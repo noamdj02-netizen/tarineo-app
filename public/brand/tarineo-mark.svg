@@ -1,0 +1,13 @@
+<svg width="62" height="56" viewBox="0 0 62 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="tarineo-bar" x1="0" y1="56" x2="56" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDBC68"/>
+      <stop offset="0.45" stop-color="#EC5821"/>
+      <stop offset="1" stop-color="#8A1B0B"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="28" width="10" height="24" rx="5" fill="url(#tarineo-bar)" transform="rotate(-12 7 40)"/>
+  <rect x="16" y="20" width="10" height="32" rx="5" fill="url(#tarineo-bar)" transform="rotate(-12 21 36)"/>
+  <rect x="30" y="12" width="10" height="40" rx="5" fill="url(#tarineo-bar)" transform="rotate(-12 35 32)"/>
+  <rect x="44" y="4" width="10" height="48" rx="5" fill="url(#tarineo-bar)" transform="rotate(-12 49 28)"/>
+</svg>

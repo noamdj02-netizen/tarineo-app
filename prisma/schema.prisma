@@ -1,0 +1,423 @@
+// Schéma de la base de données Tarineo.
+// Documentation : https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // Pooler Supabase en mode transaction (port 6543) — nécessaire en serverless
+  // (Vercel) : le mode session utilisé jusqu'ici (port 5432) plafonne à 15
+  // connexions simultanées, largement insuffisant dès que plusieurs fonctions
+  // serverless s'exécutent en parallèle (voir l'incident "EMAXCONNSESSION" —
+  // n'importe quelle page interrogeant la base au mauvais moment plantait).
+  url       = env("DATABASE_URL")
+  // Connexion directe (non poolée) : requise pour les migrations, le mode
+  // transaction du pooler ne supportant pas les statements préparés dont
+  // `prisma migrate deploy` a besoin.
+  directUrl = env("DIRECT_URL")
+}
+
+// --- Authentification (Auth.js) ---
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+
+  // Champs métier Tarineo
+  trade                String? // corps de métier : plombier, électricien, etc.
+  consentAt            DateTime? // horodatage du consentement RGPD à l'inscription
+  stripeCustomerId     String?   @unique
+  // "trialing" par défaut à la création : essai gratuit, aucun moyen de paiement
+  // enregistré. Passe à "active" une fois le SetupIntent Stripe confirmé (voir
+  // src/lib/quota.ts, qui fait basculer le quota mensuel du palier d'essai fixe
+  // vers celui du plan réel à ce moment précis — pas de prélèvement à ce stade).
+  subscriptionStatus   String?   @default("trialing") // trialing, active, past_due, canceled...
+  plan                 String? // starter, pro, equipe — choisi au moment d'ajouter un moyen de paiement
+  // Abonnement Stripe réel créé au moment du SetupIntent (voir le webhook
+  // setup_intent.succeeded) — source de vérité pour l'intervalle de facturation
+  // (mensuel/annuel), la date de fin de période et cancel_at_period_end,
+  // consultés en direct via l'API Stripe plutôt que dupliqués en base.
+  stripeSubscriptionId String?   @unique
+
+  // Pop-up d'onboarding ("votre historique est prêt, importez un devis récent")
+  // affichée une seule fois, dès que historiqueEstSuffisant() devient vrai
+  // (src/lib/historique.ts). Ce flag empêche toute réapparition ultérieure.
+  onboardingDevisPopupVu Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  accounts         Account[]
+  sessions         Session[]
+  documents        Document[]
+  lineItems        LineItem[]
+  priceHistory     PriceHistory[]
+  clientQuotes     ClientQuote[]
+  clientInvoices   ClientInvoice[]
+  alerts           Alert[]
+  distributorGoals DistributorGoal[]
+  companyProfile   CompanyProfile?
+  generationsIA    GenerationIA[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// --- Cœur métier : devis, factures, historique de prix ---
+
+enum DocumentType {
+  DEVIS
+  FACTURE
+  BON_COMMANDE
+  BON_ENLEVEMENT
+}
+
+enum DocumentStatus {
+  PROCESSING
+  NEEDS_REVIEW
+  VALIDATED
+  ERROR
+}
+
+model Document {
+  id              String         @id @default(cuid())
+  userId          String
+  type            DocumentType
+  distributor     String?
+  distributorNorm String?
+  documentDate    DateTime?
+  fileKey         String
+  status          DocumentStatus @default(PROCESSING)
+  totalHt         Decimal?       @db.Decimal(10, 2)
+  totalTtc        Decimal?       @db.Decimal(10, 2)
+  rawExtraction   Json?
+  // SHA-256 du fichier envoyé — détecte un ré-upload du même fichier avant même
+  // l'analyse IA (voir trouverDoublonParHash dans src/lib/documents.ts).
+  fileHash        String?
+  // Vrai quand un autre document du même utilisateur partage distributeur + date +
+  // montant total (détection après extraction, pour le cas d'un même achat re-scanné
+  // sous un fichier différent — le hash ne suffit pas dans ce cas). Force une revue
+  // manuelle plutôt qu'une validation automatique (voir analyserDocument).
+  possibleDoublon Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lineItems LineItem[]
+
+  @@index([userId, createdAt])
+  @@index([userId, distributorNorm])
+  @@index([userId, fileHash])
+}
+
+model LineItem {
+  id                  String  @id @default(cuid())
+  documentId          String
+  userId              String
+  reference           String
+  referenceNorm       String
+  // Référence fabricant (optionnelle), distincte du code interne du distributeur
+  // ci-dessus : c'est elle qui permet de rapprocher un même produit entre enseignes.
+  // Détectée par l'IA dans la désignation, ou saisie manuellement par l'artisan.
+  manufacturerRef     String?
+  manufacturerRefNorm String?
+  designation         String
+  quantity            Decimal @db.Decimal(10, 2)
+  unitPriceHt         Decimal @db.Decimal(10, 2)
+  discountPct         Decimal @default(0) @db.Decimal(5, 2)
+  totalHt             Decimal @db.Decimal(10, 2)
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, referenceNorm])
+}
+
+model PriceHistory {
+  id                  String   @id @default(cuid())
+  userId              String
+  referenceNorm       String
+  // Référence fabricant (optionnelle) : clé utilisée pour le comparateur inter-enseignes,
+  // par opposition à referenceNorm qui est propre au code interne de chaque distributeur.
+  manufacturerRefNorm String?
+  distributor         String
+  distributorNorm     String
+  unitPriceHt         Decimal  @db.Decimal(10, 2)
+  documentDate        DateTime
+  documentId          String
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, referenceNorm, distributorNorm])
+  @@index([userId, manufacturerRefNorm])
+}
+
+model DistributorGoal {
+  id     String @id @default(cuid())
+  userId String
+
+  distributor     String // libellé affiché, tel que saisi par l'artisan
+  distributorNorm String // clé de rapprochement avec Document.distributorNorm
+  targetHt        Decimal @db.Decimal(10, 2) // objectif de dépenses HT sur la période
+
+  // Début de la période (jour/mois, année ignorée) : période glissante de 12 mois
+  // reconduite chaque année. Par défaut 1er janvier = année civile. Certains
+  // distributeurs calculent leur BFA sur une autre période (ex. juillet-juin) :
+  // l'artisan peut l'ajuster ici.
+  periodStartMonth Int @default(1)
+  periodStartDay   Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, distributorNorm])
+}
+
+// --- Devis clients (générés par Tarineo pour les clients de l'artisan) : à ne pas
+// confondre avec Document/type=DEVIS, qui désigne un devis FOURNISSEUR reçu et analysé
+// pour la détection de hausse de prix — deux objets métier distincts, aucune relation
+// entre les deux.
+
+// Profil "Mon entreprise" — renseigné une fois, réutilisé sur chaque devis généré
+// (logo + mentions légales obligatoires). Relation 1:1 avec User.
+model CompanyProfile {
+  id                      String    @id @default(cuid())
+  userId                  String    @unique
+  raisonSociale           String
+  siret                   String
+  formeJuridique          String?
+  adresseRue              String
+  adresseCodePostal       String
+  adresseVille            String
+  telephone               String
+  emailContact            String
+  regimeTva               RegimeTva @default(NORMAL)
+  // RCS/RM + ville d'immatriculation — vide pour une micro-entreprise non immatriculée.
+  registreImmatriculation String?
+
+  // Assurance décennale : 6 mentions requises par l'art. L.243-2 du code des assurances
+  // pour les corps de métier qui y sont soumis — mais Tarineo ne peut pas présumer que
+  // c'est le cas de tous ses utilisateurs, donc entièrement optionnel/masquable : ces
+  // champs ne sont ni requis à la saisie ni affichés sur le PDF si laissés vides (voir
+  // FormulaireEntreprise.tsx et devisPdf.tsx).
+  assuranceNom                String?
+  assuranceAdresse            String?
+  assuranceNumeroContrat      String?
+  assuranceActivitesGaranties String?
+  assuranceZoneGeographique   String?
+
+  logoKey String? // clé Supabase Storage
+
+  // Compteurs séquentiels pour la numérotation des devis et des factures (voir
+  // ClientQuote.numero / ClientInvoice.numero) — sur le profil plutôt que recalculés
+  // depuis un COUNT, pour ne jamais réutiliser un numéro après une éventuelle
+  // suppression. Deux compteurs séparés : un devis et une facture émis le même jour
+  // n'ont donc jamais le même numéro de séquence, en plus du préfixe "F" qui les
+  // distingue déjà visuellement (voir genererNumeroFacture dans facturesClients.ts).
+  nextQuoteNumber   Int @default(1)
+  nextInvoiceNumber Int @default(1)
+
+  // Marge par défaut appliquée aux prix suggérés lors de la saisie d'une ligne de devis
+  // client, à partir de la moyenne des derniers achats fournisseur correspondants (voir
+  // suggererPrixAchat dans src/lib/suggestionPrix.ts) — réglable ici, et toujours
+  // éditable ligne par ligne dans le devis, jamais imposée.
+  margeParDefautPct Decimal @default(25) @db.Decimal(5, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum RegimeTva {
+  NORMAL // TVA classique, taux affiché par ligne
+  FRANCHISE_293B // micro-entreprise : "TVA non applicable, art. 293 B du CGI"
+}
+
+model ClientQuote {
+  id     String @id @default(cuid())
+  userId String
+
+  // Ex. "2026-014" — généré depuis CompanyProfile.nextQuoteNumber au moment de la
+  // création, jamais recalculé ensuite.
+  numero             String
+  clientNom          String
+  clientAdresse      String?
+  dateEmission       DateTime @default(now())
+  dureeValiditeJours Int      @default(30)
+  conditionsPaiement String
+
+  totalHt  Decimal @db.Decimal(10, 2)
+  totalTva Decimal @db.Decimal(10, 2)
+  totalTtc Decimal @db.Decimal(10, 2)
+
+  // Texte d'origine (prompt tapé ou transcrit vocalement) ayant servi à générer les
+  // lignes via l'IA — conservé pour traçabilité et une éventuelle régénération. Null
+  // pour un devis créé/corrigé entièrement à la main.
+  promptOriginal String?
+  pdfKey         String?
+
+  createdAt DateTime @default(now())
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lines   ClientQuoteLine[]
+  // Facture générée par transformation de ce devis (voir transformerEnFacture) — au
+  // plus une, le devis reste consultable tel quel après transformation, jamais
+  // remplacé. L'unicité vit sur ClientInvoice.clientQuoteId (voir plus bas).
+  invoice ClientInvoice?
+
+  @@index([userId, createdAt])
+}
+
+model ClientQuoteLine {
+  id             String  @id @default(cuid())
+  clientQuoteId  String
+  ordre          Int
+  designation    String
+  quantite       Decimal @db.Decimal(10, 2)
+  prixUnitaireHt Decimal @db.Decimal(10, 2)
+  // Taux en %, ex. 20 ou 10 — 0 si CompanyProfile.regimeTva === FRANCHISE_293B.
+  tauxTva        Decimal @db.Decimal(5, 2)
+  totalHt        Decimal @db.Decimal(10, 2)
+
+  clientQuote ClientQuote @relation(fields: [clientQuoteId], references: [id], onDelete: Cascade)
+
+  @@index([clientQuoteId])
+}
+
+// Facture émise pour un client — créée uniquement par transformation d'un ClientQuote
+// existant pour l'instant (voir transformerEnFacture dans devis-clients/[id]/actions.ts),
+// pas de création manuelle/IA directe. À ne pas confondre avec Document/type=FACTURE
+// (facture FOURNISSEUR reçue et analysée pour la hausse de prix) : aucune relation entre
+// les deux, même distinction que ClientQuote vis-à-vis de Document/type=DEVIS.
+model ClientInvoice {
+  id     String @id @default(cuid())
+  userId String
+
+  // Ex. "F2026-003" — préfixe "F" pour ne jamais se confondre visuellement avec un
+  // numéro de devis, généré depuis CompanyProfile.nextInvoiceNumber.
+  numero             String
+  clientNom          String
+  clientAdresse      String?
+  dateEmission       DateTime @default(now())
+  dateEcheance       DateTime
+  conditionsPaiement String
+
+  totalHt  Decimal @db.Decimal(10, 2)
+  totalTva Decimal @db.Decimal(10, 2)
+  totalTtc Decimal @db.Decimal(10, 2)
+
+  pdfKey String?
+
+  // Devis d'origine si cette facture en est la transformation — @unique impose au
+  // niveau base qu'un devis ne soit transformé qu'une seule fois, en plus de la
+  // vérification applicative (voir transformerEnFacture).
+  clientQuoteId String?      @unique
+  clientQuote   ClientQuote? @relation(fields: [clientQuoteId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  user  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lines ClientInvoiceLine[]
+
+  @@index([userId, createdAt])
+}
+
+model ClientInvoiceLine {
+  id              String  @id @default(cuid())
+  clientInvoiceId String
+  ordre           Int
+  designation     String
+  quantite        Decimal @db.Decimal(10, 2)
+  prixUnitaireHt  Decimal @db.Decimal(10, 2)
+  tauxTva         Decimal @db.Decimal(5, 2)
+  totalHt         Decimal @db.Decimal(10, 2)
+
+  clientInvoice ClientInvoice @relation(fields: [clientInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([clientInvoiceId])
+}
+
+// Journal des appels IA de génération/reconstruction de lignes de devis (création
+// via genererDepuisPrompt et modification via modifierLignesAvecIA) — sert
+// uniquement à compter le quota mensuel (voir src/lib/quota.ts), remplace le
+// comptage précédent basé sur ClientQuote.promptOriginal qui ne capturait pas
+// les modifications (aucune nouvelle ligne ClientQuote créée dans ce cas).
+model GenerationIA {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+enum AlertType {
+  PRICE_INCREASE
+  YEAR_END_DISCOUNT
+}
+
+model Alert {
+  id        String    @id @default(cuid())
+  userId    String
+  type      AlertType
+  payload   Json
+  seenAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, seenAt])
+}
+
+// Accès anticipé limité à 500 comptes (src/lib/accesAnticipe.ts) : une fois le seuil
+// atteint, l'inscription normale (email/mot de passe et Google) est bloquée et
+// remplacée par ce simple recueil d'email, sans création de compte.
+model WaitlistSignup {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("waitlist_signups")
+}
