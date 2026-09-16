@@ -57,6 +57,8 @@ const ONGLETS = [
       pathname.startsWith("/parametres") ||
       pathname.startsWith("/compte") ||
       pathname.startsWith("/devis-clients") ||
+      pathname.startsWith("/chantiers") ||
+      pathname.startsWith("/analyses") ||
       pathname.startsWith("/entreprise"),
     icone: (actif: boolean) => (
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">

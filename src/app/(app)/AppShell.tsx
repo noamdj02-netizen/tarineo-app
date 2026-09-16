@@ -83,6 +83,8 @@ const LIENS_NAV = [
   { id: "dashboard", href: "/accueil", libelle: "Dashboard" },
   { id: "documents", href: "/documents", libelle: "Mes documents" },
   { id: "fournisseurs", href: "/fournisseurs", libelle: "Fournisseurs" },
+  { id: "chantiers", href: "/chantiers", libelle: "Chantiers" },
+  { id: "analyses", href: "/analyses", libelle: "Analyses" },
   { id: "facturation", href: "/facturation-clients", libelle: "Facturation clients" },
   { id: "parametres", href: "/parametres", libelle: "Paramètres" },
 ];
@@ -90,8 +92,8 @@ const LIENS_NAV = [
 const LIENS_TOP = [
   { href: "/accueil", libelle: "Dashboard" },
   { href: "/documents", libelle: "Documents" },
-  { href: "/fournisseurs", libelle: "Fournisseurs" },
-  { href: "/devis-clients", libelle: "Devis clients" },
+  { href: "/chantiers", libelle: "Chantiers" },
+  { href: "/analyses", libelle: "Analyses" },
 ];
 
 const SOUS_LIENS_DOCUMENTS = [
@@ -111,7 +113,9 @@ const SOUS_LIENS_FACTURATION = [
 
 function iconeNav(id: string) {
   const cls = "size-6 shrink-0";
-  if (id === "dashboard" || id === "fournisseurs") return <IconWidget className={cls} />;
+  if (id === "dashboard" || id === "fournisseurs" || id === "analyses" || id === "chantiers") {
+    return <IconWidget className={cls} />;
+  }
   if (id === "documents") return <IconDocument className={cls} />;
   if (id === "facturation") return <IconInvoice className={cls} />;
   return <IconSettings className={cls} />;

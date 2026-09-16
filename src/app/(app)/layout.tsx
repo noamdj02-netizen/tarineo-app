@@ -38,29 +38,69 @@ function formaterDateRelative(date: Date, maintenant: Date): string {
 
 async function chargerNotifications(userId: string): Promise<NotifUi[]> {
   const maintenant = new Date();
-  const alertes = await prisma.alert.findMany({
-    where: { userId, type: "PRICE_INCREASE" },
-    orderBy: { createdAt: "desc" },
-    take: 8,
-  });
+  const [alertes, aVerifier, enErreur] = await Promise.all([
+    prisma.alert.findMany({
+      where: { userId, type: "PRICE_INCREASE" },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    }),
+    prisma.document.findMany({
+      where: { userId, status: "NEEDS_REVIEW" },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+      select: { id: true, distributor: true, createdAt: true },
+    }),
+    prisma.document.findMany({
+      where: { userId, status: "ERROR" },
+      orderBy: { createdAt: "desc" },
+      take: 2,
+      select: { id: true, distributor: true, createdAt: true },
+    }),
+  ]);
 
-  return alertes.map((a) => {
+  const notifs: NotifUi[] = [];
+
+  for (const doc of aVerifier) {
+    notifs.push({
+      id: `review-${doc.id}`,
+      titre: "Document à vérifier",
+      message: doc.distributor
+        ? `${doc.distributor} — confiance faible, validez ou corrigez.`
+        : "Une extraction nécessite votre validation.",
+      date: formaterDateRelative(doc.createdAt, maintenant),
+      href: `/documents/${doc.id}`,
+      nonLu: true,
+    });
+  }
+
+  for (const doc of enErreur) {
+    notifs.push({
+      id: `err-${doc.id}`,
+      titre: "Échec de lecture",
+      message: "Nous n'avons pas réussi à lire ce document — réessayez ou importez un autre fichier.",
+      date: formaterDateRelative(doc.createdAt, maintenant),
+      href: `/documents/${doc.id}`,
+      nonLu: true,
+    });
+  }
+
+  for (const a of alertes) {
     const payloads = parserPayloadsAlertesHausse([a]);
     const p = payloads[0];
     const pct = p?.ecartPourcent;
-    const titre = p ? `Hausse chez ${p.distributor}` : "Hausse de prix détectée";
-    const message = p
-      ? `${p.designation || p.reference}${pct != null ? ` : ${pct > 0 ? "+" : ""}${pct.toFixed(0)} %` : ""}`
-      : "Consultez le document pour le détail.";
-    return {
+    notifs.push({
       id: a.id,
-      titre,
-      message,
+      titre: p ? `Hausse chez ${p.distributor}` : "Hausse de prix détectée",
+      message: p
+        ? `${p.designation || p.reference}${pct != null ? ` : ${pct > 0 ? "+" : ""}${pct.toFixed(0)} %` : ""}`
+        : "Consultez le document pour le détail.",
       date: formaterDateRelative(a.createdAt, maintenant),
       href: p ? `/documents/${p.documentId}` : "/documents?hausse=1",
       nonLu: a.seenAt === null,
-    };
-  });
+    });
+  }
+
+  return notifs.slice(0, 10);
 }
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

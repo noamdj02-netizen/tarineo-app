@@ -72,6 +72,7 @@ model User {
   distributorGoals DistributorGoal[]
   companyProfile   CompanyProfile?
   generationsIA    GenerationIA[]
+  projects         Project[]
 }
 
 model Account {
@@ -146,14 +147,19 @@ model Document {
   // sous un fichier différent — le hash ne suffit pas dans ce cas). Force une revue
   // manuelle plutôt qu'une validation automatique (voir analyserDocument).
   possibleDoublon Boolean        @default(false)
+  // Lien facultatif vers un chantier (P2) — permet de relier achats fournisseurs
+  // et ventes clients pour une marge documentée.
+  projectId       String?
   createdAt       DateTime       @default(now())
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   lineItems LineItem[]
+  project   Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([userId, distributorNorm])
   @@index([userId, fileHash])
+  @@index([userId, projectId])
 }
 
 model LineItem {
@@ -306,16 +312,19 @@ model ClientQuote {
   promptOriginal String?
   pdfKey         String?
 
+  // Chantier lié (optionnel) — fil rouge vente/achat du cahier produit V2.
+  projectId String?
+
   createdAt DateTime @default(now())
 
   user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   lines   ClientQuoteLine[]
-  // Facture générée par transformation de ce devis (voir transformerEnFacture) — au
-  // plus une, le devis reste consultable tel quel après transformation, jamais
-  // remplacé. L'unicité vit sur ClientInvoice.clientQuoteId (voir plus bas).
+  // Facture générée par transformation de ce devis (voir transformerEnFacture).
   invoice ClientInvoice?
+  project Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  @@index([userId, projectId])
 }
 
 model ClientQuoteLine {
@@ -385,6 +394,25 @@ model ClientInvoiceLine {
   clientInvoice ClientInvoice @relation(fields: [clientInvoiceId], references: [id], onDelete: Cascade)
 
   @@index([clientInvoiceId])
+}
+
+// Chantier — fil rouge du produit (cahier V2) : relie client, devis/factures clients
+// et achats fournisseurs pour une marge documentée uniquement quand les deux côtés
+// sont renseignés. Jamais de marge inventée.
+model Project {
+  id        String   @id @default(cuid())
+  userId    String
+  nom       String
+  clientNom String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quotes    ClientQuote[]
+  documents Document[]
+
+  @@index([userId, createdAt])
 }
 
 // Journal des appels IA de génération/reconstruction de lignes de devis (création
