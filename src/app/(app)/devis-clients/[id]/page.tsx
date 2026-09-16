@@ -1,26 +1,18 @@
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PageCard, PageHeader } from "@/components/tarineo/PageHeader";
 import { StatusBadge } from "@/components/tarineo/StatusBadge";
-import { PageTabs } from "@/components/tarineo/PageTabs";
 import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
-import { BrandMark } from "@/components/tarineo/BrandMark";
-import { BtnGhost, BtnPrimary } from "@/components/tarineo/Actions";
-import { deduireStatutDevis, formaterDateDevis, formaterMontantDevis } from "@/lib/devisClients";
 import { BoutonTransformerEnFacture } from "./BoutonTransformerEnFacture";
 import { BoutonRegenererPdf } from "./BoutonRegenererPdf";
 
-export default async function DevisClientDetailPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ onglet?: string }>;
-}) {
-  const { id } = await params;
-  const { onglet = "prestations" } = await searchParams;
+const formaterEuros = (valeur: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(valeur);
 
+export default async function DevisClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
 
@@ -30,11 +22,6 @@ export default async function DevisClientDetailPage({
   });
   if (!quote) notFound();
 
-  const statut = deduireStatutDevis(quote);
-  const totalHt = Number(quote.totalHt);
-  const totalTva = Number(quote.totalTva);
-  const totalTtc = Number(quote.totalTtc);
-
   return (
     <div>
       <PageHeader
@@ -42,96 +29,68 @@ export default async function DevisClientDetailPage({
         title={
           <span className="inline-flex flex-wrap items-center gap-3">
             Devis n° {quote.numero}
-            <StatusBadge statut={statut} />
+            <StatusBadge statut={quote.invoice ? "accepte" : "envoye"} />
           </span>
         }
         actions={
-          quote.invoice ? (
-            <BtnPrimary href={`/factures-clients/${quote.invoice.id}`}>Voir la facture</BtnPrimary>
-          ) : (
-            <>
-              <BtnGhost href={`/devis-clients/${quote.id}/modifier`}>Modifier</BtnGhost>
+          <div className="flex flex-wrap gap-2">
+            {!quote.invoice && (
+              <Link
+                href={`/devis-clients/${quote.id}/modifier`}
+                className="rounded-full border border-border bg-white px-4 py-2.5 text-sm font-medium hover:bg-secondary"
+              >
+                Modifier
+              </Link>
+            )}
+            {quote.invoice ? (
+              <Link href={`/factures-clients/${quote.invoice.id}`} className="rounded-full bg-primary px-4 py-2.5 text-sm text-white">
+                Voir la facture {quote.invoice.numero}
+              </Link>
+            ) : (
               <BoutonTransformerEnFacture clientQuoteId={quote.id} />
-            </>
-          )
+            )}
+          </div>
         }
       />
-
-      <div className="mb-5 grid gap-4 lg:grid-cols-3">
-        <PageCard>
-          <p className="mb-3 text-sm font-semibold">Client</p>
-          <div className="flex gap-3">
-            <BrandMark nom={quote.clientNom} size={44} />
-            <div className="min-w-0 text-sm">
-              <p className="font-medium">{quote.clientNom}</p>
-              {quote.clientAdresse && (
-                <p className="whitespace-pre-line text-muted-foreground">{quote.clientAdresse}</p>
-              )}
-            </div>
+      <PageCard className="mb-4">
+        <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-muted-foreground">Client</dt>
+            <dd className="font-medium">{quote.clientNom}</dd>
           </div>
-        </PageCard>
-        <PageCard>
-          <p className="mb-3 text-sm font-semibold">Informations</p>
-          <dl className="grid grid-cols-2 gap-y-2 text-sm">
+          <div>
             <dt className="text-muted-foreground">Date d&apos;émission</dt>
-            <dd>{formaterDateDevis(quote.dateEmission)}</dd>
-            <dt className="text-muted-foreground">Validité</dt>
-            <dd>{quote.dureeValiditeJours} jours</dd>
-            <dt className="text-muted-foreground">Paiement</dt>
-            <dd className="col-span-2 text-xs leading-relaxed text-foreground">{quote.conditionsPaiement}</dd>
-          </dl>
-        </PageCard>
-        <PageCard>
-          <p className="mb-3 text-sm font-semibold">Total HT</p>
-          <p className="text-[32px] font-semibold tracking-tight text-[#172935]">{formaterMontantDevis(totalHt)}</p>
-        </PageCard>
-      </div>
-
+            <dd>
+              {quote.dateEmission.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+            </dd>
+          </div>
+          {quote.clientAdresse && (
+            <div className="sm:col-span-2">
+              <dt className="text-muted-foreground">Adresse</dt>
+              <dd className="whitespace-pre-line">{quote.clientAdresse}</dd>
+            </div>
+          )}
+        </dl>
+      </PageCard>
       <PageCard>
-        <PageTabs
-          actif={onglet}
-          items={[
-            { id: "prestations", label: "Prestations", href: `/devis-clients/${id}?onglet=prestations` },
-            { id: "commentaires", label: "Commentaires", href: `/devis-clients/${id}?onglet=commentaires` },
-            { id: "historique", label: "Historique", href: `/devis-clients/${id}?onglet=historique` },
-          ]}
-        />
-        {onglet !== "prestations" ? (
-          <p className="mt-6 text-sm text-muted-foreground">Aucun élément pour cet onglet.</p>
-        ) : (
-          <>
-            <div className="mt-2">
-              <DataTable columns={["Désignation", "Quantité", "Prix unitaire HT", "TVA", "Total HT"]}>
-                {quote.lines.map((l) => (
-                  <TableRow key={l.id}>
-                    <TableCell>{l.designation}</TableCell>
-                    <TableCell>{Number(l.quantite)}</TableCell>
-                    <TableCell>{formaterMontantDevis(Number(l.prixUnitaireHt))}</TableCell>
-                    <TableCell>{Number(l.tauxTva)}%</TableCell>
-                    <TableCell>{formaterMontantDevis(Number(l.totalHt))}</TableCell>
-                  </TableRow>
-                ))}
-              </DataTable>
-            </div>
-            <div className="mt-6 ml-auto w-full max-w-xs space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Total HT</span>
-                <span>{formaterMontantDevis(totalHt)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">TVA</span>
-                <span>{formaterMontantDevis(totalTva)}</span>
-              </div>
-              <div className="flex justify-between text-base font-semibold">
-                <span>Total TTC</span>
-                <span>{formaterMontantDevis(totalTtc)}</span>
-              </div>
-            </div>
-            <div className="mt-6 flex flex-wrap justify-end gap-2">
-              <BoutonRegenererPdf clientQuoteId={quote.id} />
-            </div>
-          </>
-        )}
+        <DataTable columns={["Désignation", "Quantité", "Prix unitaire HT", "TVA", "Total HT"]}>
+          {quote.lines.map((l) => (
+            <TableRow key={l.id}>
+              <TableCell>{l.designation}</TableCell>
+              <TableCell>{Number(l.quantite)}</TableCell>
+              <TableCell>{formaterEuros(Number(l.prixUnitaireHt))}</TableCell>
+              <TableCell>{Number(l.tauxTva)}%</TableCell>
+              <TableCell>{formaterEuros(Number(l.totalHt))}</TableCell>
+            </TableRow>
+          ))}
+        </DataTable>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+          <p className="text-sm text-muted-foreground">
+            Total HT {formaterEuros(Number(quote.totalHt))} · TVA {formaterEuros(Number(quote.totalTva))} ·{" "}
+            <span className="font-semibold text-foreground">TTC {formaterEuros(Number(quote.totalTtc))}</span>
+          </p>
+          <BoutonRegenererPdf clientQuoteId={quote.id} />
+        </div>
       </PageCard>
     </div>
   );

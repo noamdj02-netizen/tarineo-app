@@ -1,121 +1,75 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { PageHeader, PageCard, SearchField } from "@/components/tarineo/PageHeader";
-import { PillTabs } from "@/components/tarineo/PageTabs";
-import { DataTable, TableRow, TableCell, RowActions, TablePagination } from "@/components/tarineo/DataTable";
-import { StatusBadge } from "@/components/tarineo/StatusBadge";
+import { prisma } from "@/lib/prisma";
+import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { EmptyState } from "@/components/tarineo/EmptyState";
-import { BtnGhost, BtnPrimary } from "@/components/tarineo/Actions";
-import { IconFilter, IconPlus } from "@/components/tarineo/NavIcons";
-import {
-  formaterDateDevis,
-  formaterMontantDevis,
-  listerDevisUtilisateur,
-  type StatutDevisClient,
-} from "@/lib/devisClients";
+import { BtnPrimary } from "@/components/tarineo/Actions";
+import { IconPlus } from "@/components/tarineo/NavIcons";
 
-const STATUTS_FILTRE: StatutDevisClient[] = ["brouillon", "envoye", "accepte", "refuse", "expire"];
-const PAGE_SIZE = 10;
+const formaterEuros = (valeur: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(valeur);
 
-export default async function DevisClientsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ statut?: string }>;
-}) {
+const formaterDate = (date: Date) =>
+  date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+
+export default async function DevisClientsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
 
-  const { statut = "tous" } = await searchParams;
-  const devis = await listerDevisUtilisateur(session.user.id);
+  const devis = await prisma.clientQuote.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: "desc" },
+    include: { invoice: { select: { id: true } } },
+  });
 
   if (devis.length === 0) {
     return (
       <EmptyState
-        title="Devis"
-        subtitle="Créez et gérez vos devis clients."
+        title="Devis clients"
+        subtitle="Créez et gérez vos devis pour vos clients."
         heading="Aucun devis pour le moment"
-        description="Créez votre premier devis pour commencer à gérer vos projets et suivre vos opportunités."
+        description="Créez votre premier devis (manuel ou assisté par IA) pour envoyer une proposition à votre client."
         primary={{ href: "/devis-clients/nouveau", label: "+ Créer votre premier devis" }}
-        secondary={{ href: "/documents", label: "Importer vos achats fournisseurs" }}
+        secondary={{ href: "/documents", label: "D'abord importer un devis fournisseur" }}
         variant="document"
       />
     );
   }
 
-  const counts = {
-    tous: devis.length,
-    brouillon: devis.filter((d) => d.statut === "brouillon").length,
-    envoye: devis.filter((d) => d.statut === "envoye").length,
-    accepte: devis.filter((d) => d.statut === "accepte").length,
-    refuse: devis.filter((d) => d.statut === "refuse").length,
-    expire: devis.filter((d) => d.statut === "expire").length,
-  };
-
-  const statutValide = STATUTS_FILTRE.includes(statut as StatutDevisClient) ? (statut as StatutDevisClient) : null;
-  const filtered = statutValide ? devis.filter((d) => d.statut === statutValide) : devis;
-  const rows = statut === "tous" ? filtered.slice(0, PAGE_SIZE) : filtered;
-
   return (
     <div>
       <PageHeader
-        title="Devis"
-        subtitle="Gérez tous vos devis en un seul endroit."
+        title="Devis clients"
+        subtitle="Propositions envoyées à vos clients (distinctes des devis fournisseurs)."
         actions={
-          <>
-            <BtnGhost>
-              <IconFilter /> Filtrer
-            </BtnGhost>
-            <BtnPrimary href="/devis-clients/nouveau">
-              <IconPlus /> Nouveau devis
-            </BtnPrimary>
-          </>
+          <BtnPrimary href="/devis-clients/nouveau">
+            <IconPlus /> Nouveau devis
+          </BtnPrimary>
         }
       />
       <PageCard>
-        <SearchField placeholder="Rechercher un devis, un client..." className="mb-5" />
-        <PillTabs
-          actif={statut}
-          items={[
-            { id: "tous", label: `Tous (${counts.tous})`, href: "/devis-clients" },
-            { id: "brouillon", label: `Brouillons (${counts.brouillon})`, href: "/devis-clients?statut=brouillon" },
-            { id: "envoye", label: `Envoyés (${counts.envoye})`, href: "/devis-clients?statut=envoye" },
-            { id: "accepte", label: `Acceptés (${counts.accepte})`, href: "/devis-clients?statut=accepte" },
-            { id: "refuse", label: `Refusés (${counts.refuse})`, href: "/devis-clients?statut=refuse" },
-            { id: "expire", label: `Expirés (${counts.expire})`, href: "/devis-clients?statut=expire" },
-          ]}
-        />
-        <div className="mt-1">
-          {rows.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">
-              Aucun devis dans cette catégorie pour le moment.
-            </p>
-          ) : (
-            <DataTable columns={["N° de devis", "Client", "Montant HT", "Statut", "Date", "Actions"]}>
-              {rows.map((d) => (
-                <TableRow key={d.id}>
-                  <TableCell>
-                    <Link href={`/devis-clients/${d.id}`} className="font-medium hover:text-primary">
-                      {d.numero}
-                    </Link>
-                  </TableCell>
-                  <TableCell>{d.clientNom}</TableCell>
-                  <TableCell>{formaterMontantDevis(d.montantHt)}</TableCell>
-                  <TableCell>
-                    <StatusBadge statut={d.statut} />
-                  </TableCell>
-                  <TableCell>{formaterDateDevis(d.dateEmission)}</TableCell>
-                  <TableCell>
-                    <RowActions href={`/devis-clients/${d.id}`} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </DataTable>
-          )}
-          <TablePagination
-            label={`Affichage de ${rows.length} sur ${statut === "tous" ? devis.length : filtered.length} résultat${filtered.length > 1 ? "s" : ""}`}
-          />
-        </div>
+        <DataTable columns={["N° de devis", "Client", "Montant HT", "Statut", "Date", ""]}>
+          {devis.map((d) => (
+            <TableRow key={d.id}>
+              <TableCell>
+                <Link href={`/devis-clients/${d.id}`} className="font-medium hover:text-primary">
+                  {d.numero}
+                </Link>
+              </TableCell>
+              <TableCell>{d.clientNom}</TableCell>
+              <TableCell>{formaterEuros(Number(d.totalHt))}</TableCell>
+              <TableCell>{d.invoice ? "Facturé" : "Ouvert"}</TableCell>
+              <TableCell>{formaterDate(d.dateEmission)}</TableCell>
+              <TableCell>
+                <Link href={`/devis-clients/${d.id}`} className="text-sm text-primary hover:underline">
+                  Ouvrir
+                </Link>
+              </TableCell>
+            </TableRow>
+          ))}
+        </DataTable>
       </PageCard>
     </div>
   );

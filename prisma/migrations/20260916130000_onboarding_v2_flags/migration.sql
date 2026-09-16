@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardingImportDeferred" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "onboardingFlowCompletedAt" TIMESTAMP(3);
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "telephone" TEXT;
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "entrepriseNom" TEXT;

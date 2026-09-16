@@ -1,48 +1,37 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRightIcon, FileTextIcon, StarIcon, UploadIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { BrandMark } from "@/components/tarineo/BrandMark";
 import { logoFournisseur } from "@/lib/logosFournisseurs";
-import { trouverFournisseurConnu } from "@/lib/fournisseursConnus";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { GraphiqueEconomiesSemaine } from "./AccueilCharts";
-import { GraphiqueDepensesInteractif } from "./GraphiqueDepensesInteractif";
+import { GraphiqueEconomiesSemaine, GraphiqueDepensesMensuelles } from "./AccueilCharts";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
 
+const MOIS_COURTS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 const formaterDateFigma = (date: Date | null) => {
   if (!date) return "—";
-  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = MOIS_COURTS_EN[date.getUTCMonth()];
+  return `${day} ${month}, ${date.getUTCFullYear()}`;
 };
 
 const descriptionFournisseur = (nom: string, norm: string) => {
-  const connu = trouverFournisseurConnu(nom) ?? trouverFournisseurConnu(norm);
-  if (connu) {
-    return connu.groupe ? `${connu.specialite} · groupe ${connu.groupe}` : connu.specialite;
-  }
+  const key = norm.toLowerCase();
+  if (key.includes("cedeo")) return "Détection automatique des hausses sur vos devis Cedeo.";
+  if (key.includes("point")) return "Comparaison des prix multi-agences Point P.";
+  if (key.includes("rexel")) return "Suivi des tarifs matériel électrique Rexel.";
   return `Suivi des dépenses et hausses chez ${nom}.`;
 };
 
-const labelFournisseur = (f: FournisseurCarte) => {
-  if (f.pourcentageAtteinte !== null) return `${Math.min(100, Math.round(f.pourcentageAtteinte))}% BFA`;
-  return null;
+const scoreObjectif = (f: FournisseurCarte) => {
+  if (f.pourcentageAtteinte === null) return null;
+  return Math.min(100, Math.round(f.pourcentageAtteinte));
 };
-
-function explicationDocument(doc: DocumentRecent): string | null {
-  if (doc.haussePositive) {
-    return `Un ou plusieurs prix sont plus élevés que votre dernier achat chez ${doc.distributor}. Ouvrez le document pour voir le détail ligne par ligne.`;
-  }
-  if (doc.hausseNegative) {
-    return `Bonne nouvelle : certains prix sont en baisse par rapport à votre historique chez ${doc.distributor}.`;
-  }
-  if (doc.hausseLabel === "Stable") {
-    return `Prix alignés avec votre historique récent chez ${doc.distributor}.`;
-  }
-  return null;
-}
 
 function IconeStat() {
   return (
@@ -52,9 +41,29 @@ function IconeStat() {
   );
 }
 
-// Délègue à BrandMark pour ne pas dupliquer le repli quand logo.dev ne répond pas.
 function LogoFournisseur({ nom, norm, size = 28, rounded = "md" }: { nom: string; norm?: string; size?: number; rounded?: "md" | "full" }) {
-  return <BrandMark nom={nom} logo={logoFournisseur(norm ?? nom)} size={size} rounded={rounded} />;
+  const src = logoFournisseur(norm ?? nom);
+  const radius = rounded === "full" ? "rounded-full" : "rounded-[4px]";
+  if (src) {
+    return (
+      <Image
+        src={src}
+        alt=""
+        width={size}
+        height={size}
+        className={`shrink-0 object-cover ${radius}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+  return (
+    <div
+      className={`flex shrink-0 items-center justify-center overflow-hidden bg-secondary font-bold text-primary ${radius}`}
+      style={{ width: size, height: size, fontSize: size > 36 ? 16 : 11 }}
+    >
+      {nom.charAt(0).toUpperCase()}
+    </div>
+  );
 }
 
 export type FournisseurCarte = {
@@ -75,19 +84,104 @@ export type DocumentRecent = {
   hausseNegative: boolean;
 };
 
-export function DashboardSupplierRow({
-  fournisseurs,
-  utiliseDemo = false,
+export function DashboardHeroImport({ compteVide }: { compteVide: boolean }) {
+  if (!compteVide) return null;
+  return (
+    <section className="w-full min-w-0 rounded-[24px] bg-gradient-to-br from-[#FFF0E8] via-card to-[#F3F7FA] p-6 sm:p-8">
+      <p className="text-sm font-medium uppercase tracking-wider text-primary">Votre espace est prêt</p>
+      <h2 className="mt-2 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+        Vous n&apos;avez encore aucun document
+      </h2>
+      <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+        Commencez avec une facture ou un devis. Tarinéo s&apos;occupe du reste — fournisseurs, produits,
+        historique de prix. Aucune donnée inventée.
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button render={<Link href="/documents?scanner=1" />} className="h-auto rounded-full px-6 py-3">
+          <UploadIcon data-icon="inline-start" />
+          Scanner un document
+        </Button>
+        <Button variant="outline" render={<Link href="/documents?onboarding=1" />} className="h-auto rounded-full px-6 py-3">
+          Importer un PDF
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+export function DashboardBanniereReprise() {
+  return (
+    <section className="w-full min-w-0 rounded-[24px] border border-primary/20 bg-[#FFF0E8] p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-foreground">Votre espace est prêt. Importez vos premiers documents pour commencer.</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Vous aviez choisi de le faire plus tard — c&apos;est le bon moment, depuis ce téléphone ou votre ordinateur.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button render={<Link href="/documents?onboarding=1" />} className="rounded-full">
+          Importer mes documents
+        </Button>
+        <Button variant="outline" render={<Link href="/documents?scanner=1" />} className="rounded-full">
+          Scanner
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+export function DashboardAFaire({
+  aVerifier,
+  hausses,
+  moisCourantStr,
 }: {
-  fournisseurs: FournisseurCarte[];
-  utiliseDemo?: boolean;
+  aVerifier: number;
+  hausses: number;
+  moisCourantStr: string;
 }) {
+  if (aVerifier === 0 && hausses === 0) return null;
+
+  return (
+    <section className="w-full min-w-0 rounded-[24px] bg-card p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-foreground">À vérifier</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Ce qui mérite votre attention aujourd&apos;hui.</p>
+      <ul className="mt-4 flex flex-col gap-3">
+        {aVerifier > 0 && (
+          <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-secondary px-4 py-3">
+            <div>
+              <p className="font-medium text-foreground">
+                {aVerifier} document{aVerifier > 1 ? "s" : ""} à vérifier
+              </p>
+              <p className="text-xs text-muted-foreground">Confiance faible — Tarinéo n&apos;a rien inventé.</p>
+            </div>
+            <Button size="sm" render={<Link href="/documents" />} className="rounded-full">
+              Vérifier
+            </Button>
+          </li>
+        )}
+        {hausses > 0 && (
+          <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#FFF0E8] px-4 py-3">
+            <div>
+              <p className="font-medium text-foreground">
+                {hausses} hausse{hausses > 1 ? "s" : ""} de prix détectée{hausses > 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">Basées sur votre historique d&apos;achats.</p>
+            </div>
+            <Button size="sm" render={<Link href={`/documents?hausse=1&mois=${moisCourantStr}`} />} className="rounded-full">
+              Voir les hausses
+            </Button>
+          </li>
+        )}
+      </ul>
+    </section>
+  );
+}
+
+export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: FournisseurCarte[] }) {
   return (
     <section className="w-full min-w-0">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
-        <h2 className="text-xl font-medium leading-none text-foreground sm:text-2xl">Vos fournisseurs suivis ce mois-ci</h2>
+        <h2 className="text-xl font-medium leading-none text-foreground sm:text-2xl">Vos fournisseurs suivis</h2>
         <Button variant="ghost" size="sm" render={<Link href="/fournisseurs" />} className="text-muted-foreground">
-          Bibliothèque
+          Voir tout
           <ArrowUpRightIcon data-icon="inline-end" />
         </Button>
       </div>
@@ -100,7 +194,9 @@ export function DashboardSupplierRow({
                   <UploadIcon />
                 </EmptyMedia>
                 <EmptyTitle>Aucun fournisseur suivi</EmptyTitle>
-                <EmptyDescription>Envoyez un devis ou une facture pour voir vos enseignes ici, avec le volume du mois.</EmptyDescription>
+                <EmptyDescription>
+                  Importez un devis ou une facture pour voir vos enseignes ici, avec le volume de la période.
+                </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button render={<Link href="/documents" />}>Importer un document</Button>
@@ -111,37 +207,37 @@ export function DashboardSupplierRow({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
           {fournisseurs.map((f) => {
-            const badge = labelFournisseur(f);
-            const href = utiliseDemo
-              ? "/documents?onboarding=1"
-              : `/fournisseurs/${encodeURIComponent(f.distributorNorm)}`;
+            const score = scoreObjectif(f);
             return (
-              <Link key={f.distributorNorm} href={href} className="block h-full">
-                <Card className="h-full rounded-[24px] ring-0 transition-shadow hover:shadow-md">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base font-medium">
-                      <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} />
-                      <span className="truncate">{f.distributor}</span>
-                    </CardTitle>
-                    {badge && (
-                      <CardAction>
-                        <Badge variant="secondary" className="gap-1 text-[var(--app-star)]">
-                          <StarIcon data-icon="inline-start" />
-                          {badge}
-                        </Badge>
-                      </CardAction>
-                    )}
-                    <CardDescription>{descriptionFournisseur(f.distributor, f.distributorNorm)}</CardDescription>
-                  </CardHeader>
-                  <CardFooter className="justify-between border-t bg-transparent">
-                    <p className="text-xl font-medium text-[var(--app-text-body)]">{formaterEuros(f.depenses)}</p>
-                    <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
-                      {utiliseDemo ? "Importer" : "Fiche fournisseur"}
-                      <ArrowUpRightIcon className="size-4" />
-                    </span>
-                  </CardFooter>
-                </Card>
-              </Link>
+              <Card key={f.distributorNorm} className="h-full rounded-[24px] ring-0">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} />
+                    <span className="truncate text-base font-medium">{f.distributor}</span>
+                  </CardTitle>
+                  {score !== null && (
+                    <CardAction>
+                      <Badge variant="secondary" className="gap-1 text-[var(--app-star)]" title="Avancement de l'objectif annuel">
+                        <StarIcon data-icon="inline-start" />
+                        {score}%
+                      </Badge>
+                    </CardAction>
+                  )}
+                  <CardDescription>{descriptionFournisseur(f.distributor, f.distributorNorm)}</CardDescription>
+                </CardHeader>
+                <CardFooter className="justify-between border-t bg-transparent">
+                  <p className="text-xl font-medium text-[var(--app-text-body)]">{formaterEuros(f.depenses)}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={<Link href={`/fournisseurs/${encodeURIComponent(f.distributorNorm)}`} />}
+                    className="rounded-full text-primary"
+                  >
+                    Voir
+                    <ArrowUpRightIcon data-icon="inline-end" />
+                  </Button>
+                </CardFooter>
+              </Card>
             );
           })}
         </div>
@@ -150,18 +246,12 @@ export function DashboardSupplierRow({
   );
 }
 
-export function DashboardRecentDocuments({
-  documents,
-  utiliseDemo = false,
-}: {
-  documents: DocumentRecent[];
-  utiliseDemo?: boolean;
-}) {
+export function DashboardRecentDocuments({ documents }: { documents: DocumentRecent[] }) {
   return (
     <Card className="min-h-0 w-full rounded-[24px] ring-0 lg:min-h-[538px]">
       <CardHeader>
-        <CardTitle className="text-xl">Documents récents</CardTitle>
-        <CardDescription>Imports de la semaine</CardDescription>
+        <CardTitle className="text-xl">Devis récents</CardTitle>
+        <CardDescription>Scans de la semaine</CardDescription>
         <CardAction>
           <Button variant="ghost" size="sm" render={<Link href="/documents" />} className="text-muted-foreground">
             Voir tout
@@ -184,38 +274,30 @@ export function DashboardRecentDocuments({
           </Empty>
         ) : (
           <ul className="flex flex-1 flex-col">
-            {documents.map((doc) => {
-              const detail = explicationDocument(doc);
-              return (
-                <li key={doc.id}>
-                  <Link
-                    href={utiliseDemo || doc.id.startsWith("demo-") ? "/documents?onboarding=1" : `/documents/${doc.id}`}
-                    className="block rounded-xl px-3 py-2 transition-colors hover:bg-secondary"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <LogoFournisseur nom={doc.distributor} size={48} rounded="full" />
-                        <div className="min-w-0">
-                          <p className="truncate text-base font-medium text-foreground">{doc.distributor}</p>
-                          <p className="text-[13px] text-muted-foreground">{formaterDateFigma(doc.documentDate)}</p>
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-base font-medium text-foreground">
-                          {doc.totalHt !== null ? formaterEuros(Number(doc.totalHt)) : "—"}
-                        </p>
-                        <Badge variant={doc.haussePositive ? "destructive" : "secondary"} className="mt-0.5">
-                          {doc.hausseLabel}
-                        </Badge>
-                      </div>
+            {documents.map((doc) => (
+              <li key={doc.id}>
+                <Link
+                  href={`/documents/${doc.id}`}
+                  className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <LogoFournisseur nom={doc.distributor} size={48} rounded="full" />
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-medium text-foreground">{doc.distributor}</p>
+                      <p className="text-[13px] text-muted-foreground">{formaterDateFigma(doc.documentDate)}</p>
                     </div>
-                    {detail && !utiliseDemo && (
-                      <p className="mt-2 pl-[60px] text-xs leading-relaxed text-muted-foreground">{detail}</p>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-base font-medium text-foreground">
+                      {doc.totalHt !== null ? formaterEuros(Number(doc.totalHt)) : "—"}
+                    </p>
+                    <Badge variant={doc.haussePositive ? "destructive" : "secondary"} className="mt-0.5">
+                      {doc.hausseLabel}
+                    </Badge>
+                  </div>
+                </Link>
+              </li>
+            ))}
           </ul>
         )}
       </CardContent>
@@ -266,14 +348,12 @@ export function DashboardOverviewStats({
   economiesPotentielles,
   moisCourantStr,
   payloadsCount,
-  utiliseDemo = false,
 }: {
   nbDocumentsMois: number;
   hausseMoyenne: number | null;
   economiesPotentielles: number;
   moisCourantStr: string;
   payloadsCount: number;
-  utiliseDemo?: boolean;
 }) {
   const stats = [
     {
@@ -282,23 +362,23 @@ export function DashboardOverviewStats({
       value: String(nbDocumentsMois),
       suffix: "documents",
       href: `/documents?mois=${moisCourantStr}`,
-      cliquable: !utiliseDemo && nbDocumentsMois > 0,
+      cliquable: nbDocumentsMois > 0,
     },
     {
       label: "Hausse moyenne détectée",
       sub: "Ce mois-ci",
       value: hausseMoyenne !== null ? hausseMoyenne.toFixed(1).replace(".", ",") : "—",
       suffix: hausseMoyenne !== null ? "%" : "",
-      href: utiliseDemo ? "/documents?onboarding=1" : `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
-      cliquable: !utiliseDemo && payloadsCount > 0,
+      href: `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
+      cliquable: payloadsCount > 0,
     },
     {
       label: "Économies potentielles",
       sub: "Ce mois-ci",
       value: new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(economiesPotentielles),
       suffix: "€",
-      href: utiliseDemo ? "/documents?onboarding=1" : `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
-      cliquable: !utiliseDemo && payloadsCount > 0,
+      href: `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
+      cliquable: payloadsCount > 0,
     },
   ];
 
@@ -349,11 +429,9 @@ export function DashboardOverviewStats({
 export function DashboardDepensesChart({
   donnees,
   aDesDepenses,
-  utiliseDemo = false,
 }: {
   donnees: { mois: string; montant: number }[];
   aDesDepenses: boolean;
-  utiliseDemo?: boolean;
 }) {
   return (
     <Card className="w-full min-w-0 rounded-[24px] ring-0">
@@ -362,7 +440,7 @@ export function DashboardDepensesChart({
       </CardHeader>
       <CardContent>
         {aDesDepenses ? (
-          <GraphiqueDepensesInteractif donnees={donnees} liensActifs={!utiliseDemo} />
+          <GraphiqueDepensesMensuelles donnees={donnees} />
         ) : (
           <Empty>
             <EmptyHeader>

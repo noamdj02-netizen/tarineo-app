@@ -1,9 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 
-/** Les factures clients sont créées depuis un devis accepté — pas de création directe. */
-export default async function NouvelleFacturePage() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
+/** Les factures clients se créent uniquement par transformation d'un devis. */
+export default function NouvelleFacturePage() {
   redirect("/devis-clients");
 }

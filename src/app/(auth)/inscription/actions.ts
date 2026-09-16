@@ -7,25 +7,31 @@ import { Prisma } from "@prisma/client";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasherMotDePasse, LONGUEUR_MIN_MOT_DE_PASSE } from "@/lib/password";
-import { calculerEtatAccesAnticipe, invaliderCacheAccesAnticipe } from "@/lib/accesAnticipe";
-import { ROUTE_APRES_AUTH } from "@/lib/appRoutes";
+import { calculerEtatAccesAnticipe } from "@/lib/accesAnticipe";
 
 const schema = z
   .object({
-    name: z.string().trim().min(1),
+    prenom: z.string().trim().min(1),
+    nom: z.string().trim().min(1),
     email: z.string().trim().toLowerCase().email(),
     password: z.string().min(LONGUEUR_MIN_MOT_DE_PASSE),
     confirmation: z.string(),
+    entrepriseNom: z.string().trim().min(1),
+    telephone: z.string().trim().optional(),
     consent: z.literal("on"),
   })
   .refine((data) => data.password === data.confirmation, { path: ["confirmation"] });
 
 export async function creerCompte(formData: FormData) {
+  const telephoneBrut = String(formData.get("telephone") ?? "").trim();
   const parsed = schema.safeParse({
-    name: formData.get("name"),
+    prenom: formData.get("prenom"),
+    nom: formData.get("nom"),
     email: formData.get("email"),
     password: formData.get("password"),
     confirmation: formData.get("confirmation"),
+    entrepriseNom: formData.get("entrepriseNom"),
+    telephone: telephoneBrut || undefined,
     consent: formData.get("consent"),
   });
 
@@ -33,7 +39,8 @@ export async function creerCompte(formData: FormData) {
     redirect("/inscription?erreur=1");
   }
 
-  const { name, email, password } = parsed.data;
+  const { prenom, nom, email, password, entrepriseNom, telephone } = parsed.data;
+  const name = `${prenom} ${nom}`.trim();
 
   try {
     const { phase } = calculerEtatAccesAnticipe(await prisma.user.count());
@@ -43,7 +50,14 @@ export async function creerCompte(formData: FormData) {
 
     const passwordHash = await hasherMotDePasse(password);
     await prisma.user.create({
-      data: { name, email, passwordHash, consentAt: new Date() },
+      data: {
+        name,
+        email,
+        passwordHash,
+        consentAt: new Date(),
+        entrepriseNom,
+        telephone: telephone || null,
+      },
     });
     invaliderCacheAccesAnticipe();
   } catch (error) {
@@ -54,7 +68,7 @@ export async function creerCompte(formData: FormData) {
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: ROUTE_APRES_AUTH });
+    await signIn("credentials", { email, password, redirectTo: "/onboarding" });
   } catch (error) {
     if (error instanceof AuthError) {
       redirect("/connexion");
@@ -64,7 +78,7 @@ export async function creerCompte(formData: FormData) {
 }
 
 export async function creerCompteAvecGoogle() {
-  await signIn("google", { redirectTo: ROUTE_APRES_AUTH });
+  await signIn("google", { redirectTo: "/onboarding" });
 }
 
 const schemaWaitlist = z.object({

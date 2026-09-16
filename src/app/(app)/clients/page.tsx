@@ -1,23 +1,60 @@
 import Link from "next/link";
-import { PageHeader, PageCard, SearchField } from "@/components/tarineo/PageHeader";
-import { DataTable, TableRow, TableCell, RowActions } from "@/components/tarineo/DataTable";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { EmptyState } from "@/components/tarineo/EmptyState";
-import { BrandMark } from "@/components/tarineo/BrandMark";
-import { BtnGhost, BtnPrimary } from "@/components/tarineo/Actions";
-import { IconFilter, IconPlus } from "@/components/tarineo/NavIcons";
-import { DEMO_CLIENTS, formaterEurosDemo } from "@/lib/uiDemo";
+import { BtnPrimary } from "@/components/tarineo/Actions";
+import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
 
-export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ vide?: string }> }) {
-  const { vide } = await searchParams;
-  if (vide === "1") {
+/**
+ * Clients détectés automatiquement depuis les devis/factures clients.
+ * Pas encore de modèle Client CRM : on agrège les noms documentés (jamais inventés).
+ */
+export default async function ClientsPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/connexion");
+
+  const [quotes, invoices] = await Promise.all([
+    prisma.clientQuote.findMany({
+      where: { userId: session.user.id },
+      select: { clientNom: true, id: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.clientInvoice.findMany({
+      where: { userId: session.user.id },
+      select: { clientNom: true, id: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  const parNom = new Map<string, { nom: string; devis: number; factures: number }>();
+  for (const q of quotes) {
+    const cle = q.clientNom.trim().toLowerCase();
+    if (!cle) continue;
+    const existant = parNom.get(cle);
+    if (existant) existant.devis += 1;
+    else parNom.set(cle, { nom: q.clientNom.trim(), devis: 1, factures: 0 });
+  }
+  for (const inv of invoices) {
+    const cle = inv.clientNom.trim().toLowerCase();
+    if (!cle) continue;
+    const existant = parNom.get(cle);
+    if (existant) existant.factures += 1;
+    else parNom.set(cle, { nom: inv.clientNom.trim(), devis: 0, factures: 1 });
+  }
+
+  const clients = [...parNom.values()].sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+
+  if (clients.length === 0) {
     return (
       <EmptyState
         title="Clients"
-        subtitle="Gérez vos clients et suivez votre activité."
+        subtitle="Tarinéo crée vos fiches à partir de vos devis et factures."
         heading="Aucun client pour le moment"
-        description="Ajoutez votre premier client pour commencer à créer des devis et à suivre vos projets."
-        primary={{ href: "/clients", label: "+ Ajouter votre premier client" }}
-        secondary={{ href: "/documents", label: "Scanner un devis pour créer un client" }}
+        description="Créez un devis client : le nom apparaît ici automatiquement. Aucun client n'est inventé."
+        primary={{ href: "/devis-clients/nouveau", label: "+ Créer un devis client" }}
+        secondary={{ href: "/devis-clients", label: "Voir mes devis" }}
         variant="user"
       />
     );
@@ -27,36 +64,20 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
     <div>
       <PageHeader
         title="Clients"
-        subtitle="Gérez vos clients et suivez votre activité."
-        actions={
-          <>
-            <BtnGhost>
-              <IconFilter /> Filtrer
-            </BtnGhost>
-            <BtnPrimary>
-              <IconPlus /> Nouveau client
-            </BtnPrimary>
-          </>
-        }
+        subtitle="Détectés automatiquement depuis vos devis et factures — jamais inventés."
+        actions={<BtnPrimary href="/devis-clients/nouveau">Nouveau devis</BtnPrimary>}
       />
       <PageCard>
-        <SearchField placeholder="Rechercher un client..." className="mb-4" />
-        <DataTable columns={["Nom", "Contact", "Ville", "Devis", "CA généré", "Dernière activité", "Actions"]}>
-          {DEMO_CLIENTS.map((c) => (
-            <TableRow key={c.id}>
-              <TableCell>
-                <Link href={`/clients/${c.id}`} className="inline-flex items-center gap-2.5 font-medium hover:text-primary">
-                  <BrandMark nom={c.nom} logo={c.logo} size={28} />
-                  {c.nom}
-                </Link>
-              </TableCell>
-              <TableCell>{c.contact}</TableCell>
-              <TableCell>{c.ville}</TableCell>
+        <DataTable columns={["Client", "Devis", "Factures", ""]}>
+          {clients.map((c) => (
+            <TableRow key={c.nom}>
+              <TableCell className="font-medium">{c.nom}</TableCell>
               <TableCell>{c.devis}</TableCell>
-              <TableCell>{formaterEurosDemo(c.ca)}</TableCell>
-              <TableCell>{c.activite}</TableCell>
+              <TableCell>{c.factures}</TableCell>
               <TableCell>
-                <RowActions href={`/clients/${c.id}`} />
+                <Link href="/devis-clients" className="text-sm text-primary hover:underline">
+                  Voir les devis
+                </Link>
               </TableCell>
             </TableRow>
           ))}

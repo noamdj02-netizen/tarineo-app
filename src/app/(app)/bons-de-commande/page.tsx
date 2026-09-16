@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function BonsCommandePage() {
+/** Ancienne démo → historique fournisseur filtré. */
+export default function BonsDeCommandePage() {
   redirect("/documents?type=BON_COMMANDE");
 }

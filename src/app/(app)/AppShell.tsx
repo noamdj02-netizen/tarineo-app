@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { BellIcon, ChevronDownIcon, LogOutIcon, MenuIcon, SearchIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { BellIcon, LogOutIcon, MenuIcon, SearchIcon } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { IconDocument, IconInvoice, IconSettings, IconWidget } from "@/components/tarineo/NavIcons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,11 +18,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { DEMO_NOTIFICATIONS } from "@/lib/uiDemo";
 import { deconnexionAction } from "./deconnexionAction";
 
-function MenuNotifications() {
-  const nonLues = DEMO_NOTIFICATIONS.filter((n) => n.nonLu).length;
+export type NotifUi = {
+  id: string;
+  titre: string;
+  message: string;
+  date: string;
+  href: string;
+  nonLu: boolean;
+};
+
+function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
+  const nonLues = notifications.filter((n) => n.nonLu).length;
 
   return (
     <DropdownMenu>
@@ -33,33 +41,38 @@ function MenuNotifications() {
         <BellIcon className="size-5" />
         {nonLues > 0 && (
           <span className="absolute right-2.5 top-2.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-white xl:right-3 xl:top-3">
-            {nonLues}
+            {nonLues > 9 ? "9+" : nonLues}
           </span>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[min(100vw-2rem,360px)] p-2">
-        {/* Le libellé doit vivre DANS le groupe qu'il nomme : Base UI lève sinon
-            « MenuGroupContext is missing » à chaque ouverture du menu. Rendu collant
-            pour rester visible quand la liste défile. */}
-        <DropdownMenuGroup className="max-h-[min(60vh,320px)] overflow-y-auto">
-          <DropdownMenuLabel className="sticky top-0 z-10 bg-popover px-2 py-1.5 text-sm font-semibold text-foreground">
-            Notifications <span className="font-normal text-muted-foreground">(exemples)</span>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {DEMO_NOTIFICATIONS.map((notif) => (
-            <DropdownMenuItem key={notif.id} className="flex-col items-start gap-1 whitespace-normal rounded-xl px-3 py-3">
-              <div className="flex w-full items-start justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">{notif.titre}</p>
-                {notif.nonLu && <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />}
-              </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">{notif.message}</p>
-              <p className="text-[11px] text-muted-foreground">{notif.date}</p>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
+        <DropdownMenuLabel className="px-2 py-1.5 text-sm font-semibold text-foreground">Notifications</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem nativeButton={false} render={<Link href="/documents" className="w-full justify-center text-center" />}>
-          Importer un document
+        {notifications.length === 0 ? (
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+            Aucune alerte pour l&apos;instant. Importez un devis pour détecter les hausses.
+          </p>
+        ) : (
+          <DropdownMenuGroup className="max-h-[min(60vh,320px)] overflow-y-auto">
+            {notifications.map((notif) => (
+              <DropdownMenuItem
+                key={notif.id}
+                nativeButton={false}
+                render={<Link href={notif.href} className="flex-col items-start gap-1 whitespace-normal rounded-xl px-3 py-3" />}
+              >
+                <div className="flex w-full items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-foreground">{notif.titre}</p>
+                  {notif.nonLu && <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />}
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">{notif.message}</p>
+                <p className="text-[11px] text-muted-foreground">{notif.date}</p>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem nativeButton={false} render={<Link href="/documents?hausse=1" className="w-full justify-center text-center" />}>
+          Voir les hausses
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -69,25 +82,22 @@ function MenuNotifications() {
 const LIENS_NAV = [
   { id: "dashboard", href: "/accueil", libelle: "Dashboard" },
   { id: "documents", href: "/documents", libelle: "Mes documents" },
-  { id: "fournisseurs", href: "/fournisseurs", libelle: "Bibliothèque" },
-  { id: "veille", href: "/veille", libelle: "Veille" },
-  { id: "facturation", href: "/devis-clients", libelle: "Facturation clients" },
-  { id: "analyses", href: "/analyses", libelle: "Analyses" },
+  { id: "fournisseurs", href: "/fournisseurs", libelle: "Fournisseurs" },
+  { id: "facturation", href: "/facturation-clients", libelle: "Facturation clients" },
   { id: "parametres", href: "/parametres", libelle: "Paramètres" },
 ];
 
 const LIENS_TOP = [
   { href: "/accueil", libelle: "Dashboard" },
-  { href: "/documents", libelle: "Mes documents" },
+  { href: "/documents", libelle: "Documents" },
   { href: "/fournisseurs", libelle: "Fournisseurs" },
-  { href: "/devis-clients", libelle: "Facturation" },
-  { href: "/analyses", libelle: "Analyses" },
+  { href: "/devis-clients", libelle: "Devis clients" },
 ];
 
 const SOUS_LIENS_DOCUMENTS = [
   { href: "/documents", libelle: "Tous" },
   { href: "/documents?type=DEVIS", libelle: "Devis fournisseurs" },
-  { href: "/documents?type=FACTURE", libelle: "Factures" },
+  { href: "/documents?type=FACTURE", libelle: "Factures fournisseurs" },
   { href: "/documents?type=BON_COMMANDE", libelle: "Bons de commande" },
   { href: "/documents?type=BON_ENLEVEMENT", libelle: "Bons d'enlèvement" },
 ];
@@ -95,49 +105,19 @@ const SOUS_LIENS_DOCUMENTS = [
 const SOUS_LIENS_FACTURATION = [
   { href: "/devis-clients", libelle: "Devis clients" },
   { href: "/factures-clients", libelle: "Factures clients" },
+  { href: "/clients", libelle: "Clients" },
+  { href: "/facturation-clients", libelle: "Facturation électronique" },
 ];
 
 function iconeNav(id: string) {
   const cls = "size-6 shrink-0";
-  if (id === "dashboard" || id === "analyses" || id === "fournisseurs" || id === "veille") {
-    return <IconWidget className={cls} />;
-  }
+  if (id === "dashboard" || id === "fournisseurs") return <IconWidget className={cls} />;
   if (id === "documents") return <IconDocument className={cls} />;
   if (id === "facturation") return <IconInvoice className={cls} />;
   return <IconSettings className={cls} />;
 }
 
-function useTiroirSidebar(cle: string, defautOuvert: boolean) {
-  const [ouvert, setOuvert] = useState(defautOuvert);
-
-  useEffect(() => {
-    try {
-      const stocke = localStorage.getItem(cle);
-      // Lecture d'un système externe (localStorage), impossible au premier rendu
-      // puisqu'il n'existe pas côté serveur — exception assumée à la règle, et non un
-      // état dérivé d'un autre état React. Même motif que dans FormulaireDevis.tsx.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (stocke === "0") setOuvert(false);
-      if (stocke === "1") setOuvert(true);
-    } catch {
-      // ignore
-    }
-  }, [cle]);
-
-  function basculer() {
-    const suivant = !ouvert;
-    setOuvert(suivant);
-    try {
-      localStorage.setItem(cle, suivant ? "1" : "0");
-    } catch {
-      // ignore
-    }
-  }
-
-  return { ouvert, basculer };
-}
-
-function SousMenuLiens({
+function SousMenu({
   liens,
   onNavigate,
 }: {
@@ -145,23 +125,12 @@ function SousMenuLiens({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  function estActif(href: string) {
-    const [path, query] = href.split("?");
-    const surSection = pathname === path || pathname.startsWith(`${path}/`);
-    if (!surSection) return false;
-    if (path === "/documents") {
-      if (!query) return !searchParams.get("type");
-      return searchParams.get("type") === new URLSearchParams(query).get("type");
-    }
-    return pathname === path || pathname.startsWith(`${path}/`);
-  }
 
   return (
     <div>
       {liens.map((lien) => {
-        const actif = estActif(lien.href);
+        const base = lien.href.split("?")[0];
+        const actif = pathname === base || (base !== "/documents" && base !== "/accueil" && pathname.startsWith(`${base}/`));
         return (
           <Link
             key={lien.href}
@@ -181,87 +150,44 @@ function SousMenuLiens({
   );
 }
 
-function LienNavAvecTiroir({
+function LienNavAvecSousMenu({
   id,
   href,
   libelle,
   sousLiens,
-  actif,
   onNavigate,
 }: {
   id: string;
   href: string;
   libelle: string;
   sousLiens: { href: string; libelle: string }[];
-  actif: boolean;
   onNavigate?: () => void;
 }) {
-  const { ouvert, basculer } = useTiroirSidebar(`tarineo-sidebar-${id}`, actif);
+  const pathname = usePathname();
+  const actif =
+    pathname === href ||
+    pathname.startsWith(`${href}/`) ||
+    sousLiens.some((l) => {
+      const base = l.href.split("?")[0];
+      return pathname === base || pathname.startsWith(`${base}/`);
+    });
 
   return (
     <div>
-      <div
+      <Link
+        href={href}
+        onClick={onNavigate}
+        aria-current={actif ? "page" : undefined}
         className={cn(
-          "flex items-center rounded-[10px] transition-colors",
+          "flex items-center gap-3 rounded-[10px] px-6 py-3.5 text-base font-normal transition-colors",
           actif ? "bg-[#FFF0E8] text-primary" : "text-muted-foreground hover:text-foreground"
         )}
       >
-        <Link
-          href={href}
-          onClick={onNavigate}
-          aria-current={actif ? "page" : undefined}
-          className="flex min-w-0 flex-1 items-center gap-3 px-6 py-3.5 text-base font-normal"
-        >
-          {iconeNav(id)}
-          {libelle}
-        </Link>
-        <button
-          type="button"
-          onClick={basculer}
-          className="mr-3 flex size-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black/5"
-          aria-expanded={ouvert}
-          aria-label={ouvert ? `Replier ${libelle}` : `Déplier ${libelle}`}
-        >
-          <ChevronDownIcon className={cn("size-4 transition-transform duration-200", ouvert && "rotate-180")} />
-        </button>
-      </div>
-      {ouvert && <SousMenuLiens liens={sousLiens} onNavigate={onNavigate} />}
+        {iconeNav(id)}
+        {libelle}
+      </Link>
+      <SousMenu liens={sousLiens} onNavigate={onNavigate} />
     </div>
-  );
-}
-
-function LienNavDocuments({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
-  const actif = pathname === "/documents" || pathname.startsWith("/documents/");
-
-  return (
-    <LienNavAvecTiroir
-      id="documents"
-      href="/documents"
-      libelle="Mes documents"
-      sousLiens={SOUS_LIENS_DOCUMENTS}
-      actif={actif}
-      onNavigate={onNavigate}
-    />
-  );
-}
-
-function LienNavFacturation({ onNavigate }: { onNavigate?: () => void }) {
-  const pathname = usePathname();
-  const actif =
-    pathname.startsWith("/devis-clients") ||
-    pathname.startsWith("/factures-clients") ||
-    pathname.startsWith("/facturation-clients");
-
-  return (
-    <LienNavAvecTiroir
-      id="facturation"
-      href="/devis-clients"
-      libelle="Facturation clients"
-      sousLiens={SOUS_LIENS_FACTURATION}
-      actif={actif}
-      onNavigate={onNavigate}
-    />
   );
 }
 
@@ -323,10 +249,28 @@ function ContenuSidebar({
         <nav className="w-full rounded-[24px] bg-secondary">
           {LIENS_NAV.map((lien) => {
             if (lien.id === "documents") {
-              return <LienNavDocuments key={lien.id} onNavigate={onNavigate} />;
+              return (
+                <LienNavAvecSousMenu
+                  key={lien.id}
+                  id={lien.id}
+                  href={lien.href}
+                  libelle={lien.libelle}
+                  sousLiens={SOUS_LIENS_DOCUMENTS}
+                  onNavigate={onNavigate}
+                />
+              );
             }
             if (lien.id === "facturation") {
-              return <LienNavFacturation key={lien.id} onNavigate={onNavigate} />;
+              return (
+                <LienNavAvecSousMenu
+                  key={lien.id}
+                  id={lien.id}
+                  href="/devis-clients"
+                  libelle={lien.libelle}
+                  sousLiens={SOUS_LIENS_FACTURATION}
+                  onNavigate={onNavigate}
+                />
+              );
             }
             const actif =
               lien.href === "/accueil"
@@ -379,7 +323,7 @@ function MenuCompte({ prenom, email }: { prenom: string; email: string }) {
         <DropdownMenuGroup>
           <DropdownMenuItem render={<Link href="/parametres" />}>Paramètres</DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/compte" />}>Mon compte</DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/clients" />}>Clients</DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/entreprise" />}>Mon entreprise</DropdownMenuItem>
           <DropdownMenuItem render={<a href="mailto:contact@tarineo.com" />}>Support</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -396,7 +340,15 @@ function MenuCompte({ prenom, email }: { prenom: string; email: string }) {
   );
 }
 
-function TopBar({ prenom, email }: { prenom: string; email: string }) {
+function TopBar({
+  prenom,
+  email,
+  notifications,
+}: {
+  prenom: string;
+  email: string;
+  notifications: NotifUi[];
+}) {
   const pathname = usePathname();
 
   function navTopActif(href: string) {
@@ -436,9 +388,9 @@ function TopBar({ prenom, email }: { prenom: string; email: string }) {
               className="hidden h-11 items-center gap-2 rounded-full bg-secondary px-4 text-sm text-muted-foreground xl:inline-flex xl:h-14 xl:w-[230px] xl:justify-start"
             >
               <SearchIcon className="size-4" />
-              <span className="hidden xl:inline">Rechercher...</span>
+              <span className="hidden xl:inline">Rechercher un document…</span>
             </Link>
-            <MenuNotifications />
+            <MenuNotifications notifications={notifications} />
             <MenuCompte prenom={prenom} email={email} />
           </div>
         </div>
@@ -451,11 +403,13 @@ export function AppShell({
   email,
   prenom,
   dateLabel,
+  notifications = [],
   children,
 }: {
   email: string;
   prenom: string;
   dateLabel: string;
+  notifications?: NotifUi[];
   children: React.ReactNode;
 }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -463,7 +417,7 @@ export function AppShell({
   return (
     <>
       <Suspense fallback={<div className="hidden h-[108px] lg:block" />}>
-        <TopBar prenom={prenom} email={email} />
+        <TopBar prenom={prenom} email={email} notifications={notifications} />
       </Suspense>
 
       <div className="flex w-full min-w-0 flex-1 gap-4 px-4 pb-8 pt-4 sm:px-6 lg:gap-8 lg:px-8 lg:pt-6">

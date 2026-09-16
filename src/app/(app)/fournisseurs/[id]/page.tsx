@@ -1,74 +1,102 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { PageCard, PageHeader } from "@/components/tarineo/PageHeader";
-import { PageTabs } from "@/components/tarineo/PageTabs";
-import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
-import { BrandMark } from "@/components/tarineo/BrandMark";
-import { BtnGhost, BtnPrimary } from "@/components/tarineo/Actions";
-import { LABELS_TYPE } from "@/lib/documentLabels";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
-import { ficheFournisseur } from "@/lib/fichesFournisseurs";
-import { trouverFournisseurParSlug } from "@/lib/fournisseursConnus";
-import { listerFournisseursUtilisateur, trouverFournisseurImporte } from "@/lib/fournisseursPage";
-import { ObjectifDistributeur } from "../../depenses/ObjectifDistributeur";
+import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
+import { logoFournisseur } from "@/lib/logosFournisseurs";
+import { LABELS_STATUT, LABELS_TYPE } from "@/lib/documentLabels";
+import { enseigneParId, enseigneParNorm } from "@/lib/bibliothequeFournisseurs";
+import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { BtnGhost, BtnPrimary } from "@/components/tarineo/Actions";
+import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 
-const formaterEuros = (v: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(v);
+const formaterEuros = (valeur: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
 
-export default async function FournisseurDetailPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ onglet?: string }>;
-}) {
-  const { id } = await params;
-  const slug = decodeURIComponent(id);
-  const { onglet = "vue" } = await searchParams;
+const formaterDate = (date: Date | null) =>
+  date
+    ? date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+    : "—";
 
+export default async function FournisseurDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: idBrut } = await params;
+  const id = decodeURIComponent(idBrut);
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
   const userId = session.user.id;
 
-  const connu = trouverFournisseurParSlug(slug);
-  if (!connu) notFound();
+  const enseigneLib = enseigneParId(id);
+  const tousDocs = await prisma.document.findMany({
+    where: { userId, distributorNorm: { not: null } },
+    orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
+    take: 200,
+    select: {
+      id: true,
+      type: true,
+      status: true,
+      distributor: true,
+      distributorNorm: true,
+      documentDate: true,
+      totalHt: true,
+      createdAt: true,
+    },
+  });
 
-  const fiche = ficheFournisseur(connu);
+  const idCle = id
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^A-Z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const hintCle = enseigneLib?.normHint ?? "";
 
-  const [importes, depenses] = await Promise.all([
-    listerFournisseursUtilisateur(userId),
-    calculerDepensesParDistributeur(userId),
-  ]);
-  const donnees = trouverFournisseurImporte(importes, slug);
-  const importe = donnees !== null;
-  const depensesFournisseur = importe
-    ? depenses.find((d) => d.distributorNorm === donnees!.distributorNorm)
-    : null;
-  const distributorNorm = donnees?.distributorNorm ?? slug;
-  const nom = connu.nom;
-  const logo = connu.logo ?? null;
+  const documents = tousDocs
+    .filter((d) => {
+      const n = (d.distributorNorm ?? "").toUpperCase();
+      return n === id.toUpperCase() || n === idCle || (hintCle && (n === hintCle || n.includes(hintCle) || hintCle.includes(n)));
+    })
+    .slice(0, 40);
 
-  const documents = importe
-    ? await prisma.document.findMany({
-        where: { userId, distributorNorm: donnees!.distributorNorm, status: "VALIDATED" },
-        orderBy: [{ documentDate: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
-        take: 20,
-        select: { id: true, type: true, documentDate: true, totalHt: true },
-      })
-    : [];
+  const depenses = await calculerDepensesParDistributeur(userId);
+  const depense =
+    depenses.find((d) => d.distributorNorm === id) ??
+    (enseigneLib
+      ? depenses.find((d) => d.distributorNorm.toLowerCase().includes(enseigneLib.normHint))
+      : undefined);
 
-  const referencesPerso = importe
-    ? await prisma.priceHistory.findMany({
-        where: { userId, distributorNorm: donnees!.distributorNorm },
-        orderBy: { documentDate: "desc" },
-        take: 8,
-        select: { referenceNorm: true, unitPriceHt: true, documentDate: true },
-      })
-    : [];
+  const nom =
+    documents[0]?.distributor ??
+    depense?.distributor ??
+    enseigneLib?.nom ??
+    id;
 
-  const urlBase = `/fournisseurs/${encodeURIComponent(slug)}`;
+  const norm = documents[0]?.distributorNorm ?? depense?.distributorNorm ?? enseigneLib?.normHint ?? id;
+  const meta = enseigneParNorm(norm) ?? enseigneLib;
+
+  if (!documents.length && !depense && !enseigneLib) {
+    notFound();
+  }
+
+  const alertes = await prisma.alert.findMany({
+    where: { userId, type: "PRICE_INCREASE" },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+  const hausses = parserPayloadsAlertesHausse(alertes).filter((p) => {
+    const d = p.distributor.toLowerCase();
+    return d.includes(nom.toLowerCase().slice(0, 5)) || (enseigneLib && d.includes(enseigneLib.normHint));
+  });
+
+  const logo = logoFournisseur(norm || nom);
+  const totalHt = documents.reduce((s, d) => s + Number(d.totalHt ?? 0), 0);
+  const hausseMoy =
+    hausses.length > 0
+      ? hausses.reduce((s, p) => s + (p.ecartPourcent ?? 0), 0) / hausses.length
+      : null;
 
   return (
     <div>
@@ -76,178 +104,113 @@ export default async function FournisseurDetailPage({
         backHref="/fournisseurs"
         title={
           <span className="flex items-center gap-3">
-            <BrandMark nom={nom} logo={logo} size={48} rounded="xl" />
-            <span>{nom}</span>
+            {logo ? (
+              <Image src={logo} alt="" width={48} height={48} className="rounded-xl object-cover" />
+            ) : (
+              <span className="flex size-12 items-center justify-center rounded-xl bg-secondary text-lg font-bold text-primary">
+                {nom.charAt(0)}
+              </span>
+            )}
+            <span className="flex flex-col gap-1">
+              <span>{nom}</span>
+              {meta && <span className="text-sm font-normal text-muted-foreground">{meta.metiers}</span>}
+            </span>
           </span>
         }
-        subtitle={[connu.specialite, connu.groupe ? `Groupe ${connu.groupe}` : null].filter(Boolean).join(" · ")}
         actions={
-          importe ? (
-            <>
-              <BtnGhost href={`/documents?distributeur=${encodeURIComponent(distributorNorm)}`}>Tous les documents</BtnGhost>
-              <BtnPrimary href={`/documents?distributeur=${encodeURIComponent(distributorNorm)}`}>Importer</BtnPrimary>
-            </>
-          ) : (
-            <BtnPrimary href="/documents">Importer un premier document</BtnPrimary>
-          )
+          <>
+            <BtnGhost href={`/documents?distributeur=${encodeURIComponent(norm)}`}>Voir l&apos;historique</BtnGhost>
+            <BtnPrimary href="/documents">Importer un devis</BtnPrimary>
+          </>
         }
       />
 
-      <div className="mb-5">
-        <PageTabs
-          actif={onglet}
-          items={[
-            { id: "vue", label: "Vue d'ensemble", href: urlBase },
-            ...(importe
-              ? [
-                  {
-                    id: "documents",
-                    label: `Documents (${documents.length})`,
-                    href: `${urlBase}?onglet=documents`,
-                  },
-                ]
-              : []),
-          ]}
-        />
+      <div className="mb-5 grid gap-4 sm:grid-cols-3">
+        <PageCard>
+          <p className="text-xs text-muted-foreground">Documents importés</p>
+          <p className="mt-1 text-2xl font-semibold">{documents.length}</p>
+        </PageCard>
+        <PageCard>
+          <p className="text-xs text-muted-foreground">Volume HT (docs listés)</p>
+          <p className="mt-1 text-2xl font-semibold">{formaterEuros(totalHt)}</p>
+        </PageCard>
+        <PageCard>
+          <p className="text-xs text-muted-foreground">Dépenses période (achats)</p>
+          <p className="mt-1 text-2xl font-semibold">{formaterEuros(depense?.depenses ?? 0)}</p>
+          {hausseMoy !== null && (
+            <p className="mt-1 text-sm text-primary">
+              Hausse moy. détectée : {hausseMoy > 0 ? "+" : ""}
+              {hausseMoy.toFixed(1)} %
+            </p>
+          )}
+        </PageCard>
       </div>
 
-      {onglet === "documents" && importe ? (
-        <PageCard>
-          <DataTable columns={["Type", "Date", "Montant HT", ""]}>
-            {documents.map((d) => (
-              <TableRow key={d.id}>
-                <TableCell>{LABELS_TYPE[d.type] ?? d.type}</TableCell>
+      {meta && (
+        <PageCard className="mb-5">
+          <p className="text-sm leading-relaxed text-muted-foreground">{meta.description}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Les prix affichés viennent uniquement de <strong className="font-medium text-foreground">votre</strong>{" "}
+            historique — jamais d&apos;un référentiel public.
+          </p>
+        </PageCard>
+      )}
+
+      <PageCard className="mb-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-base font-semibold">Documents reçus</h2>
+          <Link href="/documents" className="text-sm text-primary hover:underline">
+            Importer →
+          </Link>
+        </div>
+        {documents.length === 0 ? (
+          <Empty className="py-8">
+            <EmptyHeader>
+              <EmptyTitle>Aucun document pour {nom}</EmptyTitle>
+              <EmptyDescription>Importez un devis ou une facture de cette enseigne pour démarrer le suivi.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <DataTable columns={["Date", "Type", "Statut", "Montant HT", ""]}>
+            {documents.map((doc) => (
+              <TableRow key={doc.id}>
+                <TableCell>{formaterDate(doc.documentDate ?? doc.createdAt)}</TableCell>
+                <TableCell>{LABELS_TYPE[doc.type] ?? doc.type}</TableCell>
+                <TableCell>{LABELS_STATUT[doc.status] ?? doc.status}</TableCell>
+                <TableCell>{doc.totalHt != null ? formaterEuros(Number(doc.totalHt)) : "—"}</TableCell>
                 <TableCell>
-                  {d.documentDate
-                    ? d.documentDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
-                    : "—"}
-                </TableCell>
-                <TableCell>{d.totalHt !== null ? formaterEuros(Number(d.totalHt)) : "—"}</TableCell>
-                <TableCell>
-                  <Link href={`/documents/${d.id}`} className="text-sm text-primary hover:underline">Ouvrir</Link>
+                  <Link href={`/documents/${doc.id}`} className="text-sm text-primary hover:underline">
+                    Ouvrir
+                  </Link>
                 </TableCell>
               </TableRow>
             ))}
           </DataTable>
-        </PageCard>
-      ) : (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="flex flex-col gap-4 lg:col-span-2">
-            {importe && donnees && (
-              <PageCard>
-                <h2 className="mb-4 text-base font-semibold">Vos achats chez {nom}</h2>
-                <dl className="grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-[16px] bg-[#F8F8F8] p-4">
-                    <dt className="text-xs text-muted-foreground">Dépenses période</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-foreground">{formaterEuros(donnees.depenses)}</dd>
-                  </div>
-                  <div className="rounded-[16px] bg-[#F8F8F8] p-4">
-                    <dt className="text-xs text-muted-foreground">Documents validés</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-foreground">{documents.length}</dd>
-                  </div>
-                  <div className="rounded-[16px] bg-[#F8F8F8] p-4">
-                    <dt className="text-xs text-muted-foreground">Alertes hausse</dt>
-                    <dd className="mt-1 text-2xl font-semibold text-primary">{donnees.hausses}</dd>
-                  </div>
-                </dl>
-                {referencesPerso.length > 0 && (
-                  <div className="mt-5">
-                    <h3 className="text-sm font-semibold text-foreground">Derniers prix que vous avez payés</h3>
-                    <ul className="mt-2 space-y-2">
-                      {referencesPerso.map((r, i) => (
-                        <li
-                          key={`${r.referenceNorm}-${i}`}
-                          className="flex flex-wrap items-baseline justify-between gap-2 rounded-[12px] border border-[#F0F1F1] px-3 py-2 text-sm"
-                        >
-                          <span className="font-medium text-foreground">{r.referenceNorm}</span>
-                          <span className="text-muted-foreground">
-                            {formaterEuros(Number(r.unitPriceHt))} HT ·{" "}
-                            {r.documentDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </PageCard>
-            )}
+        )}
+      </PageCard>
 
-            <PageCard>
-              <h2 className="mb-3 text-base font-semibold">À propos de {nom}</h2>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                {fiche.avantages.map((a) => (
-                  <li key={a} className="flex gap-2">
-                    <span className="text-primary">✓</span>
-                    <span>{a}</span>
-                  </li>
-                ))}
-              </ul>
-              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                <div className="rounded-[12px] bg-[#F8F8F8] p-3">
-                  <dt className="text-xs text-muted-foreground">Livraison</dt>
-                  <dd className="mt-1 text-foreground">{fiche.livraison}</dd>
-                </div>
-                <div className="rounded-[12px] bg-[#F8F8F8] p-3">
-                  <dt className="text-xs text-muted-foreground">BFA / remise annuelle</dt>
-                  <dd className="mt-1 text-foreground">{fiche.bfa}</dd>
-                </div>
-              </dl>
-              <a
-                href={fiche.siteWeb}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
-              >
-                Site officiel {nom} →
-              </a>
-            </PageCard>
-
-            <PageCard className="border border-[#E6E9EB] bg-[#FAFBFC]">
-              <h2 className="text-base font-semibold text-foreground">Promos en cours</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Tarineo ne scrape pas les sites fournisseurs. Les promos de {nom} apparaîtront ici quand vous
-                transférerez vos newsletters enseigne (agent fournisseur — bientôt), ou dès qu&apos;une promo est
-                détectée dans un devis que vous importez.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link href="/veille" className="rounded-full bg-[#FFF0E8] px-4 py-2 text-sm font-medium text-primary">
-                  Veille &amp; dérives silencieuses
-                </Link>
-                <Link
-                  href="/documents"
-                  className="rounded-full border border-[#E6E9EB] bg-white px-4 py-2 text-sm text-foreground hover:bg-[#F8F8F8]"
-                >
-                  Importer un devis {nom}
-                </Link>
-              </div>
-            </PageCard>
-          </div>
-
-          <PageCard>
-            <h2 className="mb-4 text-base font-semibold">Objectif BFA</h2>
-            {importe && depensesFournisseur && depensesFournisseur.objectif !== null ? (
-              <ObjectifDistributeur
-                distributor={nom}
-                distributorNorm={depensesFournisseur.distributorNorm}
-                depenses={depensesFournisseur.depenses}
-                objectif={depensesFournisseur.objectif}
-                pourcentageAtteinte={depensesFournisseur.pourcentageAtteinte}
-                encoursRestant={depensesFournisseur.encoursRestant}
-                periodStartMonth={depensesFournisseur.periodStartMonth}
-                periodStartDay={depensesFournisseur.periodStartDay}
-                periodeLabel={`Période à partir du ${depensesFournisseur.periodStartDay}/${depensesFournisseur.periodStartMonth}`}
-              />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {importe
-                  ? `Aucun objectif annuel défini pour ${nom}. `
-                  : `Importez des factures chez ${nom} pour suivre un objectif BFA. `}
-                <Link href="/accueil#objectifs" className="text-primary hover:underline">Configurer sur le dashboard</Link>.
-              </p>
-            )}
-          </PageCard>
-        </div>
-      )}
+      <PageCard>
+        <h2 className="mb-4 text-base font-semibold">Dernières hausses détectées</h2>
+        {hausses.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Aucune hausse &gt; 3 % pour cette enseigne dans votre historique. Continuez à importer pour affiner la
+            comparaison.
+          </p>
+        ) : (
+          <DataTable columns={["Référence", "Désignation", "Écart", "Prix actuel"]}>
+            {hausses.slice(0, 10).map((h) => (
+              <TableRow key={`${h.documentId}-${h.reference}`}>
+                <TableCell className="font-medium">{h.reference}</TableCell>
+                <TableCell className="max-w-[240px] truncate">{h.designation}</TableCell>
+                <TableCell className="text-primary">
+                  {h.ecartPourcent != null ? `${h.ecartPourcent > 0 ? "+" : ""}${h.ecartPourcent.toFixed(0)} %` : "—"}
+                </TableCell>
+                <TableCell>{formaterEuros(h.prixActuel)}</TableCell>
+              </TableRow>
+            ))}
+          </DataTable>
+        )}
+      </PageCard>
     </div>
   );
 }

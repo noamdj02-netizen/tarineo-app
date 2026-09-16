@@ -15,6 +15,16 @@ export function PopupOnboardingDevis() {
 
   if (!visible) return null;
 
+  function allerVersImport() {
+    setVisible(false);
+    const cible = document.getElementById("formulaire-upload");
+    if (cible) {
+      cible.scrollIntoView({ behavior: "smooth", block: "center" });
+      const input = cible.querySelector<HTMLElement>("input, button, [role='button']");
+      input?.focus?.();
+    }
+  }
+
   return (
     <div
       role="dialog"
@@ -29,12 +39,15 @@ export function PopupOnboardingDevis() {
         <p className="mt-2 text-sm leading-relaxed text-muted">
           Importez maintenant un devis reçu récemment pour voir Tarineo détecter une éventuelle hausse de prix.
         </p>
+        <button type="button" onClick={allerVersImport} className="mt-5 w-full app-btn-primary">
+          Importer un devis
+        </button>
         <button
           type="button"
           onClick={() => setVisible(false)}
-          className="mt-5 w-full app-btn-primary"
+          className="mt-2 w-full py-2 text-sm text-muted hover:text-foreground"
         >
-          Importer un devis
+          Plus tard
         </button>
       </div>
     </div>
