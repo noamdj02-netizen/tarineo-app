@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { LandingHeroIntro } from "./_components/LandingHeroIntro";
-import { LandingHeroPhoneComposition } from "./LandingHeroPhoneComposition";
+import { LandingHeroPhoneLazy } from "./LandingHeroPhoneLazy";
 
 interface Props {
   ctaHref: string;
@@ -25,7 +25,7 @@ export function LandingHero({ ctaHref, ctaLabel }: Props) {
 
         {/* 886 px Figma — téléphone calé en bas, transition directe vers la section suivante */}
         <div className="relative z-10 mx-auto -mb-2 mt-10 w-full max-w-[886px] sm:-mb-4 sm:mt-14">
-          <LandingHeroPhoneComposition />
+          <LandingHeroPhoneLazy />
         </div>
       </div>
 

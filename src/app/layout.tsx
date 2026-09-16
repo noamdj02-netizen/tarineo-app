@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { Barlow, Geist } from "next/font/google";
+import { Barlow } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const barlow = Barlow({
   variable: "--font-barlow",
@@ -26,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={cn("h-full", "antialiased", barlow.variable, "font-sans", geist.variable)}>
+    <html lang="fr" className={cn("h-full", "antialiased", barlow.variable, "font-sans")}>
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>
   );

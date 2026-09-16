@@ -40,21 +40,19 @@ function normaliserCle(valeur: string): string {
 }
 
 export async function listerFournisseursUtilisateur(userId: string): Promise<FournisseurListe[]> {
-  const [depenses, comptesDocs, alertes] = await Promise.all([
-    calculerDepensesParDistributeur(userId),
-    prisma.document.groupBy({
-      by: ["distributorNorm"],
-      where: { userId, distributorNorm: { not: null }, status: "VALIDATED" },
-      _count: { _all: true },
-      _max: { documentDate: true },
-    }),
-    prisma.alert.findMany({
-      where: { userId, type: "PRICE_INCREASE" },
-      select: { payload: true },
-      orderBy: { createdAt: "desc" },
-      take: 200,
-    }),
-  ]);
+  const depenses = await calculerDepensesParDistributeur(userId);
+  const comptesDocs = await prisma.document.groupBy({
+    by: ["distributorNorm"],
+    where: { userId, distributorNorm: { not: null }, status: "VALIDATED" },
+    _count: { _all: true },
+    _max: { documentDate: true },
+  });
+  const alertes = await prisma.alert.findMany({
+    where: { userId, type: "PRICE_INCREASE" },
+    select: { payload: true },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  });
 
   const comptesParNorm = new Map(
     comptesDocs.map((d) => [d.distributorNorm as string, { count: d._count._all, dernier: d._max.documentDate }])

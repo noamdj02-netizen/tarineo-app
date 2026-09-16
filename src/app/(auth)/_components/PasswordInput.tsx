@@ -1,3 +1,8 @@
+"use client";
+
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+
 export function PasswordInput({
   id,
   name,
@@ -15,6 +20,8 @@ export function PasswordInput({
   autoComplete?: string;
   variant?: "glass" | "solid" | "light";
 }) {
+  const [visible, setVisible] = useState(false);
+
   const inputClass =
     variant === "light"
       ? "h-[52px] w-full rounded-[14px] border border-[#E6E9EB] bg-white px-4 pr-12 text-[15px] text-[#172935] outline-none placeholder:text-[#9CA3AF] focus:border-[#EC5821] focus:ring-2 focus:ring-[#EC5821]/20"
@@ -25,6 +32,9 @@ export function PasswordInput({
   const labelClass =
     variant === "light" ? "text-[13px] font-semibold text-[#53616A]" : "text-[13px] font-semibold text-[#b9b4b0]";
 
+  const iconClass =
+    variant === "light" ? "text-[#9CA3AF] hover:text-[#53616A]" : "text-[#6b6560] hover:text-[#b9b4b0]";
+
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={id} className={labelClass}>
@@ -34,22 +44,22 @@ export function PasswordInput({
         <input
           id={id}
           name={name}
-          type="password"
+          type={visible ? "text" : "password"}
           required={required}
           minLength={minLength}
           autoComplete={autoComplete}
           placeholder="••••••••"
           className={inputClass}
         />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/auth/eye-off.svg"
-          alt=""
-          width={19}
-          height={19}
-          className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${variant === "light" ? "opacity-40" : "opacity-50"}`}
-          aria-hidden
-        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          className={`absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors ${iconClass}`}
+          aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          aria-pressed={visible}
+        >
+          {visible ? <Eye className="h-[19px] w-[19px]" strokeWidth={1.75} /> : <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.75} />}
+        </button>
       </div>
     </div>
   );

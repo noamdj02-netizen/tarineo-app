@@ -31,19 +31,19 @@ function periodeCourante(mois: number, jour: number, reference: Date): { debut: 
 export async function calculerDepensesParDistributeur(userId: string): Promise<DepenseDistributeur[]> {
   const maintenant = new Date();
 
-  const [objectifs, documents] = await Promise.all([
-    prisma.distributorGoal.findMany({ where: { userId } }),
-    prisma.document.findMany({
-      where: {
-        userId,
-        type: { in: [...TYPES_ACHAT_REEL] },
-        status: "VALIDATED",
-        distributorNorm: { not: null },
-      },
-      select: { distributor: true, distributorNorm: true, documentDate: true, totalHt: true },
-      orderBy: { documentDate: "desc" },
-    }),
-  ]);
+  // Séquentiel : avec le pooler Supabase, le parallélisme sature la connexion unique
+  // et finit en timeout P2024 (« Failed to fetch » côté navigateur).
+  const objectifs = await prisma.distributorGoal.findMany({ where: { userId } });
+  const documents = await prisma.document.findMany({
+    where: {
+      userId,
+      type: { in: [...TYPES_ACHAT_REEL] },
+      status: "VALIDATED",
+      distributorNorm: { not: null },
+    },
+    select: { distributor: true, distributorNorm: true, documentDate: true, totalHt: true },
+    orderBy: { documentDate: "desc" },
+  });
 
   const objectifParNorm = new Map(objectifs.map((o) => [o.distributorNorm, o]));
 

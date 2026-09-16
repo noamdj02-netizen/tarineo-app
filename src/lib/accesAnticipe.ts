@@ -1,3 +1,4 @@
+import { unstable_cache, revalidateTag } from "next/cache";
 import { prisma } from "./prisma";
 
 // Accès anticipé limité au lancement de Tarineo. Deux seuils :
@@ -7,6 +8,8 @@ import { prisma } from "./prisma";
 //    et remplacée par la liste d'attente (voir src/app/inscription/).
 export const ACCES_ANTICIPE_LIMITE_TOTAL = 100;
 export const ACCES_ANTICIPE_SEUIL_URGENCE = 70;
+
+const TAG_CACHE_ACCES = "acces-anticipe";
 
 export type EtatAccesAnticipe =
   | { phase: "disponible"; inscrits: number }
@@ -23,11 +26,20 @@ export function calculerEtatAccesAnticipe(inscrits: number): EtatAccesAnticipe {
   return { phase: "disponible", inscrits };
 }
 
-/** Compte les inscrits ; si la DB est injoignable, retourne phase « disponible » (0 inscrits). */
-export async function etatAccesAnticipeDepuisDb(): Promise<EtatAccesAnticipe> {
+async function compterInscrits(): Promise<EtatAccesAnticipe> {
   try {
     return calculerEtatAccesAnticipe(await prisma.user.count());
   } catch {
     return calculerEtatAccesAnticipe(0);
   }
+}
+
+/** Compte mis en cache 2 min — évite un aller-retour Supabase sur chaque visite de /. */
+export const etatAccesAnticipeDepuisDb = unstable_cache(compterInscrits, ["acces-anticipe-count"], {
+  revalidate: 120,
+  tags: [TAG_CACHE_ACCES],
+});
+
+export function invaliderCacheAccesAnticipe(): void {
+  revalidateTag(TAG_CACHE_ACCES, "max");
 }

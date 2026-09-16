@@ -39,15 +39,11 @@ export function AuthVisualPanel({ variant }: { variant: Variant }) {
       className="relative hidden h-full min-h-dvh w-[clamp(320px,42vw,760px)] shrink-0 overflow-hidden lg:block"
       aria-hidden
     >
-      {/* Fond HD natif — pas de scale, pas de Next/Image */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={panel.background}
-        alt=""
-        width={941}
-        height={1672}
-        className="absolute inset-0 h-full w-full object-cover object-center"
-        decoding="async"
+      {/* Fond en CSS : le panneau est masqué sous lg — le navigateur ne télécharge pas l'image sur mobile. */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url('${panel.background}')` }}
+        aria-hidden
       />
       <div className="absolute inset-0 bg-[rgba(9,8,7,0.58)]" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-[#f24f0a]/20 blur-[100px]" />

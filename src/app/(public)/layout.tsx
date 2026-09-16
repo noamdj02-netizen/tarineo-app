@@ -1,6 +1,6 @@
 import { Manrope, Inter } from "next/font/google";
-import { auth } from "@/auth";
 import { PublicHeader } from "./PublicHeader";
+import { PublicSessionProvider } from "./PublicSessionProvider";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -14,13 +14,13 @@ const inter = Inter({
   weight: ["400", "500", "600"],
 });
 
-export default async function PublicLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-
+export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${manrope.variable} ${inter.variable} landing-theme landing-body min-h-full`}>
-      <PublicHeader sessionUser={Boolean(session?.user)} />
-      <main className="flex-1">{children}</main>
-    </div>
+    <PublicSessionProvider>
+      <div className={`${manrope.variable} ${inter.variable} landing-theme landing-body min-h-full`}>
+        <PublicHeader />
+        <main className="flex-1">{children}</main>
+      </div>
+    </PublicSessionProvider>
   );
 }

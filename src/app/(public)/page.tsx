@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
-import { auth } from "@/auth";
-import { etatAccesAnticipeDepuisDb, ACCES_ANTICIPE_LIMITE_TOTAL } from "@/lib/accesAnticipe";
+import dynamic from "next/dynamic";
 import { urlSite } from "@/lib/siteUrl";
 import { LandingHero } from "./LandingHero";
 import { LandingAnnouncementBar } from "./_components/LandingAnnouncementBar";
 import { LandingHowItWorksSection } from "./LandingHowItWorksSection";
 import { LandingFeaturesSection } from "./LandingFeaturesSection";
-import { LandingDistributorsSection } from "./LandingDistributorsSection";
-import { LandingProofSection } from "./LandingProofSection";
-import { LandingPricingSection } from "./LandingPricingSection";
-import { LandingFaqSection } from "./LandingFaqSection";
-import { LandingFooter } from "./_components/LandingFooter";
+import { ACCES_ANTICIPE_LIMITE_TOTAL } from "@/lib/accesAnticipe";
+
+const LandingDistributorsSection = dynamic(() =>
+  import("./LandingDistributorsSection").then((m) => ({ default: m.LandingDistributorsSection }))
+);
+const LandingProofSection = dynamic(() =>
+  import("./LandingProofSection").then((m) => ({ default: m.LandingProofSection }))
+);
+const LandingPricingSection = dynamic(() =>
+  import("./LandingPricingSection").then((m) => ({ default: m.LandingPricingSection }))
+);
+const LandingFaqSection = dynamic(() =>
+  import("./LandingFaqSection").then((m) => ({ default: m.LandingFaqSection }))
+);
+const LandingFooter = dynamic(() =>
+  import("./_components/LandingFooter").then((m) => ({ default: m.LandingFooter }))
+);
 
 export const metadata: Metadata = {
   title: "Tarineo | L'assistant qui protège votre marge",
@@ -26,26 +37,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Home() {
-  const session = await auth();
-  const accesComplet = (await etatAccesAnticipeDepuisDb()).phase === "complete";
+// Pas d'auth() ni de requête DB : la landing s'affiche tout de suite.
+// Les utilisateurs connectés passent par « Mon espace » dans le header.
+const CTA_INSCRIPTION = "/inscription";
 
-  const cta = session?.user ? "/documents" : "/inscription";
-  const ctaLabelHero = session?.user
-    ? "Aller à mes documents"
-    : accesComplet
-      ? "Rejoindre la liste d'attente"
-      : "Vérifier mon premier devis";
-
+export default function Home() {
   return (
     <div>
-      <LandingHero ctaHref={cta} ctaLabel={ctaLabelHero} />
+      <LandingHero ctaHref={CTA_INSCRIPTION} ctaLabel="Vérifier mon premier devis" />
       <LandingAnnouncementBar limiteTotal={ACCES_ANTICIPE_LIMITE_TOTAL} />
       <LandingHowItWorksSection />
-      <LandingFeaturesSection ctaHref={cta} />
-      <LandingDistributorsSection ctaHref={cta} />
+      <LandingFeaturesSection ctaHref={CTA_INSCRIPTION} />
+      <LandingDistributorsSection ctaHref={CTA_INSCRIPTION} />
       <LandingProofSection />
-      <LandingPricingSection ctaHref={cta} />
+      <LandingPricingSection ctaHref={CTA_INSCRIPTION} />
       <LandingFaqSection />
       <LandingFooter />
     </div>

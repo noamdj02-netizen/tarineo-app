@@ -73,19 +73,43 @@ export default async function DocumentsPage({
   const filtreHausse = hausse === "1";
   const typeValide = estTypeValide(type) ? type : undefined;
 
-  // Options du filtre distributeur : un par distributorNorm, avec le libellé le plus
-  // récemment utilisé pour cette enseigne.
-  const distributeursExistants = await prisma.document.findMany({
-    where: { userId, distributorNorm: { not: null } },
-    select: { distributor: true, distributorNorm: true },
-    orderBy: { documentDate: "desc" },
-  });
+  const debutMois = debutMoisUTC(maintenant);
+
+  // Lot initial : une seule vague (évite d'enchaîner 6 allers-retours Supabase).
+  const [
+    distributeursExistants,
+    utilisateur,
+    historiquePrix,
+    documentsAvantCeMois,
+    documentsCeMois,
+    alertesHausseTotal,
+  ] = await Promise.all([
+    prisma.document.findMany({
+      where: { userId, distributorNorm: { not: null } },
+      select: { distributor: true, distributorNorm: true },
+      orderBy: { documentDate: "desc" },
+    }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true, onboardingDevisPopupVu: true, plan: true, subscriptionStatus: true },
+    }),
+    prisma.priceHistory.findMany({
+      where: { userId },
+      select: { distributorNorm: true, documentId: true },
+    }),
+    prisma.document.count({ where: { userId, createdAt: { lt: debutMois } } }),
+    prisma.document.count({ where: { userId, createdAt: { gte: debutMois } } }),
+    prisma.alert.count({ where: { userId, type: "PRICE_INCREASE" } }),
+  ]);
+
   const distributeursOptions = new Map<string, string>();
   for (const d of distributeursExistants) {
     if (d.distributorNorm && !distributeursOptions.has(d.distributorNorm)) {
       distributeursOptions.set(d.distributorNorm, d.distributor ?? d.distributorNorm);
     }
   }
+  const historiqueSuffisant = historiqueEstSuffisant(historiquePrix);
+  const documentsTotal = documentsAvantCeMois + documentsCeMois;
 
   const where: Prisma.DocumentWhereInput = { userId };
   if (distributeur) {
@@ -165,12 +189,6 @@ export default async function DocumentsPage({
     documentsCeTypeJamais = await prisma.document.count({ where: { userId, type: typeValide } });
   }
 
-  const historiquePrix = await prisma.priceHistory.findMany({
-    where: { userId },
-    select: { distributorNorm: true, documentId: true },
-  });
-  const historiqueSuffisant = historiqueEstSuffisant(historiquePrix);
-
   // Cas A : jamais importé (ignore tous les filtres) — avec bouton d'import.
   // Cas B : ce type existe, mais la case "hausse" est cochée et l'historique global
   // n'est pas encore suffisant pour comparer un prix (voir historiqueEstSuffisant —
@@ -193,18 +211,22 @@ export default async function DocumentsPage({
   // (ex. Cas C avec un distributeur qui n'a rien pour ce type). Masquée uniquement quand
   // ce total est à 0 (Cas A), le seul cas où elle n'aurait rien à montrer.
   const whereStats: Prisma.DocumentWhereInput = typeValide ? { userId, type: typeValide } : { userId };
-  const [statsTotal, statsMontant, statsParDistributeurBruts, statsDocumentsIds] = await Promise.all([
-    prisma.document.count({ where: whereStats }),
-    prisma.document.aggregate({ where: whereStats, _sum: { totalHt: true } }),
-    prisma.document.groupBy({
-      by: ["distributorNorm"],
-      where: { ...whereStats, distributorNorm: { not: null } },
-      _count: { _all: true },
-    }),
-    prisma.document.findMany({ where: whereStats, select: { id: true } }),
-  ]);
+  const statsTotal = await prisma.document.count({ where: whereStats });
+  let statsMontant = { _sum: { totalHt: null as number | null } };
+  let statsParDistributeurBruts: { distributorNorm: string | null; _count: { _all: number } }[] = [];
   let statsHausses = 0;
   if (statsTotal > 0) {
+    const [montant, parDistributeur, statsDocumentsIds] = await Promise.all([
+      prisma.document.aggregate({ where: whereStats, _sum: { totalHt: true } }),
+      prisma.document.groupBy({
+        by: ["distributorNorm"],
+        where: { ...whereStats, distributorNorm: { not: null } },
+        _count: { _all: true },
+      }),
+      prisma.document.findMany({ where: whereStats, select: { id: true } }),
+    ]);
+    statsMontant = montant;
+    statsParDistributeurBruts = parDistributeur;
     const idsDocumentsType = new Set(statsDocumentsIds.map((d) => d.id));
     const alertesHausse12Mois = await prisma.alert.findMany({
       where: {
@@ -227,17 +249,6 @@ export default async function DocumentsPage({
     .sort((a, b) => b.count - a.count);
   const maxStatsParDistributeur = Math.max(...statsParDistributeur.map((d) => d.count), 1);
 
-  const debutMois = debutMoisUTC(maintenant);
-  const [utilisateur, documentsAvantCeMois, documentsCeMois, alertesHausseTotal] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { createdAt: true, onboardingDevisPopupVu: true, plan: true, subscriptionStatus: true },
-    }),
-    prisma.document.count({ where: { userId, createdAt: { lt: debutMois } } }),
-    prisma.document.count({ where: { userId, createdAt: { gte: debutMois } } }),
-    prisma.alert.count({ where: { userId, type: "PRICE_INCREASE" } }),
-  ]);
-  const documentsTotal = documentsAvantCeMois + documentsCeMois;
   const etatQuota = utilisateur
     ? calculerEtatQuota({
         createdAtUtilisateur: utilisateur.createdAt,

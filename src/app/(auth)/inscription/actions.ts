@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasherMotDePasse, LONGUEUR_MIN_MOT_DE_PASSE } from "@/lib/password";
-import { calculerEtatAccesAnticipe } from "@/lib/accesAnticipe";
+import { calculerEtatAccesAnticipe, invaliderCacheAccesAnticipe } from "@/lib/accesAnticipe";
 import { ROUTE_APRES_AUTH } from "@/lib/appRoutes";
 
 const schema = z
@@ -45,6 +45,7 @@ export async function creerCompte(formData: FormData) {
     await prisma.user.create({
       data: { name, email, passwordHash, consentAt: new Date() },
     });
+    invaliderCacheAccesAnticipe();
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       redirect("/inscription?erreur=existe");
