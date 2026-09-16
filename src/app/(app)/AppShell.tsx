@@ -18,11 +18,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { DEMO_NOTIFICATIONS } from "@/lib/uiDemo";
 import { deconnexionAction } from "./deconnexionAction";
 
-function MenuNotifications() {
-  const nonLues = DEMO_NOTIFICATIONS.filter((n) => n.nonLu).length;
+export type NotifUi = {
+  id: string;
+  titre: string;
+  message: string;
+  date: string;
+  href: string;
+  nonLu: boolean;
+};
+
+function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
+  const nonLues = notifications.filter((n) => n.nonLu).length;
 
   return (
     <DropdownMenu>
@@ -33,28 +41,38 @@ function MenuNotifications() {
         <BellIcon className="size-5" />
         {nonLues > 0 && (
           <span className="absolute right-2.5 top-2.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-white xl:right-3 xl:top-3">
-            {nonLues}
+            {nonLues > 9 ? "9+" : nonLues}
           </span>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[min(100vw-2rem,360px)] p-2">
         <DropdownMenuLabel className="px-2 py-1.5 text-sm font-semibold text-foreground">Notifications</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuGroup className="max-h-[min(60vh,320px)] overflow-y-auto">
-          {DEMO_NOTIFICATIONS.map((notif) => (
-            <DropdownMenuItem key={notif.id} className="flex-col items-start gap-1 whitespace-normal rounded-xl px-3 py-3">
-              <div className="flex w-full items-start justify-between gap-2">
-                <p className="text-sm font-medium text-foreground">{notif.titre}</p>
-                {notif.nonLu && <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />}
-              </div>
-              <p className="text-xs leading-relaxed text-muted-foreground">{notif.message}</p>
-              <p className="text-[11px] text-muted-foreground">{notif.date}</p>
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuGroup>
+        {notifications.length === 0 ? (
+          <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+            Aucune alerte pour l&apos;instant. Importez un devis pour détecter les hausses.
+          </p>
+        ) : (
+          <DropdownMenuGroup className="max-h-[min(60vh,320px)] overflow-y-auto">
+            {notifications.map((notif) => (
+              <DropdownMenuItem
+                key={notif.id}
+                nativeButton={false}
+                render={<Link href={notif.href} className="flex-col items-start gap-1 whitespace-normal rounded-xl px-3 py-3" />}
+              >
+                <div className="flex w-full items-start justify-between gap-2">
+                  <p className="text-sm font-medium text-foreground">{notif.titre}</p>
+                  {notif.nonLu && <span className="mt-1 size-2 shrink-0 rounded-full bg-primary" />}
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">{notif.message}</p>
+                <p className="text-[11px] text-muted-foreground">{notif.date}</p>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuGroup>
+        )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem nativeButton={false} render={<Link href="/accueil" className="w-full justify-center text-center" />}>
-          Voir le tableau de bord
+        <DropdownMenuItem nativeButton={false} render={<Link href="/documents?hausse=1" className="w-full justify-center text-center" />}>
+          Voir les hausses
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -63,41 +81,55 @@ function MenuNotifications() {
 
 const LIENS_NAV = [
   { id: "dashboard", href: "/accueil", libelle: "Dashboard" },
-  { id: "documents", href: "/devis-clients", libelle: "Mes documents" },
+  { id: "documents", href: "/documents", libelle: "Mes documents" },
+  { id: "fournisseurs", href: "/fournisseurs", libelle: "Fournisseurs" },
   { id: "facturation", href: "/facturation-clients", libelle: "Facturation clients" },
-  { id: "analyses", href: "/analyses", libelle: "Analyses" },
   { id: "parametres", href: "/parametres", libelle: "Paramètres" },
 ];
 
 const LIENS_TOP = [
   { href: "/accueil", libelle: "Dashboard" },
-  { href: "/devis-clients", libelle: "Devis" },
+  { href: "/documents", libelle: "Documents" },
   { href: "/fournisseurs", libelle: "Fournisseurs" },
-  { href: "/documents", libelle: "Historique" },
+  { href: "/devis-clients", libelle: "Devis clients" },
 ];
 
 const SOUS_LIENS_DOCUMENTS = [
-  { href: "/devis-clients", libelle: "Devis" },
-  { href: "/factures-clients", libelle: "Factures" },
-  { href: "/bons-de-commande", libelle: "Bons de commande" },
-  { href: "/bons-enlevement", libelle: "Bons d'enlèvement" },
+  { href: "/documents", libelle: "Tous" },
+  { href: "/documents?type=DEVIS", libelle: "Devis fournisseurs" },
+  { href: "/documents?type=FACTURE", libelle: "Factures fournisseurs" },
+  { href: "/documents?type=BON_COMMANDE", libelle: "Bons de commande" },
+  { href: "/documents?type=BON_ENLEVEMENT", libelle: "Bons d'enlèvement" },
+];
+
+const SOUS_LIENS_FACTURATION = [
+  { href: "/devis-clients", libelle: "Devis clients" },
+  { href: "/factures-clients", libelle: "Factures clients" },
+  { href: "/facturation-clients", libelle: "Facturation électronique" },
 ];
 
 function iconeNav(id: string) {
   const cls = "size-6 shrink-0";
-  if (id === "dashboard" || id === "analyses") return <IconWidget className={cls} />;
+  if (id === "dashboard" || id === "fournisseurs") return <IconWidget className={cls} />;
   if (id === "documents") return <IconDocument className={cls} />;
   if (id === "facturation") return <IconInvoice className={cls} />;
   return <IconSettings className={cls} />;
 }
 
-function SousMenuDocuments({ onNavigate }: { onNavigate?: () => void }) {
+function SousMenu({
+  liens,
+  onNavigate,
+}: {
+  liens: { href: string; libelle: string }[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
     <div>
-      {SOUS_LIENS_DOCUMENTS.map((lien) => {
-        const actif = pathname === lien.href || pathname.startsWith(`${lien.href}/`);
+      {liens.map((lien) => {
+        const base = lien.href.split("?")[0];
+        const actif = pathname === base || (base !== "/documents" && base !== "/accueil" && pathname.startsWith(`${base}/`));
         return (
           <Link
             key={lien.href}
@@ -117,18 +149,43 @@ function SousMenuDocuments({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function LienNavDocuments({ onNavigate }: { onNavigate?: () => void }) {
+function LienNavAvecSousMenu({
+  id,
+  href,
+  libelle,
+  sousLiens,
+  onNavigate,
+}: {
+  id: string;
+  href: string;
+  libelle: string;
+  sousLiens: { href: string; libelle: string }[];
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const actif =
+    pathname === href ||
+    pathname.startsWith(`${href}/`) ||
+    sousLiens.some((l) => {
+      const base = l.href.split("?")[0];
+      return pathname === base || pathname.startsWith(`${base}/`);
+    });
+
   return (
     <div>
       <Link
-        href="/devis-clients"
+        href={href}
         onClick={onNavigate}
-        className="flex items-center gap-3 rounded-[10px] px-6 py-3.5 text-base font-normal text-muted-foreground hover:text-foreground"
+        aria-current={actif ? "page" : undefined}
+        className={cn(
+          "flex items-center gap-3 rounded-[10px] px-6 py-3.5 text-base font-normal transition-colors",
+          actif ? "bg-[#FFF0E8] text-primary" : "text-muted-foreground hover:text-foreground"
+        )}
       >
-        {iconeNav("documents")}
-        Mes documents
+        {iconeNav(id)}
+        {libelle}
       </Link>
-      <SousMenuDocuments onNavigate={onNavigate} />
+      <SousMenu liens={sousLiens} onNavigate={onNavigate} />
     </div>
   );
 }
@@ -191,7 +248,28 @@ function ContenuSidebar({
         <nav className="w-full rounded-[24px] bg-secondary">
           {LIENS_NAV.map((lien) => {
             if (lien.id === "documents") {
-              return <LienNavDocuments key={lien.id} onNavigate={onNavigate} />;
+              return (
+                <LienNavAvecSousMenu
+                  key={lien.id}
+                  id={lien.id}
+                  href={lien.href}
+                  libelle={lien.libelle}
+                  sousLiens={SOUS_LIENS_DOCUMENTS}
+                  onNavigate={onNavigate}
+                />
+              );
+            }
+            if (lien.id === "facturation") {
+              return (
+                <LienNavAvecSousMenu
+                  key={lien.id}
+                  id={lien.id}
+                  href="/devis-clients"
+                  libelle={lien.libelle}
+                  sousLiens={SOUS_LIENS_FACTURATION}
+                  onNavigate={onNavigate}
+                />
+              );
             }
             const actif =
               lien.href === "/accueil"
@@ -244,7 +322,7 @@ function MenuCompte({ prenom, email }: { prenom: string; email: string }) {
         <DropdownMenuGroup>
           <DropdownMenuItem render={<Link href="/parametres" />}>Paramètres</DropdownMenuItem>
           <DropdownMenuItem render={<Link href="/compte" />}>Mon compte</DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/clients" />}>Clients</DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/entreprise" />}>Mon entreprise</DropdownMenuItem>
           <DropdownMenuItem render={<a href="mailto:contact@tarineo.com" />}>Support</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -261,7 +339,15 @@ function MenuCompte({ prenom, email }: { prenom: string; email: string }) {
   );
 }
 
-function TopBar({ prenom, email }: { prenom: string; email: string }) {
+function TopBar({
+  prenom,
+  email,
+  notifications,
+}: {
+  prenom: string;
+  email: string;
+  notifications: NotifUi[];
+}) {
   const pathname = usePathname();
 
   function navTopActif(href: string) {
@@ -301,9 +387,9 @@ function TopBar({ prenom, email }: { prenom: string; email: string }) {
               className="hidden h-11 items-center gap-2 rounded-full bg-secondary px-4 text-sm text-muted-foreground xl:inline-flex xl:h-14 xl:w-[230px] xl:justify-start"
             >
               <SearchIcon className="size-4" />
-              <span className="hidden xl:inline">Rechercher...</span>
+              <span className="hidden xl:inline">Rechercher un document…</span>
             </Link>
-            <MenuNotifications />
+            <MenuNotifications notifications={notifications} />
             <MenuCompte prenom={prenom} email={email} />
           </div>
         </div>
@@ -316,11 +402,13 @@ export function AppShell({
   email,
   prenom,
   dateLabel,
+  notifications = [],
   children,
 }: {
   email: string;
   prenom: string;
   dateLabel: string;
+  notifications?: NotifUi[];
   children: React.ReactNode;
 }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
@@ -328,7 +416,7 @@ export function AppShell({
   return (
     <>
       <Suspense fallback={<div className="hidden h-[108px] lg:block" />}>
-        <TopBar prenom={prenom} email={email} />
+        <TopBar prenom={prenom} email={email} notifications={notifications} />
       </Suspense>
 
       <div className="flex w-full min-w-0 flex-1 gap-4 px-4 pb-8 pt-4 sm:px-6 lg:gap-8 lg:px-8 lg:pt-6">

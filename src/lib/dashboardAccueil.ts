@@ -4,7 +4,6 @@ import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { normaliserDistributeur } from "@/lib/normalisation";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
-import { DEMO_DASHBOARD } from "@/lib/uiDemo";
 import type { DocumentRecent, FournisseurCarte } from "@/app/(app)/accueil/DashboardSections";
 
 const JOURS_COURTS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
@@ -28,22 +27,6 @@ function montantDepuisPayloads(
   }, 0);
 }
 
-function estVide(donnees: {
-  nbDocumentsMois: number;
-  fournisseursTop: FournisseurCarte[];
-  documentsRecentsUi: DocumentRecent[];
-  repartitionParDistributeur: { count: number }[];
-  aDesDepenses: boolean;
-}) {
-  return (
-    donnees.nbDocumentsMois === 0 &&
-    donnees.fournisseursTop.length === 0 &&
-    donnees.documentsRecentsUi.length === 0 &&
-    donnees.repartitionParDistributeur.length === 0 &&
-    !donnees.aDesDepenses
-  );
-}
-
 export type DonneesDashboardAccueil = {
   nbDocumentsMois: number;
   pourcentageMoyenHausse: number | null;
@@ -60,7 +43,6 @@ export type DonneesDashboardAccueil = {
   depenses: Awaited<ReturnType<typeof calculerDepensesParDistributeur>>;
   distributeursOptions: Map<string, string>;
   moisCourantStr: string;
-  utiliseDemo: boolean;
 };
 
 export async function chargerDonneesDashboardAccueil(userId: string): Promise<DonneesDashboardAccueil> {
@@ -87,7 +69,6 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
     depenses: [],
     distributeursOptions: new Map(),
     moisCourantStr,
-    utiliseDemo: false,
   };
 
   try {
@@ -296,33 +277,11 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       depenses,
       distributeursOptions,
       moisCourantStr,
-      utiliseDemo: false,
     };
 
-    if (estVide(donnees)) {
-      return appliquerDemo(donnees);
-    }
     return donnees;
-  } catch {
-    return appliquerDemo(vide);
+  } catch (e) {
+    console.error("Échec du chargement du dashboard :", e);
+    return vide;
   }
-}
-
-function appliquerDemo(base: DonneesDashboardAccueil): DonneesDashboardAccueil {
-  return {
-    ...base,
-    nbDocumentsMois: DEMO_DASHBOARD.nbDocumentsMois,
-    pourcentageMoyenHausse: DEMO_DASHBOARD.hausseMoyenne,
-    montantIdentifie: DEMO_DASHBOARD.economiesPotentielles,
-    payloadsCount: DEMO_DASHBOARD.payloadsCount,
-    fournisseursTop: DEMO_DASHBOARD.fournisseurs,
-    documentsRecentsUi: DEMO_DASHBOARD.documentsRecents,
-    totalSemaine: DEMO_DASHBOARD.totalSemaine,
-    evolutionPct: DEMO_DASHBOARD.evolutionPct,
-    donneesSemaine: DEMO_DASHBOARD.donneesSemaine,
-    evolutionDepenses: DEMO_DASHBOARD.evolutionDepenses,
-    aDesDepenses: true,
-    repartitionParDistributeur: DEMO_DASHBOARD.repartitionParDistributeur,
-    utiliseDemo: true,
-  };
 }

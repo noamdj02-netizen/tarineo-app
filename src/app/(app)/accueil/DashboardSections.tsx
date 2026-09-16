@@ -28,9 +28,9 @@ const descriptionFournisseur = (nom: string, norm: string) => {
   return `Suivi des dépenses et hausses chez ${nom}.`;
 };
 
-const scoreFournisseur = (f: FournisseurCarte, index: number) => {
-  if (f.pourcentageAtteinte !== null) return Math.min(100, Math.round(f.pourcentageAtteinte));
-  return [96, 94, 98][index] ?? 95;
+const scoreObjectif = (f: FournisseurCarte) => {
+  if (f.pourcentageAtteinte === null) return null;
+  return Math.min(100, Math.round(f.pourcentageAtteinte));
 };
 
 function IconeStat() {
@@ -84,12 +84,37 @@ export type DocumentRecent = {
   hausseNegative: boolean;
 };
 
+export function DashboardHeroImport({ compteVide }: { compteVide: boolean }) {
+  if (!compteVide) return null;
+  return (
+    <section className="w-full min-w-0 rounded-[24px] bg-gradient-to-br from-[#FFF0E8] via-card to-[#F3F7FA] p-6 sm:p-8">
+      <p className="text-sm font-medium uppercase tracking-wider text-primary">Pour commencer</p>
+      <h2 className="mt-2 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+        Importez un devis fournisseur pour protéger votre marge
+      </h2>
+      <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+        Photo ou PDF d&apos;un devis Cedeo, Point P, Rexel… Tarineo extrait les prix et les compare à
+        <strong className="font-medium text-foreground"> vos</strong> achats précédents — pas à un comparateur public.
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Button render={<Link href="/documents" />} className="h-auto rounded-full px-6 py-3">
+          <UploadIcon data-icon="inline-start" />
+          Importer un devis
+        </Button>
+        <Button variant="outline" render={<Link href="/fournisseurs" />} className="h-auto rounded-full px-6 py-3">
+          Voir les fournisseurs
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: FournisseurCarte[] }) {
   return (
     <section className="w-full min-w-0">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
-        <h2 className="text-xl font-medium leading-none text-foreground sm:text-2xl">Vos fournisseurs suivis ce mois-ci</h2>
-        <Button variant="ghost" size="sm" render={<Link href="/documents" />} className="text-muted-foreground">
+        <h2 className="text-xl font-medium leading-none text-foreground sm:text-2xl">Vos fournisseurs suivis</h2>
+        <Button variant="ghost" size="sm" render={<Link href="/fournisseurs" />} className="text-muted-foreground">
           Voir tout
           <ArrowUpRightIcon data-icon="inline-end" />
         </Button>
@@ -103,7 +128,9 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
                   <UploadIcon />
                 </EmptyMedia>
                 <EmptyTitle>Aucun fournisseur suivi</EmptyTitle>
-                <EmptyDescription>Envoyez un devis ou une facture pour voir vos enseignes ici, avec le volume du mois.</EmptyDescription>
+                <EmptyDescription>
+                  Importez un devis ou une facture pour voir vos enseignes ici, avec le volume de la période.
+                </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
                 <Button render={<Link href="/documents" />}>Importer un document</Button>
@@ -113,26 +140,33 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-          {fournisseurs.map((f, index) => {
-            const score = scoreFournisseur(f, index);
+          {fournisseurs.map((f) => {
+            const score = scoreObjectif(f);
             return (
               <Card key={f.distributorNorm} className="h-full rounded-[24px] ring-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} />
-                    <span className="sr-only">{f.distributor}</span>
+                    <span className="truncate text-base font-medium">{f.distributor}</span>
                   </CardTitle>
-                  <CardAction>
-                    <Badge variant="secondary" className="gap-1 text-[var(--app-star)]">
-                      <StarIcon data-icon="inline-start" />
-                      {score}%
-                    </Badge>
-                  </CardAction>
+                  {score !== null && (
+                    <CardAction>
+                      <Badge variant="secondary" className="gap-1 text-[var(--app-star)]" title="Avancement de l'objectif annuel">
+                        <StarIcon data-icon="inline-start" />
+                        {score}%
+                      </Badge>
+                    </CardAction>
+                  )}
                   <CardDescription>{descriptionFournisseur(f.distributor, f.distributorNorm)}</CardDescription>
                 </CardHeader>
                 <CardFooter className="justify-between border-t bg-transparent">
                   <p className="text-xl font-medium text-[var(--app-text-body)]">{formaterEuros(f.depenses)}</p>
-                  <Button variant="outline" size="sm" render={<Link href={`/documents?distributeur=${encodeURIComponent(f.distributorNorm)}`} />} className="rounded-full text-primary">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={<Link href={`/fournisseurs/${encodeURIComponent(f.distributorNorm)}`} />}
+                    className="rounded-full text-primary"
+                  >
                     Voir
                     <ArrowUpRightIcon data-icon="inline-end" />
                   </Button>
@@ -177,7 +211,7 @@ export function DashboardRecentDocuments({ documents }: { documents: DocumentRec
             {documents.map((doc) => (
               <li key={doc.id}>
                 <Link
-                  href={doc.id.startsWith("demo-") ? "/documents" : `/documents/${doc.id}`}
+                  href={`/documents/${doc.id}`}
                   className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary"
                 >
                   <div className="flex min-w-0 items-center gap-3">

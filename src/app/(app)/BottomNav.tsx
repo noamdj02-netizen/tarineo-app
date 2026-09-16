@@ -27,13 +27,12 @@ const ONGLETS = [
     ),
   },
   {
-    href: "/devis-clients",
+    href: "/documents",
     label: "Documents",
     estActif: (pathname: string) =>
-      pathname.startsWith("/devis-clients") ||
+      pathname.startsWith("/documents") ||
       pathname.startsWith("/bons-de-commande") ||
-      pathname.startsWith("/bons-enlevement") ||
-      pathname.startsWith("/documents"),
+      pathname.startsWith("/bons-enlevement"),
     icone: (actif: boolean) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -55,9 +54,9 @@ const ONGLETS = [
     ),
   },
   {
-    href: "/analyses",
-    label: "Analyses",
-    estActif: (pathname: string) => pathname.startsWith("/analyses"),
+    href: "/fournisseurs",
+    label: "Fournisseurs",
+    estActif: (pathname: string) => pathname.startsWith("/fournisseurs"),
     icone: (actif: boolean) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -72,10 +71,9 @@ const ONGLETS = [
         className="h-6 w-6"
         aria-hidden="true"
       >
-        <rect x="3" y="3" width="8" height="8" rx="2" />
-        <rect x="13" y="3" width="8" height="8" rx="2" />
-        <rect x="3" y="13" width="8" height="8" rx="2" />
-        <rect x="13" y="13" width="8" height="8" rx="2" />
+        <path d="M3 21h18" />
+        <path d="M5 21V7l7-4 7 4v14" />
+        <path d="M9 21v-6h6v6" />
       </svg>
     ),
   },

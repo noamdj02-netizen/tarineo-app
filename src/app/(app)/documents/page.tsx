@@ -24,6 +24,7 @@ interface Recherche {
   upgrade?: string;
   hausse?: string;
   type?: string;
+  enseigne?: string;
 }
 
 function estTypeValide(valeur: string | undefined): valeur is DocumentType {
@@ -58,7 +59,7 @@ export default async function DocumentsPage({
   const userId = session.user.id;
   const maintenant = new Date();
 
-  const { mois, distributeur, reference, upgrade, hausse, type } = await searchParams;
+  const { mois, distributeur, reference, upgrade, hausse, type, enseigne } = await searchParams;
   const filtreHausse = hausse === "1";
   const typeValide = estTypeValide(type) ? type : undefined;
 
@@ -258,6 +259,18 @@ export default async function DocumentsPage({
           </p>
           <p className="mt-3 font-medium text-foreground">
             Import initial : {etatQuota.documentsTotal}/{etatQuota.limiteHistorique} documents
+          </p>
+        </div>
+      )}
+
+      {enseigne?.trim() && (
+        <div className="mt-6 app-banner text-sm">
+          <p className="font-semibold text-[var(--foreground)]">
+            Importez un devis ou une facture {enseigne.trim()}
+          </p>
+          <p className="mt-1 text-muted">
+            Une fois validé, cette enseigne apparaîtra dans Fournisseurs et Tarineo comparera les prix à votre
+            historique personnel.
           </p>
         </div>
       )}

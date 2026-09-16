@@ -7,6 +7,7 @@ import { ExportBouton } from "../depenses/ExportBouton";
 import { GraphiqueRepartitionDistributeurs } from "./AccueilCharts";
 import {
   DashboardDepensesChart,
+  DashboardHeroImport,
   DashboardOverviewStats,
   DashboardRecentDocuments,
   DashboardSupplierRow,
@@ -65,6 +66,12 @@ export default async function AccueilPage() {
 
   const distributeursAvecObjectif = depenses.filter((d) => d.objectif !== null);
   const distributeursSansObjectif = depenses.filter((d) => d.objectif === null);
+  const compteVide =
+    nbDocumentsMois === 0 &&
+    fournisseursTop.length === 0 &&
+    documentsRecentsUi.length === 0 &&
+    !aDesDepenses &&
+    payloadsCount === 0;
 
   const prenom = (session.user.name?.split(" ")[0] ?? "Artisan").replace(/^./, (c) => c.toUpperCase());
   const dateLabel = maintenant.toLocaleDateString("fr-FR", {
@@ -85,6 +92,8 @@ export default async function AccueilPage() {
       </header>
 
       <div className="flex flex-col gap-8">
+        <DashboardHeroImport compteVide={compteVide} />
+
         <DashboardSupplierRow fournisseurs={fournisseursTop} />
 
         <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,425px)_minmax(0,1fr)]">
@@ -118,7 +127,11 @@ export default async function AccueilPage() {
                 <Empty>
                   <EmptyHeader>
                     <EmptyTitle>Aucune hausse détectée</EmptyTitle>
-                    <EmptyDescription>Rien à signaler sur les 12 derniers mois.</EmptyDescription>
+                    <EmptyDescription>
+                      {compteVide
+                        ? "Après quelques imports, les hausses détectées apparaîtront ici."
+                        : "Rien à signaler sur les 12 derniers mois."}
+                    </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
               )}
@@ -126,9 +139,12 @@ export default async function AccueilPage() {
           </Card>
         </div>
 
-        <div className="flex justify-center pt-2">
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
           <Button render={<Link href="/documents" />} className="h-auto rounded-full px-6 py-3">
-            Voir mes documents
+            Importer / voir mes documents
+          </Button>
+          <Button variant="outline" render={<Link href="/devis-clients/nouveau" />} className="h-auto rounded-full px-6 py-3">
+            Créer un devis client
           </Button>
         </div>
 
