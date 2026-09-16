@@ -7,7 +7,7 @@ import { Prisma } from "@prisma/client";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasherMotDePasse, LONGUEUR_MIN_MOT_DE_PASSE } from "@/lib/password";
-import { calculerEtatAccesAnticipe } from "@/lib/accesAnticipe";
+import { calculerEtatAccesAnticipe, invaliderCacheAccesAnticipe } from "@/lib/accesAnticipe";
 
 const schema = z
   .object({

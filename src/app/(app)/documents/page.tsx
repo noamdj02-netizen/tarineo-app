@@ -195,7 +195,7 @@ export default async function DocumentsPage({
   // ce total est à 0 (Cas A), le seul cas où elle n'aurait rien à montrer.
   const whereStats: Prisma.DocumentWhereInput = typeValide ? { userId, type: typeValide } : { userId };
   const statsTotal = await prisma.document.count({ where: whereStats });
-  let statsMontant = { _sum: { totalHt: null as number | null } };
+  let statsSommeHt = 0;
   let statsParDistributeurBruts: { distributorNorm: string | null; _count: { _all: number } }[] = [];
   let statsHausses = 0;
   if (statsTotal > 0) {
@@ -208,7 +208,7 @@ export default async function DocumentsPage({
       }),
       prisma.document.findMany({ where: whereStats, select: { id: true } }),
     ]);
-    statsMontant = montant;
+    statsSommeHt = Number(montant._sum.totalHt ?? 0);
     statsParDistributeurBruts = parDistributeur;
     const idsDocumentsType = new Set(statsDocumentsIds.map((d) => d.id));
     const alertesHausse12Mois = await prisma.alert.findMany({
@@ -617,7 +617,7 @@ export default async function DocumentsPage({
                 <p className="text-xs text-muted">Montant total HT</p>
                 <p className="mt-1 text-xl font-semibold text-foreground">
                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                    Number(statsMontant._sum.totalHt ?? 0)
+                    statsSommeHt
                   )}
                 </p>
               </div>
