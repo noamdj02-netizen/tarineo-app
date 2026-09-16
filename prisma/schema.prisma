@@ -50,6 +50,15 @@ model User {
   // (src/lib/historique.ts). Ce flag empêche toute réapparition ultérieure.
   onboardingDevisPopupVu Boolean @default(false)
 
+  // Parcours d'onboarding V2 (cahier produit) :
+  // - onboardingImportDeferred : a choisi "Je le ferai plus tard" après inscription
+  // - onboardingFlowCompletedAt : a vu le résumé post-analyse OU a quitté le parcours
+  // - telephone / entrepriseNom : saisis à l'inscription (profil entreprise complet plus tard)
+  onboardingImportDeferred Boolean   @default(false)
+  onboardingFlowCompletedAt DateTime?
+  telephone                 String?
+  entrepriseNom             String?
+
   createdAt DateTime @default(now())
 
   accounts         Account[]

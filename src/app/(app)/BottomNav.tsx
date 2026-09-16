@@ -8,19 +8,7 @@ const ONGLETS = [
     href: "/accueil",
     label: "Accueil",
     icone: (actif: boolean) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={actif ? 2 : 1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        width={24}
-        height={24}
-        className="h-6 w-6"
-        aria-hidden="true"
-      >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
         <path d="M4 11.5 12 4l8 7.5" />
         <path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" />
       </svg>
@@ -29,27 +17,24 @@ const ONGLETS = [
   {
     href: "/documents",
     label: "Documents",
-    estActif: (pathname: string) =>
-      pathname.startsWith("/documents") ||
-      pathname.startsWith("/bons-de-commande") ||
-      pathname.startsWith("/bons-enlevement"),
+    estActif: (pathname: string) => pathname.startsWith("/documents") && !pathname.includes("scanner"),
     icone: (actif: boolean) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={actif ? 2 : 1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        width={24}
-        height={24}
-        className="h-6 w-6"
-        aria-hidden="true"
-      >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
         <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
         <path d="M13 3v4a1 1 0 0 0 1 1h4" />
         <path d="M9 13h6M9 17h6" />
+      </svg>
+    ),
+  },
+  {
+    href: "/documents?scanner=1",
+    label: "Scanner",
+    estActif: () => false,
+    prominent: true,
+    icone: (_actif?: boolean) => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={26} height={26} className="h-6 w-6" aria-hidden="true">
+        <path d="M7 3h3M14 3h3M21 7v3M21 14v3M17 21h-3M10 21H7M3 17v-3M3 10V7" />
+        <circle cx="12" cy="12" r="3.5" />
       </svg>
     ),
   },
@@ -58,19 +43,7 @@ const ONGLETS = [
     label: "Fournisseurs",
     estActif: (pathname: string) => pathname.startsWith("/fournisseurs"),
     icone: (actif: boolean) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={actif ? 2 : 1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        width={24}
-        height={24}
-        className="h-6 w-6"
-        aria-hidden="true"
-      >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
         <path d="M3 21h18" />
         <path d="M5 21V7l7-4 7 4v14" />
         <path d="M9 21v-6h6v6" />
@@ -79,23 +52,17 @@ const ONGLETS = [
   },
   {
     href: "/parametres",
-    label: "Compte",
+    label: "Plus",
+    estActif: (pathname: string) =>
+      pathname.startsWith("/parametres") ||
+      pathname.startsWith("/compte") ||
+      pathname.startsWith("/devis-clients") ||
+      pathname.startsWith("/entreprise"),
     icone: (actif: boolean) => (
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={actif ? 2 : 1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        width={24}
-        height={24}
-        className="h-6 w-6"
-        aria-hidden="true"
-      >
-        <circle cx="12" cy="8" r="3.25" />
-        <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
+        <circle cx="5" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="19" cy="12" r="1.5" fill="currentColor" />
       </svg>
     ),
   },
@@ -109,11 +76,27 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] lg:hidden"
       aria-label="Navigation principale"
     >
-      <div className="mx-auto flex max-w-5xl items-stretch justify-around">
+      <div className="mx-auto flex max-w-5xl items-end justify-around px-1">
         {ONGLETS.map((onglet) => {
           const actif = onglet.estActif
             ? onglet.estActif(pathname)
             : pathname === onglet.href || pathname.startsWith(`${onglet.href}/`);
+
+          if (onglet.prominent) {
+            return (
+              <Link
+                key={onglet.href}
+                href={onglet.href}
+                className="-mt-5 flex flex-1 flex-col items-center gap-1"
+              >
+                <span className="flex size-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
+                  {onglet.icone(true)}
+                </span>
+                <span className="text-[11px] font-semibold text-primary">{onglet.label}</span>
+              </Link>
+            );
+          }
+
           return (
             <Link
               key={onglet.href}

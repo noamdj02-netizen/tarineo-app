@@ -88,23 +88,89 @@ export function DashboardHeroImport({ compteVide }: { compteVide: boolean }) {
   if (!compteVide) return null;
   return (
     <section className="w-full min-w-0 rounded-[24px] bg-gradient-to-br from-[#FFF0E8] via-card to-[#F3F7FA] p-6 sm:p-8">
-      <p className="text-sm font-medium uppercase tracking-wider text-primary">Pour commencer</p>
+      <p className="text-sm font-medium uppercase tracking-wider text-primary">Votre espace est prêt</p>
       <h2 className="mt-2 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
-        Importez un devis fournisseur pour protéger votre marge
+        Vous n&apos;avez encore aucun document
       </h2>
       <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-        Photo ou PDF d&apos;un devis Cedeo, Point P, Rexel… Tarineo extrait les prix et les compare à
-        <strong className="font-medium text-foreground"> vos</strong> achats précédents — pas à un comparateur public.
+        Commencez avec une facture ou un devis. Tarinéo s&apos;occupe du reste — fournisseurs, produits,
+        historique de prix. Aucune donnée inventée.
       </p>
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button render={<Link href="/documents" />} className="h-auto rounded-full px-6 py-3">
+        <Button render={<Link href="/documents?scanner=1" />} className="h-auto rounded-full px-6 py-3">
           <UploadIcon data-icon="inline-start" />
-          Importer un devis
+          Scanner un document
         </Button>
-        <Button variant="outline" render={<Link href="/fournisseurs" />} className="h-auto rounded-full px-6 py-3">
-          Voir les fournisseurs
+        <Button variant="outline" render={<Link href="/documents?onboarding=1" />} className="h-auto rounded-full px-6 py-3">
+          Importer un PDF
         </Button>
       </div>
+    </section>
+  );
+}
+
+export function DashboardBanniereReprise() {
+  return (
+    <section className="w-full min-w-0 rounded-[24px] border border-primary/20 bg-[#FFF0E8] p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-foreground">Votre espace est prêt. Importez vos premiers documents pour commencer.</h2>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Vous aviez choisi de le faire plus tard — c&apos;est le bon moment, depuis ce téléphone ou votre ordinateur.
+      </p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <Button render={<Link href="/documents?onboarding=1" />} className="rounded-full">
+          Importer mes documents
+        </Button>
+        <Button variant="outline" render={<Link href="/documents?scanner=1" />} className="rounded-full">
+          Scanner
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+export function DashboardAFaire({
+  aVerifier,
+  hausses,
+  moisCourantStr,
+}: {
+  aVerifier: number;
+  hausses: number;
+  moisCourantStr: string;
+}) {
+  if (aVerifier === 0 && hausses === 0) return null;
+
+  return (
+    <section className="w-full min-w-0 rounded-[24px] bg-card p-5 sm:p-6">
+      <h2 className="text-lg font-semibold text-foreground">À vérifier</h2>
+      <p className="mt-1 text-sm text-muted-foreground">Ce qui mérite votre attention aujourd&apos;hui.</p>
+      <ul className="mt-4 flex flex-col gap-3">
+        {aVerifier > 0 && (
+          <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-secondary px-4 py-3">
+            <div>
+              <p className="font-medium text-foreground">
+                {aVerifier} document{aVerifier > 1 ? "s" : ""} à vérifier
+              </p>
+              <p className="text-xs text-muted-foreground">Confiance faible — Tarinéo n&apos;a rien inventé.</p>
+            </div>
+            <Button size="sm" render={<Link href="/documents" />} className="rounded-full">
+              Vérifier
+            </Button>
+          </li>
+        )}
+        {hausses > 0 && (
+          <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#FFF0E8] px-4 py-3">
+            <div>
+              <p className="font-medium text-foreground">
+                {hausses} hausse{hausses > 1 ? "s" : ""} de prix détectée{hausses > 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">Basées sur votre historique d&apos;achats.</p>
+            </div>
+            <Button size="sm" render={<Link href={`/documents?hausse=1&mois=${moisCourantStr}`} />} className="rounded-full">
+              Voir les hausses
+            </Button>
+          </li>
+        )}
+      </ul>
     </section>
   );
 }

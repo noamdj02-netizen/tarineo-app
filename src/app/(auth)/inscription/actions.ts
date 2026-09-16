@@ -11,20 +11,27 @@ import { calculerEtatAccesAnticipe } from "@/lib/accesAnticipe";
 
 const schema = z
   .object({
-    name: z.string().trim().min(1),
+    prenom: z.string().trim().min(1),
+    nom: z.string().trim().min(1),
     email: z.string().trim().toLowerCase().email(),
     password: z.string().min(LONGUEUR_MIN_MOT_DE_PASSE),
     confirmation: z.string(),
+    entrepriseNom: z.string().trim().min(1),
+    telephone: z.string().trim().optional(),
     consent: z.literal("on"),
   })
   .refine((data) => data.password === data.confirmation, { path: ["confirmation"] });
 
 export async function creerCompte(formData: FormData) {
+  const telephoneBrut = String(formData.get("telephone") ?? "").trim();
   const parsed = schema.safeParse({
-    name: formData.get("name"),
+    prenom: formData.get("prenom"),
+    nom: formData.get("nom"),
     email: formData.get("email"),
     password: formData.get("password"),
     confirmation: formData.get("confirmation"),
+    entrepriseNom: formData.get("entrepriseNom"),
+    telephone: telephoneBrut || undefined,
     consent: formData.get("consent"),
   });
 
@@ -32,7 +39,8 @@ export async function creerCompte(formData: FormData) {
     redirect("/inscription?erreur=1");
   }
 
-  const { name, email, password } = parsed.data;
+  const { prenom, nom, email, password, entrepriseNom, telephone } = parsed.data;
+  const name = `${prenom} ${nom}`.trim();
 
   try {
     const { phase } = calculerEtatAccesAnticipe(await prisma.user.count());
@@ -42,7 +50,14 @@ export async function creerCompte(formData: FormData) {
 
     const passwordHash = await hasherMotDePasse(password);
     await prisma.user.create({
-      data: { name, email, passwordHash, consentAt: new Date() },
+      data: {
+        name,
+        email,
+        passwordHash,
+        consentAt: new Date(),
+        entrepriseNom,
+        telephone: telephone || null,
+      },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -52,7 +67,7 @@ export async function creerCompte(formData: FormData) {
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/accueil" });
+    await signIn("credentials", { email, password, redirectTo: "/onboarding" });
   } catch (error) {
     if (error instanceof AuthError) {
       redirect("/connexion");
@@ -62,7 +77,7 @@ export async function creerCompte(formData: FormData) {
 }
 
 export async function creerCompteAvecGoogle() {
-  await signIn("google", { redirectTo: "/accueil" });
+  await signIn("google", { redirectTo: "/onboarding" });
 }
 
 const schemaWaitlist = z.object({

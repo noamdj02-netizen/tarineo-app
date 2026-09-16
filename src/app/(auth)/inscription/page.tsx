@@ -27,14 +27,24 @@ function InscriptionFormPanel({
   return (
     <div className="flex w-full flex-col gap-3.5 rounded-[26px] border border-white/14 bg-[rgba(23,21,19,0.95)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] md:p-6 lg:p-[22px]">
       <form action={creerCompte} className="flex w-full flex-col gap-3">
-        <AuthField
-          id="name"
-          name="name"
-          label="Nom complet"
-          placeholder="Jean Dupont"
-          required
-          autoComplete="name"
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AuthField
+            id="prenom"
+            name="prenom"
+            label="Prénom"
+            placeholder="Jean"
+            required
+            autoComplete="given-name"
+          />
+          <AuthField
+            id="nom"
+            name="nom"
+            label="Nom"
+            placeholder="Dupont"
+            required
+            autoComplete="family-name"
+          />
+        </div>
         <AuthField
           id="email"
           name="email"
@@ -43,6 +53,22 @@ function InscriptionFormPanel({
           placeholder="vous@entreprise.fr"
           required
           autoComplete="email"
+        />
+        <AuthField
+          id="entrepriseNom"
+          name="entrepriseNom"
+          label="Nom de l'entreprise"
+          placeholder="Dupont Plomberie"
+          required
+          autoComplete="organization"
+        />
+        <AuthField
+          id="telephone"
+          name="telephone"
+          label="Téléphone (optionnel)"
+          type="tel"
+          placeholder="06 12 34 56 78"
+          autoComplete="tel"
         />
         <PasswordInput
           id="password"
@@ -175,7 +201,7 @@ export default async function InscriptionPage({
   const intro = (
     <div className="flex flex-col gap-1.5 text-white">
       <h1 className="text-[clamp(26px,3.6vw,34px)] font-extrabold leading-tight">Créez votre compte.</h1>
-      <p className="text-[15px] text-[#b9b4b0]">Des devis plus justes commencent ici.</p>
+      <p className="text-[15px] text-[#b9b4b0]">Importez vos documents ensuite — Tarinéo construit le reste.</p>
     </div>
   );
 

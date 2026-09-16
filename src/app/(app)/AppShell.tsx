@@ -105,6 +105,7 @@ const SOUS_LIENS_DOCUMENTS = [
 const SOUS_LIENS_FACTURATION = [
   { href: "/devis-clients", libelle: "Devis clients" },
   { href: "/factures-clients", libelle: "Factures clients" },
+  { href: "/clients", libelle: "Clients" },
   { href: "/facturation-clients", libelle: "Facturation électronique" },
 ];
 

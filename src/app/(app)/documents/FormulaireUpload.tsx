@@ -46,11 +46,20 @@ function decrireDoublon(doublon: DoublonPotentiel): string {
 export function FormulaireUpload({
   quotaAtteint = false,
   typeInitial,
+  modeOnboarding = false,
+  redirigerVersResume = false,
+  autoOuvrirCamera = false,
 }: {
   quotaAtteint?: boolean;
   // Préselectionne le type — utilisé par documents/page.tsx quand l'artisan arrive via
   // le bouton "Importer" de l'état vide d'un type filtré (ex. ?type=BON_ENLEVEMENT).
   typeInitial?: "DEVIS" | "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT";
+  /** Après un batch réussi, enchaîne vers l'animation d'analyse (onboarding V2). */
+  modeOnboarding?: boolean;
+  /** Même redirection pour le tout premier import hors parcours formel. */
+  redirigerVersResume?: boolean;
+  /** Ouvre directement le sélecteur photo (bouton Scanner mobile). */
+  autoOuvrirCamera?: boolean;
 }) {
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
@@ -69,6 +78,14 @@ export function FormulaireUpload({
   // sélectionner des fichiers pour se les voir refuser un par un à l'envoi).
   const enCoursOuBloque = enCours || quotaAtteint;
   const [apercuErreurId, setApercuErreurId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (autoOuvrirCamera && !quotaAtteint) {
+      // Laisse le layout peindre avant d'ouvrir le sélecteur natif.
+      const t = setTimeout(() => inputPhotoRef.current?.click(), 250);
+      return () => clearTimeout(t);
+    }
+  }, [autoOuvrirCamera, quotaAtteint]);
 
   // Aperçu = dernier fichier ajouté (image uniquement, un PDF n'a pas de rendu utile ici).
   const dernierFichier = fichiers.length > 0 ? fichiers[fichiers.length - 1] : null;
@@ -139,7 +156,7 @@ export function FormulaireUpload({
     setFichiers((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
-  async function envoyerFichier(item: FichierEnvoi, options: { ignorerDoublon?: boolean } = {}) {
+  async function envoyerFichier(item: FichierEnvoi, options: { ignorerDoublon?: boolean } = {}): Promise<boolean> {
     majStatut(item.id, { statut: "envoi" });
 
     const formData = new FormData();
@@ -151,15 +168,18 @@ export function FormulaireUpload({
 
     if (resultat.succes) {
       majStatut(item.id, { statut: "succes" });
-    } else if (resultat.erreur === "doublon_detecte") {
+      return true;
+    }
+    if (resultat.erreur === "doublon_detecte") {
       majStatut(item.id, {
         statut: "doublon",
         doublon: resultat.doublon,
         message: `Déjà envoyé : ${decrireDoublon(resultat.doublon)}`,
       });
-    } else {
-      majStatut(item.id, { statut: "erreur", message: MESSAGES_ERREUR[resultat.erreur] });
+      return false;
     }
+    majStatut(item.id, { statut: "erreur", message: MESSAGES_ERREUR[resultat.erreur] });
+    return false;
   }
 
   // Retenté individuellement (pas via le bouton "Envoyer" principal, qui ne traite
@@ -178,12 +198,14 @@ export function FormulaireUpload({
     const aEnvoyer = fichiers.filter((f) => f.statut === "en_attente");
     setProgression({ traites: 0, total: aEnvoyer.length });
     let curseur = 0;
+    const succesIds: string[] = [];
 
     async function worker() {
       while (curseur < aEnvoyer.length) {
         const item = aEnvoyer[curseur];
         curseur += 1;
-        await envoyerFichier(item);
+        const ok = await envoyerFichier(item);
+        if (ok) succesIds.push(item.id);
         setProgression((prev) => (prev ? { ...prev, traites: prev.traites + 1 } : prev));
       }
     }
@@ -196,6 +218,13 @@ export function FormulaireUpload({
     setFichiers((prev) => prev.filter((f) => f.statut !== "succes"));
     if (inputPhotoRef.current) inputPhotoRef.current.value = "";
     if (inputFichierRef.current) inputFichierRef.current.value = "";
+
+    const succesCount = succesIds.length;
+    if ((modeOnboarding || redirigerVersResume) && succesCount > 0) {
+      router.push(`/onboarding/analyse?n=${succesCount}`);
+      return;
+    }
+
     router.refresh();
   }
 

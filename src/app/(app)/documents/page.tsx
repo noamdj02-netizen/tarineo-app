@@ -25,6 +25,8 @@ interface Recherche {
   hausse?: string;
   type?: string;
   enseigne?: string;
+  onboarding?: string;
+  scanner?: string;
 }
 
 function estTypeValide(valeur: string | undefined): valeur is DocumentType {
@@ -59,7 +61,7 @@ export default async function DocumentsPage({
   const userId = session.user.id;
   const maintenant = new Date();
 
-  const { mois, distributeur, reference, upgrade, hausse, type, enseigne } = await searchParams;
+  const { mois, distributeur, reference, upgrade, hausse, type, enseigne, onboarding, scanner } = await searchParams;
   const filtreHausse = hausse === "1";
   const typeValide = estTypeValide(type) ? type : undefined;
 
@@ -271,6 +273,16 @@ export default async function DocumentsPage({
           <p className="mt-1 text-muted">
             Une fois validé, cette enseigne apparaîtra dans Fournisseurs et Tarineo comparera les prix à votre
             historique personnel.
+          </p>
+        </div>
+      )}
+
+      {onboarding === "1" && (
+        <div className="mt-6 app-banner text-sm">
+          <p className="font-semibold text-[var(--foreground)]">Importez vos premiers documents</p>
+          <p className="mt-1 text-muted">
+            PDF, photos ou plusieurs fichiers à la fois. Tarinéo lit, extrait et construit votre espace — sans
+            inventer de données.
           </p>
         </div>
       )}
@@ -661,6 +673,9 @@ export default async function DocumentsPage({
               key={typeValide ?? "defaut"}
               quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
               typeInitial={typeValide}
+              modeOnboarding={onboarding === "1"}
+              redirigerVersResume={documentsTotal === 0}
+              autoOuvrirCamera={scanner === "1"}
             />
           </>
         )}
