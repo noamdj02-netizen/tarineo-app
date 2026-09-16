@@ -248,6 +248,21 @@ model CompanyProfile {
 
   logoKey String? // clé Supabase Storage
 
+  // Champs optionnels enrichis par l'analyse de site ("Ma marque automatiquement")
+  // ou saisie manuelle — jamais inventés par l'IA (null si non trouvés / non validés).
+  website               String?
+  nomCommercial         String?
+  siren                 String?
+  numeroTva             String?
+  iban                  String? // stocké complet côté serveur ; masqué à l'affichage
+  capitalSocial         String?
+  activite              String?
+  activiteDescription   String?
+  couleurPrimaire       String? // hex #rrggbb — personnalise devis/factures, pas l'UI Tarineo
+  couleurSecondaire     String?
+  conditionsPaiementDefaut String?
+  mentionsLegales       String?
+
   // Compteurs séquentiels pour la numérotation des devis et des factures (voir
   // ClientQuote.numero / ClientInvoice.numero) — sur le profil plutôt que recalculés
   // depuis un COUNT, pour ne jamais réutiliser un numéro après une éventuelle

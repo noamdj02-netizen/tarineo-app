@@ -89,6 +89,11 @@ export interface EntrepriseInfoPdf {
   assuranceActivitesGaranties: string | null;
   assuranceZoneGeographique: string | null;
   logoDataUrl: string | null;
+  // Champs optionnels issus du profil enrichi (analyse de site / saisie manuelle)
+  numeroTva?: string | null;
+  ibanMasque?: string | null;
+  mentionsLegales?: string | null;
+  couleurPrimaire?: string | null;
 }
 
 export interface LigneDocumentPdf {
@@ -114,18 +119,20 @@ export function assuranceComplete(e: EntrepriseInfoPdf): boolean {
 }
 
 export function EnTeteEntreprise({ entreprise }: { entreprise: EntrepriseInfoPdf }) {
+  const accent = entreprise.couleurPrimaire || "#1a1a1a";
   return (
     <View>
       {entreprise.logoDataUrl && (
         // eslint-disable-next-line jsx-a11y/alt-text -- Image de @react-pdf/renderer (rendu PDF côté serveur), pas une balise <img> DOM
         <Image src={entreprise.logoDataUrl} style={stylesPdfCommun.logo} />
       )}
-      <Text style={stylesPdfCommun.raisonSociale}>{entreprise.raisonSociale}</Text>
+      <Text style={[stylesPdfCommun.raisonSociale, { color: accent }]}>{entreprise.raisonSociale}</Text>
       {entreprise.formeJuridique && <Text style={stylesPdfCommun.ligneEntreprise}>{entreprise.formeJuridique}</Text>}
       <Text style={stylesPdfCommun.ligneEntreprise}>
         {entreprise.adresseRue} — {entreprise.adresseCodePostal} {entreprise.adresseVille}
       </Text>
       <Text style={stylesPdfCommun.ligneEntreprise}>SIRET : {entreprise.siret}</Text>
+      {entreprise.numeroTva && <Text style={stylesPdfCommun.ligneEntreprise}>TVA : {entreprise.numeroTva}</Text>}
       {entreprise.registreImmatriculation && (
         <Text style={stylesPdfCommun.ligneEntreprise}>{entreprise.registreImmatriculation}</Text>
       )}
@@ -220,11 +227,28 @@ export function BlocAssurance({ entreprise }: { entreprise: EntrepriseInfoPdf })
   );
 }
 
-export function BlocConditionsPaiement({ conditionsPaiement }: { conditionsPaiement: string }) {
+export function BlocConditionsPaiement({
+  conditionsPaiement,
+  ibanMasque,
+}: {
+  conditionsPaiement: string;
+  ibanMasque?: string | null;
+}) {
   return (
     <View style={stylesPdfCommun.sectionConditions}>
       <Text style={{ fontFamily: "Helvetica-Bold" }}>Conditions de paiement</Text>
       <Text>{conditionsPaiement}</Text>
+      {ibanMasque && <Text style={{ marginTop: 4 }}>IBAN : {ibanMasque}</Text>}
+    </View>
+  );
+}
+
+export function BlocMentionsLegales({ mentions }: { mentions: string | null | undefined }) {
+  if (!mentions?.trim()) return null;
+  return (
+    <View style={stylesPdfCommun.sectionConditions}>
+      <Text style={{ fontFamily: "Helvetica-Bold" }}>Mentions légales</Text>
+      <Text>{mentions}</Text>
     </View>
   );
 }

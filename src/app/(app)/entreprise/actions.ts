@@ -4,10 +4,20 @@ import { z } from "zod";
 import { fileTypeFromBuffer } from "file-type";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
-import { siretValide } from "@/lib/entreprise";
+import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
+import {
+  normaliserCouleurHex,
+  normaliserEmail,
+  normaliserIban,
+  normaliserNumeroTva,
+  normaliserSiren,
+  normaliserSiret,
+  normaliserTelephoneFr,
+  siretValide,
+} from "@/lib/entreprise";
+import { FetchSiteError, fetchBinaireSecurise } from "@/lib/fetchSiteSecurise";
 
-const TAILLE_MAX_LOGO_OCTETS = 5 * 1024 * 1024; // 5 Mo — largement suffisant pour un logo
+const TAILLE_MAX_LOGO_OCTETS = 5 * 1024 * 1024;
 const TYPES_LOGO_AUTORISES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -16,30 +26,26 @@ const TYPES_LOGO_AUTORISES: Record<string, string> = {
 
 type ErreurUploadLogo = "trop_volumineux" | "type_invalide" | "erreur";
 
-// Vérifie le type réel par magic bytes (jamais par l'extension/Content-Type fournis par
-// le navigateur, falsifiables — même garde-fou que src/lib/documents.ts) et remplace
-// systématiquement l'éventuel logo précédent (upsert), une entreprise n'ayant qu'un seul
-// logo actif. Reste ici (plutôt que dans src/lib/entreprise.ts, importé aussi par le
-// formulaire client) pour ne jamais entraîner Supabase dans le bundle navigateur.
-async function televerserLogo(
+async function televerserLogoBuffer(
   userId: string,
-  file: File
+  buffer: Buffer,
+  mimeForce?: string
 ): Promise<{ succes: true; cleStockage: string } | { succes: false; erreur: ErreurUploadLogo }> {
-  if (file.size === 0 || file.size > TAILLE_MAX_LOGO_OCTETS) {
+  if (buffer.byteLength === 0 || buffer.byteLength > TAILLE_MAX_LOGO_OCTETS) {
     return { succes: false, erreur: "trop_volumineux" };
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   const typeDetecte = await fileTypeFromBuffer(buffer);
-  const extension = typeDetecte && TYPES_LOGO_AUTORISES[typeDetecte.mime];
-  if (!typeDetecte || !extension) {
+  const mime = typeDetecte?.mime ?? mimeForce;
+  const extension = mime ? TYPES_LOGO_AUTORISES[mime] : undefined;
+  if (!mime || !extension) {
     return { succes: false, erreur: "type_invalide" };
   }
 
   const cleStockage = `logos/${userId}.${extension}`;
   const { error } = await getSupabaseAdmin().storage
     .from(DOCUMENTS_BUCKET)
-    .upload(cleStockage, buffer, { contentType: typeDetecte.mime, upsert: true });
+    .upload(cleStockage, buffer, { contentType: mime, upsert: true });
 
   if (error) {
     console.error("Échec de l'upload du logo vers Supabase Storage :", error);
@@ -49,8 +55,32 @@ async function televerserLogo(
   return { succes: true, cleStockage };
 }
 
+async function televerserLogo(
+  userId: string,
+  file: File
+): Promise<{ succes: true; cleStockage: string } | { succes: false; erreur: ErreurUploadLogo }> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+  return televerserLogoBuffer(userId, buffer);
+}
+
+async function televerserLogoDepuisUrl(
+  userId: string,
+  url: string
+): Promise<{ succes: true; cleStockage: string } | { succes: false; erreur: ErreurUploadLogo }> {
+  if (!isSupabaseConfigured()) return { succes: false, erreur: "erreur" };
+  try {
+    const { buffer, contentType } = await fetchBinaireSecurise(url);
+    const mime = contentType.startsWith("image/") ? contentType.split(";")[0].trim() : undefined;
+    return televerserLogoBuffer(userId, buffer, mime);
+  } catch (e) {
+    if (!(e instanceof FetchSiteError)) console.error("Logo URL :", e);
+    return { succes: false, erreur: "erreur" };
+  }
+}
+
 const schema = z.object({
   raisonSociale: z.string().trim().min(1, "La raison sociale est requise."),
+  nomCommercial: z.string().trim().optional(),
   siret: z.string().trim().refine(siretValide, "SIRET invalide (14 chiffres attendus, clé de contrôle incorrecte)."),
   formeJuridique: z.string().trim().optional(),
   adresseRue: z.string().trim().min(1, "L'adresse est requise."),
@@ -58,19 +88,25 @@ const schema = z.object({
   adresseVille: z.string().trim().min(1, "La ville est requise."),
   telephone: z.string().trim().min(1, "Le téléphone est requis."),
   emailContact: z.string().trim().email("Adresse email invalide."),
+  website: z.string().trim().optional(),
+  numeroTva: z.string().trim().optional(),
+  iban: z.string().trim().optional(),
+  capitalSocial: z.string().trim().optional(),
+  activite: z.string().trim().optional(),
+  activiteDescription: z.string().trim().optional(),
+  couleurPrimaire: z.string().trim().optional(),
+  couleurSecondaire: z.string().trim().optional(),
+  conditionsPaiementDefaut: z.string().trim().optional(),
+  mentionsLegales: z.string().trim().optional(),
   regimeTva: z.enum(["NORMAL", "FRANCHISE_293B"]),
   registreImmatriculation: z.string().trim().optional(),
-  // Assurance décennale : entièrement optionnelle (voir prisma/schema.prisma) — pas de
-  // validation "tout ou rien" ici, le PDF n'affiche le bloc que si les 5 champs sont
-  // renseignés (voir assuranceComplete dans src/lib/devisPdf.tsx).
   assuranceNom: z.string().trim().optional(),
   assuranceAdresse: z.string().trim().optional(),
   assuranceNumeroContrat: z.string().trim().optional(),
   assuranceActivitesGaranties: z.string().trim().optional(),
   assuranceZoneGeographique: z.string().trim().optional(),
-  // Marge appliquée par défaut aux prix suggérés dans les devis clients (voir
-  // src/lib/suggestionPrix.ts) — toujours éditable ligne par ligne, jamais imposée.
   margeParDefautPct: z.coerce.number().min(0, "La marge ne peut pas être négative.").max(500, "Marge trop élevée."),
+  logoUrlExterne: z.string().trim().optional(),
 });
 
 export type ResultatEnregistrementEntreprise = { succes: true } | { succes: false; erreur: string };
@@ -91,6 +127,22 @@ export async function enregistrerEntreprise(formData: FormData): Promise<Resulta
   }
   const data = parsed.data;
 
+  const siret = normaliserSiret(data.siret);
+  if (!siret) return { succes: false, erreur: "SIRET invalide." };
+
+  const emailContact = normaliserEmail(data.emailContact);
+  if (!emailContact) return { succes: false, erreur: "Adresse email invalide." };
+
+  const telephone = normaliserTelephoneFr(data.telephone) ?? data.telephone;
+  const numeroTva = data.numeroTva ? normaliserNumeroTva(data.numeroTva) : null;
+  if (data.numeroTva && data.numeroTva.trim() && !numeroTva) {
+    return { succes: false, erreur: "Numéro de TVA invalide (format FR + clé + SIREN attendu)." };
+  }
+  const iban = data.iban ? normaliserIban(data.iban) : null;
+  if (data.iban && data.iban.trim() && !iban) {
+    return { succes: false, erreur: "IBAN invalide." };
+  }
+
   let logoKey: string | undefined;
   const logo = formData.get("logo");
   if (logo instanceof File && logo.size > 0) {
@@ -104,49 +156,53 @@ export async function enregistrerEntreprise(formData: FormData): Promise<Resulta
       return { succes: false, erreur: messages[resultat.erreur] };
     }
     logoKey = resultat.cleStockage;
+  } else if (data.logoUrlExterne && data.logoUrlExterne.startsWith("http")) {
+    const resultat = await televerserLogoDepuisUrl(session.user.id, data.logoUrlExterne);
+    if (resultat.succes) {
+      logoKey = resultat.cleStockage;
+    }
+    // Logo distant optionnel : on n'échoue pas l'enregistrement si le téléchargement rate
   }
+
+  const payload = {
+    raisonSociale: data.raisonSociale,
+    nomCommercial: vide(data.nomCommercial),
+    siret,
+    siren: normaliserSiren(siret),
+    formeJuridique: vide(data.formeJuridique),
+    adresseRue: data.adresseRue,
+    adresseCodePostal: data.adresseCodePostal,
+    adresseVille: data.adresseVille,
+    telephone,
+    emailContact,
+    website: vide(data.website),
+    numeroTva,
+    iban,
+    capitalSocial: vide(data.capitalSocial),
+    activite: vide(data.activite),
+    activiteDescription: vide(data.activiteDescription),
+    couleurPrimaire: normaliserCouleurHex(data.couleurPrimaire),
+    couleurSecondaire: normaliserCouleurHex(data.couleurSecondaire),
+    conditionsPaiementDefaut: vide(data.conditionsPaiementDefaut),
+    mentionsLegales: vide(data.mentionsLegales),
+    regimeTva: data.regimeTva,
+    registreImmatriculation: vide(data.registreImmatriculation),
+    assuranceNom: vide(data.assuranceNom),
+    assuranceAdresse: vide(data.assuranceAdresse),
+    assuranceNumeroContrat: vide(data.assuranceNumeroContrat),
+    assuranceActivitesGaranties: vide(data.assuranceActivitesGaranties),
+    assuranceZoneGeographique: vide(data.assuranceZoneGeographique),
+    margeParDefautPct: data.margeParDefautPct,
+    ...(logoKey ? { logoKey } : {}),
+  };
 
   await prisma.companyProfile.upsert({
     where: { userId: session.user.id },
     create: {
       userId: session.user.id,
-      raisonSociale: data.raisonSociale,
-      siret: data.siret,
-      formeJuridique: vide(data.formeJuridique),
-      adresseRue: data.adresseRue,
-      adresseCodePostal: data.adresseCodePostal,
-      adresseVille: data.adresseVille,
-      telephone: data.telephone,
-      emailContact: data.emailContact,
-      regimeTva: data.regimeTva,
-      registreImmatriculation: vide(data.registreImmatriculation),
-      assuranceNom: vide(data.assuranceNom),
-      assuranceAdresse: vide(data.assuranceAdresse),
-      assuranceNumeroContrat: vide(data.assuranceNumeroContrat),
-      assuranceActivitesGaranties: vide(data.assuranceActivitesGaranties),
-      assuranceZoneGeographique: vide(data.assuranceZoneGeographique),
-      margeParDefautPct: data.margeParDefautPct,
-      ...(logoKey ? { logoKey } : {}),
+      ...payload,
     },
-    update: {
-      raisonSociale: data.raisonSociale,
-      siret: data.siret,
-      formeJuridique: vide(data.formeJuridique),
-      adresseRue: data.adresseRue,
-      adresseCodePostal: data.adresseCodePostal,
-      adresseVille: data.adresseVille,
-      telephone: data.telephone,
-      emailContact: data.emailContact,
-      regimeTva: data.regimeTva,
-      registreImmatriculation: vide(data.registreImmatriculation),
-      assuranceNom: vide(data.assuranceNom),
-      assuranceAdresse: vide(data.assuranceAdresse),
-      assuranceNumeroContrat: vide(data.assuranceNumeroContrat),
-      assuranceActivitesGaranties: vide(data.assuranceActivitesGaranties),
-      assuranceZoneGeographique: vide(data.assuranceZoneGeographique),
-      margeParDefautPct: data.margeParDefautPct,
-      ...(logoKey ? { logoKey } : {}),
-    },
+    update: payload,
   });
 
   return { succes: true };

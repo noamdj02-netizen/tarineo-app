@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { genererPdfDevis, type EntrepriseInfoPdf } from "@/lib/devisPdf";
 import { quotaDevisIA, debutMoisUTC } from "@/lib/quota";
+import { masquerIban } from "@/lib/entreprise";
 
 // Partagé entre la création (devis-clients/nouveau/page.tsx) et la modification
 // (devis-clients/[id]/modifier/page.tsx) d'un devis.
@@ -55,6 +56,10 @@ export async function construireInfoEntreprisePourPdf(userId: string): Promise<E
     assuranceActivitesGaranties: profil.assuranceActivitesGaranties,
     assuranceZoneGeographique: profil.assuranceZoneGeographique,
     logoDataUrl,
+    numeroTva: profil.numeroTva,
+    ibanMasque: profil.iban ? masquerIban(profil.iban) : null,
+    mentionsLegales: profil.mentionsLegales,
+    couleurPrimaire: profil.couleurPrimaire,
   };
 }
 

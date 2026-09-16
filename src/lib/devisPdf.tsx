@@ -14,6 +14,7 @@ import {
   BlocTotaux,
   BlocAssurance,
   BlocConditionsPaiement,
+  BlocMentionsLegales,
   PiedDePage,
   type EntrepriseInfoPdf,
   type LigneDocumentPdf,
@@ -56,7 +57,8 @@ function DevisDocument({ entreprise, devis }: { entreprise: EntrepriseInfoPdf; d
         <TableauLignes lignes={devis.lignes} />
         <BlocTotaux entreprise={entreprise} totalHt={devis.totalHt} totalTva={devis.totalTva} totalTtc={devis.totalTtc} />
         <BlocAssurance entreprise={entreprise} />
-        <BlocConditionsPaiement conditionsPaiement={devis.conditionsPaiement} />
+        <BlocConditionsPaiement conditionsPaiement={devis.conditionsPaiement} ibanMasque={entreprise.ibanMasque} />
+        <BlocMentionsLegales mentions={entreprise.mentionsLegales} />
 
         <View style={stylesPdfCommun.sectionSignature}>
           <View style={stylesPdfCommun.blocSignature}>

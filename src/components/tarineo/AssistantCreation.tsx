@@ -10,19 +10,24 @@ import { IconCalendar } from "@/components/tarineo/NavIcons";
 import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
 import { DEMO_DEVIS_LIGNES, formaterEurosDemo } from "@/lib/uiDemo";
 import { Input } from "@/components/ui/input";
+import { AnalyserSiteEntreprise } from "@/app/(app)/entreprise/AnalyserSiteEntreprise";
 
 const STEPS = ["Client", "Chantier", "Prestations", "Aperçu"];
 
 export function AssistantCreation({
   titre,
   variante,
+  profilEntrepriseComplet = false,
 }: {
   titre: string;
   variante: "devis" | "facture";
+  /** Si false, propose le bloc "Votre entreprise, automatiquement" avant la création. */
+  profilEntrepriseComplet?: boolean;
 }) {
   const router = useRouter();
   const [etape, setEtape] = useState(1);
   const [clientChoisi, setClientChoisi] = useState(variante === "facture");
+  const [profilPret, setProfilPret] = useState(profilEntrepriseComplet);
 
   function continuer() {
     if (etape < 4) setEtape(etape + 1);
@@ -32,6 +37,24 @@ export function AssistantCreation({
   return (
     <div>
       <PageHeader title={titre} />
+
+      {!profilPret && (
+        <div className="mb-5">
+          <AnalyserSiteEntreprise
+            onSucces={() => {
+              setProfilPret(true);
+              router.refresh();
+            }}
+          />
+          <p className="mt-3 text-center text-sm text-muted-foreground">
+            ou{" "}
+            <a href="/parametres" className="font-medium text-primary underline-offset-2 hover:underline">
+              compléter mon entreprise manuellement
+            </a>
+          </p>
+        </div>
+      )}
+
       <WizardSteps steps={STEPS} actif={etape} />
 
       {etape === 1 && (

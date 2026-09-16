@@ -13,6 +13,7 @@ import {
   BlocTotaux,
   BlocAssurance,
   BlocConditionsPaiement,
+  BlocMentionsLegales,
   PiedDePage,
   type EntrepriseInfoPdf,
   type LigneDocumentPdf,
@@ -86,7 +87,8 @@ function FactureDocument({ entreprise, facture }: { entreprise: EntrepriseInfoPd
           totalTtc={facture.totalTtc}
         />
         <BlocAssurance entreprise={entreprise} />
-        <BlocConditionsPaiement conditionsPaiement={facture.conditionsPaiement} />
+        <BlocConditionsPaiement conditionsPaiement={facture.conditionsPaiement} ibanMasque={entreprise.ibanMasque} />
+        <BlocMentionsLegales mentions={entreprise.mentionsLegales} />
         <BlocMentionsRetardPaiement />
 
         <PiedDePage entreprise={entreprise} libelleDocument="Facture" numero={facture.numero} />

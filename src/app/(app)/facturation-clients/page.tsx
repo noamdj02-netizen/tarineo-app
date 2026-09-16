@@ -1,12 +1,28 @@
 import Link from "next/link";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { PageTabs } from "@/components/tarineo/PageTabs";
 import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { StatusBadge } from "@/components/tarineo/StatusBadge";
 import { DEMO_TRANSMISSIONS } from "@/lib/uiDemo";
+import { AnalyserSiteEntreprise } from "@/app/(app)/entreprise/AnalyserSiteEntreprise";
 
 export default async function FacturationClientsPage({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
   const { onglet = "vue" } = await searchParams;
+  const session = await auth();
+  let profilComplet = false;
+  if (session?.user?.id) {
+    try {
+      const profil = await prisma.companyProfile.findUnique({
+        where: { userId: session.user.id },
+        select: { siret: true, raisonSociale: true },
+      });
+      profilComplet = Boolean(profil?.siret && profil?.raisonSociale);
+    } catch {
+      profilComplet = false;
+    }
+  }
 
   return (
     <div>
@@ -25,6 +41,11 @@ export default async function FacturationClientsPage({ searchParams }: { searchP
       </div>
       {onglet === "vue" && (
         <>
+          {!profilComplet && (
+            <div className="mb-5">
+              <AnalyserSiteEntreprise />
+            </div>
+          )}
           <div className="mb-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <PageCard>
               <p className="text-sm text-muted-foreground">Statut de conformité</p>
@@ -69,7 +90,21 @@ export default async function FacturationClientsPage({ searchParams }: { searchP
           </PageCard>
         </>
       )}
-      {onglet !== "vue" && (
+      {onglet === "parametres" && (
+        <div className="space-y-5">
+          <AnalyserSiteEntreprise />
+          <PageCard>
+            <p className="text-sm text-muted-foreground">
+              Pour modifier en détail le profil repris sur vos devis et factures, ouvrez{" "}
+              <Link href="/parametres" className="font-medium text-primary underline-offset-2 hover:underline">
+                Paramètres → Profil entreprise
+              </Link>
+              .
+            </p>
+          </PageCard>
+        </div>
+      )}
+      {onglet !== "vue" && onglet !== "parametres" && (
         <PageCard>
           <p className="text-sm text-muted-foreground">Aucun élément dans cet onglet pour le moment.</p>
         </PageCard>

@@ -45,6 +45,17 @@ export default async function EntreprisePage() {
                 assuranceActivitesGaranties: profil.assuranceActivitesGaranties,
                 assuranceZoneGeographique: profil.assuranceZoneGeographique,
                 margeParDefautPct: Number(profil.margeParDefautPct),
+                website: profil.website,
+                nomCommercial: profil.nomCommercial,
+                numeroTva: profil.numeroTva,
+                iban: profil.iban,
+                capitalSocial: profil.capitalSocial,
+                activite: profil.activite,
+                activiteDescription: profil.activiteDescription,
+                couleurPrimaire: profil.couleurPrimaire,
+                couleurSecondaire: profil.couleurSecondaire,
+                conditionsPaiementDefaut: profil.conditionsPaiementDefaut,
+                mentionsLegales: profil.mentionsLegales,
               }
             : null
         }
