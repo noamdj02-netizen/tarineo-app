@@ -5,6 +5,8 @@ import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/
 import { FormulaireEntreprise } from "../entreprise/FormulaireEntreprise";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { PageTabs } from "@/components/tarineo/PageTabs";
+import { ParametresAbonnement } from "./ParametresAbonnement";
+import { ParametresIntegrations } from "./ParametresIntegrations";
 import Link from "next/link";
 
 export default async function ParametresPage({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
@@ -13,9 +15,15 @@ export default async function ParametresPage({ searchParams }: { searchParams: P
   const { onglet = "profil" } = await searchParams;
 
   let profil = null;
+  let planActuel: string | null = null;
   let dbIndisponible = false;
   try {
-    profil = await prisma.companyProfile.findUnique({ where: { userId: session.user.id } });
+    const [profilRow, userRow] = await Promise.all([
+      prisma.companyProfile.findUnique({ where: { userId: session.user.id } }),
+      prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true } }),
+    ]);
+    profil = profilRow;
+    planActuel = userRow?.plan ?? null;
   } catch {
     dbIndisponible = true;
   }
@@ -83,15 +91,24 @@ export default async function ParametresPage({ searchParams }: { searchParams: P
       )}
       {onglet === "abonnement" && (
         <PageCard>
-          <p className="text-sm text-muted-foreground">Gérez votre offre depuis la page compte.</p>
-          <Link href="/compte" className="mt-4 inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm text-white">
-            Ouvrir mon compte
-          </Link>
+          <ParametresAbonnement planActuel={planActuel} />
         </PageCard>
       )}
-      {(onglet === "notifications" || onglet === "equipe" || onglet === "integrations") && (
+      {onglet === "integrations" && (
         <PageCard>
-          <p className="text-sm text-muted-foreground">Cette section arrive avec l&apos;offre Pro.</p>
+          <ParametresIntegrations />
+        </PageCard>
+      )}
+      {(onglet === "notifications" || onglet === "equipe") && (
+        <PageCard>
+          <h2 className="text-base font-semibold">Notifications & équipe</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Alertes push sur hausse de prix, rappels BFA et accès multi-utilisateurs pour les chefs de chantier —
+            disponibles avec le plan Équipe (prochaine version).
+          </p>
+          <Link href="/parametres?onglet=abonnement" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
+            Voir les offres
+          </Link>
         </PageCard>
       )}
     </div>

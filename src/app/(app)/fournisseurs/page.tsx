@@ -1,49 +1,70 @@
 import Link from "next/link";
-import { PageHeader, PageCard, SearchField } from "@/components/tarineo/PageHeader";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { DataTable, TableRow, TableCell, RowActions } from "@/components/tarineo/DataTable";
 import { BrandMark } from "@/components/tarineo/BrandMark";
-import { BtnGhost, BtnPrimary } from "@/components/tarineo/Actions";
-import { IconFilter } from "@/components/tarineo/NavIcons";
-import { DEMO_FOURNISSEURS } from "@/lib/uiDemo";
+import { BtnPrimary } from "@/components/tarineo/Actions";
+import { construireBibliothequeComplete } from "@/lib/fournisseursPage";
+import { BibliothequeFournisseurs } from "./BibliothequeFournisseurs";
 
-export default function FournisseursPage() {
+const formaterEuros = (v: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
+
+const formaterDate = (d: Date | null) =>
+  d ? d.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : "—";
+
+export default async function FournisseursPage() {
+  const session = await auth();
+  if (!session?.user?.id) redirect("/connexion");
+
+  const bibliotheque = await construireBibliothequeComplete(session.user.id);
+  const importes = bibliotheque.filter((f) => f.importe);
+
   return (
     <div>
       <PageHeader
-        title="Fournisseurs"
-        subtitle="Suivez vos fournisseurs et l'évolution des tarifs."
-        actions={
-          <>
-            <BtnGhost>
-              <IconFilter /> Filtrer
-            </BtnGhost>
-            <BtnPrimary href="/documents">Rechercher l&apos;historique</BtnPrimary>
-          </>
-        }
+        title="Bibliothèque fournisseurs"
+        subtitle={`${bibliotheque.length} enseignes du bâtiment référencées — ${importes.length} déjà suivie${importes.length > 1 ? "s" : ""} dans vos imports.`}
+        actions={<BtnPrimary href="/documents">Importer un document</BtnPrimary>}
       />
-      <PageCard>
-        <SearchField placeholder="Rechercher un fournisseur..." className="mb-4" />
-        <DataTable columns={["Nom", "Contact", "Ville", "Produits suivis", "Évolution", "Dernier imp.", "Actions"]}>
-          {DEMO_FOURNISSEURS.map((f) => (
-            <TableRow key={f.id}>
-              <TableCell>
-                <Link href={`/fournisseurs/${f.id}`} className="inline-flex items-center gap-2.5 font-medium hover:text-primary">
-                  <BrandMark nom={f.nom} logo={f.logo} size={28} />
-                  {f.nom}
-                </Link>
-              </TableCell>
-              <TableCell>{f.contact}</TableCell>
-              <TableCell>{f.ville}</TableCell>
-              <TableCell>{f.produits}</TableCell>
-              <TableCell className={f.evolution.startsWith("-") ? "text-[#1F9D55]" : "text-primary"}>{f.evolution}</TableCell>
-              <TableCell>{f.dernier}</TableCell>
-              <TableCell>
-                <RowActions />
-              </TableCell>
-            </TableRow>
-          ))}
-        </DataTable>
-      </PageCard>
+      <BibliothequeFournisseurs fournisseurs={bibliotheque} />
+
+      {importes.length > 0 && (
+        <PageCard>
+          <h2 className="mb-4 text-base font-semibold text-foreground">Vos enseignes importées</h2>
+          <DataTable
+            columns={["Enseigne", "Dépenses période", "Documents", "Hausses", "Objectif BFA", "Dernier import", "Actions"]}
+          >
+            {importes.map((f) => (
+              <TableRow key={f.slug}>
+                <TableCell>
+                  <Link
+                    href={`/fournisseurs/${encodeURIComponent(f.slug)}`}
+                    className="inline-flex items-center gap-2.5 font-medium hover:text-primary"
+                  >
+                    <BrandMark nom={f.nom} logo={f.logo} size={28} />
+                    <span className="min-w-0">
+                      <span className="block truncate">{f.nom}</span>
+                      {f.groupe && (
+                        <span className="block text-xs font-normal text-muted-foreground">Groupe {f.groupe}</span>
+                      )}
+                    </span>
+                  </Link>
+                </TableCell>
+                <TableCell>{formaterEuros(f.depenses)}</TableCell>
+                <TableCell>{f.documents}</TableCell>
+                <TableCell className={f.hausses > 0 ? "font-medium text-primary" : ""}>{f.hausses}</TableCell>
+                <TableCell>{f.pourcentageBfa !== null ? `${Math.round(f.pourcentageBfa)}%` : "—"}</TableCell>
+                <TableCell>{formaterDate(f.dernierImport)}</TableCell>
+                <TableCell>
+                  <RowActions href={`/fournisseurs/${encodeURIComponent(f.slug)}`} />
+                </TableCell>
+              </TableRow>
+            ))}
+          </DataTable>
+        </PageCard>
+      )}
     </div>
   );
 }

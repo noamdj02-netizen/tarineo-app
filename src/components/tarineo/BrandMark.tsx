@@ -1,16 +1,20 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
+import { trouverFournisseurConnu } from "@/lib/fournisseursConnus";
 
-const COULEURS: Record<string, string> = {
-  Cedeo: "bg-[#EEF1FF] text-[#3B6AE1]",
-  "Point P": "bg-[#FFF3E6] text-[#E67A1F]",
-  Rexel: "bg-[#E9F8EE] text-[#1F9D55]",
-  Sonepar: "bg-[#FDECEC] text-[#D64545]",
-  "Leroy Merlin": "bg-[#F3E8FF] text-[#7C3AED]",
-  Castorama: "bg-[#E8F1FF] text-[#2563EB]",
-  "Brico Dépôt": "bg-[#F3F4F6] text-[#53616A]",
-  "Dupont Rénovation": "bg-[#EEF1FF] text-[#3B6AE1]",
-};
+const COULEUR_PAR_DEFAUT = "bg-[#F3F4F6] text-[#53616A]";
 
+const ARRONDI = {
+  full: "rounded-full",
+  xl: "rounded-2xl",
+  md: "rounded-[4px]",
+} as const;
+
+// Composant client uniquement pour le `onError` : les logos viennent de logo.dev (voir
+// fournisseursConnus.ts), un service tiers qui peut tomber ou retirer une marque de sa
+// base. Dans ce cas on retombe sur le monogramme coloré plutôt que sur une image cassée.
 export function BrandMark({
   nom,
   logo,
@@ -20,28 +24,33 @@ export function BrandMark({
   nom: string;
   logo?: string | null;
   size?: number;
-  rounded?: "full" | "xl";
+  rounded?: keyof typeof ARRONDI;
 }) {
-  if (logo) {
+  const [logoEchoue, setLogoEchoue] = useState(false);
+  const arrondi = ARRONDI[rounded];
+
+  if (logo && !logoEchoue) {
     return (
       <Image
         src={logo}
         alt=""
         width={size}
         height={size}
-        className={rounded === "full" ? "rounded-full object-contain" : "rounded-2xl object-contain"}
+        onError={() => setLogoEchoue(true)}
+        className={`shrink-0 object-contain ${arrondi}`}
         style={{ width: size, height: size }}
       />
     );
   }
+
+  const couleur = trouverFournisseurConnu(nom)?.couleur ?? COULEUR_PAR_DEFAUT;
+
   return (
     <span
-      className={`inline-flex items-center justify-center font-semibold ${COULEURS[nom] ?? "bg-[#F3F4F6] text-[#53616A]"} ${
-        rounded === "full" ? "rounded-full" : "rounded-2xl"
-      }`}
+      className={`inline-flex shrink-0 items-center justify-center font-semibold ${couleur} ${arrondi}`}
       style={{ width: size, height: size, fontSize: size > 36 ? 18 : 13 }}
     >
-      {nom.charAt(0)}
+      {nom.charAt(0).toUpperCase()}
     </span>
   );
 }

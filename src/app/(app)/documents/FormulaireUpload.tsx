@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
+import { LIBELLE_UPLOAD_PHOTO, SOUS_LIBELLE_UPLOAD_PHOTO } from "@/lib/documentLabels";
 
 const TAILLE_MAX_OCTETS = 20 * 1024 * 1024; // 20 Mo — doit rester synchronisé avec src/lib/documents.ts
 const ENVOIS_PARALLELES_MAX = 3;
@@ -46,11 +47,14 @@ function decrireDoublon(doublon: DoublonPotentiel): string {
 export function FormulaireUpload({
   quotaAtteint = false,
   typeInitial,
+  modeUnifie = false,
 }: {
   quotaAtteint?: boolean;
   // Préselectionne le type — utilisé par documents/page.tsx quand l'artisan arrive via
   // le bouton "Importer" de l'état vide d'un type filtré (ex. ?type=BON_ENLEVEMENT).
   typeInitial?: "DEVIS" | "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT";
+  /** Page « Mes documents » sans filtre : l'IA détecte le type, pas de sélecteur manuel. */
+  modeUnifie?: boolean;
 }) {
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
@@ -200,39 +204,54 @@ export function FormulaireUpload({
   }
 
   const enAttenteCount = fichiers.filter((f) => f.statut === "en_attente").length;
+  const cleLibelleUpload = typeInitial ?? "tous";
+  const libellePhoto = LIBELLE_UPLOAD_PHOTO[cleLibelleUpload];
+  const pourcentageEnvoi =
+    progression && progression.total > 0
+      ? (progression.traites / progression.total) * 100
+      : enCours
+        ? 8
+        : 0;
 
   return (
-    <div className="space-y-4 rounded-[24px] bg-white p-6">
-      <fieldset>
-        <legend className="mb-3 text-sm font-normal text-[var(--muted)]">
-          Type de document (l&apos;IA corrige automatiquement si besoin)
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {OPTIONS_TYPE.map((option) => (
-            <label
-              key={option.valeur}
-              className={`rounded-full px-5 py-2.5 text-sm font-normal transition-colors outline outline-1 ${
-                enCoursOuBloque ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-              } ${
-                type === option.valeur
-                  ? "bg-[var(--app-surface-muted)] text-[var(--accent)] outline-[var(--accent)]"
-                  : "bg-white text-[var(--muted)] outline-[var(--app-divider)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="type"
-                value={option.valeur}
-                checked={type === option.valeur}
-                onChange={() => setType(option.valeur)}
-                disabled={enCoursOuBloque}
-                className="sr-only"
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+    <div className="space-y-4 rounded-[24px] bg-white p-4 sm:p-5">
+      {modeUnifie ? (
+        <p className="text-sm text-muted-foreground">
+          Photographiez ou importez n&apos;importe quel document fournisseur — l&apos;IA reconnaît devis, facture,
+          bon de commande ou bon d&apos;enlèvement.
+        </p>
+      ) : (
+        <fieldset className="rounded-[16px] border border-[var(--app-divider)] px-4 pb-4 pt-1">
+          <legend className="px-1.5 text-xs text-muted-foreground">
+            Type de document (l&apos;IA corrige automatiquement si besoin)
+          </legend>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {OPTIONS_TYPE.map((option) => (
+              <label
+                key={option.valeur}
+                className={`rounded-full px-5 py-2.5 text-sm font-normal transition-colors outline outline-1 ${
+                  enCoursOuBloque ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                } ${
+                  type === option.valeur
+                    ? "bg-primary text-white outline-primary"
+                    : "bg-white text-foreground outline-[var(--app-divider)] hover:outline-accent hover:text-accent"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="type"
+                  value={option.valeur}
+                  checked={type === option.valeur}
+                  onChange={() => setType(option.valeur)}
+                  disabled={enCoursOuBloque}
+                  className="sr-only"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <div>
         <input
@@ -266,7 +285,7 @@ export function FormulaireUpload({
           role="button"
           tabIndex={enCoursOuBloque ? -1 : 0}
           aria-disabled={enCoursOuBloque}
-          aria-label={dernierFichier ? "Ajouter une autre photo" : "Photographiez votre devis"}
+          aria-label={dernierFichier ? "Ajouter une autre photo" : libellePhoto}
           onClick={() => !enCoursOuBloque && inputPhotoRef.current?.click()}
           onKeyDown={(e) => {
             if (enCoursOuBloque) return;
@@ -279,7 +298,7 @@ export function FormulaireUpload({
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
-          className={`relative flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border-2 border-dashed text-center transition-colors ${
+          className={`relative flex min-h-[120px] w-full max-w-2xl flex-col items-center justify-center gap-2 overflow-hidden rounded-[16px] border-2 border-dashed px-4 py-5 text-center transition-colors sm:min-h-[132px] sm:flex-row sm:gap-4 sm:px-6 sm:text-left ${
             glisserActif ? "border-[var(--accent)] bg-white" : "border-[var(--app-divider)] bg-[var(--app-surface-muted)]"
           } ${
             enCoursOuBloque ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-[var(--accent)] hover:bg-white"
@@ -291,11 +310,11 @@ export function FormulaireUpload({
               src={apercuUrl}
               alt="Aperçu du document"
               onError={() => dernierFichier && setApercuErreurId(dernierFichier.id)}
-              className="h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
             <>
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[var(--accent)]">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[var(--accent)] sm:h-12 sm:w-12">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -304,29 +323,31 @@ export function FormulaireUpload({
                   strokeWidth={1.75}
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7"
+                  width={24}
+                  height={24}
+                  className="h-6 w-6"
                   aria-hidden="true"
                 >
                   <path d="M4 8a2 2 0 0 1 2-2h1.5l.8-1.2A2 2 0 0 1 10 4h4a2 2 0 0 1 1.7.9L16.5 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" />
                   <circle cx="12" cy="13" r="3.25" />
                 </svg>
               </span>
-              <div>
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-foreground">
                   {quotaAtteint
                     ? "Quota mensuel atteint"
                     : glisserActif
                       ? "Déposez vos fichiers ici"
-                      : "Photographiez votre devis"}
+                      : libellePhoto}
                 </p>
-                <p className="mt-0.5 text-xs text-muted">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   {quotaAtteint
                     ? "Revenez le mois prochain pour continuer l'envoi"
                     : glisserActif
                       ? "Plusieurs fichiers à la fois, c'est possible"
-                      : "Appuyez pour ouvrir l'appareil photo, ou glissez-déposez plusieurs fichiers"}
+                      : cleLibelleUpload === "tous"
+                        ? SOUS_LIBELLE_UPLOAD_PHOTO
+                        : "Appuyez pour ouvrir l'appareil photo, ou glissez-déposez plusieurs fichiers"}
                 </p>
               </div>
             </>
@@ -451,9 +472,22 @@ export function FormulaireUpload({
         type="button"
         onClick={lancerEnvoi}
         disabled={enCoursOuBloque || enAttenteCount === 0}
-        className="w-full rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
+        className="relative w-full overflow-hidden rounded-md bg-accent px-4 py-2.5 font-medium text-accent-foreground hover:opacity-95 disabled:opacity-50"
       >
-        {enCours ? "Envoi en cours..." : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
+        {(enCours || progression) && (
+          <span
+            className="absolute inset-y-0 left-0 bg-white/35 transition-[width] duration-500 ease-out"
+            style={{ width: `${pourcentageEnvoi}%` }}
+            aria-hidden="true"
+          />
+        )}
+        <span className="relative z-10">
+          {enCours
+            ? progression
+              ? `Envoi ${progression.traites}/${progression.total}…`
+              : "Envoi en cours..."
+            : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
+        </span>
       </button>
     </div>
   );

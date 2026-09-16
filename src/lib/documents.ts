@@ -1,7 +1,7 @@
 import { fileTypeFromBuffer } from "file-type";
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
+import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import type { DocumentType } from "@prisma/client";
 
 const TAILLE_MAX_OCTETS = 20 * 1024 * 1024; // 20 Mo — marge pour les photos de facture haute résolution
@@ -65,6 +65,14 @@ export async function enregistrerDocument(
   file: File,
   fileHash: string
 ): Promise<ResultatEnregistrementDocument> {
+  // Vérifié avant de lire le fichier : sans cette garde, getSupabaseAdmin() lève et la
+  // page entière plante au lieu d'afficher l'erreur dans le formulaire. Cas typique
+  // d'une variable d'environnement oubliée après un déploiement.
+  if (!isSupabaseConfigured()) {
+    console.error("Upload impossible : SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY absents de l'environnement.");
+    return { succes: false, erreur: "erreur" };
+  }
+
   if (file.size === 0 || file.size > TAILLE_MAX_OCTETS) {
     return { succes: false, erreur: "trop_volumineux" };
   }

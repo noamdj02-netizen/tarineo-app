@@ -34,6 +34,35 @@ export const TYPES_FILTRABLES = [
   "BON_ENLEVEMENT",
 ] as const satisfies readonly DocumentType[];
 
+/** Titres de page /documents selon le filtre type actif. */
+export const TITRES_PAGE_DOCUMENTS: Record<"tous" | DocumentType, string> = {
+  tous: "Mes documents",
+  DEVIS: "Devis fournisseurs",
+  FACTURE: "Factures fournisseurs",
+  BON_COMMANDE: "Bons de commande",
+  BON_ENLEVEMENT: "Bons d'enlèvement",
+};
+
+export const SOUS_TITRES_PAGE_DOCUMENTS: Record<"tous" | DocumentType, string> = {
+  tous: "Importez et analysez vos devis, factures et bons fournisseur (PDF, photo, 20 Mo max).",
+  DEVIS: "Propositions de prix reçues de vos distributeurs — base de comparaison pour détecter les hausses.",
+  FACTURE: "Factures d'achat validées — alimentent votre historique de prix et vos dépenses.",
+  BON_COMMANDE: "Bons de commande engagés chez vos fournisseurs.",
+  BON_ENLEVEMENT: "Bons d'enlèvement et retraits en agence.",
+};
+
+/** Libellé zone photo — adapté au filtre actif ou générique sur « Mes documents ». */
+export const LIBELLE_UPLOAD_PHOTO: Record<"tous" | DocumentType, string> = {
+  tous: "Photographiez votre document",
+  DEVIS: "Photographiez votre devis",
+  FACTURE: "Photographiez votre facture",
+  BON_COMMANDE: "Photographiez votre bon de commande",
+  BON_ENLEVEMENT: "Photographiez votre bon d'enlèvement",
+};
+
+export const SOUS_LIBELLE_UPLOAD_PHOTO =
+  "Devis, facture, bon de commande… l'IA détecte le type automatiquement.";
+
 // Types représentant un achat réellement engagé, à utiliser pour le futur suivi de
 // dépenses par distributeur. DEVIS est volontairement exclu : une proposition de prix
 // n'est pas un achat (elle reste utile uniquement pour la détection de hausse de prix).

@@ -1,9 +1,9 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { AssistantCreation } from "@/components/tarineo/AssistantCreation";
+import { auth } from "@/auth";
 
+/** Les factures clients sont créées depuis un devis accepté — pas de création directe. */
 export default async function NouvelleFacturePage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
-  return <AssistantCreation titre="Créer une facture" variante="facture" />;
+  redirect("/devis-clients");
 }

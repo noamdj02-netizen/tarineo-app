@@ -95,10 +95,22 @@ const JSON_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const PROMPT = `Tu analyses un document commercial d'un distributeur de matériel du bâtiment
-(par exemple Cedeo, Point P, Rexel, Brossette, Richardson, Aubade) : un devis, une facture,
-un bon de commande, ou un bon d'enlèvement (document remis lors du retrait de marchandise
-en agence, mentionnant souvent "Bon d'enlèvement n°", "Enlèvement", "Retrait marchandise").
+const PROMPT = `Tu analyses un document commercial d'un distributeur de matériel du bâtiment :
+un devis, une facture, un bon de commande, ou un bon d'enlèvement (document remis lors du
+retrait de marchandise en agence, mentionnant souvent "Bon d'enlèvement n°", "Enlèvement",
+"Retrait marchandise").
+
+Enseignes fréquentes, à titre d'exemples uniquement : Cedeo, Envie de Salle de Bain, Point P,
+La Plateforme du Bâtiment, Dispart, PUM, Dispano, Rexel, Sonepar, France Bonhomme, France Air,
+Castorama, Brico Dépôt, Screwfix, Leroy Merlin, Tecnomat (ex-Bricoman), Aubade, Tereva,
+Bleu Rouge, Gedimat, BigMat, Bois & Matériaux, Brossette, Richardson.
+Cette liste n'est PAS limitative : si le document provient d'une autre enseigne, d'un négoce
+régional ou d'un artisan, relève le nom tel qu'il apparaît sur le document. Ne force jamais un
+nom de cette liste sur un document qui vient d'ailleurs.
+
+- distributeur : le nom commercial de l'enseigne émettrice tel qu'imprimé sur le document
+  (en-tête, logo, pied de page avec le SIRET). S'il s'agit d'une agence locale
+  ("POINT P SAINT-PRIEST"), retiens l'enseigne sans la ville ("Point P").
 
 Extrais les informations dans le JSON demandé :
 - type : détermine le VRAI type du document à partir de son contenu (titre, mentions comme

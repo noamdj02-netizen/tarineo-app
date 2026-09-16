@@ -4,7 +4,7 @@ import { z } from "zod";
 import { fileTypeFromBuffer } from "file-type";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
+import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { siretValide } from "@/lib/entreprise";
 
 const TAILLE_MAX_LOGO_OCTETS = 5 * 1024 * 1024; // 5 Mo — largement suffisant pour un logo
@@ -25,6 +25,13 @@ async function televerserLogo(
   userId: string,
   file: File
 ): Promise<{ succes: true; cleStockage: string } | { succes: false; erreur: ErreurUploadLogo }> {
+  // Même garde que dans src/lib/documents.ts : sans elle, getSupabaseAdmin() lève et
+  // fait planter la page au lieu de remonter l'erreur dans le formulaire.
+  if (!isSupabaseConfigured()) {
+    console.error("Upload du logo impossible : SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY absents de l'environnement.");
+    return { succes: false, erreur: "erreur" };
+  }
+
   if (file.size === 0 || file.size > TAILLE_MAX_LOGO_OCTETS) {
     return { succes: false, erreur: "trop_volumineux" };
   }

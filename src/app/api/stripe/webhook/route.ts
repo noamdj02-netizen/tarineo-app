@@ -1,7 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { stripe, PRIX_MENSUEL_PAR_PLAN } from "@/lib/stripe";
+import { stripe, PRIX_MENSUEL_PAR_PLAN, planDepuisPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+
+function statutDepuisAbonnement(status: Stripe.Subscription.Status): string {
+  // Aligné sur les valeurs documentées dans prisma/schema.prisma (User.subscriptionStatus).
+  if (status === "active" || status === "trialing") return status;
+  if (status === "past_due" || status === "unpaid") return "past_due";
+  if (status === "canceled" || status === "incomplete_expired") return "canceled";
+  return status;
+}
+
+async function utilisateurDepuisAbonnement(subscription: Stripe.Subscription) {
+  const parSub = await prisma.user.findFirst({
+    where: { stripeSubscriptionId: subscription.id },
+    select: { id: true, stripeSubscriptionId: true },
+  });
+  if (parSub) return parSub;
+
+  const customerId =
+    typeof subscription.customer === "string" ? subscription.customer : subscription.customer?.id;
+  if (!customerId) return null;
+
+  return prisma.user.findFirst({
+    where: { stripeCustomerId: customerId },
+    select: { id: true, stripeSubscriptionId: true },
+  });
+}
 
 // Confirmation asynchrone de l'enregistrement d'une carte (voir
 // src/app/(app)/documents/stripeActions.ts pour la création du SetupIntent) :
@@ -24,39 +49,100 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ erreur: "Signature invalide." }, { status: 400 });
   }
 
-  if (event.type === "setup_intent.succeeded") {
-    const setupIntent = event.data.object;
-    const userId = setupIntent.metadata?.userId;
-    const plan = setupIntent.metadata?.plan;
+  try {
+    switch (event.type) {
+      case "setup_intent.succeeded": {
+        const setupIntent = event.data.object;
+        const userId = setupIntent.metadata?.userId;
+        const plan = setupIntent.metadata?.plan;
+        const priceId = plan ? PRIX_MENSUEL_PAR_PLAN[plan] : undefined;
 
-    const priceId = plan ? PRIX_MENSUEL_PAR_PLAN[plan] : undefined;
+        if (!userId || !plan || !priceId) break;
 
-    if (userId && plan && priceId) {
-      const paymentMethodId =
-        typeof setupIntent.payment_method === "string" ? setupIntent.payment_method : setupIntent.payment_method?.id;
-      const customerId = typeof setupIntent.customer === "string" ? setupIntent.customer : setupIntent.customer?.id;
-
-      if (customerId && paymentMethodId) {
-        await stripe.customers.update(customerId, {
-          invoice_settings: { default_payment_method: paymentMethodId },
+        const existant = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { stripeSubscriptionId: true },
         });
+        // Évite un double abonnement si Stripe renvoie le même événement ou si l'artisan
+        // reclique après succès (skill checkout-implementation : réutiliser le customer).
+        if (existant?.stripeSubscriptionId) break;
 
-        // Abonnement mensuel réel (pas de période d'essai Stripe : l'essai gratuit
-        // est déjà géré côté Tarineo avant même l'ajout d'une carte, voir
-        // src/lib/quota.ts) — c'est cet abonnement que la page "Mon compte" permet
-        // ensuite de résilier.
-        const subscription = await stripe.subscriptions.create({
-          customer: customerId,
-          items: [{ price: priceId }],
-          default_payment_method: paymentMethodId,
-        });
+        const paymentMethodId =
+          typeof setupIntent.payment_method === "string"
+            ? setupIntent.payment_method
+            : setupIntent.payment_method?.id;
+        const customerId =
+          typeof setupIntent.customer === "string" ? setupIntent.customer : setupIntent.customer?.id;
+
+        if (customerId && paymentMethodId) {
+          await stripe.customers.update(customerId, {
+            invoice_settings: { default_payment_method: paymentMethodId },
+          });
+
+          const subscription = await stripe.subscriptions.create({
+            customer: customerId,
+            items: [{ price: priceId }],
+            default_payment_method: paymentMethodId,
+          });
+
+          await prisma.user.update({
+            where: { id: userId },
+            data: { subscriptionStatus: "active", plan, stripeSubscriptionId: subscription.id },
+          });
+        }
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const subscription = event.data.object;
+        const utilisateur = await utilisateurDepuisAbonnement(subscription);
+        if (!utilisateur) break;
+
+        const priceId = subscription.items.data[0]?.price?.id ?? null;
+        const plan = planDepuisPriceId(priceId);
 
         await prisma.user.update({
-          where: { id: userId },
-          data: { subscriptionStatus: "active", plan, stripeSubscriptionId: subscription.id },
+          where: { id: utilisateur.id },
+          data: {
+            subscriptionStatus: statutDepuisAbonnement(subscription.status),
+            stripeSubscriptionId: subscription.id,
+            ...(plan ? { plan } : {}),
+          },
         });
+        break;
       }
+
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object;
+        const utilisateur = await utilisateurDepuisAbonnement(subscription);
+        if (!utilisateur) break;
+
+        await prisma.user.update({
+          where: { id: utilisateur.id },
+          data: { subscriptionStatus: "canceled" },
+        });
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object;
+        const customerId =
+          typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+        if (!customerId) break;
+
+        await prisma.user.updateMany({
+          where: { stripeCustomerId: customerId },
+          data: { subscriptionStatus: "past_due" },
+        });
+        break;
+      }
+
+      default:
+        break;
     }
+  } catch (erreur) {
+    console.error(`Erreur traitement webhook Stripe (${event.type}, ${event.id}) :`, erreur);
+    return NextResponse.json({ erreur: "Traitement échoué." }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

@@ -99,8 +99,10 @@ export function GraphiqueEconomiesSemaine({ donnees }: { donnees: { jour: string
 
 export function GraphiqueRepartitionDistributeurs({
   donnees,
+  utiliseDemo = false,
 }: {
   donnees: { distributorNorm: string; distributor: string; count: number }[];
+  utiliseDemo?: boolean;
 }) {
   const max = Math.max(...donnees.map((d) => d.count), 1);
 
@@ -109,9 +111,17 @@ export function GraphiqueRepartitionDistributeurs({
       {donnees.map((d) => (
         <Link
           key={d.distributorNorm}
-          href={`/documents?hausse=1&distributeur=${encodeURIComponent(d.distributorNorm)}#documents-envoyes`}
+          href={
+            utiliseDemo
+              ? "/documents?onboarding=1"
+              : `/documents?hausse=1&distributeur=${encodeURIComponent(d.distributorNorm)}#documents-envoyes`
+          }
           className="group block"
-          title={`Voir les documents ${d.distributor} avec une hausse détectée (12 derniers mois)`}
+          title={
+            utiliseDemo
+              ? "Importez vos documents pour activer les hausses par distributeur"
+              : `Voir les documents ${d.distributor} avec une hausse détectée (12 derniers mois)`
+          }
         >
           <div className="flex items-baseline justify-between text-xs">
             <span className="font-medium text-[var(--foreground)] group-hover:text-[var(--accent)]">{d.distributor}</span>

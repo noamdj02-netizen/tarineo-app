@@ -56,7 +56,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
               <TableCell>{formaterEurosDemo(c.ca)}</TableCell>
               <TableCell>{c.activite}</TableCell>
               <TableCell>
-                <RowActions />
+                <RowActions href={`/clients/${c.id}`} />
               </TableCell>
             </TableRow>
           ))}

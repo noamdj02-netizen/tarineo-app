@@ -56,12 +56,13 @@ export function DonutChart({
   total: string;
   slices: { nom: string; pct: number; montant: number; couleur: string }[];
 }) {
-  let acc = 0;
+  // Chaque part du donut démarre là où la précédente s'arrête : on cumule les
+  // pourcentages des parts qui précèdent plutôt que de tenir un accumulateur mutable
+  // pendant le rendu.
   const gradient = slices
-    .map((s) => {
-      const start = acc;
-      acc += s.pct;
-      return `${s.couleur} ${start}% ${acc}%`;
+    .map((s, i) => {
+      const debut = slices.slice(0, i).reduce((somme, precedente) => somme + precedente.pct, 0);
+      return `${s.couleur} ${debut}% ${debut + s.pct}%`;
     })
     .join(", ");
 

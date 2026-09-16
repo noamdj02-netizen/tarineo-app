@@ -34,7 +34,7 @@ export default async function ClientDetailPage({
         actions={
           <>
             <BtnOrangeOutline href="/devis-clients/nouveau">+ Créer un devis</BtnOrangeOutline>
-            <BtnPrimary href="/factures-clients/nouveau">+ Créer une facture</BtnPrimary>
+            <BtnPrimary href="/devis-clients/nouveau">+ Créer un devis</BtnPrimary>
           </>
         }
       />

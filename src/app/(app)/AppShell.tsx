@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { BellIcon, LogOutIcon, MenuIcon, SearchIcon } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { BellIcon, ChevronDownIcon, LogOutIcon, MenuIcon, SearchIcon } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { IconDocument, IconInvoice, IconSettings, IconWidget } from "@/components/tarineo/NavIcons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -38,9 +38,14 @@ function MenuNotifications() {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[min(100vw-2rem,360px)] p-2">
-        <DropdownMenuLabel className="px-2 py-1.5 text-sm font-semibold text-foreground">Notifications</DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        {/* Le libellé doit vivre DANS le groupe qu'il nomme : Base UI lève sinon
+            « MenuGroupContext is missing » à chaque ouverture du menu. Rendu collant
+            pour rester visible quand la liste défile. */}
         <DropdownMenuGroup className="max-h-[min(60vh,320px)] overflow-y-auto">
+          <DropdownMenuLabel className="sticky top-0 z-10 bg-popover px-2 py-1.5 text-sm font-semibold text-foreground">
+            Notifications <span className="font-normal text-muted-foreground">(exemples)</span>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
           {DEMO_NOTIFICATIONS.map((notif) => (
             <DropdownMenuItem key={notif.id} className="flex-col items-start gap-1 whitespace-normal rounded-xl px-3 py-3">
               <div className="flex w-full items-start justify-between gap-2">
@@ -53,8 +58,8 @@ function MenuNotifications() {
           ))}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem nativeButton={false} render={<Link href="/accueil" className="w-full justify-center text-center" />}>
-          Voir le tableau de bord
+        <DropdownMenuItem nativeButton={false} render={<Link href="/documents" className="w-full justify-center text-center" />}>
+          Importer un document
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -63,41 +68,100 @@ function MenuNotifications() {
 
 const LIENS_NAV = [
   { id: "dashboard", href: "/accueil", libelle: "Dashboard" },
-  { id: "documents", href: "/devis-clients", libelle: "Mes documents" },
-  { id: "facturation", href: "/facturation-clients", libelle: "Facturation clients" },
+  { id: "documents", href: "/documents", libelle: "Mes documents" },
+  { id: "fournisseurs", href: "/fournisseurs", libelle: "Bibliothèque" },
+  { id: "veille", href: "/veille", libelle: "Veille" },
+  { id: "facturation", href: "/devis-clients", libelle: "Facturation clients" },
   { id: "analyses", href: "/analyses", libelle: "Analyses" },
   { id: "parametres", href: "/parametres", libelle: "Paramètres" },
 ];
 
 const LIENS_TOP = [
   { href: "/accueil", libelle: "Dashboard" },
-  { href: "/devis-clients", libelle: "Devis" },
+  { href: "/documents", libelle: "Mes documents" },
   { href: "/fournisseurs", libelle: "Fournisseurs" },
-  { href: "/documents", libelle: "Historique" },
+  { href: "/devis-clients", libelle: "Facturation" },
+  { href: "/analyses", libelle: "Analyses" },
 ];
 
 const SOUS_LIENS_DOCUMENTS = [
-  { href: "/devis-clients", libelle: "Devis" },
-  { href: "/factures-clients", libelle: "Factures" },
-  { href: "/bons-de-commande", libelle: "Bons de commande" },
-  { href: "/bons-enlevement", libelle: "Bons d'enlèvement" },
+  { href: "/documents", libelle: "Tous" },
+  { href: "/documents?type=DEVIS", libelle: "Devis fournisseurs" },
+  { href: "/documents?type=FACTURE", libelle: "Factures" },
+  { href: "/documents?type=BON_COMMANDE", libelle: "Bons de commande" },
+  { href: "/documents?type=BON_ENLEVEMENT", libelle: "Bons d'enlèvement" },
+];
+
+const SOUS_LIENS_FACTURATION = [
+  { href: "/devis-clients", libelle: "Devis clients" },
+  { href: "/factures-clients", libelle: "Factures clients" },
 ];
 
 function iconeNav(id: string) {
   const cls = "size-6 shrink-0";
-  if (id === "dashboard" || id === "analyses") return <IconWidget className={cls} />;
+  if (id === "dashboard" || id === "analyses" || id === "fournisseurs" || id === "veille") {
+    return <IconWidget className={cls} />;
+  }
   if (id === "documents") return <IconDocument className={cls} />;
   if (id === "facturation") return <IconInvoice className={cls} />;
   return <IconSettings className={cls} />;
 }
 
-function SousMenuDocuments({ onNavigate }: { onNavigate?: () => void }) {
+function useTiroirSidebar(cle: string, defautOuvert: boolean) {
+  const [ouvert, setOuvert] = useState(defautOuvert);
+
+  useEffect(() => {
+    try {
+      const stocke = localStorage.getItem(cle);
+      // Lecture d'un système externe (localStorage), impossible au premier rendu
+      // puisqu'il n'existe pas côté serveur — exception assumée à la règle, et non un
+      // état dérivé d'un autre état React. Même motif que dans FormulaireDevis.tsx.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (stocke === "0") setOuvert(false);
+      if (stocke === "1") setOuvert(true);
+    } catch {
+      // ignore
+    }
+  }, [cle]);
+
+  function basculer() {
+    const suivant = !ouvert;
+    setOuvert(suivant);
+    try {
+      localStorage.setItem(cle, suivant ? "1" : "0");
+    } catch {
+      // ignore
+    }
+  }
+
+  return { ouvert, basculer };
+}
+
+function SousMenuLiens({
+  liens,
+  onNavigate,
+}: {
+  liens: { href: string; libelle: string }[];
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  function estActif(href: string) {
+    const [path, query] = href.split("?");
+    const surSection = pathname === path || pathname.startsWith(`${path}/`);
+    if (!surSection) return false;
+    if (path === "/documents") {
+      if (!query) return !searchParams.get("type");
+      return searchParams.get("type") === new URLSearchParams(query).get("type");
+    }
+    return pathname === path || pathname.startsWith(`${path}/`);
+  }
 
   return (
     <div>
-      {SOUS_LIENS_DOCUMENTS.map((lien) => {
-        const actif = pathname === lien.href || pathname.startsWith(`${lien.href}/`);
+      {liens.map((lien) => {
+        const actif = estActif(lien.href);
         return (
           <Link
             key={lien.href}
@@ -117,19 +181,87 @@ function SousMenuDocuments({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function LienNavDocuments({ onNavigate }: { onNavigate?: () => void }) {
+function LienNavAvecTiroir({
+  id,
+  href,
+  libelle,
+  sousLiens,
+  actif,
+  onNavigate,
+}: {
+  id: string;
+  href: string;
+  libelle: string;
+  sousLiens: { href: string; libelle: string }[];
+  actif: boolean;
+  onNavigate?: () => void;
+}) {
+  const { ouvert, basculer } = useTiroirSidebar(`tarineo-sidebar-${id}`, actif);
+
   return (
     <div>
-      <Link
-        href="/devis-clients"
-        onClick={onNavigate}
-        className="flex items-center gap-3 rounded-[10px] px-6 py-3.5 text-base font-normal text-muted-foreground hover:text-foreground"
+      <div
+        className={cn(
+          "flex items-center rounded-[10px] transition-colors",
+          actif ? "bg-[#FFF0E8] text-primary" : "text-muted-foreground hover:text-foreground"
+        )}
       >
-        {iconeNav("documents")}
-        Mes documents
-      </Link>
-      <SousMenuDocuments onNavigate={onNavigate} />
+        <Link
+          href={href}
+          onClick={onNavigate}
+          aria-current={actif ? "page" : undefined}
+          className="flex min-w-0 flex-1 items-center gap-3 px-6 py-3.5 text-base font-normal"
+        >
+          {iconeNav(id)}
+          {libelle}
+        </Link>
+        <button
+          type="button"
+          onClick={basculer}
+          className="mr-3 flex size-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-black/5"
+          aria-expanded={ouvert}
+          aria-label={ouvert ? `Replier ${libelle}` : `Déplier ${libelle}`}
+        >
+          <ChevronDownIcon className={cn("size-4 transition-transform duration-200", ouvert && "rotate-180")} />
+        </button>
+      </div>
+      {ouvert && <SousMenuLiens liens={sousLiens} onNavigate={onNavigate} />}
     </div>
+  );
+}
+
+function LienNavDocuments({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const actif = pathname === "/documents" || pathname.startsWith("/documents/");
+
+  return (
+    <LienNavAvecTiroir
+      id="documents"
+      href="/documents"
+      libelle="Mes documents"
+      sousLiens={SOUS_LIENS_DOCUMENTS}
+      actif={actif}
+      onNavigate={onNavigate}
+    />
+  );
+}
+
+function LienNavFacturation({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const actif =
+    pathname.startsWith("/devis-clients") ||
+    pathname.startsWith("/factures-clients") ||
+    pathname.startsWith("/facturation-clients");
+
+  return (
+    <LienNavAvecTiroir
+      id="facturation"
+      href="/devis-clients"
+      libelle="Facturation clients"
+      sousLiens={SOUS_LIENS_FACTURATION}
+      actif={actif}
+      onNavigate={onNavigate}
+    />
   );
 }
 
@@ -192,6 +324,9 @@ function ContenuSidebar({
           {LIENS_NAV.map((lien) => {
             if (lien.id === "documents") {
               return <LienNavDocuments key={lien.id} onNavigate={onNavigate} />;
+            }
+            if (lien.id === "facturation") {
+              return <LienNavFacturation key={lien.id} onNavigate={onNavigate} />;
             }
             const actif =
               lien.href === "/accueil"

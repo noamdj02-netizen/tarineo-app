@@ -8,9 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { FormulaireUpload } from "./FormulaireUpload";
 import { PopupOnboardingDevis } from "./PopupOnboardingDevis";
+import { OnboardingDocuments } from "./OnboardingDocuments";
 import { EcranPaiementRequis } from "./EcranPaiementRequis";
-import { LABELS_STATUT, LABELS_TYPE, LABELS_TYPE_PLURIEL, TYPES_FILTRABLES } from "@/lib/documentLabels";
+import {
+  LABELS_STATUT,
+  LABELS_TYPE,
+  LABELS_TYPE_PLURIEL,
+  SOUS_TITRES_PAGE_DOCUMENTS,
+  TITRES_PAGE_DOCUMENTS,
+  TYPES_FILTRABLES,
+} from "@/lib/documentLabels";
 import { NavTypeMobile } from "./NavTypeMobile";
+import { BanniereRepliable } from "@/components/tarineo/BanniereRepliable";
 import { normaliserReference } from "@/lib/normalisation";
 import { historiqueEstSuffisant } from "@/lib/historique";
 import { calculerEtatQuota, debutMoisUTC } from "@/lib/quota";
@@ -24,6 +33,7 @@ interface Recherche {
   upgrade?: string;
   hausse?: string;
   type?: string;
+  onboarding?: string;
 }
 
 function estTypeValide(valeur: string | undefined): valeur is DocumentType {
@@ -58,7 +68,8 @@ export default async function DocumentsPage({
   const userId = session.user.id;
   const maintenant = new Date();
 
-  const { mois, distributeur, reference, upgrade, hausse, type } = await searchParams;
+  const { mois, distributeur, reference, upgrade, hausse, type, onboarding } = await searchParams;
+  const onboardingActif = onboarding === "1";
   const filtreHausse = hausse === "1";
   const typeValide = estTypeValide(type) ? type : undefined;
 
@@ -217,13 +228,14 @@ export default async function DocumentsPage({
   const maxStatsParDistributeur = Math.max(...statsParDistributeur.map((d) => d.count), 1);
 
   const debutMois = debutMoisUTC(maintenant);
-  const [utilisateur, documentsAvantCeMois, documentsCeMois] = await Promise.all([
+  const [utilisateur, documentsAvantCeMois, documentsCeMois, alertesHausseTotal] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: { createdAt: true, onboardingDevisPopupVu: true, plan: true, subscriptionStatus: true },
     }),
     prisma.document.count({ where: { userId, createdAt: { lt: debutMois } } }),
     prisma.document.count({ where: { userId, createdAt: { gte: debutMois } } }),
+    prisma.alert.count({ where: { userId, type: "PRICE_INCREASE" } }),
   ]);
   const documentsTotal = documentsAvantCeMois + documentsCeMois;
   const etatQuota = utilisateur
@@ -238,93 +250,69 @@ export default async function DocumentsPage({
     : null;
   const afficherPopupOnboarding = historiqueSuffisant && utilisateur !== null && !utilisateur.onboardingDevisPopupVu;
   const bloquePaiementRequis = etatQuota?.phase === "bloque_paiement_requis";
+  const vueGlobale = !typeValide;
+  const clePage = typeValide ?? "tous";
+  const titrePage = TITRES_PAGE_DOCUMENTS[clePage];
+  const sousTitrePage = SOUS_TITRES_PAGE_DOCUMENTS[clePage];
+  const afficherOnboardingGlobal =
+    vueGlobale && (onboardingActif || documentsTotal < 3 || !historiqueSuffisant) && alertesHausseTotal === 0;
 
   return (
     <div className="app-page flex flex-col gap-6">
-      <section className="rounded-[24px] bg-white p-6">
-      <h1 className="text-2xl font-medium text-[var(--foreground)]">Mes documents</h1>
-      <p className="mt-2 text-sm text-[var(--muted)]">
-        Envoyez un ou plusieurs devis/factures/bons de commande fournisseur (PDF, JPEG, PNG ou HEIC, 20 Mo maximum par fichier).
-      </p>
+      <NavTypeMobile typeActif={typeValide} comptes={Object.fromEntries(comptesParType)} />
 
-      {documentsTotal === 0 && !bloquePaiementRequis && etatQuota?.phase === "historique" && (
-        <div className="mt-6 app-banner text-sm">
-          <p className="font-semibold text-[var(--foreground)]">
-            Bienvenue sur Tarineo — importez votre historique pour activer les alertes de hausse de prix.
-          </p>
-          <p className="mt-1 text-muted">
-            La plupart des distributeurs (Cedeo, Point P, Tereva...) permettent de retélécharger vos documents
-            passés depuis votre espace client.
-          </p>
-          <p className="mt-3 font-medium text-foreground">
-            Import initial : {etatQuota.documentsTotal}/{etatQuota.limiteHistorique} documents
-          </p>
-        </div>
+      {afficherOnboardingGlobal && (
+        <OnboardingDocuments
+          documentsTotal={documentsTotal}
+          historiqueSuffisant={historiqueSuffisant}
+          alertesCount={alertesHausseTotal}
+          forceAffichage={onboardingActif}
+        />
       )}
 
-      {etatQuota?.phase === "historique" && documentsTotal > 0 && (
-        <div className="mt-6 flex gap-3 app-banner text-sm">
-          <span className="mt-0.5 shrink-0 text-accent" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width={20}
-              height={20}
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5.5M12 8v.01" />
-            </svg>
-          </span>
-          <div>
-            <p className="font-medium text-foreground">
-              Import initial : {etatQuota.documentsTotal}/{etatQuota.limiteHistorique} documents
-            </p>
-            <p className="mt-1 text-muted">
-              Ce quota d&apos;import de votre historique est indépendant de votre quota mensuel — utilisez-le pour
-              importer vos anciens devis et factures sans entamer votre forfait.
-              {!historiqueSuffisant &&
-                " Tarineo a besoin d'au moins deux documents d'un même distributeur pour détecter une hausse de prix : les alertes s'activeront automatiquement dès que suffisamment d'achats seront enregistrés pour une même enseigne."}
-            </p>
-          </div>
-        </div>
+      <section className="rounded-[24px] bg-white p-6">
+      <h1 className="text-2xl font-medium text-foreground">{titrePage}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{sousTitrePage}</p>
+
+      {vueGlobale && documentsTotal === 0 && !bloquePaiementRequis && etatQuota?.phase === "historique" && (
+        <BanniereRepliable id="bienvenue-historique" titre="Bienvenue — importez votre historique" className="mt-6">
+          <p>
+            La plupart des distributeurs (Cedeo, Point P, Tereva…) permettent de retélécharger vos documents passés
+            depuis votre espace client.
+          </p>
+          <p className="mt-2 font-medium text-foreground">
+            Import initial : {etatQuota.documentsTotal}/{etatQuota.limiteHistorique} documents
+          </p>
+        </BanniereRepliable>
+      )}
+
+      {vueGlobale && etatQuota?.phase === "historique" && documentsTotal > 0 && (
+        <BanniereRepliable
+          id="quota-historique"
+          titre={`Import initial : ${etatQuota.documentsTotal}/${etatQuota.limiteHistorique} documents`}
+          className="mt-6"
+        >
+          <p>
+            Ce quota d&apos;import est indépendant de votre quota mensuel — utilisez-le pour vos anciens devis et
+            factures sans entamer votre forfait.
+            {!historiqueSuffisant &&
+              " Tarineo a besoin d'au moins deux documents d'un même distributeur pour activer les alertes de hausse."}
+          </p>
+        </BanniereRepliable>
       )}
 
       {etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint && (
-        <div className="mt-6 flex gap-3 app-banner text-sm">
-          <span className="mt-0.5 shrink-0 text-accent" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width={20}
-              height={20}
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5.5M12 8v.01" />
-            </svg>
-          </span>
-          <div>
-            <p className="font-medium text-foreground">
-              Quota mensuel atteint ({etatQuota.quotaMensuel} documents/mois)
-            </p>
-            <p className="mt-1 text-muted">
-              {etatQuota.surPlanReel
-                ? "Vous pourrez de nouveau envoyer des documents le mois prochain."
-                : "Ce plafond s'applique pendant l'essai gratuit, quel que soit le plan visé. Il passera au quota de votre formule (jusqu'à 1 000 documents/mois) dès votre premier moyen de paiement enregistré."}
-            </p>
-          </div>
-        </div>
+        <BanniereRepliable
+          id="quota-mensuel"
+          titre={`Quota mensuel atteint (${etatQuota.quotaMensuel} documents/mois)`}
+          className="mt-6"
+        >
+          <p>
+            {etatQuota.surPlanReel
+              ? "Vous pourrez de nouveau envoyer des documents le mois prochain."
+              : "Ce plafond s'applique pendant l'essai gratuit. Il passera au quota de votre formule dès votre premier moyen de paiement enregistré."}
+          </p>
+        </BanniereRepliable>
       )}
 
       {etatQuota?.phase === "mensuel" && !etatQuota.quotaAtteint && (
@@ -337,37 +325,31 @@ export default async function DocumentsPage({
       {/* Pendant la phase "historique" (import initial), ce message est déjà intégré au
           bandeau "Import initial : X/100 documents" ci-dessus plutôt que dupliqué dans un
           second encart identique visuellement — voir etatQuota?.phase === "historique". */}
-      {!historiqueSuffisant && documentsTotal > 0 && !bloquePaiementRequis && etatQuota?.phase !== "historique" && (
-        <div className="mt-6 flex gap-3 app-banner text-sm">
-          <span className="mt-0.5 shrink-0 text-accent" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width={20}
-              height={20}
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5.5M12 8v.01" />
-            </svg>
-          </span>
-          <div>
-            <p className="font-medium text-foreground">Historique encore insuffisant pour détecter une hausse</p>
-            <p className="mt-1 text-muted">
-              Tarineo a besoin d&apos;au moins deux documents d&apos;un même distributeur pour comparer un prix
-              et repérer une hausse — sans historique, il n&apos;y a rien à comparer. Continuez à envoyer vos
-              devis et factures au fil du temps : les alertes s&apos;activeront automatiquement dès que
-              suffisamment d&apos;achats seront enregistrés pour une même enseigne.
-            </p>
-          </div>
-        </div>
+      {vueGlobale && !historiqueSuffisant && documentsTotal > 0 && !bloquePaiementRequis && etatQuota?.phase !== "historique" && (
+        <BanniereRepliable id="historique-insuffisant" titre="Historique encore insuffisant pour les alertes" className="mt-6">
+          <p>
+            Ajoutez au moins deux documents du même distributeur (ex. Cedeo, Point P). Les alertes de hausse
+            s&apos;activeront automatiquement dès que la comparaison est possible.
+          </p>
+        </BanniereRepliable>
       )}
       </section>
+
+      <div id="formulaire-upload" className="scroll-mt-6">
+        {bloquePaiementRequis ? (
+          <EcranPaiementRequis />
+        ) : (
+          <>
+            {upgrade === "1" && <EcranPaiementRequis bloque={false} />}
+            <FormulaireUpload
+              key={typeValide ?? "defaut"}
+              quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
+              typeInitial={typeValide}
+              modeUnifie={!typeValide}
+            />
+          </>
+        )}
+      </div>
 
       <section id="documents-envoyes" className="scroll-mt-6 rounded-[24px] bg-white p-6">
         <div className="flex items-center justify-between">
@@ -377,10 +359,6 @@ export default async function DocumentsPage({
               Réinitialiser les filtres
             </Link>
           )}
-        </div>
-
-        <div className="mt-3">
-          <NavTypeMobile typeActif={typeValide} comptes={Object.fromEntries(comptesParType)} />
         </div>
 
         {/* key forcé sur la combinaison de filtres : sans lui, une navigation côté client
@@ -631,27 +609,6 @@ export default async function DocumentsPage({
           </div>
         </section>
       )}
-
-      {/* Ancre ciblée par le bouton "Importer" de l'état vide "jamais importé" plus haut —
-          scroll-mt pour ne pas coller sous la sidebar/nav mobile au moment du scroll. */}
-      <div id="formulaire-upload" className="scroll-mt-6">
-        {bloquePaiementRequis ? (
-          <EcranPaiementRequis />
-        ) : (
-          <>
-            {upgrade === "1" && <EcranPaiementRequis bloque={false} />}
-            {/* key : même raison que le <form> de filtres plus haut — sans lui, un lien
-                de type (sidebar/onglets mobile) qui reste sur /documents ne fait que
-                changer `type`, donc FormulaireUpload n'est pas remonté et son
-                useState(typeInitial) interne garde l'ancienne sélection. */}
-            <FormulaireUpload
-              key={typeValide ?? "defaut"}
-              quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
-              typeInitial={typeValide}
-            />
-          </>
-        )}
-      </div>
 
       {afficherPopupOnboarding && <PopupOnboardingDevis />}
     </div>

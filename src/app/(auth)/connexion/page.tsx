@@ -18,7 +18,7 @@ function ConnexionFormPanel({
   showSocial?: boolean;
 }) {
   const panelClass =
-    "rounded-[26px] border border-white/14 bg-[rgba(23,21,19,0.95)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] md:p-6 lg:p-7";
+    "rounded-[24px] border border-[#E6E9EB] bg-white p-5 shadow-[0_8px_30px_rgba(23,41,53,0.06)] md:p-6 lg:p-7";
 
   return (
     <div className={`flex w-full flex-col gap-3.5 ${panelClass}`}>
@@ -47,7 +47,7 @@ function ConnexionFormPanel({
         >
           Mot de passe oublié ?
         </Link>
-        {erreur && <p className="text-sm text-red-400">Email ou mot de passe incorrect.</p>}
+        {erreur && <p className="text-sm text-red-600">Email ou mot de passe incorrect.</p>}
         <button
           type="submit"
           className="flex h-14 items-center justify-center rounded-full bg-[#f24f0a] text-[16px] font-extrabold text-white transition hover:bg-[#e8520e] md:h-[54px]"
@@ -68,18 +68,18 @@ export default async function ConnexionPage({
   const { erreur } = await searchParams;
 
   const intro = (
-    <div className="flex flex-col gap-2 text-white">
+    <div className="flex flex-col gap-2 text-[#172935]">
       <h1 className="text-[clamp(26px,4vw,38px)] font-extrabold leading-tight">Heureux de vous revoir.</h1>
-      <p className="text-[15px] leading-relaxed text-[#b9b4b0]">
+      <p className="text-[15px] leading-relaxed text-[#53616A]">
         Connectez-vous pour comparer vos devis fournisseurs.
       </p>
     </div>
   );
 
   const footer = (
-    <p className="text-center text-[13px] text-[#b9b4b0]">
+    <p className="text-center text-[13px] text-[#53616A]">
       Pas encore de compte ?{" "}
-      <Link href="/inscription" className="font-extrabold text-[#ff6a24] hover:opacity-90">
+      <Link href="/inscription" className="font-extrabold text-[#EC5821] hover:opacity-90">
         Créer un compte
       </Link>
     </p>
@@ -87,9 +87,9 @@ export default async function ConnexionPage({
 
   return (
     <>
-      <MobileAuthShell background="/auth/bg-connexion-mobile.png" overlayOpacity={0.79}>
+      <MobileAuthShell>
         <div className="flex flex-col gap-[26px]">
-          <AuthBrand variant="dark" />
+          <AuthBrand variant="light" />
           {intro}
         </div>
         <ConnexionFormPanel erreur={erreur} />

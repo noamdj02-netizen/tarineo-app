@@ -1,21 +1,21 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { PageCard, PageHeader } from "@/components/tarineo/PageHeader";
-import { StatusBadge } from "@/components/tarineo/StatusBadge";
 import { PageTabs } from "@/components/tarineo/PageTabs";
-import { LineChart } from "@/components/tarineo/Charts";
-import { DataTable, TableRow, TableCell, RowActions } from "@/components/tarineo/DataTable";
+import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { BrandMark } from "@/components/tarineo/BrandMark";
-import { BtnGhost, BtnPrimary, PeriodSelect } from "@/components/tarineo/Actions";
-import { IconFile } from "@/components/tarineo/NavIcons";
-import {
-  DEMO_FOURNISSEURS,
-  DEMO_HAUSSES_CEDEO,
-  DEMO_DEVIS_CEDEO,
-  DEMO_SERIES_CATEGORIES,
-  formaterEurosDemo,
-  formaterEurosDec,
-} from "@/lib/uiDemo";
+import { BtnGhost, BtnPrimary } from "@/components/tarineo/Actions";
+import { LABELS_TYPE } from "@/lib/documentLabels";
+import { calculerDepensesParDistributeur } from "@/lib/depenses";
+import { ficheFournisseur } from "@/lib/fichesFournisseurs";
+import { trouverFournisseurParSlug } from "@/lib/fournisseursConnus";
+import { listerFournisseursUtilisateur, trouverFournisseurImporte } from "@/lib/fournisseursPage";
+import { ObjectifDistributeur } from "../../depenses/ObjectifDistributeur";
+
+const formaterEuros = (v: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(v);
 
 export default async function FournisseurDetailPage({
   params,
@@ -25,9 +25,50 @@ export default async function FournisseurDetailPage({
   searchParams: Promise<{ onglet?: string }>;
 }) {
   const { id } = await params;
+  const slug = decodeURIComponent(id);
   const { onglet = "vue" } = await searchParams;
-  const f = DEMO_FOURNISSEURS.find((x) => x.id === id);
-  if (!f) notFound();
+
+  const session = await auth();
+  if (!session?.user?.id) redirect("/connexion");
+  const userId = session.user.id;
+
+  const connu = trouverFournisseurParSlug(slug);
+  if (!connu) notFound();
+
+  const fiche = ficheFournisseur(connu);
+
+  const [importes, depenses] = await Promise.all([
+    listerFournisseursUtilisateur(userId),
+    calculerDepensesParDistributeur(userId),
+  ]);
+  const donnees = trouverFournisseurImporte(importes, slug);
+  const importe = donnees !== null;
+  const depensesFournisseur = importe
+    ? depenses.find((d) => d.distributorNorm === donnees!.distributorNorm)
+    : null;
+  const distributorNorm = donnees?.distributorNorm ?? slug;
+  const nom = connu.nom;
+  const logo = connu.logo ?? null;
+
+  const documents = importe
+    ? await prisma.document.findMany({
+        where: { userId, distributorNorm: donnees!.distributorNorm, status: "VALIDATED" },
+        orderBy: [{ documentDate: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+        take: 20,
+        select: { id: true, type: true, documentDate: true, totalHt: true },
+      })
+    : [];
+
+  const referencesPerso = importe
+    ? await prisma.priceHistory.findMany({
+        where: { userId, distributorNorm: donnees!.distributorNorm },
+        orderBy: { documentDate: "desc" },
+        take: 8,
+        select: { referenceNorm: true, unitPriceHt: true, documentDate: true },
+      })
+    : [];
+
+  const urlBase = `/fournisseurs/${encodeURIComponent(slug)}`;
 
   return (
     <div>
@@ -35,169 +76,178 @@ export default async function FournisseurDetailPage({
         backHref="/fournisseurs"
         title={
           <span className="flex items-center gap-3">
-            <BrandMark nom={f.nom} logo={f.logo} size={48} rounded="xl" />
-            <span className="flex flex-col gap-1.5">
-              <span>{f.nom}</span>
-              <span className="flex flex-wrap items-center gap-2 text-sm font-normal">
-                <StatusBadge statut="fournisseur" />
-                <StatusBadge statut="fiabilite" label={`${f.fiabilite}% de fiabilité`} />
-                <span className="text-muted-foreground">{f.site}</span>
-              </span>
-            </span>
+            <BrandMark nom={nom} logo={logo} size={48} rounded="xl" />
+            <span>{nom}</span>
           </span>
         }
+        subtitle={[connu.specialite, connu.groupe ? `Groupe ${connu.groupe}` : null].filter(Boolean).join(" · ")}
         actions={
-          <>
-            <BtnGhost href="/analyses">Voir les prix</BtnGhost>
-            <BtnGhost href="/documents">Importer un devis</BtnGhost>
-            <BtnPrimary href="/documents">+ Suivre les prix</BtnPrimary>
-          </>
+          importe ? (
+            <>
+              <BtnGhost href={`/documents?distributeur=${encodeURIComponent(distributorNorm)}`}>Tous les documents</BtnGhost>
+              <BtnPrimary href={`/documents?distributeur=${encodeURIComponent(distributorNorm)}`}>Importer</BtnPrimary>
+            </>
+          ) : (
+            <BtnPrimary href="/documents">Importer un premier document</BtnPrimary>
+          )
         }
       />
+
       <div className="mb-5">
         <PageTabs
           actif={onglet}
           items={[
-            { id: "vue", label: "Vue d'ensemble", href: `/fournisseurs/${id}` },
-            { id: "devis", label: "Devis reçus (24)", href: `/fournisseurs/${id}?onglet=devis` },
-            { id: "evolution", label: "Évolution des prix", href: `/fournisseurs/${id}?onglet=evolution` },
-            { id: "categories", label: "Catégories", href: `/fournisseurs/${id}?onglet=categories` },
-            { id: "infos", label: "Informations", href: `/fournisseurs/${id}?onglet=infos` },
+            { id: "vue", label: "Vue d'ensemble", href: urlBase },
+            ...(importe
+              ? [
+                  {
+                    id: "documents",
+                    label: `Documents (${documents.length})`,
+                    href: `${urlBase}?onglet=documents`,
+                  },
+                ]
+              : []),
           ]}
         />
       </div>
-      <div className="mb-5 grid gap-4 lg:grid-cols-3">
-        <PageCard>
-          <h2 className="mb-4 text-base font-semibold">Informations générales</h2>
-          <dl className="grid grid-cols-[88px_1fr] gap-y-2.5 text-sm">
-            <dt className="text-muted-foreground">Adresse</dt>
-            <dd>12 Rue des Artisans<br />75011 Paris</dd>
-            <dt className="text-muted-foreground">Téléphone</dt>
-            <dd>01 23 45 67 89</dd>
-            <dt className="text-muted-foreground">Email</dt>
-            <dd className="text-[#3B6AE1]">{f.contact}</dd>
-            <dt className="text-muted-foreground">Site web</dt>
-            <dd className="text-[#3B6AE1]">{f.site}</dd>
-          </dl>
-        </PageCard>
-        <PageCard>
-          <h2 className="mb-4 text-base font-semibold">Statistiques (6 derniers mois)</h2>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <StatMini icone="doc" valeur="24" label="Devis reçus" />
-            <StatMini icone="euro" valeur="18 420 €" label="Montant total" />
-            <StatMini icone="up" valeur="+8,2 %" label="Hausse moyenne" accent="orange" />
-            <StatMini icone="ok" valeur="98 %" label="Fiabilité des prix" accent="green" />
-          </div>
-        </PageCard>
-        <PageCard>
-          <h2 className="mb-4 text-base font-semibold">Catégories les plus impactées</h2>
-          <ul className="flex flex-col gap-2.5 text-sm">
-            {[
-              ["+24%", "Cuivre et raccords", "hausse"],
-              ["+18%", "Appareillage électrique", "hausse"],
-              ["+12%", "Carrelage et faïence", "hausse"],
-              ["+8%", "Plomberie sanitaire", "hausse_ok"],
-              ["+6%", "Chauffage et climatisation", "hausse_ok"],
-            ].map(([pct, label, statut]) => (
-              <li key={label} className="flex items-center gap-2.5">
-                <StatusBadge statut={statut} label={pct} />
-                <span>{label}</span>
-              </li>
-            ))}
-          </ul>
-        </PageCard>
-      </div>
-      <div className="mb-5 grid gap-5 xl:grid-cols-2">
-        <PageCard>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Évolution des prix par catégorie</h2>
-            <PeriodSelect className="h-9 px-3 text-xs text-muted-foreground" />
-          </div>
-          <div className="mb-3 flex flex-wrap gap-4 text-xs">
-            {DEMO_SERIES_CATEGORIES.map((s) => (
-              <span key={s.nom} className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full" style={{ background: s.couleur }} />
-                {s.nom}
-              </span>
-            ))}
-          </div>
-          <LineChart series={DEMO_SERIES_CATEGORIES} />
-        </PageCard>
-        <PageCard>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-semibold">Derniers devis reçus</h2>
-            <Link href="/documents" className="text-sm text-muted-foreground hover:text-primary">
-              Voir tout
-            </Link>
-          </div>
-          <ul className="flex flex-col">
-            {DEMO_DEVIS_CEDEO.map((d) => (
-              <li key={d.numero} className="flex items-center gap-3 border-b border-[#F3F3F3] py-3 text-sm last:border-0">
-                <span className="grid size-8 place-items-center rounded-lg bg-[#F8F8F8] text-muted-foreground">
-                  <IconFile />
-                </span>
-                <span className="min-w-[110px] font-medium">{d.numero}</span>
-                <span className="flex-1 text-muted-foreground">{d.categorie}</span>
-                <span className="text-muted-foreground">{d.date}</span>
-                <span className="w-20 text-right font-medium">{formaterEurosDemo(d.montant)}</span>
-                <RowActions />
-              </li>
-            ))}
-          </ul>
-        </PageCard>
-      </div>
-      <PageCard>
-        <h2 className="mb-3 text-base font-semibold">Top 5 des hausses de prix détectées chez {f.nom}</h2>
-        <DataTable columns={["Produit", "Ancien prix", "Nouveau prix", "Variation", "Catégorie", "Date"]}>
-          {DEMO_HAUSSES_CEDEO.map((h) => (
-            <TableRow key={h.produit}>
-              <TableCell className="font-medium">{h.produit}</TableCell>
-              <TableCell>{formaterEurosDec(h.ancien)}</TableCell>
-              <TableCell>{formaterEurosDec(h.nouveau)}</TableCell>
-              <TableCell>
-                <StatusBadge statut="hausse" label={`+${h.variation}%`} />
-              </TableCell>
-              <TableCell>{h.categorie}</TableCell>
-              <TableCell>{h.date}</TableCell>
-            </TableRow>
-          ))}
-        </DataTable>
-      </PageCard>
-    </div>
-  );
-}
 
-function StatMini({
-  icone,
-  valeur,
-  label,
-  accent,
-}: {
-  icone: "doc" | "euro" | "up" | "ok";
-  valeur: string;
-  label: string;
-  accent?: "orange" | "green";
-}) {
-  const colors = {
-    doc: "bg-[#EEF1FF] text-[#3B6AE1]",
-    euro: "bg-[#F3E8FF] text-[#7C3AED]",
-    up: "bg-[#FFF3E6] text-[#E67A1F]",
-    ok: "bg-[#E9F8EE] text-[#1F9D55]",
-  };
-  return (
-    <div className="flex items-start gap-2.5">
-      <span className={`mt-0.5 grid size-8 place-items-center rounded-lg ${colors[icone]}`}>
-        {icone === "doc" && <IconFile className="size-4" />}
-        {icone === "euro" && <span className="text-sm font-semibold">€</span>}
-        {icone === "up" && <span className="text-sm font-semibold">↗</span>}
-        {icone === "ok" && <span className="text-sm font-semibold">✓</span>}
-      </span>
-      <div>
-        <p className={`text-xl font-semibold leading-none ${accent === "orange" ? "text-primary" : accent === "green" ? "text-[#1F9D55]" : ""}`}>
-          {valeur}
-        </p>
-        <p className="mt-1 text-muted-foreground">{label}</p>
-      </div>
+      {onglet === "documents" && importe ? (
+        <PageCard>
+          <DataTable columns={["Type", "Date", "Montant HT", ""]}>
+            {documents.map((d) => (
+              <TableRow key={d.id}>
+                <TableCell>{LABELS_TYPE[d.type] ?? d.type}</TableCell>
+                <TableCell>
+                  {d.documentDate
+                    ? d.documentDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })
+                    : "—"}
+                </TableCell>
+                <TableCell>{d.totalHt !== null ? formaterEuros(Number(d.totalHt)) : "—"}</TableCell>
+                <TableCell>
+                  <Link href={`/documents/${d.id}`} className="text-sm text-primary hover:underline">Ouvrir</Link>
+                </TableCell>
+              </TableRow>
+            ))}
+          </DataTable>
+        </PageCard>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="flex flex-col gap-4 lg:col-span-2">
+            {importe && donnees && (
+              <PageCard>
+                <h2 className="mb-4 text-base font-semibold">Vos achats chez {nom}</h2>
+                <dl className="grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-[16px] bg-[#F8F8F8] p-4">
+                    <dt className="text-xs text-muted-foreground">Dépenses période</dt>
+                    <dd className="mt-1 text-2xl font-semibold text-foreground">{formaterEuros(donnees.depenses)}</dd>
+                  </div>
+                  <div className="rounded-[16px] bg-[#F8F8F8] p-4">
+                    <dt className="text-xs text-muted-foreground">Documents validés</dt>
+                    <dd className="mt-1 text-2xl font-semibold text-foreground">{documents.length}</dd>
+                  </div>
+                  <div className="rounded-[16px] bg-[#F8F8F8] p-4">
+                    <dt className="text-xs text-muted-foreground">Alertes hausse</dt>
+                    <dd className="mt-1 text-2xl font-semibold text-primary">{donnees.hausses}</dd>
+                  </div>
+                </dl>
+                {referencesPerso.length > 0 && (
+                  <div className="mt-5">
+                    <h3 className="text-sm font-semibold text-foreground">Derniers prix que vous avez payés</h3>
+                    <ul className="mt-2 space-y-2">
+                      {referencesPerso.map((r, i) => (
+                        <li
+                          key={`${r.referenceNorm}-${i}`}
+                          className="flex flex-wrap items-baseline justify-between gap-2 rounded-[12px] border border-[#F0F1F1] px-3 py-2 text-sm"
+                        >
+                          <span className="font-medium text-foreground">{r.referenceNorm}</span>
+                          <span className="text-muted-foreground">
+                            {formaterEuros(Number(r.unitPriceHt))} HT ·{" "}
+                            {r.documentDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </PageCard>
+            )}
+
+            <PageCard>
+              <h2 className="mb-3 text-base font-semibold">À propos de {nom}</h2>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                {fiche.avantages.map((a) => (
+                  <li key={a} className="flex gap-2">
+                    <span className="text-primary">✓</span>
+                    <span>{a}</span>
+                  </li>
+                ))}
+              </ul>
+              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div className="rounded-[12px] bg-[#F8F8F8] p-3">
+                  <dt className="text-xs text-muted-foreground">Livraison</dt>
+                  <dd className="mt-1 text-foreground">{fiche.livraison}</dd>
+                </div>
+                <div className="rounded-[12px] bg-[#F8F8F8] p-3">
+                  <dt className="text-xs text-muted-foreground">BFA / remise annuelle</dt>
+                  <dd className="mt-1 text-foreground">{fiche.bfa}</dd>
+                </div>
+              </dl>
+              <a
+                href={fiche.siteWeb}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+              >
+                Site officiel {nom} →
+              </a>
+            </PageCard>
+
+            <PageCard className="border border-[#E6E9EB] bg-[#FAFBFC]">
+              <h2 className="text-base font-semibold text-foreground">Promos en cours</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Tarineo ne scrape pas les sites fournisseurs. Les promos de {nom} apparaîtront ici quand vous
+                transférerez vos newsletters enseigne (agent fournisseur — bientôt), ou dès qu&apos;une promo est
+                détectée dans un devis que vous importez.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link href="/veille" className="rounded-full bg-[#FFF0E8] px-4 py-2 text-sm font-medium text-primary">
+                  Veille &amp; dérives silencieuses
+                </Link>
+                <Link
+                  href="/documents"
+                  className="rounded-full border border-[#E6E9EB] bg-white px-4 py-2 text-sm text-foreground hover:bg-[#F8F8F8]"
+                >
+                  Importer un devis {nom}
+                </Link>
+              </div>
+            </PageCard>
+          </div>
+
+          <PageCard>
+            <h2 className="mb-4 text-base font-semibold">Objectif BFA</h2>
+            {importe && depensesFournisseur && depensesFournisseur.objectif !== null ? (
+              <ObjectifDistributeur
+                distributor={nom}
+                distributorNorm={depensesFournisseur.distributorNorm}
+                depenses={depensesFournisseur.depenses}
+                objectif={depensesFournisseur.objectif}
+                pourcentageAtteinte={depensesFournisseur.pourcentageAtteinte}
+                encoursRestant={depensesFournisseur.encoursRestant}
+                periodStartMonth={depensesFournisseur.periodStartMonth}
+                periodStartDay={depensesFournisseur.periodStartDay}
+                periodeLabel={`Période à partir du ${depensesFournisseur.periodStartDay}/${depensesFournisseur.periodStartMonth}`}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                {importe
+                  ? `Aucun objectif annuel défini pour ${nom}. `
+                  : `Importez des factures chez ${nom} pour suivre un objectif BFA. `}
+                <Link href="/accueil#objectifs" className="text-primary hover:underline">Configurer sur le dashboard</Link>.
+              </p>
+            )}
+          </PageCard>
+        </div>
+      )}
     </div>
   );
 }

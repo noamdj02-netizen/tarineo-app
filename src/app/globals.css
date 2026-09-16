@@ -552,9 +552,98 @@ html {
   animation-fill-mode: forwards;
 }
 
+/* Wizard de création de devis (devis-clients/FormulaireDevis.tsx) : entrée de chaque
+   étape, sens de l'animation selon qu'on avance ou qu'on recule. */
+@keyframes devis-etape-avant {
+  0% {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+@keyframes devis-etape-arriere {
+  0% {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.devis-etape[data-sens="avant"] {
+  animation: devis-etape-avant 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.devis-etape[data-sens="arriere"] {
+  animation: devis-etape-arriere 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Pendant la génération IA : le logo respire et une barre balaie la carte, pour que
+   l'attente (plusieurs secondes d'appel Claude) ne paraisse pas figée. */
+@keyframes devis-ia-respire {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+.devis-ia-respire {
+  animation: devis-ia-respire 1.4s ease-in-out infinite;
+}
+
+@keyframes devis-ia-balayage {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+.devis-ia-balayage {
+  animation: devis-ia-balayage 1.6s ease-in-out infinite;
+}
+
+/* Ligne fraîchement produite par l'IA : apparition en cascade (délai porté par
+   --index) pour qu'on voie le devis « se remplir ». */
+@keyframes devis-ligne-in {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.devis-ligne-in {
+  animation: devis-ligne-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--index, 0) * 60ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  /* FormulaireDevis.tsx : étapes, attente IA et lignes générées s'affichent
+     directement, sans glissement ni pulsation. */
+  .devis-etape,
+  .devis-ia-respire,
+  .devis-ia-balayage,
+  .devis-ligne-in {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .devis-ia-balayage {
+    display: none !important;
   }
 
   .animate-marquee {

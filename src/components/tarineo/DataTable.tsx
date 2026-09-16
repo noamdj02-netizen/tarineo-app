@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MoreHorizontalIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +38,17 @@ export function TableCell({ children, className, align = "left" }: { children: R
   return <td className={cn("px-3 py-[14px] text-sm text-[#172935]", align === "right" && "text-right", className)}>{children}</td>;
 }
 
-export function RowActions() {
+export function RowActions({ href, label = "Voir le détail" }: { href?: string; label?: string }) {
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-medium text-primary hover:bg-[#FFF0E8]"
+      >
+        {label}
+      </Link>
+    );
+  }
   return (
     <button type="button" className="rounded-lg p-1 text-muted-foreground hover:bg-secondary" aria-label="Actions">
       <MoreHorizontalIcon className="size-4" />

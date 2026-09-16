@@ -42,3 +42,21 @@ export const PRIX_ANNUEL_PAR_PLAN: Record<string, string | undefined> = {
   pro: process.env.STRIPE_PRICE_PRO_ANNUEL,
   equipe: process.env.STRIPE_PRICE_PREMIUM_ANNUEL,
 };
+
+const TOUS_LES_PRIX_PAR_PLAN: Record<string, string | undefined> = {
+  ...PRIX_MENSUEL_PAR_PLAN,
+  ...PRIX_ANNUEL_PAR_PLAN,
+};
+
+/** Retrouve la clé plan (`starter` | `pro` | `equipe`) à partir d'un price Stripe. */
+export function planDepuisPriceId(priceId: string | null | undefined): string | null {
+  if (!priceId) return null;
+  for (const [plan, id] of Object.entries(TOUS_LES_PRIX_PAR_PLAN)) {
+    if (id === priceId) return plan;
+  }
+  return null;
+}
+
+export function priceIdValide(priceId: string): boolean {
+  return Object.values(TOUS_LES_PRIX_PAR_PLAN).includes(priceId);
+}

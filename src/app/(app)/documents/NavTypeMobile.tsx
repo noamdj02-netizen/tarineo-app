@@ -3,8 +3,8 @@ import { LABELS_TYPE_PLURIEL, TYPES_FILTRABLES } from "@/lib/documentLabels";
 import type { DocumentType } from "@prisma/client";
 
 const classeOnglet = (actif: boolean) =>
-  `-mb-px shrink-0 whitespace-nowrap border-b-2 py-2 text-sm font-medium ${
-    actif ? "border-accent text-accent" : "border-transparent text-muted"
+  `-mb-px shrink-0 whitespace-nowrap border-b-2 py-2.5 text-sm font-medium transition-colors ${
+    actif ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
   }`;
 
 // Onglets horizontaux scrollables — équivalent tactile du sous-menu desktop
@@ -23,7 +23,7 @@ export function NavTypeMobile({
   return (
     <nav
       aria-label="Filtrer par type de document"
-      className="-mx-4 mb-4 flex gap-5 overflow-x-auto border-b border-border px-4 sm:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-1 mb-5 flex gap-5 overflow-x-auto border-b border-[#EEE] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       <Link href="/documents" aria-current={!typeActif ? "page" : undefined} className={classeOnglet(!typeActif)}>
         Tous

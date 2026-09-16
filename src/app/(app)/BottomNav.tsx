@@ -27,13 +27,9 @@ const ONGLETS = [
     ),
   },
   {
-    href: "/devis-clients",
+    href: "/documents",
     label: "Documents",
-    estActif: (pathname: string) =>
-      pathname.startsWith("/devis-clients") ||
-      pathname.startsWith("/bons-de-commande") ||
-      pathname.startsWith("/bons-enlevement") ||
-      pathname.startsWith("/documents"),
+    estActif: (pathname: string) => pathname === "/documents" || pathname.startsWith("/documents/"),
     icone: (actif: boolean) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"

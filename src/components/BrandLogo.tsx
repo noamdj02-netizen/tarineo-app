@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-/** Icône Tarineo — PNG (fond noir) pour landing legacy ; SVG transparent pour l'app. */
+/** Icône Tarineo — PNG transparent (landing + auth). */
 export const BRAND_LOGO_SRC = "/landing/logo-icon.png";
 export const BRAND_MARK_SRC = "/dashboard/logo.png";
 

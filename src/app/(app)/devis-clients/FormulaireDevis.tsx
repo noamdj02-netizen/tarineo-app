@@ -1,8 +1,14 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { WizardSteps } from "@/components/tarineo/WizardSteps";
 import type { SuggestionPrix } from "@/lib/suggestionPrix";
+
+// Étapes du wizard de création/modification. L'étape 1 (IA) reste facultative : on peut
+// la traverser sans rien écrire et saisir les lignes à la main à l'étape 3.
+const ETAPES = ["Description", "Client", "Prestations", "Aperçu"] as const;
 
 interface LigneFormulaire {
   cle: string;
@@ -182,6 +188,17 @@ export function FormulaireDevis({
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
+  // Wizard : `sens` pilote la direction de l'animation d'entrée (voir .devis-etape dans
+  // globals.css), `etapeMax` autorise le retour en arrière par clic sur le fil d'étapes.
+  const [etape, setEtape] = useState(1);
+  const [sens, setSens] = useState<"avant" | "arriere">("avant");
+  // En modification, le devis est déjà complet : toutes les étapes sont atteignables
+  // d'emblée, pour aller corriger une ligne sans retraverser le wizard.
+  const [etapeMax, setEtapeMax] = useState(devisExistant ? ETAPES.length : 1);
+  // Passe à true juste après une génération IA réussie, pour jouer l'apparition en
+  // cascade des lignes une seule fois (remis à false dès que l'artisan édite).
+  const [lignesAnimees, setLignesAnimees] = useState(false);
+
   // Suggestion de prix par ligne (voir suggererPrix côté serveur) : tenue à part de
   // `lignes` car purement transitoire, indexée par clé de ligne. Lookup débouncé sur la
   // saisie du champ "Référence" pour ne pas déclencher une requête à chaque frappe.
@@ -196,7 +213,39 @@ export function FormulaireDevis({
   }, []);
 
   function majLigne(cle: string, champ: keyof LigneFormulaire, valeur: string) {
+    setLignesAnimees(false);
     setLignes((actuelles) => actuelles.map((l) => (l.cle === cle ? { ...l, [champ]: valeur } : l)));
+  }
+
+  function allerA(cible: number) {
+    setErreur(null);
+    setSens(cible > etape ? "avant" : "arriere");
+    setEtape(cible);
+    setEtapeMax((max) => Math.max(max, cible));
+  }
+
+  // Validation par étape plutôt que par attribut `required` : les champs des étapes
+  // masquées ne sont pas montés, le navigateur ne peut donc pas les valider lui-même.
+  function erreurEtape(n: number): string | null {
+    if (n === 2 && !clientNom.trim()) {
+      return "Indiquez le nom du client pour continuer.";
+    }
+    if (n === 3) {
+      const vide = lignes.find((l) => !l.designation.trim());
+      if (vide) return "Chaque ligne doit avoir une désignation.";
+      const sansPrix = lignes.find((l) => !(Number(l.quantite) > 0) || !(Number(l.prixUnitaireHt) >= 0));
+      if (sansPrix) return "Vérifiez les quantités et les prix unitaires.";
+    }
+    return null;
+  }
+
+  function continuer() {
+    const probleme = erreurEtape(etape);
+    if (probleme) {
+      setErreur(probleme);
+      return;
+    }
+    allerA(Math.min(etape + 1, ETAPES.length));
   }
 
   function ajouterLigne() {
@@ -261,14 +310,45 @@ export function FormulaireDevis({
     if (resultat.clientNom) setClientNom(resultat.clientNom);
     setLignes(lignesFormulaireDepuis(resultat.lignes));
     setPromptUtilise(prompt);
+    setLignesAnimees(true);
+    // L'IA vient de remplir le client et les lignes : on amène directement l'artisan à
+    // la relecture des prestations, qui est le vrai travail restant.
+    allerA(3);
   }
 
   const totalHt = lignes.reduce((s, l) => s + (Number(l.quantite) || 0) * (Number(l.prixUnitaireHt) || 0), 0);
+  const totalTva = lignes.reduce(
+    (s, l) =>
+      s + (Number(l.quantite) || 0) * (Number(l.prixUnitaireHt) || 0) * ((Number(l.tauxTva) || 0) / 100),
+    0
+  );
+  const totalTtc = totalHt + totalTva;
   const quotaEpuise = quotaIA.restantes <= 0;
+  const formaterEuros = (v: number) =>
+    new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(v);
 
   async function soumettre(e: React.FormEvent) {
     e.preventDefault();
     setErreur(null);
+
+    // Entrée au clavier sur une étape intermédiaire : on avance plutôt que d'envoyer
+    // un devis incomplet.
+    if (etape < ETAPES.length) {
+      continuer();
+      return;
+    }
+
+    // Le fil d'étapes permet de sauter en avant (mode modification) : on revalide tout
+    // avant d'envoyer, et on ramène l'artisan sur l'étape fautive.
+    for (let n = 1; n < ETAPES.length; n++) {
+      const probleme = erreurEtape(n);
+      if (probleme) {
+        allerA(n);
+        setErreur(probleme); // après allerA, qui remet l'erreur à null
+        return;
+      }
+    }
+
     setEnCours(true);
 
     const resultat = await actionSoumettre({
@@ -299,287 +379,399 @@ export function FormulaireDevis({
   }
 
   return (
-    <div className="mt-6 space-y-6">
-      <section className="app-card p-5 sm:p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold">{modeModification ? "Décrire la modification" : "Décrire la prestation"}</h2>
-          <span className="text-xs text-muted">
-            {quotaIA.restantes}/{quotaIA.total} générations IA restantes ce mois
-          </span>
-        </div>
-        <p className="mt-1 text-sm text-muted">
-          {modeModification
-            ? "Décrivez la modification à apporter, en texte libre — l'IA reconstruit les lignes concernées et conserve les autres à l'identique. Ex. : « ajoute 2 heures de main d'œuvre en plus », « remplace le radiateur par un modèle à 200€ »."
-            : "Décrivez ce qu'il faut facturer, en texte libre — l'IA pré-remplit les lignes ci-dessous, à corriger avant de valider. Ex. : « devis pour installation chaudière chez M. Dupont, 3 radiateurs à 150€, main d'œuvre 2h à 45€/h »."}
-        </p>
-        <div className="relative mt-3">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            disabled={quotaEpuise}
-            rows={3}
-            placeholder={modeModification ? "Ex. : ajoute 2 heures de main d'œuvre en plus..." : "Devis pour..."}
-            className={`${champClasse} pr-12 disabled:opacity-50`}
-          />
-          {supporteVocal && (
-            <button
-              type="button"
-              onClick={basculerDictee}
-              disabled={quotaEpuise}
-              aria-pressed={enEcoute}
-              aria-label={enEcoute ? "Arrêter la dictée" : "Dicter à la voix"}
-              title={enEcoute ? "Arrêter la dictée" : "Dicter à la voix"}
-              className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border transition-colors disabled:opacity-40 ${
-                enEcoute
-                  ? "border-red-500 bg-red-500/10 text-red-400"
-                  : "border-border text-muted hover:border-accent hover:text-accent"
-              }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                width={16}
-                height={16}
-                className="h-4 w-4"
-                aria-hidden="true"
-              >
-                <rect x="9" y="3" width="6" height="11" rx="3" />
-                <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-              </svg>
-            </button>
-          )}
-        </div>
-        {enEcoute && (
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-            Écoute en cours — parlez, puis appuyez à nouveau sur le micro pour arrêter.
-          </p>
-        )}
-        {erreurVocale && <p className="mt-2 text-sm text-red-400">{erreurVocale}</p>}
-        <div className="mt-3 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={genererAvecIA}
-            disabled={generationEnCours || quotaEpuise || prompt.trim().length < 5}
-            className="rounded-md border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent/10 disabled:opacity-40"
-          >
-            {generationEnCours
-              ? "Génération..."
-              : modeModification
-                ? "Appliquer la modification avec l'IA"
-                : "Générer les lignes avec l'IA"}
-          </button>
-          {quotaEpuise && (
-            <span className="text-xs text-muted">
-              Quota IA épuisé pour ce mois — vous pouvez toujours{" "}
-              {modeModification ? "modifier les lignes manuellement ci-dessous." : "saisir les lignes manuellement ci-dessous."}
-            </span>
-          )}
-        </div>
-        {erreurGeneration && <p className="mt-2 text-sm text-red-400">{erreurGeneration}</p>}
-      </section>
+    <div className="mt-6">
+      <WizardSteps steps={[...ETAPES]} actif={etape} onSelect={allerA} etapeMaxAtteinte={etapeMax} />
 
       <form onSubmit={soumettre} className="space-y-6">
-        <section className="app-card p-5 sm:p-6">
-          <h2 className="text-lg font-semibold">Client</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="clientNom" className={labelClasse}>
-                Nom du client
-              </label>
-              <input
-                id="clientNom"
-                required
-                value={clientNom}
-                onChange={(e) => setClientNom(e.target.value)}
-                className={champClasse}
-              />
-            </div>
-            <div>
-              <label htmlFor="clientAdresse" className={labelClasse}>
-                Adresse (optionnel)
-              </label>
-              <input
-                id="clientAdresse"
-                value={clientAdresse}
-                onChange={(e) => setClientAdresse(e.target.value)}
-                className={champClasse}
-              />
-            </div>
-          </div>
-        </section>
-
-        <section className="app-card p-5 sm:p-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Prestations</h2>
-            <button
-              type="button"
-              onClick={ajouterLigne}
-              className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:border-accent"
-            >
-              + Ajouter une ligne
-            </button>
-          </div>
-
-          <div className="mt-4 space-y-3">
-            {lignes.map((ligne) => {
-              const suggestionLigne = suggestions[ligne.cle];
-              return (
-              <div
-                key={ligne.cle}
-                className="rounded-md border border-border p-3"
-              >
-              <div
-                className="grid gap-2 sm:grid-cols-[3fr_1fr_1fr_1fr_auto]"
-              >
-                <div>
-                  <label className={labelClasse}>Désignation</label>
-                  <input
-                    required
-                    value={ligne.designation}
-                    onChange={(e) => majLigne(ligne.cle, "designation", e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
-                <div>
-                  <label className={labelClasse}>Quantité</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={ligne.quantite}
-                    onChange={(e) => majLigne(ligne.cle, "quantite", e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
-                <div>
-                  <label className={labelClasse}>PU HT</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={ligne.prixUnitaireHt}
-                    onChange={(e) => majLigne(ligne.cle, "prixUnitaireHt", e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
-                <div>
-                  <label className={labelClasse}>TVA %</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="100"
-                    required
-                    value={ligne.tauxTva}
-                    onChange={(e) => majLigne(ligne.cle, "tauxTva", e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
-                <div className="flex items-end">
+        <div key={etape} className="devis-etape space-y-6" data-sens={sens}>
+          {etape === 1 && (
+            <section className="app-card p-5 sm:p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">{modeModification ? "Décrire la modification" : "Décrire la prestation"}</h2>
+                <span className="text-xs text-muted">
+                  {quotaIA.restantes}/{quotaIA.total} générations IA restantes ce mois
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted">
+                {modeModification
+                  ? "Décrivez la modification à apporter, en texte libre — l'IA reconstruit les lignes concernées et conserve les autres à l'identique. Ex. : « ajoute 2 heures de main d'œuvre en plus », « remplace le radiateur par un modèle à 200€ »."
+                  : "Décrivez ce qu'il faut facturer, en texte libre — l'IA pré-remplit les lignes ci-dessous, à corriger avant de valider. Ex. : « devis pour installation chaudière chez M. Dupont, 3 radiateurs à 150€, main d'œuvre 2h à 45€/h »."}
+              </p>
+              <div className="relative mt-3">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  disabled={quotaEpuise}
+                  rows={3}
+                  placeholder={modeModification ? "Ex. : ajoute 2 heures de main d'œuvre en plus..." : "Devis pour..."}
+                  className={`${champClasse} pr-12 disabled:opacity-50`}
+                />
+                {supporteVocal && (
                   <button
                     type="button"
-                    onClick={() => supprimerLigne(ligne.cle)}
-                    disabled={lignes.length === 1}
-                    className="w-full rounded-md border border-border px-3 py-2 text-xs font-medium text-muted hover:border-red-500 hover:text-red-400 disabled:opacity-40"
+                    onClick={basculerDictee}
+                    disabled={quotaEpuise}
+                    aria-pressed={enEcoute}
+                    aria-label={enEcoute ? "Arrêter la dictée" : "Dicter à la voix"}
+                    title={enEcoute ? "Arrêter la dictée" : "Dicter à la voix"}
+                    className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border transition-colors disabled:opacity-40 ${
+                      enEcoute
+                        ? "border-red-500 bg-red-500/10 text-red-400"
+                        : "border-border text-muted hover:border-accent hover:text-accent"
+                    }`}
                   >
-                    Supprimer
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.75}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      width={16}
+                      height={16}
+                      className="h-4 w-4"
+                      aria-hidden="true"
+                    >
+                      <rect x="9" y="3" width="6" height="11" rx="3" />
+                      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+                    </svg>
                   </button>
+                )}
+              </div>
+              {enEcoute && (
+                <p className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+                  <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                  Écoute en cours — parlez, puis appuyez à nouveau sur le micro pour arrêter.
+                </p>
+              )}
+              {erreurVocale && <p className="mt-2 text-sm text-red-400">{erreurVocale}</p>}
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={genererAvecIA}
+                  disabled={generationEnCours || quotaEpuise || prompt.trim().length < 5}
+                  className="rounded-md border border-accent px-4 py-2 text-sm font-medium text-accent hover:bg-accent/10 disabled:opacity-40"
+                >
+                  {generationEnCours
+                    ? "Génération..."
+                    : modeModification
+                      ? "Appliquer la modification avec l'IA"
+                      : "Générer les lignes avec l'IA"}
+                </button>
+                {quotaEpuise && (
+                  <span className="text-xs text-muted">
+                    Quota IA épuisé pour ce mois — vous pouvez toujours{" "}
+                    {modeModification ? "modifier les lignes manuellement ci-dessous." : "saisir les lignes manuellement ci-dessous."}
+                  </span>
+                )}
+              </div>
+              {erreurGeneration && <p className="mt-2 text-sm text-red-400">{erreurGeneration}</p>}
+
+              {generationEnCours && (
+                <div className="mt-4 flex items-center gap-4 overflow-hidden rounded-[16px] bg-[var(--app-surface-muted)] p-4">
+                  <Image
+                    src="/landing/logo-icon.png"
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="devis-ia-respire size-10 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground">
+                      {modeModification ? "Application de votre modification…" : "Rédaction de votre devis…"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      L&apos;IA découpe votre description en lignes chiffrées. Vous pourrez tout corriger ensuite.
+                    </p>
+                    <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-[var(--app-chart-track)]">
+                      <div className="devis-ia-balayage h-full w-1/4 rounded-full bg-accent" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {etape === 2 && (
+            <section className="app-card p-5 sm:p-6">
+              <h2 className="text-lg font-semibold">Client</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="clientNom" className={labelClasse}>
+                    Nom du client
+                  </label>
+                  <input
+                    id="clientNom"
+                    value={clientNom}
+                    onChange={(e) => setClientNom(e.target.value)}
+                    className={champClasse}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="clientAdresse" className={labelClasse}>
+                    Adresse (optionnel)
+                  </label>
+                  <input
+                    id="clientAdresse"
+                    value={clientAdresse}
+                    onChange={(e) => setClientAdresse(e.target.value)}
+                    className={champClasse}
+                  />
                 </div>
               </div>
+            </section>
+          )}
 
-              <div className="mt-2">
-                <label className={labelClasse}>Référence fournisseur (optionnel) — pour suggérer un prix</label>
-                <input
-                  value={ligne.reference}
-                  onChange={(e) => surChangementReference(ligne.cle, e.target.value)}
-                  placeholder="Ex. : DURALIS200L"
-                  className={`${champClasse} max-w-xs`}
-                />
-                {suggestionLigne?.enCours && (
-                  <p className="mt-1 text-xs text-muted">Recherche dans l&apos;historique d&apos;achat...</p>
-                )}
-                {suggestionLigne?.erreur && <p className="mt-1 text-xs text-red-400">{suggestionLigne.erreur}</p>}
-                {!suggestionLigne?.enCours && !suggestionLigne?.erreur && suggestionLigne?.suggestion && (
-                  <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
-                    Prix suggéré :{" "}
-                    <span className="font-semibold text-foreground">
-                      {suggestionLigne.suggestion.prixSuggereHt.toFixed(2)} € HT
+          {etape === 3 && (
+            <section className="app-card p-5 sm:p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Prestations</h2>
+                <button
+                  type="button"
+                  onClick={ajouterLigne}
+                  className="rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:border-accent"
+                >
+                  + Ajouter une ligne
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {lignes.map((ligne, index) => {
+                  const suggestionLigne = suggestions[ligne.cle];
+                  return (
+                  <div
+                    key={ligne.cle}
+                    className={`rounded-md border border-border p-3 ${lignesAnimees ? "devis-ligne-in" : ""}`}
+                    style={lignesAnimees ? ({ "--index": index } as React.CSSProperties) : undefined}
+                  >
+                  <div
+                    className="grid gap-2 sm:grid-cols-[3fr_1fr_1fr_1fr_auto]"
+                  >
+                    <div>
+                      <label className={labelClasse}>Désignation</label>
+                      <input
+                        required
+                        value={ligne.designation}
+                        onChange={(e) => majLigne(ligne.cle, "designation", e.target.value)}
+                        className={champClasse}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClasse}>Quantité</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={ligne.quantite}
+                        onChange={(e) => majLigne(ligne.cle, "quantite", e.target.value)}
+                        className={champClasse}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClasse}>PU HT</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        required
+                        value={ligne.prixUnitaireHt}
+                        onChange={(e) => majLigne(ligne.cle, "prixUnitaireHt", e.target.value)}
+                        className={champClasse}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelClasse}>TVA %</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        required
+                        value={ligne.tauxTva}
+                        onChange={(e) => majLigne(ligne.cle, "tauxTva", e.target.value)}
+                        className={champClasse}
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => supprimerLigne(ligne.cle)}
+                        disabled={lignes.length === 1}
+                        className="w-full rounded-md border border-border px-3 py-2 text-xs font-medium text-muted hover:border-red-500 hover:text-red-400 disabled:opacity-40"
+                      >
+                        Supprimer
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-2">
+                    <label className={labelClasse}>Référence fournisseur (optionnel) — pour suggérer un prix</label>
+                    <input
+                      value={ligne.reference}
+                      onChange={(e) => surChangementReference(ligne.cle, e.target.value)}
+                      placeholder="Ex. : DURALIS200L"
+                      className={`${champClasse} max-w-xs`}
+                    />
+                    {suggestionLigne?.enCours && (
+                      <p className="mt-1 text-xs text-muted">Recherche dans l&apos;historique d&apos;achat...</p>
+                    )}
+                    {suggestionLigne?.erreur && <p className="mt-1 text-xs text-red-400">{suggestionLigne.erreur}</p>}
+                    {!suggestionLigne?.enCours && !suggestionLigne?.erreur && suggestionLigne?.suggestion && (
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                        Prix suggéré :{" "}
+                        <span className="font-semibold text-foreground">
+                          {suggestionLigne.suggestion.prixSuggereHt.toFixed(2)} € HT
+                        </span>
+                        (moyenne des {suggestionLigne.suggestion.nombreAchats} derniers achats :{" "}
+                        {suggestionLigne.suggestion.moyenneAchatsHt.toFixed(2)} € HT, marge{" "}
+                        {suggestionLigne.suggestion.margeAppliqueePct}%)
+                        <button
+                          type="button"
+                          onClick={() => utiliserSuggestion(ligne.cle, suggestionLigne.suggestion!.prixSuggereHt)}
+                          className="rounded border border-accent px-2 py-0.5 font-medium text-accent hover:bg-accent/10"
+                        >
+                          Utiliser
+                        </button>
+                      </p>
+                    )}
+                    {!suggestionLigne?.enCours && !suggestionLigne?.erreur && suggestionLigne && !suggestionLigne.suggestion && (
+                      <p className="mt-1 text-xs text-muted">Aucun achat correspondant trouvé dans l&apos;historique.</p>
+                    )}
+                  </div>
+                  </div>
+                  );
+                })}
+              </div>
+
+              <p className="mt-3 text-right text-sm text-muted">
+                Total HT : <span className="font-semibold text-foreground">{totalHt.toFixed(2)} €</span>
+              </p>
+            </section>
+          )}
+
+          {etape === 4 && (
+            <>
+            <section className="app-card p-5 sm:p-6">
+              <h2 className="text-lg font-semibold">Conditions</h2>
+              <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_2fr]">
+                <div>
+                  <label htmlFor="dureeValiditeJours" className={labelClasse}>
+                    Validité (jours)
+                  </label>
+                  <input
+                    id="dureeValiditeJours"
+                    type="number"
+                    min="1"
+                    required
+                    value={dureeValiditeJours}
+                    onChange={(e) => setDureeValiditeJours(e.target.value)}
+                    className={champClasse}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="conditionsPaiement" className={labelClasse}>
+                    Conditions de paiement
+                  </label>
+                  <input
+                    id="conditionsPaiement"
+                    required
+                    value={conditionsPaiement}
+                    onChange={(e) => setConditionsPaiement(e.target.value)}
+                    className={champClasse}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section className="app-card p-5 sm:p-6">
+              <h2 className="text-lg font-semibold">Aperçu</h2>
+              <p className="mt-1 text-sm text-muted">
+                Dernière vérification avant {modeModification ? "l'enregistrement" : "la génération du PDF"}.
+              </p>
+
+              <p className="mt-4 text-sm">
+                <span className="text-muted">Client :</span>{" "}
+                <span className="font-medium text-foreground">{clientNom || "—"}</span>
+                {clientAdresse && <span className="text-muted"> · {clientAdresse}</span>}
+              </p>
+
+              <ul className="mt-4 divide-y divide-border border-y border-border">
+                {lignes.map((ligne) => (
+                  <li key={ligne.cle} className="flex items-baseline justify-between gap-3 py-2 text-sm">
+                    <span className="min-w-0">
+                      <span className="text-foreground">{ligne.designation || "Ligne sans désignation"}</span>
+                      <span className="text-muted">
+                        {" "}
+                        · {ligne.quantite} × {Number(ligne.prixUnitaireHt || 0).toFixed(2)} €
+                      </span>
                     </span>
-                    (moyenne des {suggestionLigne.suggestion.nombreAchats} derniers achats :{" "}
-                    {suggestionLigne.suggestion.moyenneAchatsHt.toFixed(2)} € HT, marge{" "}
-                    {suggestionLigne.suggestion.margeAppliqueePct}%)
-                    <button
-                      type="button"
-                      onClick={() => utiliserSuggestion(ligne.cle, suggestionLigne.suggestion!.prixSuggereHt)}
-                      className="rounded border border-accent px-2 py-0.5 font-medium text-accent hover:bg-accent/10"
-                    >
-                      Utiliser
-                    </button>
-                  </p>
-                )}
-                {!suggestionLigne?.enCours && !suggestionLigne?.erreur && suggestionLigne && !suggestionLigne.suggestion && (
-                  <p className="mt-1 text-xs text-muted">Aucun achat correspondant trouvé dans l&apos;historique.</p>
-                )}
-              </div>
-              </div>
-              );
-            })}
-          </div>
+                    <span className="shrink-0 font-medium text-foreground">
+                      {formaterEuros((Number(ligne.quantite) || 0) * (Number(ligne.prixUnitaireHt) || 0))}
+                    </span>
+                  </li>
+                ))}
+              </ul>
 
-          <p className="mt-3 text-right text-sm text-muted">
-            Total HT : <span className="font-semibold text-foreground">{totalHt.toFixed(2)} €</span>
-          </p>
-        </section>
-
-        <section className="app-card p-5 sm:p-6">
-          <h2 className="text-lg font-semibold">Conditions</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_2fr]">
-            <div>
-              <label htmlFor="dureeValiditeJours" className={labelClasse}>
-                Validité (jours)
-              </label>
-              <input
-                id="dureeValiditeJours"
-                type="number"
-                min="1"
-                required
-                value={dureeValiditeJours}
-                onChange={(e) => setDureeValiditeJours(e.target.value)}
-                className={champClasse}
-              />
-            </div>
-            <div>
-              <label htmlFor="conditionsPaiement" className={labelClasse}>
-                Conditions de paiement
-              </label>
-              <input
-                id="conditionsPaiement"
-                required
-                value={conditionsPaiement}
-                onChange={(e) => setConditionsPaiement(e.target.value)}
-                className={champClasse}
-              />
-            </div>
-          </div>
-        </section>
+              <dl className="ml-auto mt-4 flex w-full max-w-xs flex-col gap-1.5 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted">Total HT</dt>
+                  <dd className="text-foreground">{formaterEuros(totalHt)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt className="text-muted">TVA</dt>
+                  <dd className="text-foreground">{formaterEuros(totalTva)}</dd>
+                </div>
+                <div className="flex justify-between border-t border-border pt-1.5 text-base font-semibold">
+                  <dt>Total TTC</dt>
+                  <dd className="text-foreground">{formaterEuros(totalTtc)}</dd>
+                </div>
+              </dl>
+            </section>
+            </>
+          )}
+        </div>
 
         {erreur && <p className="text-sm text-red-400">{erreur}</p>}
 
-        <button
-          type="submit"
-          disabled={enCours}
-          className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-        >
-          {enCours ? "Enregistrement..." : modeModification ? "Enregistrer les modifications" : "Générer le devis"}
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => allerA(Math.max(1, etape - 1))}
+            disabled={etape === 1 || enCours}
+            className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+          >
+            ← Retour
+          </button>
+
+          {etape < ETAPES.length ? (
+            <button
+              type="button"
+              onClick={continuer}
+              className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90"
+            >
+              Continuer →
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={enCours}
+              className="relative overflow-hidden rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+            >
+              {enCours && (
+                <span className="devis-ia-balayage absolute inset-y-0 left-0 w-1/3 bg-white/30" aria-hidden="true" />
+              )}
+              <span className="relative z-10">
+                {enCours
+                  ? "Enregistrement…"
+                  : modeModification
+                    ? "Enregistrer les modifications"
+                    : "Générer le devis"}
+              </span>
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );

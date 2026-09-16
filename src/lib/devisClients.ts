@@ -157,6 +157,59 @@ export async function genererEtStockerPdfDevis(
 // via genererDepuisPrompt ET modification via modifierLignesAvecIA comptent toutes les
 // deux) — factorisé ici pour être calculé de façon identique par nouveau/page.tsx et
 // [id]/modifier/page.tsx.
+/** Statut affiché en liste/détail — dérivé du modèle (pas de colonne `statut` en base). */
+export type StatutDevisClient = "envoye" | "accepte" | "expire" | "brouillon" | "refuse";
+
+export interface DevisClientListe {
+  id: string;
+  numero: string;
+  clientNom: string;
+  montantHt: number;
+  statut: StatutDevisClient;
+  dateEmission: Date;
+}
+
+export function formaterMontantDevis(valeur: number): string {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(valeur);
+}
+
+export function formaterDateDevis(date: Date): string {
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function deduireStatutDevis(
+  quote: { dateEmission: Date; dureeValiditeJours: number; invoice?: { id: string } | null },
+  maintenant = new Date()
+): StatutDevisClient {
+  if (quote.invoice) return "accepte";
+  const finValidite = new Date(quote.dateEmission);
+  finValidite.setUTCDate(finValidite.getUTCDate() + quote.dureeValiditeJours);
+  if (finValidite < maintenant) return "expire";
+  return "envoye";
+}
+
+export async function listerDevisUtilisateur(userId: string): Promise<DevisClientListe[]> {
+  const quotes = await prisma.clientQuote.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: { invoice: { select: { id: true } } },
+  });
+  const maintenant = new Date();
+  return quotes.map((q) => ({
+    id: q.id,
+    numero: q.numero,
+    clientNom: q.clientNom,
+    montantHt: Number(q.totalHt),
+    statut: deduireStatutDevis(q, maintenant),
+    dateEmission: q.dateEmission,
+  }));
+}
+
 export async function etatQuotaDevisIA(userId: string): Promise<{ restantes: number; total: number }> {
   const [utilisateur, genereesCeMois] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { plan: true, subscriptionStatus: true } }),

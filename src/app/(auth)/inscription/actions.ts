@@ -8,6 +8,7 @@ import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasherMotDePasse, LONGUEUR_MIN_MOT_DE_PASSE } from "@/lib/password";
 import { calculerEtatAccesAnticipe } from "@/lib/accesAnticipe";
+import { ROUTE_APRES_AUTH } from "@/lib/appRoutes";
 
 const schema = z
   .object({
@@ -52,7 +53,7 @@ export async function creerCompte(formData: FormData) {
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/accueil" });
+    await signIn("credentials", { email, password, redirectTo: ROUTE_APRES_AUTH });
   } catch (error) {
     if (error instanceof AuthError) {
       redirect("/connexion");
@@ -62,7 +63,7 @@ export async function creerCompte(formData: FormData) {
 }
 
 export async function creerCompteAvecGoogle() {
-  await signIn("google", { redirectTo: "/accueil" });
+  await signIn("google", { redirectTo: ROUTE_APRES_AUTH });
 }
 
 const schemaWaitlist = z.object({

@@ -8,10 +8,56 @@ import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { genererPdfFacture } from "@/lib/facturePdf";
 import { construireInfoEntreprisePourPdf } from "@/lib/devisClients";
 
-// Numéro séquentiel "F-AAAA-NNN" (ex. "F2026-003") : préfixe "F" pour ne jamais se
-// confondre visuellement avec un numéro de devis (voir genererNumeroDevis dans
-// devisClients.ts, même principe de compteur atomique sur CompanyProfile — appeler DANS
-// la même transaction que la création du ClientInvoice).
+export type StatutFactureClient = "envoyee" | "payee" | "en_retard" | "brouillon";
+
+export interface FactureClientListe {
+  id: string;
+  numero: string;
+  clientNom: string;
+  montantHt: number;
+  statut: StatutFactureClient;
+  dateEmission: Date;
+  dateEcheance: Date;
+  devisNumero: string | null;
+}
+
+export function formaterMontantFacture(valeur: number): string {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(valeur);
+}
+
+export function formaterDateFacture(date: Date): string {
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+}
+
+export function deduireStatutFacture(invoice: { dateEcheance: Date }): StatutFactureClient {
+  if (invoice.dateEcheance < new Date()) return "en_retard";
+  return "envoyee";
+}
+
+export async function listerFacturesUtilisateur(userId: string): Promise<FactureClientListe[]> {
+  const factures = await prisma.clientInvoice.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    include: { clientQuote: { select: { numero: true } } },
+  });
+
+  return factures.map((f) => ({
+    id: f.id,
+    numero: f.numero,
+    clientNom: f.clientNom,
+    montantHt: Number(f.totalHt),
+    statut: deduireStatutFacture(f),
+    dateEmission: f.dateEmission,
+    dateEcheance: f.dateEcheance,
+    devisNumero: f.clientQuote?.numero ?? null,
+  }));
+}
+
 export async function genererNumeroFacture(
   tx: Prisma.TransactionClient | PrismaClient,
   userId: string
@@ -26,10 +72,6 @@ export async function genererNumeroFacture(
   return `F${annee}-${String(numeroSequentiel).padStart(3, "0")}`;
 }
 
-// Même logique que genererEtStockerPdfDevis (devisClients.ts) : génère le PDF pour un
-// ClientInvoice déjà enregistré en base, le stocke dans Supabase Storage, met à jour son
-// pdfKey. Ne fait rien si l'entreprise n'a pas de profil "Mon entreprise" (impossible en
-// pratique, la transformation est bloquée avant).
 export async function genererEtStockerPdfFacture(
   userId: string,
   facture: ClientInvoice,

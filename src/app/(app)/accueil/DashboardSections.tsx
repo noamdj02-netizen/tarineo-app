@@ -1,37 +1,48 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRightIcon, FileTextIcon, StarIcon, UploadIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { BrandMark } from "@/components/tarineo/BrandMark";
 import { logoFournisseur } from "@/lib/logosFournisseurs";
+import { trouverFournisseurConnu } from "@/lib/fournisseursConnus";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { GraphiqueEconomiesSemaine, GraphiqueDepensesMensuelles } from "./AccueilCharts";
+import { GraphiqueEconomiesSemaine } from "./AccueilCharts";
+import { GraphiqueDepensesInteractif } from "./GraphiqueDepensesInteractif";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
 
-const MOIS_COURTS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
 const formaterDateFigma = (date: Date | null) => {
   if (!date) return "—";
-  const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = MOIS_COURTS_EN[date.getUTCMonth()];
-  return `${day} ${month}, ${date.getUTCFullYear()}`;
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 };
 
 const descriptionFournisseur = (nom: string, norm: string) => {
-  const key = norm.toLowerCase();
-  if (key.includes("cedeo")) return "Détection automatique des hausses sur vos devis Cedeo.";
-  if (key.includes("point")) return "Comparaison des prix multi-agences Point P.";
-  if (key.includes("rexel")) return "Suivi des tarifs matériel électrique Rexel.";
+  const connu = trouverFournisseurConnu(nom) ?? trouverFournisseurConnu(norm);
+  if (connu) {
+    return connu.groupe ? `${connu.specialite} · groupe ${connu.groupe}` : connu.specialite;
+  }
   return `Suivi des dépenses et hausses chez ${nom}.`;
 };
 
-const scoreFournisseur = (f: FournisseurCarte, index: number) => {
-  if (f.pourcentageAtteinte !== null) return Math.min(100, Math.round(f.pourcentageAtteinte));
-  return [96, 94, 98][index] ?? 95;
+const labelFournisseur = (f: FournisseurCarte) => {
+  if (f.pourcentageAtteinte !== null) return `${Math.min(100, Math.round(f.pourcentageAtteinte))}% BFA`;
+  return null;
 };
+
+function explicationDocument(doc: DocumentRecent): string | null {
+  if (doc.haussePositive) {
+    return `Un ou plusieurs prix sont plus élevés que votre dernier achat chez ${doc.distributor}. Ouvrez le document pour voir le détail ligne par ligne.`;
+  }
+  if (doc.hausseNegative) {
+    return `Bonne nouvelle : certains prix sont en baisse par rapport à votre historique chez ${doc.distributor}.`;
+  }
+  if (doc.hausseLabel === "Stable") {
+    return `Prix alignés avec votre historique récent chez ${doc.distributor}.`;
+  }
+  return null;
+}
 
 function IconeStat() {
   return (
@@ -41,29 +52,9 @@ function IconeStat() {
   );
 }
 
+// Délègue à BrandMark pour ne pas dupliquer le repli quand logo.dev ne répond pas.
 function LogoFournisseur({ nom, norm, size = 28, rounded = "md" }: { nom: string; norm?: string; size?: number; rounded?: "md" | "full" }) {
-  const src = logoFournisseur(norm ?? nom);
-  const radius = rounded === "full" ? "rounded-full" : "rounded-[4px]";
-  if (src) {
-    return (
-      <Image
-        src={src}
-        alt=""
-        width={size}
-        height={size}
-        className={`shrink-0 object-cover ${radius}`}
-        style={{ width: size, height: size }}
-      />
-    );
-  }
-  return (
-    <div
-      className={`flex shrink-0 items-center justify-center overflow-hidden bg-secondary font-bold text-primary ${radius}`}
-      style={{ width: size, height: size, fontSize: size > 36 ? 16 : 11 }}
-    >
-      {nom.charAt(0).toUpperCase()}
-    </div>
-  );
+  return <BrandMark nom={nom} logo={logoFournisseur(norm ?? nom)} size={size} rounded={rounded} />;
 }
 
 export type FournisseurCarte = {
@@ -84,13 +75,19 @@ export type DocumentRecent = {
   hausseNegative: boolean;
 };
 
-export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: FournisseurCarte[] }) {
+export function DashboardSupplierRow({
+  fournisseurs,
+  utiliseDemo = false,
+}: {
+  fournisseurs: FournisseurCarte[];
+  utiliseDemo?: boolean;
+}) {
   return (
     <section className="w-full min-w-0">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-8">
         <h2 className="text-xl font-medium leading-none text-foreground sm:text-2xl">Vos fournisseurs suivis ce mois-ci</h2>
-        <Button variant="ghost" size="sm" render={<Link href="/documents" />} className="text-muted-foreground">
-          Voir tout
+        <Button variant="ghost" size="sm" render={<Link href="/fournisseurs" />} className="text-muted-foreground">
+          Bibliothèque
           <ArrowUpRightIcon data-icon="inline-end" />
         </Button>
       </div>
@@ -113,31 +110,38 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
-          {fournisseurs.map((f, index) => {
-            const score = scoreFournisseur(f, index);
+          {fournisseurs.map((f) => {
+            const badge = labelFournisseur(f);
+            const href = utiliseDemo
+              ? "/documents?onboarding=1"
+              : `/fournisseurs/${encodeURIComponent(f.distributorNorm)}`;
             return (
-              <Card key={f.distributorNorm} className="h-full rounded-[24px] ring-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} />
-                    <span className="sr-only">{f.distributor}</span>
-                  </CardTitle>
-                  <CardAction>
-                    <Badge variant="secondary" className="gap-1 text-[var(--app-star)]">
-                      <StarIcon data-icon="inline-start" />
-                      {score}%
-                    </Badge>
-                  </CardAction>
-                  <CardDescription>{descriptionFournisseur(f.distributor, f.distributorNorm)}</CardDescription>
-                </CardHeader>
-                <CardFooter className="justify-between border-t bg-transparent">
-                  <p className="text-xl font-medium text-[var(--app-text-body)]">{formaterEuros(f.depenses)}</p>
-                  <Button variant="outline" size="sm" render={<Link href={`/documents?distributeur=${encodeURIComponent(f.distributorNorm)}`} />} className="rounded-full text-primary">
-                    Voir
-                    <ArrowUpRightIcon data-icon="inline-end" />
-                  </Button>
-                </CardFooter>
-              </Card>
+              <Link key={f.distributorNorm} href={href} className="block h-full">
+                <Card className="h-full rounded-[24px] ring-0 transition-shadow hover:shadow-md">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base font-medium">
+                      <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} />
+                      <span className="truncate">{f.distributor}</span>
+                    </CardTitle>
+                    {badge && (
+                      <CardAction>
+                        <Badge variant="secondary" className="gap-1 text-[var(--app-star)]">
+                          <StarIcon data-icon="inline-start" />
+                          {badge}
+                        </Badge>
+                      </CardAction>
+                    )}
+                    <CardDescription>{descriptionFournisseur(f.distributor, f.distributorNorm)}</CardDescription>
+                  </CardHeader>
+                  <CardFooter className="justify-between border-t bg-transparent">
+                    <p className="text-xl font-medium text-[var(--app-text-body)]">{formaterEuros(f.depenses)}</p>
+                    <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+                      {utiliseDemo ? "Importer" : "Fiche fournisseur"}
+                      <ArrowUpRightIcon className="size-4" />
+                    </span>
+                  </CardFooter>
+                </Card>
+              </Link>
             );
           })}
         </div>
@@ -146,12 +150,18 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
   );
 }
 
-export function DashboardRecentDocuments({ documents }: { documents: DocumentRecent[] }) {
+export function DashboardRecentDocuments({
+  documents,
+  utiliseDemo = false,
+}: {
+  documents: DocumentRecent[];
+  utiliseDemo?: boolean;
+}) {
   return (
     <Card className="min-h-0 w-full rounded-[24px] ring-0 lg:min-h-[538px]">
       <CardHeader>
-        <CardTitle className="text-xl">Devis récents</CardTitle>
-        <CardDescription>Scans de la semaine</CardDescription>
+        <CardTitle className="text-xl">Documents récents</CardTitle>
+        <CardDescription>Imports de la semaine</CardDescription>
         <CardAction>
           <Button variant="ghost" size="sm" render={<Link href="/documents" />} className="text-muted-foreground">
             Voir tout
@@ -174,30 +184,38 @@ export function DashboardRecentDocuments({ documents }: { documents: DocumentRec
           </Empty>
         ) : (
           <ul className="flex flex-1 flex-col">
-            {documents.map((doc) => (
-              <li key={doc.id}>
-                <Link
-                  href={doc.id.startsWith("demo-") ? "/documents" : `/documents/${doc.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <LogoFournisseur nom={doc.distributor} size={48} rounded="full" />
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-medium text-foreground">{doc.distributor}</p>
-                      <p className="text-[13px] text-muted-foreground">{formaterDateFigma(doc.documentDate)}</p>
+            {documents.map((doc) => {
+              const detail = explicationDocument(doc);
+              return (
+                <li key={doc.id}>
+                  <Link
+                    href={utiliseDemo || doc.id.startsWith("demo-") ? "/documents?onboarding=1" : `/documents/${doc.id}`}
+                    className="block rounded-xl px-3 py-2 transition-colors hover:bg-secondary"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <LogoFournisseur nom={doc.distributor} size={48} rounded="full" />
+                        <div className="min-w-0">
+                          <p className="truncate text-base font-medium text-foreground">{doc.distributor}</p>
+                          <p className="text-[13px] text-muted-foreground">{formaterDateFigma(doc.documentDate)}</p>
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-base font-medium text-foreground">
+                          {doc.totalHt !== null ? formaterEuros(Number(doc.totalHt)) : "—"}
+                        </p>
+                        <Badge variant={doc.haussePositive ? "destructive" : "secondary"} className="mt-0.5">
+                          {doc.hausseLabel}
+                        </Badge>
+                      </div>
                     </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-base font-medium text-foreground">
-                      {doc.totalHt !== null ? formaterEuros(Number(doc.totalHt)) : "—"}
-                    </p>
-                    <Badge variant={doc.haussePositive ? "destructive" : "secondary"} className="mt-0.5">
-                      {doc.hausseLabel}
-                    </Badge>
-                  </div>
-                </Link>
-              </li>
-            ))}
+                    {detail && !utiliseDemo && (
+                      <p className="mt-2 pl-[60px] text-xs leading-relaxed text-muted-foreground">{detail}</p>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </CardContent>
@@ -248,12 +266,14 @@ export function DashboardOverviewStats({
   economiesPotentielles,
   moisCourantStr,
   payloadsCount,
+  utiliseDemo = false,
 }: {
   nbDocumentsMois: number;
   hausseMoyenne: number | null;
   economiesPotentielles: number;
   moisCourantStr: string;
   payloadsCount: number;
+  utiliseDemo?: boolean;
 }) {
   const stats = [
     {
@@ -262,23 +282,23 @@ export function DashboardOverviewStats({
       value: String(nbDocumentsMois),
       suffix: "documents",
       href: `/documents?mois=${moisCourantStr}`,
-      cliquable: nbDocumentsMois > 0,
+      cliquable: !utiliseDemo && nbDocumentsMois > 0,
     },
     {
       label: "Hausse moyenne détectée",
       sub: "Ce mois-ci",
       value: hausseMoyenne !== null ? hausseMoyenne.toFixed(1).replace(".", ",") : "—",
       suffix: hausseMoyenne !== null ? "%" : "",
-      href: `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
-      cliquable: payloadsCount > 0,
+      href: utiliseDemo ? "/documents?onboarding=1" : `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
+      cliquable: !utiliseDemo && payloadsCount > 0,
     },
     {
       label: "Économies potentielles",
       sub: "Ce mois-ci",
       value: new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(economiesPotentielles),
       suffix: "€",
-      href: `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
-      cliquable: payloadsCount > 0,
+      href: utiliseDemo ? "/documents?onboarding=1" : `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
+      cliquable: !utiliseDemo && payloadsCount > 0,
     },
   ];
 
@@ -329,9 +349,11 @@ export function DashboardOverviewStats({
 export function DashboardDepensesChart({
   donnees,
   aDesDepenses,
+  utiliseDemo = false,
 }: {
   donnees: { mois: string; montant: number }[];
   aDesDepenses: boolean;
+  utiliseDemo?: boolean;
 }) {
   return (
     <Card className="w-full min-w-0 rounded-[24px] ring-0">
@@ -340,7 +362,7 @@ export function DashboardDepensesChart({
       </CardHeader>
       <CardContent>
         {aDesDepenses ? (
-          <GraphiqueDepensesMensuelles donnees={donnees} />
+          <GraphiqueDepensesInteractif donnees={donnees} liensActifs={!utiliseDemo} />
         ) : (
           <Empty>
             <EmptyHeader>
