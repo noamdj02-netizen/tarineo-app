@@ -16,7 +16,17 @@ const MESSAGES_ERREUR: Record<ErreurEnregistrementDocument, string> = {
   trop_volumineux: "Fichier vide ou supérieur à 20 Mo.",
   quota_depasse: "Quota mensuel atteint. Réessayez le mois prochain.",
   essai_termine: "Votre essai gratuit est terminé — ajoutez un moyen de paiement pour continuer.",
+  stockage_indisponible:
+    "Stockage indisponible sur le serveur. Réessayez dans quelques minutes ou contactez le support.",
+  base_indisponible: "Le fichier est reçu mais l'enregistrement a échoué. Réessayez.",
   erreur: "Échec de l'envoi. Réessayez.",
+};
+
+const MESSAGES_ERREUR_ENVOI: Record<string, string> = {
+  ...MESSAGES_ERREUR,
+  fichier_invalide: "Fichier illisible par le serveur. Réessayez ou choisissez un autre format.",
+  session_invalide: "Session expirée. Rechargez la page puis reconnectez-vous.",
+  doublon_detecte: "Ce document semble déjà envoyé.",
 };
 
 const OPTIONS_TYPE = [
@@ -202,7 +212,16 @@ export function FormulaireUpload({
     formData.append("fichier", item.file);
     if (options.ignorerDoublon) formData.append("ignorerDoublon", "true");
 
-    const resultat = await envoyerUnDocument(formData);
+    let resultat: Awaited<ReturnType<typeof envoyerUnDocument>>;
+    try {
+      resultat = await envoyerUnDocument(formData);
+    } catch {
+      majStatut(item.id, {
+        statut: "erreur",
+        message: "Connexion interrompue. Vérifiez votre réseau et réessayez.",
+      });
+      return null;
+    }
 
     if (resultat.succes) {
       majStatut(item.id, { statut: "succes", documentId: resultat.documentId });
@@ -216,7 +235,10 @@ export function FormulaireUpload({
       });
       return null;
     }
-    majStatut(item.id, { statut: "erreur", message: MESSAGES_ERREUR[resultat.erreur] });
+    majStatut(item.id, {
+      statut: "erreur",
+      message: MESSAGES_ERREUR_ENVOI[resultat.erreur] ?? MESSAGES_ERREUR.erreur,
+    });
     return null;
   }
 

@@ -5,7 +5,9 @@ const globalForSupabase = globalThis as unknown as {
 };
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const url = process.env.SUPABASE_URL?.trim();
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  return Boolean(url && key);
 }
 
 /** Client service role — créé à la demande, jamais à l'import du module. */

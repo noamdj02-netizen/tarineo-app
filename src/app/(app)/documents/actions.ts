@@ -16,22 +16,32 @@ const schema = z.object({
 
 export type ResultatEnvoiDocument =
   | ResultatEnregistrementDocument
-  | { succes: false; erreur: "doublon_detecte"; doublon: DoublonPotentiel };
+  | { succes: false; erreur: "doublon_detecte"; doublon: DoublonPotentiel }
+  | { succes: false; erreur: "fichier_invalide" | "session_invalide" };
+
+function extraireFichier(formData: FormData): Blob | null {
+  const entree = formData.get("fichier");
+  if (!entree || typeof entree === "string") return null;
+  // Sur Vercel/Node, FormData peut renvoyer un Blob plutôt qu'une instance File.
+  if (entree instanceof Blob && entree.size > 0) return entree;
+  return null;
+}
 
 export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnvoiDocument> {
+  try {
   const session = await auth();
   if (!session?.user?.id) {
-    return { succes: false, erreur: "erreur" };
+    return { succes: false, erreur: "session_invalide" };
   }
 
   const parsed = schema.safeParse({
     type: formData.get("type"),
     ignorerDoublon: formData.get("ignorerDoublon") ?? undefined,
   });
-  const file = formData.get("fichier");
+  const file = extraireFichier(formData);
 
-  if (!parsed.success || !(file instanceof File)) {
-    return { succes: false, erreur: "erreur" };
+  if (!parsed.success || !file) {
+    return { succes: false, erreur: "fichier_invalide" };
   }
 
   // Vérifié avant tout traitement : un document bloqué ne doit coûter ni stockage
@@ -74,7 +84,7 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
     }
   }
 
-  const resultat = await enregistrerDocument(session.user.id, parsed.data.type, file, fileHash);
+  const resultat = await enregistrerDocument(session.user.id, parsed.data.type, buffer, fileHash);
 
   if (resultat.succes) {
     // L'analyse IA prend 10–60 s : on la lance après la réponse pour ne pas bloquer
@@ -82,11 +92,19 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
     const documentId = resultat.documentId;
     const userId = session.user.id;
     after(async () => {
-      await analyserDocument(documentId, userId);
+      try {
+        await analyserDocument(documentId, userId);
+      } catch (erreur) {
+        console.error(`Analyse IA échouée pour ${documentId} :`, erreur);
+      }
     });
   }
 
   return resultat;
+  } catch (erreur) {
+    console.error("envoyerUnDocument :", erreur);
+    return { succes: false, erreur: "erreur" };
+  }
 }
 
 // Marque la pop-up d'onboarding "historique prêt" comme vue, pour qu'elle ne

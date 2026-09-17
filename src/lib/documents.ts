@@ -21,6 +21,8 @@ export type ErreurEnregistrementDocument =
   | "type_invalide"
   | "quota_depasse"
   | "essai_termine"
+  | "stockage_indisponible"
+  | "base_indisponible"
   | "erreur";
 
 export type ResultatEnregistrementDocument =
@@ -59,10 +61,30 @@ export async function trouverDoublonParHash(userId: string, fileHash: string): P
   };
 }
 
+async function detecterTypeFichier(buffer: Buffer): Promise<{ mime: string; extension: string } | null> {
+  const typeDetecte = await fileTypeFromBuffer(buffer);
+  if (typeDetecte && TYPES_AUTORISES[typeDetecte.mime]) {
+    return { mime: typeDetecte.mime, extension: TYPES_AUTORISES[typeDetecte.mime] };
+  }
+
+  // Repli pour photos iPhone / exports où file-type ne reconnaît pas toujours le MIME.
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return { mime: "image/jpeg", extension: "jpg" };
+  }
+  if (buffer.length >= 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+    return { mime: "image/png", extension: "png" };
+  }
+  if (buffer.length >= 4 && buffer.subarray(0, 4).toString("ascii") === "%PDF") {
+    return { mime: "application/pdf", extension: "pdf" };
+  }
+
+  return null;
+}
+
 export async function enregistrerDocument(
   userId: string,
   type: DocumentType,
-  file: File,
+  buffer: Buffer,
   fileHash: string
 ): Promise<ResultatEnregistrementDocument> {
   // Vérifié avant de lire le fichier : sans cette garde, getSupabaseAdmin() lève et la
@@ -70,45 +92,47 @@ export async function enregistrerDocument(
   // d'une variable d'environnement oubliée après un déploiement.
   if (!isSupabaseConfigured()) {
     console.error("Upload impossible : SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY absents de l'environnement.");
-    return { succes: false, erreur: "erreur" };
+    return { succes: false, erreur: "stockage_indisponible" };
   }
 
-  if (file.size === 0 || file.size > TAILLE_MAX_OCTETS) {
+  if (buffer.length === 0 || buffer.length > TAILLE_MAX_OCTETS) {
     return { succes: false, erreur: "trop_volumineux" };
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  const typeDetecte = await fileTypeFromBuffer(buffer);
-  const extension = typeDetecte && TYPES_AUTORISES[typeDetecte.mime];
-
-  if (!typeDetecte || !extension) {
+  const typeFichier = await detecterTypeFichier(buffer);
+  if (!typeFichier) {
     return { succes: false, erreur: "type_invalide" };
   }
 
-  const cleStockage = `${userId}/${crypto.randomUUID()}.${extension}`;
+  const cleStockage = `${userId}/${crypto.randomUUID()}.${typeFichier.extension}`;
 
   const { error: erreurUpload } = await getSupabaseAdmin().storage
     .from(DOCUMENTS_BUCKET)
     .upload(cleStockage, buffer, {
-      contentType: typeDetecte.mime,
+      contentType: typeFichier.mime,
       upsert: false,
     });
 
   if (erreurUpload) {
     console.error("Échec de l'upload vers Supabase Storage :", erreurUpload);
-    return { succes: false, erreur: "erreur" };
+    return { succes: false, erreur: "stockage_indisponible" };
   }
 
-  const document = await prisma.document.create({
-    data: {
-      userId,
-      type,
-      fileKey: cleStockage,
-      fileHash,
-      status: "PROCESSING",
-    },
-  });
+  try {
+    const document = await prisma.document.create({
+      data: {
+        userId,
+        type,
+        fileKey: cleStockage,
+        fileHash,
+        status: "PROCESSING",
+      },
+    });
 
-  return { succes: true, documentId: document.id };
+    return { succes: true, documentId: document.id };
+  } catch (erreur) {
+    console.error("Échec de la création Document en base :", erreur);
+    await getSupabaseAdmin().storage.from(DOCUMENTS_BUCKET).remove([cleStockage]);
+    return { succes: false, erreur: "base_indisponible" };
+  }
 }

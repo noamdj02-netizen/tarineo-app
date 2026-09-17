@@ -13,6 +13,7 @@ const schemaIdentifiants = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: PrismaAdapter(prisma),
   // Le flux Credentials d'Auth.js encode toujours la session en JWT, quelle que
   // soit la stratégie configurée (vérifié dans @auth/core/lib/actions/callback :
