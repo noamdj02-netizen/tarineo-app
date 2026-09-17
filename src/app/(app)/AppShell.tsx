@@ -3,9 +3,16 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BellIcon, LogOutIcon, MenuIcon, SearchIcon } from "lucide-react";
+import { BellIcon, ChevronDownIcon, LogOutIcon, MenuIcon, SearchIcon } from "lucide-react";
+import { ROUTES_DOCUMENTS_PAR_TYPE } from "@/lib/documentLabels";
 import { BrandLogo } from "@/components/BrandLogo";
-import { IconDocument, IconInvoice, IconSettings, IconWidget } from "@/components/tarineo/NavIcons";
+import {
+  IconDocument,
+  IconFournisseurs,
+  IconInvoice,
+  IconSettings,
+  IconWidget,
+} from "@/components/tarineo/NavIcons";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -18,16 +25,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import type { NotifUi } from "@/lib/notifications";
 import { deconnexionAction } from "./deconnexionAction";
 
-export type NotifUi = {
-  id: string;
-  titre: string;
-  message: string;
-  date: string;
-  href: string;
-  nonLu: boolean;
-};
+export type { NotifUi };
 
 function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
   const nonLues = notifications.filter((n) => n.nonLu).length;
@@ -58,7 +59,7 @@ function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
               <DropdownMenuItem
                 key={notif.id}
                 nativeButton={false}
-                render={<Link href={notif.href} className="flex-col items-start gap-1 whitespace-normal rounded-xl px-3 py-3" />}
+                render={<Link prefetch={false} href={notif.href} className="flex-col items-start gap-1 whitespace-normal rounded-xl px-3 py-3" />}
               >
                 <div className="flex w-full items-start justify-between gap-2">
                   <p className="text-sm font-medium text-foreground">{notif.titre}</p>
@@ -71,7 +72,7 @@ function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
           </DropdownMenuGroup>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem nativeButton={false} render={<Link href="/documents?hausse=1" className="w-full justify-center text-center" />}>
+        <DropdownMenuItem nativeButton={false} render={<Link prefetch={false} href="/documents?hausse=1" className="w-full justify-center text-center" />}>
           Voir les hausses
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -96,10 +97,10 @@ const LIENS_TOP = [
 
 const SOUS_LIENS_DOCUMENTS = [
   { href: "/documents", libelle: "Tous" },
-  { href: "/documents?type=DEVIS", libelle: "Devis fournisseurs" },
-  { href: "/documents?type=FACTURE", libelle: "Factures fournisseurs" },
-  { href: "/documents?type=BON_COMMANDE", libelle: "Bons de commande" },
-  { href: "/documents?type=BON_ENLEVEMENT", libelle: "Bons d'enlèvement" },
+  { href: ROUTES_DOCUMENTS_PAR_TYPE.DEVIS, libelle: "Devis fournisseurs" },
+  { href: ROUTES_DOCUMENTS_PAR_TYPE.FACTURE, libelle: "Factures fournisseurs" },
+  { href: ROUTES_DOCUMENTS_PAR_TYPE.BON_COMMANDE, libelle: "Bons de commande" },
+  { href: ROUTES_DOCUMENTS_PAR_TYPE.BON_ENLEVEMENT, libelle: "Bons d'enlèvement" },
 ];
 
 const SOUS_LIENS_FACTURATION = [
@@ -111,35 +112,52 @@ const SOUS_LIENS_FACTURATION = [
 
 function iconeNav(id: string) {
   const cls = "size-6 shrink-0";
-  if (id === "dashboard" || id === "fournisseurs") return <IconWidget className={cls} />;
+  if (id === "dashboard") return <IconWidget className={cls} />;
   if (id === "documents") return <IconDocument className={cls} />;
+  if (id === "fournisseurs") return <IconFournisseurs className={cls} />;
   if (id === "facturation") return <IconInvoice className={cls} />;
-  return <IconSettings className={cls} />;
+  if (id === "parametres") return <IconSettings className={cls} />;
+  return <IconWidget className={cls} />;
+}
+
+function lienSidebarActif(pathname: string, href: string): boolean {
+  const base = href.split("?")[0];
+  if (base === "/documents" && href === "/documents") {
+    return pathname === "/documents";
+  }
+  if (pathname === base) return true;
+  if (base.startsWith("/documents/")) return pathname === base;
+  if (base !== "/accueil") return pathname.startsWith(`${base}/`);
+  return false;
 }
 
 function SousMenu({
   liens,
   onNavigate,
+  ouvert,
 }: {
   liens: { href: string; libelle: string }[];
   onNavigate?: () => void;
+  ouvert: boolean;
 }) {
   const pathname = usePathname();
 
+  if (!ouvert) return null;
+
   return (
-    <div>
+    <div className="pb-1">
       {liens.map((lien) => {
-        const base = lien.href.split("?")[0];
-        const actif = pathname === base || (base !== "/documents" && base !== "/accueil" && pathname.startsWith(`${base}/`));
+        const actif = lienSidebarActif(pathname, lien.href);
         return (
           <Link
             key={lien.href}
             href={lien.href}
+            prefetch={false}
             onClick={onNavigate}
             aria-current={actif ? "page" : undefined}
             className={cn(
               "block py-2.5 pl-[60px] pr-6 text-sm font-normal transition-colors",
-              actif ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              actif ? "font-medium text-primary" : "text-foreground/70 hover:text-foreground"
             )}
           >
             {lien.libelle}
@@ -164,29 +182,50 @@ function LienNavAvecSousMenu({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const actif =
-    pathname === href ||
-    pathname.startsWith(`${href}/`) ||
-    sousLiens.some((l) => {
-      const base = l.href.split("?")[0];
-      return pathname === base || pathname.startsWith(`${base}/`);
-    });
+  const sectionActive = sousLiens.some((l) => lienSidebarActif(pathname, l.href));
+  const actif = lienSidebarActif(pathname, href) || sectionActive;
+  const [ouvert, setOuvert] = useState(sectionActive);
+  const [sectionActivePrecedente, setSectionActivePrecedente] = useState(sectionActive);
+  if (sectionActive !== sectionActivePrecedente) {
+    setSectionActivePrecedente(sectionActive);
+    if (sectionActive) setOuvert(true);
+  }
 
   return (
     <div>
-      <Link
-        href={href}
-        onClick={onNavigate}
-        aria-current={actif ? "page" : undefined}
+      <div
         className={cn(
-          "flex items-center gap-3 rounded-[10px] px-6 py-3.5 text-base font-normal transition-colors",
-          actif ? "bg-[#FFF0E8] text-primary" : "text-muted-foreground hover:text-foreground"
+          "flex items-center rounded-[10px] pr-2 transition-colors",
+          actif ? "bg-[#FFF0E8]" : "hover:bg-black/[0.03]"
         )}
       >
-        {iconeNav(id)}
-        {libelle}
-      </Link>
-      <SousMenu liens={sousLiens} onNavigate={onNavigate} />
+        <Link
+          href={href}
+          prefetch={false}
+          onClick={onNavigate}
+          aria-current={actif && !sectionActive ? "page" : undefined}
+          className={cn(
+            "flex flex-1 items-center gap-3 px-6 py-3.5 text-base font-normal transition-colors",
+            actif ? "text-primary" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
+          {iconeNav(id)}
+          {libelle}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOuvert((v) => !v)}
+          aria-expanded={ouvert}
+          aria-label={ouvert ? `Replier ${libelle}` : `Déplier ${libelle}`}
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
+            actif ? "text-primary hover:bg-white/60" : "text-muted-foreground hover:bg-secondary"
+          )}
+        >
+          <ChevronDownIcon className={cn("size-5 transition-transform duration-200", ouvert && "rotate-180")} />
+        </button>
+      </div>
+      <SousMenu liens={sousLiens} onNavigate={onNavigate} ouvert={ouvert} />
     </div>
   );
 }
@@ -211,7 +250,7 @@ function PiedSidebar({ onNavigate }: { onNavigate?: () => void }) {
         <IconLifeBuoy />
         Support
       </a>
-      <Link href="/compte" onClick={onNavigate} className={lien}>
+      <Link href="/compte" prefetch={false} onClick={onNavigate} className={lien}>
         Mon compte
       </Link>
       <form action={deconnexionAction}>
@@ -280,6 +319,7 @@ function ContenuSidebar({
               <Link
                 key={lien.id}
                 href={lien.href}
+                prefetch={false}
                 onClick={onNavigate}
                 aria-current={actif ? "page" : undefined}
                 className={cn(
@@ -321,9 +361,9 @@ function MenuCompte({ prenom, email }: { prenom: string; email: string }) {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem render={<Link href="/parametres" />}>Paramètres</DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/compte" />}>Mon compte</DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/entreprise" />}>Mon entreprise</DropdownMenuItem>
+          <DropdownMenuItem render={<Link prefetch={false} href="/parametres" />}>Paramètres</DropdownMenuItem>
+          <DropdownMenuItem render={<Link prefetch={false} href="/compte" />}>Mon compte</DropdownMenuItem>
+          <DropdownMenuItem render={<Link prefetch={false} href="/entreprise" />}>Mon entreprise</DropdownMenuItem>
           <DropdownMenuItem render={<a href="mailto:contact@tarineo.com" />}>Support</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -361,7 +401,7 @@ function TopBar({
       <div className="w-full px-6 pt-6 xl:px-8 xl:pt-8">
         <div className="flex h-16 items-center justify-between gap-3 rounded-full bg-card py-2 pl-4 pr-2 xl:h-[76px] xl:py-[10px] xl:pl-6 xl:pr-[10px]">
           <div className="flex min-w-0 items-center gap-4 xl:gap-[70px]">
-            <BrandLogo href="/accueil" wordmarkStyle="dashboard" iconClassName="h-10 w-11 xl:h-[56px] xl:w-[62px]" className="shrink-0 gap-1" priority />
+            <BrandLogo href="/accueil" wordmarkStyle="dashboard" iconClassName="h-7 w-8 xl:h-9 xl:w-10" className="shrink-0 gap-1" priority />
 
             <nav className="hidden items-center rounded-full bg-secondary xl:flex" aria-label="Navigation principale">
               {LIENS_TOP.map((lien) => {
@@ -370,6 +410,7 @@ function TopBar({
                   <Link
                     key={lien.href}
                     href={lien.href}
+                    prefetch={false}
                     className={cn(
                       "flex h-12 items-center rounded-full px-5 text-base font-normal transition-colors xl:h-14 xl:px-6",
                       actif ? "text-foreground" : "text-muted-foreground hover:text-foreground"
@@ -385,6 +426,7 @@ function TopBar({
           <div className="flex shrink-0 items-center gap-2 xl:gap-[18px]">
             <Link
               href="/documents"
+              prefetch={false}
               className="hidden h-11 items-center gap-2 rounded-full bg-secondary px-4 text-sm text-muted-foreground xl:inline-flex xl:h-14 xl:w-[230px] xl:justify-start"
             >
               <SearchIcon className="size-4" />
@@ -429,7 +471,13 @@ export function AppShell({
 
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="mb-4 flex items-center justify-between rounded-full bg-card px-4 py-2.5 lg:hidden">
-            <BrandLogo href="/accueil" wordmarkStyle="dashboard" iconClassName="size-10" className="gap-2" />
+            <BrandLogo
+              href="/accueil"
+              wordmarkStyle="dashboard"
+              showWordmark={false}
+              iconClassName="h-7 w-8 max-h-7"
+              className="shrink-0"
+            />
             <Sheet open={menuOuvert} onOpenChange={setMenuOuvert}>
               <SheetTrigger
                 className="inline-flex size-11 items-center justify-center rounded-full bg-secondary text-foreground"

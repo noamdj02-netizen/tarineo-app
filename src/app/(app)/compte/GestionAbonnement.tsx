@@ -50,7 +50,7 @@ export function GestionAbonnement({ planLabel, intervalle, dateFin, resiliationD
   return (
     <section className="mt-8 app-card p-5 sm:p-6">
       <h2 className="text-lg font-semibold">Gérer mon abonnement</h2>
-      <p className="mt-1 text-sm text-muted">
+      <p className="mt-1 text-sm text-muted-foreground">
         Plan {planLabel} · {intervalle === "month" ? "facturation mensuelle" : "engagement annuel"}
       </p>
 
@@ -62,7 +62,7 @@ export function GestionAbonnement({ planLabel, intervalle, dateFin, resiliationD
           </p>
         ) : (
           <>
-            <p className="mt-4 text-sm text-muted">
+            <p className="mt-4 text-sm text-muted-foreground">
               Vous pouvez résilier à tout moment. Aucun remboursement au prorata : votre accès reste actif jusqu&apos;à
               la fin de la période déjà payée, le <strong className="text-foreground">{dateFin}</strong>.
             </p>
@@ -83,7 +83,7 @@ export function GestionAbonnement({ planLabel, intervalle, dateFin, resiliationD
         </p>
       ) : (
         <>
-          <p className="mt-4 text-sm text-muted">
+          <p className="mt-4 text-sm text-muted-foreground">
             Votre engagement annuel court jusqu&apos;au <strong className="text-foreground">{dateFin}</strong>. Vous
             pourrez choisir de ne pas le renouveler à cette date.
           </p>

@@ -110,7 +110,7 @@ export function FormulaireCorrection(props: Props) {
   return (
     <div className="space-y-4 app-card-sm p-4">
       <fieldset>
-        <legend className="mb-2 text-sm text-muted">Type de document</legend>
+        <legend className="mb-2 text-sm text-muted-foreground">Type de document</legend>
         <div className="flex flex-wrap gap-2">
           {OPTIONS_TYPE.map((option) => (
             <label
@@ -140,7 +140,7 @@ export function FormulaireCorrection(props: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="distributor" className="block text-sm text-muted mb-1">
+          <label htmlFor="distributor" className="block text-sm text-muted-foreground mb-1">
             Distributeur
           </label>
           <input
@@ -153,7 +153,7 @@ export function FormulaireCorrection(props: Props) {
           />
         </div>
         <div>
-          <label htmlFor="documentDate" className="block text-sm text-muted mb-1">
+          <label htmlFor="documentDate" className="block text-sm text-muted-foreground mb-1">
             Date
           </label>
           <input
@@ -166,7 +166,7 @@ export function FormulaireCorrection(props: Props) {
           />
         </div>
         <div>
-          <label htmlFor="totalHt" className="block text-sm text-muted mb-1">
+          <label htmlFor="totalHt" className="block text-sm text-muted-foreground mb-1">
             Total HT (€)
           </label>
           <input
@@ -184,7 +184,7 @@ export function FormulaireCorrection(props: Props) {
           />
         </div>
         <div>
-          <label htmlFor="totalTtc" className="block text-sm text-muted mb-1">
+          <label htmlFor="totalTtc" className="block text-sm text-muted-foreground mb-1">
             Total TTC (€)
           </label>
           <input
@@ -202,7 +202,7 @@ export function FormulaireCorrection(props: Props) {
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm text-muted">Lignes produits</h3>
+          <h3 className="text-sm text-muted-foreground">Lignes produits</h3>
           <button
             type="button"
             onClick={() => setLignes((prev) => [...prev, ligneVide()])}
@@ -267,7 +267,7 @@ export function FormulaireCorrection(props: Props) {
                   type="button"
                   onClick={() => supprimerLigne(ligne.cle)}
                   disabled={enCours || lignes.length === 1}
-                  className="rounded border border-border text-sm text-muted hover:border-red-500 hover:text-red-400 disabled:opacity-30"
+                  className="rounded border border-border text-sm text-muted-foreground hover:border-red-500 hover:text-red-400 disabled:opacity-30"
                   title="Supprimer la ligne"
                 >
                   ×
@@ -303,10 +303,10 @@ export function FormulaireCorrection(props: Props) {
         type="button"
         onClick={enregistrer}
         disabled={enCours}
-        className={`w-full rounded-md px-4 py-2 font-medium hover:opacity-90 disabled:opacity-50 ${
+        className={`w-full rounded-full px-4 py-2.5 text-sm font-semibold hover:opacity-90 disabled:bg-[#E1E3E5] disabled:text-[#8A969E] disabled:opacity-100 ${
           confirmationZeroRequise
-            ? "bg-amber-500 text-background"
-            : "bg-accent text-accent-foreground"
+            ? "bg-amber-500 text-white"
+            : "bg-primary text-white"
         }`}
       >
         {enCours

@@ -64,6 +64,18 @@ export default async function DevisClientDetailPage({ params }: { params: Promis
               {quote.dateEmission.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
             </dd>
           </div>
+          {quote.clientSiret && (
+            <div>
+              <dt className="text-muted-foreground">SIRET</dt>
+              <dd>{quote.clientSiret}</dd>
+            </div>
+          )}
+          {quote.clientEmail && (
+            <div>
+              <dt className="text-muted-foreground">Email</dt>
+              <dd>{quote.clientEmail}</dd>
+            </div>
+          )}
           {quote.clientAdresse && (
             <div className="sm:col-span-2">
               <dt className="text-muted-foreground">Adresse</dt>

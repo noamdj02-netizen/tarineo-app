@@ -49,6 +49,16 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
   const maintenant = new Date();
   const debutMois = debutMoisUTC(maintenant);
   const moisCourantStr = `${maintenant.getUTCFullYear()}-${String(maintenant.getUTCMonth() + 1).padStart(2, "0")}`;
+  const debut12Mois = ajouterMoisUTC(maintenant, -11);
+
+  const debutSemaine = (() => {
+    const jour = maintenant.getUTCDay();
+    const deltaLundi = jour === 0 ? -6 : 1 - jour;
+    return debutJourUTC(
+      new Date(Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate() + deltaLundi))
+    );
+  })();
+  const debutSemainePrecedente = new Date(debutSemaine.getTime() - 7 * 86400000);
 
   const vide: DonneesDashboardAccueil = {
     nbDocumentsMois: 0,
@@ -72,15 +82,34 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
   };
 
   try {
-    const [nbDocumentsMois, alertesCeMois, alertes12Mois] = await Promise.all([
+    const [nbDocumentsMois, alertes12Mois, documentsRecents, docsSemaine, depenses] = await Promise.all([
       prisma.document.count({ where: { userId, createdAt: { gte: debutMois } } }),
       prisma.alert.findMany({
-        where: { userId, type: "PRICE_INCREASE", createdAt: { gte: debutMois } },
+        where: { userId, type: "PRICE_INCREASE", createdAt: { gte: debut12Mois } },
       }),
-      prisma.alert.findMany({
-        where: { userId, type: "PRICE_INCREASE", createdAt: { gte: ajouterMoisUTC(maintenant, -11) } },
+      prisma.document.findMany({
+        where: {
+          userId,
+          type: { in: [...TYPES_ACHAT_REEL] },
+          status: "VALIDATED",
+          documentDate: { gte: ajouterMoisUTC(maintenant, -5) },
+        },
+        select: { documentDate: true, totalHt: true },
       }),
+      prisma.document.findMany({
+        where: { userId, createdAt: { gte: debutSemaine } },
+        orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
+        take: 6,
+        select: { id: true, distributor: true, documentDate: true, totalHt: true },
+      }),
+      calculerDepensesParDistributeur(userId),
     ]);
+
+    const alertesCeMois = alertes12Mois.filter((a) => a.createdAt >= debutMois);
+    const alertesSemaine = alertes12Mois.filter((a) => a.createdAt >= debutSemaine);
+    const alertesSemainePrecedente = alertes12Mois.filter(
+      (a) => a.createdAt >= debutSemainePrecedente && a.createdAt < debutSemaine
+    );
 
     const payloadsCeMois = parserPayloadsAlertesHausse(alertesCeMois);
     const pourcentageMoyenHausse =
@@ -110,15 +139,6 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       .sort((a, b) => b.count - a.count)
       .slice(0, 6);
 
-    const documentsRecents = await prisma.document.findMany({
-      where: {
-        userId,
-        type: { in: [...TYPES_ACHAT_REEL] },
-        status: "VALIDATED",
-        documentDate: { gte: ajouterMoisUTC(maintenant, -5) },
-      },
-      select: { documentDate: true, totalHt: true },
-    });
     const depensesParMois = new Map<string, number>();
     for (let i = -5; i <= 0; i++) {
       const d = ajouterMoisUTC(maintenant, i);
@@ -134,41 +154,10 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
     const evolutionDepenses = [...depensesParMois.entries()].map(([mois, montant]) => ({ mois, montant }));
     const aDesDepenses = evolutionDepenses.some((d) => d.montant > 0);
 
-    const debutSemaine = (() => {
-      const jour = maintenant.getUTCDay();
-      const deltaLundi = jour === 0 ? -6 : 1 - jour;
-      return debutJourUTC(new Date(Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth(), maintenant.getUTCDate() + deltaLundi)));
-    })();
-
-    const [docsSemaine, alertesSemaine, alertesSemainePrecedente] = await Promise.all([
-      prisma.document.findMany({
-        where: { userId, createdAt: { gte: debutSemaine } },
-        orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
-        take: 6,
-        select: { id: true, distributor: true, documentDate: true, totalHt: true },
-      }),
-      prisma.alert.findMany({
-        where: { userId, type: "PRICE_INCREASE", createdAt: { gte: debutSemaine } },
-      }),
-      prisma.alert.findMany({
-        where: {
-          userId,
-          type: "PRICE_INCREASE",
-          createdAt: {
-            gte: new Date(debutSemaine.getTime() - 7 * 86400000),
-            lt: debutSemaine,
-          },
-        },
-      }),
-    ]);
-
     const docIdsSemaine = new Set(docsSemaine.map((d) => d.id));
     const alertesParDoc = new Map<string, number>();
     if (docIdsSemaine.size > 0) {
-      const alertesDocs = await prisma.alert.findMany({
-        where: { userId, type: "PRICE_INCREASE" },
-      });
-      for (const p of parserPayloadsAlertesHausse(alertesDocs)) {
+      for (const p of parserPayloadsAlertesHausse(alertes12Mois)) {
         if (!docIdsSemaine.has(p.documentId)) continue;
         const pctVal = p.ecartPourcent ?? 0;
         const actuel = alertesParDoc.get(p.documentId);
@@ -198,24 +187,22 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
 
     const payloadsSemaine = parserPayloadsAlertesHausse(alertesSemaine);
     const docIdsAlertesSemaine = [...new Set(payloadsSemaine.map((p) => p.documentId))];
-    const lignesSemaine =
-      docIdsAlertesSemaine.length > 0
-        ? await prisma.lineItem.findMany({
-            where: { documentId: { in: docIdsAlertesSemaine } },
-            select: { documentId: true, reference: true, quantity: true },
-          })
-        : [];
-    const totalSemaine = montantDepuisPayloads(payloadsSemaine, lignesSemaine);
-
     const payloadsSemainePrec = parserPayloadsAlertesHausse(alertesSemainePrecedente);
     const docIdsPrec = [...new Set(payloadsSemainePrec.map((p) => p.documentId))];
-    const lignesPrec =
-      docIdsPrec.length > 0
+    const tousDocIds = [...new Set([...docIdsAlertesSemaine, ...docIdsPrec])];
+
+    const lignesSemaineEtPrec =
+      tousDocIds.length > 0
         ? await prisma.lineItem.findMany({
-            where: { documentId: { in: docIdsPrec } },
+            where: { documentId: { in: tousDocIds } },
             select: { documentId: true, reference: true, quantity: true },
           })
         : [];
+
+    const lignesSemaine = lignesSemaineEtPrec.filter((l) => docIdsAlertesSemaine.includes(l.documentId));
+    const lignesPrec = lignesSemaineEtPrec.filter((l) => docIdsPrec.includes(l.documentId));
+
+    const totalSemaine = montantDepuisPayloads(payloadsSemaine, lignesSemaine);
     const totalSemainePrec = montantDepuisPayloads(payloadsSemainePrec, lignesPrec);
     const evolutionPct =
       totalSemainePrec > 0 ? ((totalSemaine - totalSemainePrec) / totalSemainePrec) * 100 : totalSemaine > 0 ? 100 : null;
@@ -237,7 +224,6 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       return { jour: JOURS_COURTS[jourDate.getUTCDay()], montant };
     });
 
-    const depenses = await calculerDepensesParDistributeur(userId);
     const fournisseursTop = [...depenses]
       .sort((a, b) => b.depenses - a.depenses)
       .slice(0, 3)
@@ -249,19 +235,11 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
         objectif: d.objectif,
       }));
 
-    const distributeursExistants = await prisma.document.findMany({
-      where: { userId, distributorNorm: { not: null } },
-      select: { distributor: true, distributorNorm: true },
-      orderBy: { documentDate: "desc" },
-    });
-    const distributeursOptions = new Map<string, string>();
-    for (const d of distributeursExistants) {
-      if (d.distributorNorm && !distributeursOptions.has(d.distributorNorm)) {
-        distributeursOptions.set(d.distributorNorm, d.distributor ?? d.distributorNorm);
-      }
-    }
+    const distributeursOptions = new Map(
+      depenses.map((d) => [d.distributorNorm, d.distributor])
+    );
 
-    const donnees: DonneesDashboardAccueil = {
+    return {
       nbDocumentsMois,
       pourcentageMoyenHausse,
       montantIdentifie,
@@ -278,8 +256,6 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       distributeursOptions,
       moisCourantStr,
     };
-
-    return donnees;
   } catch (e) {
     console.error("Échec du chargement du dashboard :", e);
     return vide;

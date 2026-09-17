@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WizardSteps } from "@/components/tarineo/WizardSteps";
 import type { SuggestionPrix } from "@/lib/suggestionPrix";
+import { RechercheClient } from "./RechercheClient";
 
 // Étapes du wizard de création/modification. L'étape 1 (IA) reste facultative : on peut
 // la traverser sans rien écrire et saisir les lignes à la main à l'étape 3.
@@ -51,6 +52,8 @@ type ResultatSoumissionDevis = { succes: true; id: string } | { succes: false; e
 interface DonneesSoumissionDevis {
   clientNom: string;
   clientAdresse?: string;
+  clientSiret?: string;
+  clientEmail?: string;
   dureeValiditeJours: number;
   conditionsPaiement: string;
   promptOriginal?: string;
@@ -61,6 +64,8 @@ export interface DevisExistantPourFormulaire {
   id: string;
   clientNom: string;
   clientAdresse: string | null;
+  clientSiret: string | null;
+  clientEmail: string | null;
   dureeValiditeJours: number;
   conditionsPaiement: string;
   lignes: LigneEnvoi[];
@@ -82,7 +87,7 @@ function lignesFormulaireDepuis(lignes: LigneEnvoi[]): LigneFormulaire[] {
 }
 
 const champClasse = "w-full app-input";
-const labelClasse = "mb-1 block text-xs text-muted";
+const labelClasse = "mb-1 block text-xs text-muted-foreground";
 
 // Grille éditable des lignes — alimentée soit à la main, soit par le pipeline IA (voir la
 // section prompt plus bas) : dans les deux cas, l'artisan corrige avant de valider (aperçu
@@ -178,6 +183,8 @@ export function FormulaireDevis({
 
   const [clientNom, setClientNom] = useState(devisExistant?.clientNom ?? "");
   const [clientAdresse, setClientAdresse] = useState(devisExistant?.clientAdresse ?? "");
+  const [clientSiret, setClientSiret] = useState(devisExistant?.clientSiret ?? "");
+  const [clientEmail, setClientEmail] = useState(devisExistant?.clientEmail ?? "");
   const [dureeValiditeJours, setDureeValiditeJours] = useState(String(devisExistant?.dureeValiditeJours ?? 30));
   const [conditionsPaiement, setConditionsPaiement] = useState(
     devisExistant?.conditionsPaiement ?? conditionsPaiementParDefaut
@@ -307,7 +314,11 @@ export function FormulaireDevis({
       setErreurGeneration(resultat.erreur);
       return;
     }
-    if (resultat.clientNom) setClientNom(resultat.clientNom);
+    if (resultat.clientNom) {
+      setClientNom(resultat.clientNom);
+      setClientSiret("");
+      setClientEmail("");
+    }
     setLignes(lignesFormulaireDepuis(resultat.lignes));
     setPromptUtilise(prompt);
     setLignesAnimees(true);
@@ -354,6 +365,8 @@ export function FormulaireDevis({
     const resultat = await actionSoumettre({
       clientNom,
       clientAdresse,
+      clientSiret,
+      clientEmail,
       dureeValiditeJours: Number(dureeValiditeJours),
       conditionsPaiement,
       // Rattaché au devis final même si l'artisan a corrigé les lignes générées ensuite
@@ -388,11 +401,11 @@ export function FormulaireDevis({
             <section className="app-card p-5 sm:p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">{modeModification ? "Décrire la modification" : "Décrire la prestation"}</h2>
-                <span className="text-xs text-muted">
+                <span className="text-xs text-muted-foreground">
                   {quotaIA.restantes}/{quotaIA.total} générations IA restantes ce mois
                 </span>
               </div>
-              <p className="mt-1 text-sm text-muted">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {modeModification
                   ? "Décrivez la modification à apporter, en texte libre — l'IA reconstruit les lignes concernées et conserve les autres à l'identique. Ex. : « ajoute 2 heures de main d'œuvre en plus », « remplace le radiateur par un modèle à 200€ »."
                   : "Décrivez ce qu'il faut facturer, en texte libre — l'IA pré-remplit les lignes ci-dessous, à corriger avant de valider. Ex. : « devis pour installation chaudière chez M. Dupont, 3 radiateurs à 150€, main d'œuvre 2h à 45€/h »."}
@@ -417,7 +430,7 @@ export function FormulaireDevis({
                     className={`absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full border transition-colors disabled:opacity-40 ${
                       enEcoute
                         ? "border-red-500 bg-red-500/10 text-red-400"
-                        : "border-border text-muted hover:border-accent hover:text-accent"
+                        : "border-border text-muted-foreground hover:border-accent hover:text-accent"
                     }`}
                   >
                     <svg
@@ -460,7 +473,7 @@ export function FormulaireDevis({
                       : "Générer les lignes avec l'IA"}
                 </button>
                 {quotaEpuise && (
-                  <span className="text-xs text-muted">
+                  <span className="text-xs text-muted-foreground">
                     Quota IA épuisé pour ce mois — vous pouvez toujours{" "}
                     {modeModification ? "modifier les lignes manuellement ci-dessous." : "saisir les lignes manuellement ci-dessous."}
                   </span>
@@ -496,29 +509,16 @@ export function FormulaireDevis({
           {etape === 2 && (
             <section className="app-card p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Client</h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="clientNom" className={labelClasse}>
-                    Nom du client
-                  </label>
-                  <input
-                    id="clientNom"
-                    value={clientNom}
-                    onChange={(e) => setClientNom(e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="clientAdresse" className={labelClasse}>
-                    Adresse (optionnel)
-                  </label>
-                  <input
-                    id="clientAdresse"
-                    value={clientAdresse}
-                    onChange={(e) => setClientAdresse(e.target.value)}
-                    className={champClasse}
-                  />
-                </div>
+              <div className="mt-4">
+                <RechercheClient
+                  valeur={{ nom: clientNom, siret: clientSiret, adresse: clientAdresse, email: clientEmail }}
+                  onChange={({ nom, siret, adresse, email }) => {
+                    setClientNom(nom);
+                    setClientSiret(siret);
+                    setClientAdresse(adresse);
+                    setClientEmail(email);
+                  }}
+                />
               </div>
             </section>
           )}
@@ -599,7 +599,7 @@ export function FormulaireDevis({
                         type="button"
                         onClick={() => supprimerLigne(ligne.cle)}
                         disabled={lignes.length === 1}
-                        className="w-full rounded-md border border-border px-3 py-2 text-xs font-medium text-muted hover:border-red-500 hover:text-red-400 disabled:opacity-40"
+                        className="w-full rounded-md border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:border-red-500 hover:text-red-400 disabled:opacity-40"
                       >
                         Supprimer
                       </button>
@@ -615,11 +615,11 @@ export function FormulaireDevis({
                       className={`${champClasse} max-w-xs`}
                     />
                     {suggestionLigne?.enCours && (
-                      <p className="mt-1 text-xs text-muted">Recherche dans l&apos;historique d&apos;achat...</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Recherche dans l&apos;historique d&apos;achat...</p>
                     )}
                     {suggestionLigne?.erreur && <p className="mt-1 text-xs text-red-400">{suggestionLigne.erreur}</p>}
                     {!suggestionLigne?.enCours && !suggestionLigne?.erreur && suggestionLigne?.suggestion && (
-                      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                      <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         Prix suggéré :{" "}
                         <span className="font-semibold text-foreground">
                           {suggestionLigne.suggestion.prixSuggereHt.toFixed(2)} € HT
@@ -637,7 +637,7 @@ export function FormulaireDevis({
                       </p>
                     )}
                     {!suggestionLigne?.enCours && !suggestionLigne?.erreur && suggestionLigne && !suggestionLigne.suggestion && (
-                      <p className="mt-1 text-xs text-muted">Aucun achat correspondant trouvé dans l&apos;historique.</p>
+                      <p className="mt-1 text-xs text-muted-foreground">Aucun achat correspondant trouvé dans l&apos;historique.</p>
                     )}
                   </div>
                   </div>
@@ -645,7 +645,7 @@ export function FormulaireDevis({
                 })}
               </div>
 
-              <p className="mt-3 text-right text-sm text-muted">
+              <p className="mt-3 text-right text-sm text-muted-foreground">
                 Total HT : <span className="font-semibold text-foreground">{totalHt.toFixed(2)} €</span>
               </p>
             </section>
@@ -687,14 +687,16 @@ export function FormulaireDevis({
 
             <section className="app-card p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Aperçu</h2>
-              <p className="mt-1 text-sm text-muted">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Dernière vérification avant {modeModification ? "l'enregistrement" : "la génération du PDF"}.
               </p>
 
               <p className="mt-4 text-sm">
-                <span className="text-muted">Client :</span>{" "}
+                <span className="text-muted-foreground">Client :</span>{" "}
                 <span className="font-medium text-foreground">{clientNom || "—"}</span>
-                {clientAdresse && <span className="text-muted"> · {clientAdresse}</span>}
+                {clientSiret && <span className="text-muted-foreground"> · SIRET {clientSiret}</span>}
+                {clientAdresse && <span className="text-muted-foreground"> · {clientAdresse}</span>}
+                {clientEmail && <span className="text-muted-foreground"> · {clientEmail}</span>}
               </p>
 
               <ul className="mt-4 divide-y divide-border border-y border-border">
@@ -702,7 +704,7 @@ export function FormulaireDevis({
                   <li key={ligne.cle} className="flex items-baseline justify-between gap-3 py-2 text-sm">
                     <span className="min-w-0">
                       <span className="text-foreground">{ligne.designation || "Ligne sans désignation"}</span>
-                      <span className="text-muted">
+                      <span className="text-muted-foreground">
                         {" "}
                         · {ligne.quantite} × {Number(ligne.prixUnitaireHt || 0).toFixed(2)} €
                       </span>
@@ -716,11 +718,11 @@ export function FormulaireDevis({
 
               <dl className="ml-auto mt-4 flex w-full max-w-xs flex-col gap-1.5 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-muted">Total HT</dt>
+                  <dt className="text-muted-foreground">Total HT</dt>
                   <dd className="text-foreground">{formaterEuros(totalHt)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted">TVA</dt>
+                  <dt className="text-muted-foreground">TVA</dt>
                   <dd className="text-foreground">{formaterEuros(totalTva)}</dd>
                 </div>
                 <div className="flex justify-between border-t border-border pt-1.5 text-base font-semibold">
@@ -740,7 +742,7 @@ export function FormulaireDevis({
             type="button"
             onClick={() => allerA(Math.max(1, etape - 1))}
             disabled={etape === 1 || enCours}
-            className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+            className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
           >
             ← Retour
           </button>
@@ -749,7 +751,7 @@ export function FormulaireDevis({
             <button
               type="button"
               onClick={continuer}
-              className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90"
+              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               Continuer →
             </button>
@@ -757,7 +759,7 @@ export function FormulaireDevis({
             <button
               type="submit"
               disabled={enCours}
-              className="relative overflow-hidden rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="relative overflow-hidden rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:bg-[#E1E3E5] disabled:text-[#8A969E] disabled:opacity-100"
             >
               {enCours && (
                 <span className="devis-ia-balayage absolute inset-y-0 left-0 w-1/3 bg-white/30" aria-hidden="true" />

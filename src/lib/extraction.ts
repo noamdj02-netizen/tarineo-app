@@ -1,6 +1,6 @@
 import { z } from "zod";
 import convertHeic from "heic-convert";
-import { anthropic } from "@/lib/anthropic";
+import { anthropic, isAnthropicConfigured } from "@/lib/anthropic";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { comparerLignesAuHistorique, creerAlertesHausse } from "@/lib/comparaisonPrix";
@@ -160,11 +160,15 @@ async function construireBlocContenu(buffer: Buffer, extension: string | undefin
   };
 }
 
-export async function analyserDocument(documentId: string, userId: string): Promise<void> {
+export async function analyserDocument(documentId: string, userId: string): Promise<boolean> {
   const document = await prisma.document.findFirst({ where: { id: documentId, userId } });
-  if (!document) return;
+  if (!document) return false;
 
   try {
+    if (!isAnthropicConfigured()) {
+      throw new Error("ANTHROPIC_API_KEY manquante — renseignez-la dans le fichier .env puis relancez l'analyse.");
+    }
+
     const { data, error } = await getSupabaseAdmin().storage.from(DOCUMENTS_BUCKET).download(document.fileKey);
     if (error || !data) {
       throw new Error("Téléchargement du fichier depuis Supabase Storage impossible : " + error?.message);
@@ -313,11 +317,14 @@ export async function analyserDocument(documentId: string, userId: string): Prom
         comparaisons,
       });
     }
+
+    return true;
   } catch (erreur) {
     console.error("Échec de l'analyse Claude pour le document", documentId, ":", erreur);
     await prisma.document.update({
       where: { id: documentId },
       data: { status: "ERROR" },
     });
+    return false;
   }
 }

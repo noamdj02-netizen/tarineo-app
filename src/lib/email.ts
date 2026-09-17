@@ -125,3 +125,31 @@ export async function envoyerEmailContactEntreprise(donnee: DemandeContactEntrep
     throw new Error("Impossible d'envoyer la demande de contact Entreprise : " + JSON.stringify(error));
   }
 }
+
+export async function envoyerEmailDocument(params: {
+  to: string;
+  subject: string;
+  body: string;
+  replyTo?: string;
+  attachment: { filename: string; content: Buffer };
+}): Promise<void> {
+  const resend = new Resend(process.env.RESEND_API_KEY);
+
+  const { error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM as string,
+    to: params.to,
+    replyTo: params.replyTo,
+    subject: params.subject,
+    text: params.body,
+    attachments: [
+      {
+        filename: params.attachment.filename,
+        content: params.attachment.content,
+      },
+    ],
+  });
+
+  if (error) {
+    throw new Error("Impossible d'envoyer l'email : " + JSON.stringify(error));
+  }
+}

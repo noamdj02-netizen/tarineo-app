@@ -2,6 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 
 const globalForAnthropic = globalThis as unknown as { anthropic?: Anthropic };
 
+export function isAnthropicConfigured(): boolean {
+  return Boolean(process.env.ANTHROPIC_API_KEY?.trim());
+}
+
 export const anthropic =
   globalForAnthropic.anthropic ?? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 

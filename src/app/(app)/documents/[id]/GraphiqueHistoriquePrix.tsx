@@ -37,7 +37,7 @@ export function GraphiqueHistoriquePrix({ points }: { points: PointHistoriquePri
         type="button"
         onClick={() => setOuvert((o) => !o)}
         aria-expanded={ouvert}
-        className="flex items-center gap-1.5 text-xs font-medium text-muted transition-colors hover:text-accent"
+        className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-accent"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -59,7 +59,7 @@ export function GraphiqueHistoriquePrix({ points }: { points: PointHistoriquePri
 
       {ouvert &&
         (points.length === 1 ? (
-          <div className="mt-3 flex items-start gap-2.5 rounded-lg bg-background px-3 py-2.5 text-xs text-muted">
+          <div className="mt-3 flex items-start gap-2.5 rounded-lg bg-background px-3 py-2.5 text-xs text-muted-foreground">
             <span
               className="mt-1 h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: PALETTE_COURBES[0] }}
@@ -164,14 +164,14 @@ function GraphiqueLignes({ points }: { points: PointHistoriquePrix[] }) {
           {formaterEuros(dernierPoint.prix)}
         </text>
       </svg>
-      <div className="mt-1 flex items-center justify-between text-[0.65rem] text-muted">
+      <div className="mt-1 flex items-center justify-between text-[0.65rem] text-muted-foreground">
         <span>{formaterMoisAnnee(points[0].date)}</span>
         <span>{formaterMoisAnnee(dernierPoint.date)}</span>
       </div>
       {multiDistributeurs && (
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
           {groupesTries.map((groupe, i) => (
-            <span key={groupe[0].distributorNorm} className="flex items-center gap-1.5 text-[0.65rem] text-muted">
+            <span key={groupe[0].distributorNorm} className="flex items-center gap-1.5 text-[0.65rem] text-muted-foreground">
               <span
                 className="h-2 w-2 shrink-0 rounded-full"
                 style={{ backgroundColor: PALETTE_COURBES[i % PALETTE_COURBES.length] }}

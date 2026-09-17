@@ -101,7 +101,7 @@ export function ObjectifDistributeur(props: Props) {
           <button
             type="button"
             onClick={() => (enEdition ? setEnEdition(false) : ouvrirEdition())}
-            className="shrink-0 text-xs text-muted hover:text-accent"
+            className="shrink-0 text-xs text-muted-foreground hover:text-accent"
           >
             {enEdition ? "Annuler" : "Définir un objectif"}
           </button>
@@ -110,7 +110,7 @@ export function ObjectifDistributeur(props: Props) {
             <button
               type="button"
               onClick={() => (enEdition ? setEnEdition(false) : ouvrirEdition())}
-              className="text-muted hover:text-accent"
+              className="text-muted-foreground hover:text-accent"
             >
               {enEdition ? "Annuler" : "Modifier"}
             </button>
@@ -118,7 +118,7 @@ export function ObjectifDistributeur(props: Props) {
               type="button"
               onClick={supprimer}
               disabled={enCours}
-              className="text-muted hover:text-red-400 disabled:opacity-50"
+              className="text-muted-foreground hover:text-red-400 disabled:opacity-50"
             >
               Supprimer
             </button>
@@ -137,11 +137,11 @@ export function ObjectifDistributeur(props: Props) {
           <div className="mt-2 flex items-baseline justify-between text-sm">
             <span>
               {formaterEuros(props.depenses)}{" "}
-              <span className="text-muted">/ {formaterEuros(props.objectif)}</span>
+              <span className="text-muted-foreground">/ {formaterEuros(props.objectif)}</span>
             </span>
-            <span className="text-muted">{pourcentage?.toFixed(0)} %</span>
+            <span className="text-muted-foreground">{pourcentage?.toFixed(0)} %</span>
           </div>
-          <p className="mt-1 text-xs text-muted">
+          <p className="mt-1 text-xs text-muted-foreground">
             {props.encoursRestant !== null && props.encoursRestant >= 0
               ? `Encours restant : ${formaterEuros(props.encoursRestant)}`
               : `Objectif dépassé de ${formaterEuros(Math.abs(props.encoursRestant ?? 0))}`}
@@ -152,7 +152,7 @@ export function ObjectifDistributeur(props: Props) {
       ) : (
         <Link
           href={`/documents?distributeur=${encodeURIComponent(props.distributorNorm)}`}
-          className="mt-2 block text-sm text-muted hover:text-foreground"
+          className="mt-2 block text-sm text-muted-foreground hover:text-foreground"
         >
           {formaterEuros(props.depenses)} dépensés cette année
         </Link>
@@ -161,7 +161,7 @@ export function ObjectifDistributeur(props: Props) {
       {enEdition && (
         <div className="mt-4 space-y-2 border-t border-border pt-3">
           <div>
-            <label htmlFor={`montant-${props.distributorNorm}`} className="block text-xs text-muted mb-1">
+            <label htmlFor={`montant-${props.distributorNorm}`} className="block text-xs text-muted-foreground mb-1">
               Objectif annuel HT (€)
             </label>
             <input
@@ -176,7 +176,7 @@ export function ObjectifDistributeur(props: Props) {
             />
           </div>
           <div>
-            <label htmlFor={`date-${props.distributorNorm}`} className="block text-xs text-muted mb-1">
+            <label htmlFor={`date-${props.distributorNorm}`} className="block text-xs text-muted-foreground mb-1">
               Début de la période (facultatif — 1er janvier par défaut)
             </label>
             <input

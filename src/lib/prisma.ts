@@ -33,13 +33,20 @@ function creerClientPrisma(): PrismaClient {
   });
 }
 
+/** Après `prisma migrate` + `generate`, le singleton HMR peut garder un client sans les nouveaux modèles. */
+function clientPrismaAJour(client: PrismaClient): boolean {
+  const delegate = (client as PrismaClient & { promoFetchLog?: { findFirst?: unknown } }).promoFetchLog;
+  return Boolean(delegate && typeof delegate.findFirst === "function");
+}
+
 const datasourceUrl = urlBaseDonnees();
 
-// En dev, Next recharge .env sans recréer le singleton : on reconnecte si l'URL change.
+// En dev, Next recharge .env sans recréer le singleton : on reconnecte si l'URL change
+// ou si le client Prisma a été généré avant une migration récente.
 if (
   globalForPrisma.prisma &&
-  globalForPrisma.prismaDatasourceUrl &&
-  globalForPrisma.prismaDatasourceUrl !== datasourceUrl
+  ((globalForPrisma.prismaDatasourceUrl && globalForPrisma.prismaDatasourceUrl !== datasourceUrl) ||
+    !clientPrismaAJour(globalForPrisma.prisma))
 ) {
   void globalForPrisma.prisma.$disconnect();
   globalForPrisma.prisma = undefined;

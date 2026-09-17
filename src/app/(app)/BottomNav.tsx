@@ -2,53 +2,39 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  IconDocument,
+  IconFournisseurs,
+  IconHome,
+  IconMore,
+  IconScanner,
+} from "@/components/tarineo/NavIcons";
+import { cn } from "@/lib/utils";
 
 const ONGLETS = [
   {
     href: "/accueil",
     label: "Accueil",
-    icone: (actif: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
-        <path d="M4 11.5 12 4l8 7.5" />
-        <path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" />
-      </svg>
-    ),
+    icone: IconHome,
   },
   {
     href: "/documents",
     label: "Documents",
     estActif: (pathname: string) => pathname.startsWith("/documents") && !pathname.includes("scanner"),
-    icone: (actif: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
-        <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-        <path d="M13 3v4a1 1 0 0 0 1 1h4" />
-        <path d="M9 13h6M9 17h6" />
-      </svg>
-    ),
+    icone: IconDocument,
   },
   {
     href: "/documents?scanner=1",
     label: "Scanner",
     estActif: () => false,
     prominent: true,
-    icone: (_actif?: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" width={26} height={26} className="h-6 w-6" aria-hidden="true">
-        <path d="M7 3h3M14 3h3M21 7v3M21 14v3M17 21h-3M10 21H7M3 17v-3M3 10V7" />
-        <circle cx="12" cy="12" r="3.5" />
-      </svg>
-    ),
+    icone: IconScanner,
   },
   {
     href: "/fournisseurs",
     label: "Fournisseurs",
     estActif: (pathname: string) => pathname.startsWith("/fournisseurs"),
-    icone: (actif: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
-        <path d="M3 21h18" />
-        <path d="M5 21V7l7-4 7 4v14" />
-        <path d="M9 21v-6h6v6" />
-      </svg>
-    ),
+    icone: IconFournisseurs,
   },
   {
     href: "/parametres",
@@ -58,13 +44,7 @@ const ONGLETS = [
       pathname.startsWith("/compte") ||
       pathname.startsWith("/devis-clients") ||
       pathname.startsWith("/entreprise"),
-    icone: (actif: boolean) => (
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={actif ? 2 : 1.75} strokeLinecap="round" strokeLinejoin="round" width={24} height={24} className="h-6 w-6" aria-hidden="true">
-        <circle cx="5" cy="12" r="1.5" fill="currentColor" />
-        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-        <circle cx="19" cy="12" r="1.5" fill="currentColor" />
-      </svg>
-    ),
+    icone: IconMore,
   },
 ];
 
@@ -81,16 +61,18 @@ export function BottomNav() {
           const actif = onglet.estActif
             ? onglet.estActif(pathname)
             : pathname === onglet.href || pathname.startsWith(`${onglet.href}/`);
+          const Icone = onglet.icone;
 
           if (onglet.prominent) {
             return (
               <Link
                 key={onglet.href}
                 href={onglet.href}
+                prefetch={false}
                 className="-mt-5 flex flex-1 flex-col items-center gap-1"
               >
                 <span className="flex size-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
-                  {onglet.icone(true)}
+                  <Icone className="size-[26px]" />
                 </span>
                 <span className="text-[11px] font-semibold text-primary">{onglet.label}</span>
               </Link>
@@ -101,12 +83,14 @@ export function BottomNav() {
             <Link
               key={onglet.href}
               href={onglet.href}
-              className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors ${
+              prefetch={false}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors",
                 actif ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              }`}
+              )}
               aria-current={actif ? "page" : undefined}
             >
-              {onglet.icone(actif)}
+              <Icone className="size-6" />
               {onglet.label}
             </Link>
           );

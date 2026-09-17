@@ -28,7 +28,7 @@ const optionClasse = (selectionne: boolean) =>
   `flex-1 cursor-pointer rounded-md border px-3 py-1.5 text-center text-xs font-medium transition-colors ${
     selectionne
       ? "border-accent bg-accent/10 text-accent"
-      : "border-[var(--border)] bg-white text-[var(--muted)] hover:border-[var(--accent)]/40"
+      : "border-[var(--border)] bg-white text-muted-foreground hover:border-[var(--accent)]/40"
   }`;
 
 interface Props {
@@ -115,7 +115,7 @@ export function ExportBouton({ distributeurs }: Props) {
           <input type="hidden" name="distributeurLabel" value={distributeurLabel} />
 
           <div>
-            <p className="mb-1.5 text-xs text-muted">Format</p>
+            <p className="mb-1.5 text-xs text-muted-foreground">Format</p>
             <div className="flex gap-2">
               {(["csv", "xlsx"] as const).map((f) => (
                 <label key={f} className={optionClasse(format === f)}>
@@ -134,7 +134,7 @@ export function ExportBouton({ distributeurs }: Props) {
           </div>
 
           <div>
-            <p className="mb-1.5 text-xs text-muted">Période</p>
+            <p className="mb-1.5 text-xs text-muted-foreground">Période</p>
             <div className="flex gap-2">
               {(["mensuelle", "annuelle", "personnalisee"] as const).map((p) => (
                 <label key={p} className={optionClasse(periodeType === p)}>
@@ -154,7 +154,7 @@ export function ExportBouton({ distributeurs }: Props) {
 
           {periodeType === "mensuelle" && (
             <div>
-              <label htmlFor="export-mois" className="mb-1 block text-xs text-muted">
+              <label htmlFor="export-mois" className="mb-1 block text-xs text-muted-foreground">
                 Mois
               </label>
               <input
@@ -171,7 +171,7 @@ export function ExportBouton({ distributeurs }: Props) {
 
           {periodeType === "annuelle" && (
             <div>
-              <label htmlFor="export-annee" className="mb-1 block text-xs text-muted">
+              <label htmlFor="export-annee" className="mb-1 block text-xs text-muted-foreground">
                 Année
               </label>
               <input
@@ -191,7 +191,7 @@ export function ExportBouton({ distributeurs }: Props) {
           {periodeType === "personnalisee" && (
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label htmlFor="export-du" className="mb-1 block text-xs text-muted">
+                <label htmlFor="export-du" className="mb-1 block text-xs text-muted-foreground">
                   Du
                 </label>
                 <input
@@ -205,7 +205,7 @@ export function ExportBouton({ distributeurs }: Props) {
                 />
               </div>
               <div>
-                <label htmlFor="export-au" className="mb-1 block text-xs text-muted">
+                <label htmlFor="export-au" className="mb-1 block text-xs text-muted-foreground">
                   Au
                 </label>
                 <input
@@ -223,7 +223,7 @@ export function ExportBouton({ distributeurs }: Props) {
 
           {distributeurs.length > 0 && (
             <div>
-              <p className="mb-1.5 text-xs text-muted">
+              <p className="mb-1.5 text-xs text-muted-foreground">
                 Distributeur{tousDistributeursSelectionnes ? " (tous inclus)" : ""}
               </p>
               <div className="space-y-1.5">
@@ -250,7 +250,7 @@ export function ExportBouton({ distributeurs }: Props) {
           )}
 
           <div>
-            <p className="mb-1.5 text-xs text-muted">Type de document</p>
+            <p className="mb-1.5 text-xs text-muted-foreground">Type de document</p>
             <div className="space-y-1.5">
               {TYPES.map((t) => (
                 <label key={t.valeur} className="flex items-center gap-2 text-sm text-foreground">

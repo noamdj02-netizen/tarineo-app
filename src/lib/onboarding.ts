@@ -15,15 +15,24 @@ export type ResumeAnalyse = {
 
 /** Stats réelles post-import — jamais de faux chiffres. */
 export async function calculerResumeAnalyse(userId: string): Promise<ResumeAnalyse> {
-  const [docs, lineItems, quotes, invoices, alertes, priceHistoryDistinct] = await Promise.all([
+  const [docsParStatut, fournisseursDistinct, produitsRow, quotes, invoices, alertes] = await Promise.all([
+    prisma.document.groupBy({
+      by: ["status"],
+      where: { userId },
+      _count: { _all: true },
+    }),
     prisma.document.findMany({
-      where: { userId },
-      select: { status: true, distributorNorm: true },
+      where: { userId, distributorNorm: { not: null } },
+      select: { distributorNorm: true },
+      distinct: ["distributorNorm"],
     }),
-    prisma.lineItem.findMany({
-      where: { userId },
-      select: { referenceNorm: true, manufacturerRefNorm: true },
-    }),
+    prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(DISTINCT COALESCE("manufacturerRefNorm", "referenceNorm")) AS count
+      FROM "LineItem"
+      WHERE "userId" = ${userId}
+        AND COALESCE("manufacturerRefNorm", "referenceNorm") IS NOT NULL
+        AND COALESCE("manufacturerRefNorm", "referenceNorm") <> ''
+    `,
     prisma.clientQuote.findMany({
       where: { userId },
       select: { clientNom: true },
@@ -36,22 +45,11 @@ export async function calculerResumeAnalyse(userId: string): Promise<ResumeAnaly
       where: { userId, type: "PRICE_INCREASE" },
       select: { payload: true },
     }),
-    prisma.priceHistory.findMany({
-      where: { userId },
-      select: { referenceNorm: true },
-      distinct: ["referenceNorm"],
-    }),
   ]);
 
-  const fournisseurs = new Set(
-    docs.map((d) => d.distributorNorm).filter((n): n is string => Boolean(n))
-  );
-
-  const produits = new Set<string>();
-  for (const l of lineItems) {
-    const cle = l.manufacturerRefNorm || l.referenceNorm;
-    if (cle) produits.add(cle);
-  }
+  const countParStatut = new Map(docsParStatut.map((d) => [d.status, d._count._all]));
+  const documentsAnalyses =
+    (countParStatut.get("VALIDATED") ?? 0) + (countParStatut.get("NEEDS_REVIEW") ?? 0);
 
   const clients = new Set<string>();
   for (const q of quotes) {
@@ -68,16 +66,27 @@ export async function calculerResumeAnalyse(userId: string): Promise<ResumeAnaly
   const impactEuros = payloads.reduce((s, p) => s + Math.max(0, p.ecartEuros ?? 0), 0);
 
   return {
-    documentsAnalyses: docs.filter((d) => d.status === "VALIDATED" || d.status === "NEEDS_REVIEW").length,
-    documentsErreur: docs.filter((d) => d.status === "ERROR").length,
-    documentsAVerifier: docs.filter((d) => d.status === "NEEDS_REVIEW").length,
-    fournisseursIdentifies: fournisseurs.size,
-    produitsDetectes: produits.size,
+    documentsAnalyses,
+    documentsErreur: countParStatut.get("ERROR") ?? 0,
+    documentsAVerifier: countParStatut.get("NEEDS_REVIEW") ?? 0,
+    fournisseursIdentifies: fournisseursDistinct.length,
+    produitsDetectes: Number(produitsRow[0]?.count ?? 0),
     clientsIdentifies: clients.size,
     variationsPrix: payloads.length,
     produitsASurveiller: refsHausse.size,
     impactEuros: Math.round(impactEuros * 100) / 100,
   };
+}
+
+/** Marque le parcours onboarding comme terminé — sans revalidatePath (appelable au rendu serveur). */
+export async function completerOnboardingFlow(userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      onboardingFlowCompletedAt: new Date(),
+      onboardingImportDeferred: false,
+    },
+  });
 }
 
 export type EtatOnboarding = {

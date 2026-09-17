@@ -2,9 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
-import { LABELS_STATUT, LABELS_TYPE } from "@/lib/documentLabels";
+import { LABELS_TYPE } from "@/lib/documentLabels";
+import { BadgeStatutDocument } from "@/components/tarineo/BadgeStatutDocument";
 import { FormulaireCorrection } from "./FormulaireCorrection";
+import { BoutonRelancerAnalyse } from "./BoutonRelancerAnalyse";
+import { SuiviAnalyseDocument } from "./SuiviAnalyseDocument";
+import { ApercuDocument } from "./ApercuDocument";
+import { ActionsDocument } from "../ActionsDocument";
+import { isAnthropicConfigured } from "@/lib/anthropic";
 import { comparerLignesAuHistorique, type ComparaisonLigne } from "@/lib/comparaisonPrix";
 import { SEUIL_CONFIANCE } from "@/lib/extraction";
 import { GraphiqueHistoriquePrix, type PointHistoriquePrix } from "./GraphiqueHistoriquePrix";
@@ -37,10 +42,6 @@ export default async function DocumentDetailPage({
   if (!document) {
     notFound();
   }
-
-  const { data: urlSignee } = isSupabaseConfigured()
-    ? await getSupabaseAdmin().storage.from(DOCUMENTS_BUCKET).createSignedUrl(document.fileKey, 300)
-    : { data: null };
 
   const extraction = document.rawExtraction as
     | { numero?: string | null; confiance?: number }
@@ -95,19 +96,40 @@ export default async function DocumentDetailPage({
 
   return (
     <div className="app-page-wide flex flex-col gap-5">
-      <Link href="/documents" className="text-sm text-muted hover:text-foreground">
+      <Link href="/documents" className="text-sm text-muted-foreground hover:text-foreground">
         ← Retour à mes documents
       </Link>
 
-      <div className="mt-4 flex items-center justify-between">
-        <h1 className="app-display text-2xl font-semibold text-[var(--foreground)]">
-          {LABELS_TYPE[document.type] ?? document.type}
-          {document.distributor ? ` · ${document.distributor}` : ""}
-        </h1>
-        <span className="rounded-full border border-border px-3 py-1 text-xs text-muted">
-          {LABELS_STATUT[document.status] ?? document.status}
-        </span>
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="app-display text-2xl font-semibold text-[var(--foreground)]">
+            {LABELS_TYPE[document.type] ?? document.type}
+            {document.distributor ? ` · ${document.distributor}` : ""}
+          </h1>
+          <BadgeStatutDocument statut={document.status} className="mt-2" />
+        </div>
+        <ActionsDocument
+          documentId={document.id}
+          statut={document.status}
+          libelle={`${LABELS_TYPE[document.type] ?? document.type}${document.distributor ? ` · ${document.distributor}` : ""}`}
+        />
       </div>
+
+      <SuiviAnalyseDocument actif={document.status === "PROCESSING"} />
+
+      {document.status === "ERROR" && (
+        <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p className="font-medium">L&apos;analyse automatique a échoué.</p>
+          <p className="mt-1">
+            {isAnthropicConfigured()
+              ? "Le fichier a bien été enregistré, mais l'IA n'a pas pu en extraire les informations. Vous pouvez relancer l'analyse."
+              : "La clé API Anthropic (ANTHROPIC_API_KEY) n'est pas configurée dans votre fichier .env. Ajoutez-la, redémarrez le serveur de développement, puis relancez l'analyse."}
+          </p>
+          <div className="mt-3">
+            <BoutonRelancerAnalyse documentId={document.id} />
+          </div>
+        </div>
+      )}
 
       {document.status === "NEEDS_REVIEW" && document.possibleDoublon && (
         <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
@@ -145,44 +167,16 @@ export default async function DocumentDetailPage({
 
       <div className="mt-8 grid gap-8 md:grid-cols-2">
         <div>
-          <h2 className="text-sm font-medium text-muted">Fichier original</h2>
+          <h2 className="text-sm font-medium text-muted-foreground">Fichier original</h2>
           <div className="mt-2 overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-[var(--app-card-shadow)]">
-            {urlSignee ? (
-              document.fileKey.endsWith(".pdf") ? (
-                <iframe src={urlSignee.signedUrl} className="h-[600px] w-full" />
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={urlSignee.signedUrl} alt="Document original" className="w-full" />
-              )
-            ) : (
-              <div className="flex h-[300px] flex-col items-center justify-center gap-2 px-6 text-center">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7 text-muted"
-                  aria-hidden="true"
-                >
-                  <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" />
-                  <path d="M13 3v4a1 1 0 0 0 1 1h4" />
-                  <path d="m9.5 12.5 5 5M14.5 12.5l-5 5" />
-                </svg>
-                <p className="text-sm text-muted">Aperçu indisponible pour ce fichier.</p>
-              </div>
-            )}
+            <ApercuDocument documentId={document.id} estPdf={document.fileKey.endsWith(".pdf")} />
           </div>
         </div>
 
         <div>
           {document.status === "NEEDS_REVIEW" ? (
             <>
-              <h2 className="text-sm font-medium text-muted">Corriger les informations</h2>
+              <h2 className="text-sm font-medium text-muted-foreground">Corriger les informations</h2>
               <div className="mt-2">
                 <FormulaireCorrection
                   documentId={document.id}
@@ -205,34 +199,34 @@ export default async function DocumentDetailPage({
             </>
           ) : (
             <>
-              <h2 className="text-sm font-medium text-muted">Informations extraites</h2>
+              <h2 className="text-sm font-medium text-muted-foreground">Informations extraites</h2>
               <dl className="mt-2 space-y-2 app-card-sm p-4 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-muted">Distributeur</dt>
+                  <dt className="text-muted-foreground">Distributeur</dt>
                   <dd>{document.distributor ?? "—"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted">Numéro</dt>
+                  <dt className="text-muted-foreground">Numéro</dt>
                   <dd>{extraction?.numero || "—"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted">Date</dt>
+                  <dt className="text-muted-foreground">Date</dt>
                   <dd>{document.documentDate?.toLocaleDateString("fr-FR") ?? "—"}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted">Total HT</dt>
+                  <dt className="text-muted-foreground">Total HT</dt>
                   <dd>{formaterMontant(document.totalHt)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted">Total TTC</dt>
+                  <dt className="text-muted-foreground">Total TTC</dt>
                   <dd>{formaterMontant(document.totalTtc)}</dd>
                 </div>
               </dl>
 
-              <h2 className="mt-6 text-sm font-medium text-muted">Lignes produits</h2>
+              <h2 className="mt-6 text-sm font-medium text-muted-foreground">Lignes produits</h2>
               <div className="mt-2 space-y-3">
                 {document.lineItems.length === 0 ? (
-                  <p className="rounded-2xl border border-[var(--border)] bg-white shadow-[var(--app-card-shadow)] p-6 text-center text-sm text-muted">
+                  <p className="rounded-2xl border border-[var(--border)] bg-white shadow-[var(--app-card-shadow)] p-6 text-center text-sm text-muted-foreground">
                     Aucune ligne extraite.
                   </p>
                 ) : (
@@ -247,7 +241,7 @@ export default async function DocumentDetailPage({
                         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
                           <div className="min-w-0">
                             <p className="break-words font-semibold text-foreground">{ligne.designation}</p>
-                            <p className="mt-1 text-xs text-muted">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               Réf. {ligne.reference} · Qté {Number(ligne.quantity)} ×{" "}
                               {formaterMontant(ligne.unitPriceHt)}
                             </p>
@@ -258,7 +252,7 @@ export default async function DocumentDetailPage({
                         {comparaisons.length > 0 &&
                           (c && c.dernierPrix !== null ? (
                             <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-border/60 pt-3 text-xs">
-                              <span className="text-muted">
+                              <span className="text-muted-foreground">
                                 Prix habituel :{" "}
                                 <span
                                   className={`font-semibold ${
@@ -269,18 +263,18 @@ export default async function DocumentDetailPage({
                                   {formaterEuros(c.dernierPrix)}
                                 </span>
                                 {c.ecartPourcent !== null && (
-                                  <span className="ml-1 text-muted">
+                                  <span className="ml-1 text-muted-foreground">
                                     ({c.ecartPourcent > 0 ? "+" : ""}
                                     {c.ecartPourcent.toFixed(1)}%)
                                   </span>
                                 )}
                               </span>
                               {c.moyenne12Mois !== null && (
-                                <span className="text-muted">Moy. 12 mois : {formaterEuros(c.moyenne12Mois)}</span>
+                                <span className="text-muted-foreground">Moy. 12 mois : {formaterEuros(c.moyenne12Mois)}</span>
                               )}
                             </div>
                           ) : (
-                            <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted">
+                            <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
                               Nouveau produit chez ce distributeur — pas encore d&apos;historique de prix.
                             </p>
                           ))}

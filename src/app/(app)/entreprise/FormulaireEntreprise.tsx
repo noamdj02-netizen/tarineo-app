@@ -25,7 +25,7 @@ interface ProfilExistant {
 }
 
 const champClasse = "w-full app-input";
-const labelClasse = "mb-1 block text-xs text-muted";
+const labelClasse = "mb-1 block text-xs text-muted-foreground";
 
 export function FormulaireEntreprise({
   profil,
@@ -77,7 +77,7 @@ export function FormulaireEntreprise({
     <form ref={formRef} onSubmit={soumettre} className={variant === "settings" ? "space-y-8" : "mt-6 space-y-6"}>
       <section className={sectionClasse}>
         <h2 className="text-lg font-semibold">{variant === "settings" ? "Informations de l'entreprise" : "Identité de l'entreprise"}</h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           Reprises sur chaque devis généré — logo, coordonnées et mentions légales.
         </p>
 
@@ -88,7 +88,7 @@ export function FormulaireEntreprise({
               // eslint-disable-next-line @next/next/no-img-element -- aperçu local (blob:/URL signée), pas une image à optimiser par Next
               <img src={apercuLogo} alt="Logo de l'entreprise" className="h-16 w-auto rounded border border-border bg-white p-1" />
             ) : (
-              <div className="flex h-16 w-16 items-center justify-center rounded border border-dashed border-border text-xs text-muted">
+              <div className="flex h-16 w-16 items-center justify-center rounded border border-dashed border-border text-xs text-muted-foreground">
                 Aucun
               </div>
             )}
@@ -97,7 +97,7 @@ export function FormulaireEntreprise({
               name="logo"
               accept="image/png,image/jpeg,image/webp"
               onChange={surChangementLogo}
-              className="text-sm text-muted file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-sm file:font-medium"
+              className="text-sm text-muted-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-sm file:font-medium"
             />
           </div>
         </div>
@@ -225,7 +225,7 @@ export function FormulaireEntreprise({
 
       <section className={sectionClasse}>
         <h2 className="text-lg font-semibold">Devis clients</h2>
-        <p className="mt-1 text-sm text-muted">
+        <p className="mt-1 text-sm text-muted-foreground">
           Lors de la saisie d&apos;un devis, un prix peut être suggéré à partir de vos derniers achats fournisseur pour
           une référence donnée. Cette marge s&apos;applique par défaut à cette suggestion — toujours modifiable ligne
           par ligne, jamais imposée.
@@ -256,7 +256,7 @@ export function FormulaireEntreprise({
         >
           <span>
             <h2 className="text-lg font-semibold">Assurance décennale</h2>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-muted-foreground">
               Optionnel — à renseigner si votre activité y est soumise. N&apos;apparaît sur le devis que si les 5
               champs sont remplis.
             </p>
@@ -331,7 +331,7 @@ export function FormulaireEntreprise({
         className={
           variant === "settings"
             ? "inline-flex h-11 items-center rounded-full bg-primary px-6 text-sm font-medium text-white disabled:opacity-50"
-            : "rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
+            : "rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:opacity-90 disabled:bg-[#E1E3E5] disabled:text-[#8A969E] disabled:opacity-100"
         }
       >
         {enCours ? "Enregistrement..." : "Enregistrer"}

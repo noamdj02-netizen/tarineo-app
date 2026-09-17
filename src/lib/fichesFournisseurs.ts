@@ -109,3 +109,36 @@ export function ficheFournisseur(connu: FournisseurConnu): FicheFournisseur {
   const slug = slugFournisseurConnu(connu);
   return FICHES[slug] ?? ficheParDefaut(connu);
 }
+
+const ID_BIBLIOTHEQUE_VERS_FICHE: Record<string, string> = {
+  cedeo: "cedeo",
+  "point-p": "pointp",
+  rexel: "rexel",
+  brossette: "brossette",
+  richardson: "richardson",
+  aubade: "aubade",
+  sonepar: "sonepar",
+  "leroy-merlin": "leroymerlin",
+};
+
+const FICHE_AUBADE: FicheFournisseur = {
+  siteWeb: "https://www.aubade.fr",
+  avantages: ["Sanitaire premium", "Showrooms salle de bains", "Conseil déco", "Garanties fabricants"],
+  livraison: "Livraison ou retrait showroom — délai selon référence",
+  bfa: "Conditions annuelles à négocier avec votre conseiller",
+};
+
+/** Fiche publique de référence pour une enseigne de la bibliothèque (pas des promos live). */
+export function ficheParBibliothequeId(id: string, nomFallback?: string): FicheFournisseur {
+  const slug = ID_BIBLIOTHEQUE_VERS_FICHE[id];
+  if (slug === "aubade") return FICHE_AUBADE;
+  if (slug && FICHES[slug]) return FICHES[slug];
+  return {
+    siteWeb: "https://www.tarineo.fr",
+    avantages: ["Devis et factures importables dans Tarineo", "Comparaison à votre historique personnel"],
+    livraison: "À confirmer avec votre agence habituelle",
+    bfa: nomFallback
+      ? `Remise de fin d'année — demandez le seuil HT à votre commercial ${nomFallback}`
+      : "Remise de fin d'année — seuil à négocier avec votre commercial",
+  };
+}

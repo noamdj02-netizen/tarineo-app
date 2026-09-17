@@ -17,6 +17,9 @@ const MESSAGES_ERREUR: Record<string, string> = {
   "1": `Vérifiez vos informations, un mot de passe d'au moins ${LONGUEUR_MIN_MOT_DE_PASSE} caractères (identique dans les deux champs), et que vous avez accepté les conditions.`,
 };
 
+const AUTH_PANEL_CLASS =
+  "flex w-full flex-col gap-3.5 rounded-[24px] border border-[#E6E9EB] bg-white p-5 shadow-[0_8px_30px_rgba(23,41,53,0.06)] md:p-6 lg:p-7";
+
 function InscriptionFormPanel({
   erreur,
   showSocial = true,
@@ -25,7 +28,7 @@ function InscriptionFormPanel({
   showSocial?: boolean;
 }) {
   return (
-    <div className="flex w-full flex-col gap-3.5 rounded-[26px] border border-white/14 bg-[rgba(23,21,19,0.95)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.4)] md:p-6 lg:p-[22px]">
+    <div className={AUTH_PANEL_CLASS}>
       <form action={creerCompte} className="flex w-full flex-col gap-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <AuthField
@@ -86,17 +89,17 @@ function InscriptionFormPanel({
           minLength={LONGUEUR_MIN_MOT_DE_PASSE}
           autoComplete="new-password"
         />
-        <label className="flex items-start gap-2 text-xs leading-relaxed text-[#b9b4b0]">
-          <input type="checkbox" name="consent" required className="mt-0.5 accent-[#f24f0a]" />
+        <label className="flex items-start gap-2 text-xs leading-relaxed text-[#53616A]">
+          <input type="checkbox" name="consent" required className="mt-0.5 accent-[#EC5821]" />
           <span>
             J&apos;accepte les Conditions Générales d&apos;Utilisation et la Politique de Confidentialité de
             Tarineo.
           </span>
         </label>
-        {erreur && <p className="text-sm text-red-400">{MESSAGES_ERREUR[erreur] ?? MESSAGES_ERREUR["1"]}</p>}
+        {erreur && <p className="text-sm text-red-600">{MESSAGES_ERREUR[erreur] ?? MESSAGES_ERREUR["1"]}</p>}
         <button
           type="submit"
-          className="flex h-14 items-center justify-center rounded-full bg-[#f24f0a] text-[16px] font-extrabold text-white transition hover:bg-[#e8520e] md:h-[54px]"
+          className="flex h-14 items-center justify-center rounded-full bg-[#EC5821] text-[16px] font-extrabold text-white transition hover:bg-[#d44d1a] md:h-[54px]"
         >
           Créer mon compte
         </button>
@@ -167,11 +170,12 @@ function WaitlistView({ erreur, listeAttente }: { erreur?: string; listeAttente?
           type="email"
           placeholder="vous@entreprise.fr"
           required
+          variant="glass"
         />
         {erreur === "1" && <p className="mt-3 text-sm text-red-400">Merci de renseigner une adresse email valide.</p>}
         <button
           type="submit"
-          className="mt-4 flex h-14 w-full items-center justify-center rounded-full bg-[#f24f0a] text-[16px] font-extrabold text-white"
+          className="mt-4 flex h-14 w-full items-center justify-center rounded-full bg-[#EC5821] text-[16px] font-extrabold text-white hover:bg-[#d44d1a]"
         >
           Rejoindre la liste d&apos;attente
         </button>
@@ -199,16 +203,18 @@ export default async function InscriptionPage({
   }
 
   const intro = (
-    <div className="flex flex-col gap-1.5 text-white">
-      <h1 className="text-[clamp(26px,3.6vw,34px)] font-extrabold leading-tight">Créez votre compte.</h1>
-      <p className="text-[15px] text-[#b9b4b0]">Importez vos documents ensuite — Tarinéo construit le reste.</p>
+    <div className="flex flex-col gap-2 text-[#172935]">
+      <h1 className="text-[clamp(26px,4vw,38px)] font-extrabold leading-tight">Créez votre compte.</h1>
+      <p className="text-[15px] leading-relaxed text-[#53616A]">
+        Importez vos documents ensuite — Tarinéo construit le reste.
+      </p>
     </div>
   );
 
   const footer = (
-    <p className="text-center text-[13px] text-[#b9b4b0]">
+    <p className="text-center text-[13px] text-[#53616A]">
       Déjà un compte ?{" "}
-      <Link href="/connexion" className="font-extrabold text-[#ff6a24] hover:opacity-90">
+      <Link href="/connexion" className="font-extrabold text-[#EC5821] hover:opacity-90">
         Se connecter
       </Link>
     </p>
@@ -216,9 +222,9 @@ export default async function InscriptionPage({
 
   return (
     <>
-      <MobileAuthShell background="/auth/bg-inscription-mobile.png">
-        <div className="flex flex-col gap-[18px]">
-          <AuthBrand variant="dark" />
+      <MobileAuthShell>
+        <div className="flex flex-col gap-[26px]">
+          <AuthBrand variant="light" />
           {intro}
         </div>
         <InscriptionFormPanel erreur={erreur} />

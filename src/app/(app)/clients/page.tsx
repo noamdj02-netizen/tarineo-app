@@ -1,52 +1,49 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import { agregerClientsUtilisateur, filtrerClients, hrefClient } from "@/lib/clients";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { EmptyState } from "@/components/tarineo/EmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
-import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
+import { DataTable, RowActions, TableCell, TableRow } from "@/components/tarineo/DataTable";
+import { IconPlus } from "@/components/tarineo/NavIcons";
+import { RechercheClients } from "./RechercheClients";
 
-/**
- * Clients détectés automatiquement depuis les devis/factures clients.
- * Pas encore de modèle Client CRM : on agrège les noms documentés (jamais inventés).
- */
-export default async function ClientsPage() {
+const formaterEuros = (valeur: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
+
+const formaterDate = (date: Date | null) => {
+  if (!date) return "—";
+  return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+};
+
+function AvatarClient({ nom }: { nom: string }) {
+  const initiale = nom.replace(/[^A-Za-zÀ-ÿ0-9]/g, "").charAt(0).toUpperCase() || "?";
+  return (
+    <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FFF0E8] text-sm font-bold text-primary">
+      {initiale}
+    </div>
+  );
+}
+
+function CarteResume({ label, valeur }: { label: string; valeur: string }) {
+  return (
+    <div className="rounded-[20px] bg-secondary px-4 py-3">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-semibold text-foreground">{valeur}</p>
+    </div>
+  );
+}
+
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
 
-  const [quotes, invoices] = await Promise.all([
-    prisma.clientQuote.findMany({
-      where: { userId: session.user.id },
-      select: { clientNom: true, id: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.clientInvoice.findMany({
-      where: { userId: session.user.id },
-      select: { clientNom: true, id: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+  const { q = "" } = await searchParams;
+  const tousLesClients = await agregerClientsUtilisateur(session.user.id);
 
-  const parNom = new Map<string, { nom: string; devis: number; factures: number }>();
-  for (const q of quotes) {
-    const cle = q.clientNom.trim().toLowerCase();
-    if (!cle) continue;
-    const existant = parNom.get(cle);
-    if (existant) existant.devis += 1;
-    else parNom.set(cle, { nom: q.clientNom.trim(), devis: 1, factures: 0 });
-  }
-  for (const inv of invoices) {
-    const cle = inv.clientNom.trim().toLowerCase();
-    if (!cle) continue;
-    const existant = parNom.get(cle);
-    if (existant) existant.factures += 1;
-    else parNom.set(cle, { nom: inv.clientNom.trim(), devis: 0, factures: 1 });
-  }
-
-  const clients = [...parNom.values()].sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
-
-  if (clients.length === 0) {
+  if (tousLesClients.length === 0) {
     return (
       <EmptyState
         title="Clients"
@@ -60,28 +57,71 @@ export default async function ClientsPage() {
     );
   }
 
+  const clients = filtrerClients(tousLesClients, q);
+  const totalFacture = tousLesClients.reduce((s, c) => s + c.totalFactureHt, 0);
+  const totalDevis = tousLesClients.reduce((s, c) => s + c.devis, 0);
+  const totalFactures = tousLesClients.reduce((s, c) => s + c.factures, 0);
+
   return (
     <div>
       <PageHeader
         title="Clients"
-        subtitle="Détectés automatiquement depuis vos devis et factures — jamais inventés."
-        actions={<BtnPrimary href="/devis-clients/nouveau">Nouveau devis</BtnPrimary>}
+        subtitle="Carnet alimenté par vos devis et factures — jamais inventé, toujours à jour."
+        actions={
+          <BtnPrimary href="/devis-clients/nouveau">
+            <IconPlus /> Nouveau devis
+          </BtnPrimary>
+        }
       />
+
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <CarteResume label="Clients" valeur={String(tousLesClients.length)} />
+        <CarteResume label="Devis émis" valeur={String(totalDevis)} />
+        <CarteResume label="Factures émises" valeur={String(totalFactures)} />
+        <CarteResume label="Facturé (HT)" valeur={formaterEuros(totalFacture)} />
+      </div>
+
       <PageCard>
-        <DataTable columns={["Client", "Devis", "Factures", ""]}>
-          {clients.map((c) => (
-            <TableRow key={c.nom}>
-              <TableCell className="font-medium">{c.nom}</TableCell>
-              <TableCell>{c.devis}</TableCell>
-              <TableCell>{c.factures}</TableCell>
-              <TableCell>
-                <Link href="/devis-clients" className="text-sm text-primary hover:underline">
-                  Voir les devis
-                </Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </DataTable>
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Suspense fallback={null}>
+            <RechercheClients valeurInitiale={q} />
+          </Suspense>
+          <p className="text-sm text-muted-foreground">
+            {clients.length} client{clients.length > 1 ? "s" : ""}
+            {q.trim() ? ` pour « ${q.trim()} »` : ""}
+          </p>
+        </div>
+
+        {clients.length === 0 ? (
+          <div className="rounded-[20px] bg-secondary px-4 py-10 text-center">
+            <p className="font-medium text-foreground">Aucun client ne correspond à votre recherche.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Essayez un autre nom, SIRET ou e-mail.</p>
+          </div>
+        ) : (
+          <DataTable columns={["Client", "SIRET", "Devis", "Factures", "Facturé HT", "Dernière activité", ""]}>
+            {clients.map((c) => (
+              <TableRow key={c.cle}>
+                <TableCell>
+                  <Link href={hrefClient(c.nom)} className="flex items-center gap-3 hover:opacity-90">
+                    <AvatarClient nom={c.nom} />
+                    <div className="min-w-0">
+                      <p className="truncate font-medium text-foreground">{c.nom}</p>
+                      {c.email && <p className="truncate text-xs text-muted-foreground">{c.email}</p>}
+                    </div>
+                  </Link>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{c.siret ?? "—"}</TableCell>
+                <TableCell>{c.devis}</TableCell>
+                <TableCell>{c.factures}</TableCell>
+                <TableCell className="font-medium">{c.totalFactureHt > 0 ? formaterEuros(c.totalFactureHt) : "—"}</TableCell>
+                <TableCell className="text-muted-foreground">{formaterDate(c.derniereActivite)}</TableCell>
+                <TableCell>
+                  <RowActions href={hrefClient(c.nom)} label="Ouvrir" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </DataTable>
+        )}
       </PageCard>
     </div>
   );

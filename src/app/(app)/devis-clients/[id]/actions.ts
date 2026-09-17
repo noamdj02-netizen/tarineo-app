@@ -60,6 +60,8 @@ export async function transformerEnFacture(clientQuoteId: string): Promise<Resul
         numero,
         clientNom: quote.clientNom,
         clientAdresse: quote.clientAdresse,
+        clientSiret: quote.clientSiret,
+        clientEmail: quote.clientEmail,
         dateEmission,
         dateEcheance,
         conditionsPaiement: quote.conditionsPaiement,

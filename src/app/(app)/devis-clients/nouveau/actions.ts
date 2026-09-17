@@ -18,6 +18,12 @@ const ligneSchema = z.object({
 const schema = z.object({
   clientNom: z.string().trim().min(1, "Le nom du client est requis."),
   clientAdresse: z.string().trim().optional(),
+  clientSiret: z.string().trim().optional(),
+  clientEmail: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || z.string().email().safeParse(val).success, "Email invalide."),
   dureeValiditeJours: z.number().int().positive(),
   conditionsPaiement: z.string().trim().min(1, "Les conditions de paiement sont requises."),
   lignes: z.array(ligneSchema).min(1, "Ajoutez au moins une ligne."),
@@ -62,6 +68,8 @@ export async function creerDevis(donnees: DonneesNouveauDevis): Promise<Resultat
         numero,
         clientNom: data.clientNom,
         clientAdresse: data.clientAdresse?.trim() || null,
+        clientSiret: data.clientSiret?.trim() || null,
+        clientEmail: data.clientEmail?.trim() || null,
         dureeValiditeJours: data.dureeValiditeJours,
         conditionsPaiement: data.conditionsPaiement,
         promptOriginal: data.promptOriginal?.trim() || null,

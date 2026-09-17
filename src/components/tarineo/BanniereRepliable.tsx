@@ -80,7 +80,7 @@ export function BanniereRepliable({
           <button type="button" onClick={basculer} className="w-full text-left">
             <p className="font-medium text-foreground">{titre}</p>
           </button>
-          {ouvert && <div className="mt-1 text-muted">{children}</div>}
+          {ouvert && <div className="mt-1 text-muted-foreground">{children}</div>}
         </div>
         {dismissible && (
           <button

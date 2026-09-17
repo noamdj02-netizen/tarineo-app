@@ -1,15 +1,23 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FileTextIcon } from "lucide-react";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { BadgeConfiance, BadgeDoublon, BadgeStatutDocument } from "@/components/tarineo/BadgeStatutDocument";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { FormulaireUpload } from "./FormulaireUpload";
+import { ImportDocument } from "./ImportDocument";
+import { ActionsDocument } from "./ActionsDocument";
 import { PopupOnboardingDevis } from "./PopupOnboardingDevis";
 import { EcranPaiementRequis } from "./EcranPaiementRequis";
-import { LABELS_STATUT, LABELS_TYPE, LABELS_TYPE_PLURIEL, TYPES_FILTRABLES } from "@/lib/documentLabels";
+import {
+  AIDE_PAGE_DOCUMENTS,
+  LABELS_TYPE,
+  LABELS_TYPE_PLURIEL,
+  ROUTES_DOCUMENTS_PAR_TYPE,
+  SOUS_TITRES_PAGE_DOCUMENTS,
+  TITRES_PAGE_DOCUMENTS,
+  TYPES_FILTRABLES,
+} from "@/lib/documentLabels";
 import { NavTypeMobile } from "./NavTypeMobile";
 import { normaliserReference } from "@/lib/normalisation";
 import { historiqueEstSuffisant } from "@/lib/historique";
@@ -49,12 +57,14 @@ const LABELS_TYPE_MINUSCULE_PLURIEL: Record<DocumentType, string> = {
   BON_ENLEVEMENT: "bons d'enlèvement",
 };
 
-export default async function DocumentsPage({
+export async function DocumentsPage({
   searchParams,
+  typeFixe,
 }: {
   searchParams: Promise<Recherche>;
+  typeFixe?: DocumentType;
 }) {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) {
     redirect("/connexion");
   }
@@ -62,8 +72,14 @@ export default async function DocumentsPage({
   const maintenant = new Date();
 
   const { mois, distributeur, reference, upgrade, hausse, type, enseigne, onboarding, scanner } = await searchParams;
+
+  if (!typeFixe && estTypeValide(type)) {
+    redirect(ROUTES_DOCUMENTS_PAR_TYPE[type]);
+  }
+
   const filtreHausse = hausse === "1";
-  const typeValide = estTypeValide(type) ? type : undefined;
+  const typeValide = typeFixe ?? (estTypeValide(type) ? type : undefined);
+  const clePage = typeValide ?? "tous";
   const debutMois = debutMoisUTC(maintenant);
 
   const [distributeursExistants, utilisateur, historiquePrix, documentsAvantCeMois, documentsCeMois] =
@@ -248,17 +264,31 @@ export default async function DocumentsPage({
   return (
     <div className="app-page flex flex-col gap-6">
       <section className="rounded-[24px] bg-white p-6">
-      <h1 className="text-2xl font-medium text-[var(--foreground)]">Mes documents</h1>
-      <p className="mt-2 text-sm text-[var(--muted)]">
-        Envoyez un ou plusieurs devis/factures/bons de commande fournisseur (PDF, JPEG, PNG ou HEIC, 20 Mo maximum par fichier).
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-medium text-[var(--foreground)]">{TITRES_PAGE_DOCUMENTS[clePage]}</h1>
+          <p className="mt-2 max-w-xl text-sm text-foreground/80">{SOUS_TITRES_PAGE_DOCUMENTS[clePage]}</p>
+          {typeValide && (
+            <p className="mt-3 max-w-xl rounded-2xl bg-[#FFF0E8] px-4 py-3 text-sm text-[#172935]">
+              {AIDE_PAGE_DOCUMENTS[typeValide]}
+            </p>
+          )}
+        </div>
+        {!bloquePaiementRequis && (
+          <ImportDocument
+            quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
+            autoOpen={onboarding === "1" || scanner === "1"}
+            preferCamera={scanner === "1"}
+          />
+        )}
+      </div>
 
       {documentsTotal === 0 && !bloquePaiementRequis && etatQuota?.phase === "historique" && (
         <div className="mt-6 app-banner text-sm">
           <p className="font-semibold text-[var(--foreground)]">
             Bienvenue sur Tarineo — importez votre historique pour activer les alertes de hausse de prix.
           </p>
-          <p className="mt-1 text-muted">
+          <p className="mt-1 text-muted-foreground">
             La plupart des distributeurs (Cedeo, Point P, Tereva...) permettent de retélécharger vos documents
             passés depuis votre espace client.
           </p>
@@ -273,7 +303,7 @@ export default async function DocumentsPage({
           <p className="font-semibold text-[var(--foreground)]">
             Importez un devis ou une facture {enseigne.trim()}
           </p>
-          <p className="mt-1 text-muted">
+          <p className="mt-1 text-muted-foreground">
             Une fois validé, cette enseigne apparaîtra dans Fournisseurs et Tarineo comparera les prix à votre
             historique personnel.
           </p>
@@ -283,7 +313,7 @@ export default async function DocumentsPage({
       {onboarding === "1" && (
         <div className="mt-6 app-banner text-sm">
           <p className="font-semibold text-[var(--foreground)]">Importez vos premiers documents</p>
-          <p className="mt-1 text-muted">
+          <p className="mt-1 text-muted-foreground">
             PDF, photos ou plusieurs fichiers à la fois. Tarinéo lit, extrait et construit votre espace — sans
             inventer de données.
           </p>
@@ -313,7 +343,7 @@ export default async function DocumentsPage({
             <p className="font-medium text-foreground">
               Import initial : {etatQuota.documentsTotal}/{etatQuota.limiteHistorique} documents
             </p>
-            <p className="mt-1 text-muted">
+            <p className="mt-1 text-muted-foreground">
               Ce quota d&apos;import de votre historique est indépendant de votre quota mensuel — utilisez-le pour
               importer vos anciens devis et factures sans entamer votre forfait.
               {!historiqueSuffisant &&
@@ -346,7 +376,7 @@ export default async function DocumentsPage({
             <p className="font-medium text-foreground">
               Quota mensuel atteint ({etatQuota.quotaMensuel} documents/mois)
             </p>
-            <p className="mt-1 text-muted">
+            <p className="mt-1 text-muted-foreground">
               {etatQuota.surPlanReel
                 ? "Vous pourrez de nouveau envoyer des documents le mois prochain."
                 : "Ce plafond s'applique pendant l'essai gratuit, quel que soit le plan visé. Il passera au quota de votre formule (jusqu'à 1 000 documents/mois) dès votre premier moyen de paiement enregistré."}
@@ -356,7 +386,7 @@ export default async function DocumentsPage({
       )}
 
       {etatQuota?.phase === "mensuel" && !etatQuota.quotaAtteint && (
-        <p className="mt-4 text-xs text-muted">
+        <p className="mt-4 text-xs text-muted-foreground">
           {etatQuota.documentsCeMoisHorsHistorique}/{etatQuota.quotaMensuel} documents envoyés ce mois-ci
           {!etatQuota.surPlanReel ? " (palier d'essai)" : ""}.
         </p>
@@ -386,7 +416,7 @@ export default async function DocumentsPage({
           </span>
           <div>
             <p className="font-medium text-foreground">Historique encore insuffisant pour détecter une hausse</p>
-            <p className="mt-1 text-muted">
+            <p className="mt-1 text-muted-foreground">
               Tarineo a besoin d&apos;au moins deux documents d&apos;un même distributeur pour comparer un prix
               et repérer une hausse — sans historique, il n&apos;y a rien à comparer. Continuez à envoyer vos
               devis et factures au fil du temps : les alertes s&apos;activeront automatiquement dès que
@@ -401,15 +431,17 @@ export default async function DocumentsPage({
         <div className="flex items-center justify-between">
           <h2 className="text-base font-medium text-[var(--foreground)]">Documents envoyés</h2>
           {desFiltresActifs && (
-            <Link href="/documents" className="text-xs text-muted hover:text-accent">
+            <Link href="/documents" className="text-xs text-muted-foreground hover:text-accent">
               Réinitialiser les filtres
             </Link>
           )}
         </div>
 
-        <div className="mt-3">
-          <NavTypeMobile typeActif={typeValide} comptes={Object.fromEntries(comptesParType)} />
-        </div>
+        {!typeFixe && (
+          <div className="mt-3">
+            <NavTypeMobile typeActif={typeValide} comptes={Object.fromEntries(comptesParType)} />
+          </div>
+        )}
 
         {/* key forcé sur la combinaison de filtres : sans lui, une navigation côté client
             qui reste sur /documents (ex. les nouveaux liens de type dans la sidebar ou les
@@ -425,7 +457,7 @@ export default async function DocumentsPage({
           className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]"
         >
           <div>
-            <label htmlFor="mois" className="block text-xs text-muted mb-1">
+            <label htmlFor="mois" className="block text-xs text-muted-foreground mb-1">
               Mois
             </label>
             <input
@@ -437,7 +469,7 @@ export default async function DocumentsPage({
             />
           </div>
           <div>
-            <label htmlFor="distributeur" className="block text-xs text-muted mb-1">
+            <label htmlFor="distributeur" className="block text-xs text-muted-foreground mb-1">
               Distributeur
             </label>
             <select
@@ -454,26 +486,28 @@ export default async function DocumentsPage({
               ))}
             </select>
           </div>
+          {!typeFixe && (
+            <div>
+              <label htmlFor="type" className="block text-xs text-muted-foreground mb-1">
+                Type
+              </label>
+              <select
+                id="type"
+                name="type"
+                defaultValue={typeValide ?? ""}
+                className="w-full app-input"
+              >
+                <option value="">Tous</option>
+                {TYPES_FILTRABLES.map((t) => (
+                  <option key={t} value={t}>
+                    {LABELS_TYPE[t]} ({comptesParType.get(t) ?? 0})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
-            <label htmlFor="type" className="block text-xs text-muted mb-1">
-              Type
-            </label>
-            <select
-              id="type"
-              name="type"
-              defaultValue={typeValide ?? ""}
-              className="w-full app-input"
-            >
-              <option value="">Tous</option>
-              {TYPES_FILTRABLES.map((t) => (
-                <option key={t} value={t}>
-                  {LABELS_TYPE[t]} ({comptesParType.get(t) ?? 0})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor="reference" className="block text-xs text-muted mb-1">
+            <label htmlFor="reference" className="block text-xs text-muted-foreground mb-1">
               Référence
             </label>
             <input
@@ -491,7 +525,7 @@ export default async function DocumentsPage({
           >
             Filtrer
           </button>
-          <label className="col-span-full flex items-center gap-2 text-sm text-muted">
+          <label className="col-span-full flex items-center gap-2 text-sm text-muted-foreground">
             <input
               type="checkbox"
               name="hausse"
@@ -513,7 +547,10 @@ export default async function DocumentsPage({
                 <EmptyTitle>Vous n&apos;avez pas encore envoyé de {LABELS_TYPE_MINUSCULE[typeValide]}.</EmptyTitle>
               </EmptyHeader>
               <EmptyContent>
-                <Button render={<a href="#formulaire-upload" />}>Importer un {LABELS_TYPE_MINUSCULE[typeValide]}</Button>
+                <ImportDocument
+                  quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
+                  label={`Importer un ${LABELS_TYPE_MINUSCULE[typeValide]}`}
+                />
               </EmptyContent>
             </Empty>
           ) : etatVide.cas === "historique_insuffisant" && typeValide ? (
@@ -550,51 +587,54 @@ export default async function DocumentsPage({
               const confianceFaible = confiance !== undefined && confiance < 0.9;
               const alertesDocument = alertesParDocument?.get(document.id);
 
+              const libelleDocument = `${LABELS_TYPE[document.type] ?? document.type}${document.distributor ? ` · ${document.distributor}` : ""}`;
+
               return (
-                <li key={document.id}>
-                  <Link
-                    href={`/documents/${document.id}`}
-                    className="flex flex-col gap-1.5 app-list-link text-sm"
-                  >
-                    <span className="flex items-center justify-between gap-3">
-                      <span>
-                        {LABELS_TYPE[document.type] ?? document.type}
-                        {document.distributor ? ` · ${document.distributor}` : ""} ·{" "}
-                        {(document.documentDate ?? document.createdAt).toLocaleDateString("fr-FR")}
-                        {document.totalTtc !== null && (
-                          <>
-                            {" · "}
-                            {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                              Number(document.totalTtc)
-                            )}
-                          </>
-                        )}
+                <li key={document.id} className="app-list-link rounded-xl text-sm">
+                  <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <Link href={`/documents/${document.id}`} className="min-w-0 flex-1">
+                      <span className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+                        <span>
+                          {LABELS_TYPE[document.type] ?? document.type}
+                          {document.distributor ? ` · ${document.distributor}` : ""} ·{" "}
+                          {(document.documentDate ?? document.createdAt).toLocaleDateString("fr-FR")}
+                          {document.totalTtc !== null && (
+                            <>
+                              {" · "}
+                              {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+                                Number(document.totalTtc)
+                              )}
+                            </>
+                          )}
+                        </span>
+                        <span className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                          {document.possibleDoublon && <BadgeDoublon />}
+                          {confianceFaible && confiance !== undefined && (
+                            <BadgeConfiance pct={Math.round(confiance * 100)} />
+                          )}
+                          <BadgeStatutDocument statut={document.status} />
+                        </span>
                       </span>
-                      <span className="flex shrink-0 items-center gap-2">
-                        {document.possibleDoublon && (
-                          <Badge variant="secondary">Doublon ?</Badge>
-                        )}
-                        {confianceFaible && (
-                          <Badge variant="secondary">{Math.round(confiance * 100)}% confiance</Badge>
-                        )}
-                        <Badge variant="outline">
-                          {LABELS_STATUT[document.status] ?? document.status}
-                        </Badge>
-                      </span>
-                    </span>
-                    {alertesDocument && alertesDocument.length > 0 && (
-                      <span className="text-xs text-red-400">
-                        {alertesDocument
-                          .map(
-                            (p) =>
-                              `${p.designation || p.reference} : +${p.ecartPourcent?.toFixed(0) ?? "?"} %${
-                                p.ecartEuros !== null ? ` (${p.ecartEuros >= 0 ? "+" : ""}${p.ecartEuros.toFixed(2)} €/u)` : ""
-                              }`
-                          )
-                          .join(" · ")}
-                      </span>
-                    )}
-                  </Link>
+                      {alertesDocument && alertesDocument.length > 0 && (
+                        <span className="mt-1 block text-xs text-red-400">
+                          {alertesDocument
+                            .map(
+                              (p) =>
+                                `${p.designation || p.reference} : +${p.ecartPourcent?.toFixed(0) ?? "?"} %${
+                                  p.ecartEuros !== null ? ` (${p.ecartEuros >= 0 ? "+" : ""}${p.ecartEuros.toFixed(2)} €/u)` : ""
+                                }`
+                            )
+                            .join(" · ")}
+                        </span>
+                      )}
+                    </Link>
+                    <ActionsDocument
+                      documentId={document.id}
+                      statut={document.status}
+                      libelle={libelleDocument}
+                      compact
+                    />
+                  </div>
                 </li>
               );
             })}
@@ -604,17 +644,17 @@ export default async function DocumentsPage({
 
       {statsTotal > 0 && (
         <section className="mt-10">
-          <p className="text-sm font-medium text-muted">
+          <p className="text-sm font-medium text-muted-foreground">
             En bref{typeValide ? ` — ${LABELS_TYPE_PLURIEL[typeValide]}` : ""}
           </p>
           <div className="mt-3 app-card p-5 sm:p-6">
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <p className="text-xs text-muted">Documents</p>
+                <p className="text-xs text-muted-foreground">Documents</p>
                 <p className="mt-1 text-xl font-semibold text-foreground">{statsTotal}</p>
               </div>
               <div>
-                <p className="text-xs text-muted">Montant total HT</p>
+                <p className="text-xs text-muted-foreground">Montant total HT</p>
                 <p className="mt-1 text-xl font-semibold text-foreground">
                   {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
                     statsSommeHt
@@ -622,7 +662,7 @@ export default async function DocumentsPage({
                 </p>
               </div>
               <div>
-                <p className="text-xs text-muted">Hausses détectées</p>
+                <p className="text-xs text-muted-foreground">Hausses détectées</p>
                 <p className={`mt-1 text-xl font-semibold ${statsHausses > 0 ? "text-red-400" : "text-foreground"}`}>
                   {statsHausses}
                 </p>
@@ -631,7 +671,7 @@ export default async function DocumentsPage({
 
             {statsParDistributeur.length > 0 && (
               <div className="mt-5 space-y-2.5 border-t border-border pt-4">
-                <p className="text-xs text-muted">Répartition par distributeur</p>
+                <p className="text-xs text-muted-foreground">Répartition par distributeur</p>
                 {statsParDistributeur.map((d) => (
                   <Link
                     key={d.norm}
@@ -642,7 +682,7 @@ export default async function DocumentsPage({
                       <span className="text-foreground group-hover:text-accent group-hover:underline">
                         {d.label}
                       </span>
-                      <span className="text-muted">
+                      <span className="text-muted-foreground">
                         {d.count} document{d.count > 1 ? "s" : ""}
                       </span>
                     </div>
@@ -660,31 +700,22 @@ export default async function DocumentsPage({
         </section>
       )}
 
-      {/* Ancre ciblée par le bouton "Importer" de l'état vide "jamais importé" plus haut —
-          scroll-mt pour ne pas coller sous la sidebar/nav mobile au moment du scroll. */}
-      <div id="formulaire-upload" className="scroll-mt-6">
-        {bloquePaiementRequis ? (
+      {bloquePaiementRequis && (
+        <div className="mt-8">
           <EcranPaiementRequis />
-        ) : (
-          <>
-            {upgrade === "1" && <EcranPaiementRequis bloque={false} />}
-            {/* key : même raison que le <form> de filtres plus haut — sans lui, un lien
-                de type (sidebar/onglets mobile) qui reste sur /documents ne fait que
-                changer `type`, donc FormulaireUpload n'est pas remonté et son
-                useState(typeInitial) interne garde l'ancienne sélection. */}
-            <FormulaireUpload
-              key={typeValide ?? "defaut"}
-              quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
-              typeInitial={typeValide}
-              modeOnboarding={onboarding === "1"}
-              redirigerVersResume={documentsTotal === 0}
-              autoOuvrirCamera={scanner === "1"}
-            />
-          </>
-        )}
-      </div>
+        </div>
+      )}
+      {upgrade === "1" && !bloquePaiementRequis && (
+        <div className="mt-8">
+          <EcranPaiementRequis bloque={false} />
+        </div>
+      )}
 
       {afficherPopupOnboarding && <PopupOnboardingDevis />}
     </div>
   );
+}
+
+export default function Page(props: { searchParams: Promise<Recherche> }) {
+  return DocumentsPage(props);
 }

@@ -292,6 +292,8 @@ model ClientQuote {
   numero             String
   clientNom          String
   clientAdresse      String?
+  clientSiret        String?
+  clientEmail        String?
   dateEmission       DateTime @default(now())
   dureeValiditeJours Int      @default(30)
   conditionsPaiement String
@@ -348,6 +350,8 @@ model ClientInvoice {
   numero             String
   clientNom          String
   clientAdresse      String?
+  clientSiret        String?
+  clientEmail        String?
   dateEmission       DateTime @default(now())
   dateEcheance       DateTime
   conditionsPaiement String
@@ -429,4 +433,37 @@ model WaitlistSignup {
   createdAt DateTime @default(now())
 
   @@map("waitlist_signups")
+}
+
+// Promos extraites des pages publiques des enseignes (S4, SPEC-AGENT-FOURNISSEUR.md).
+// Cache partagé entre artisans — le croisement avec PriceHistory se fait à l'affichage.
+model PromoFournisseur {
+  id              String    @id @default(cuid())
+  bibliothequeId  String
+  distributorNorm String
+  titre           String
+  description     String
+  remisePct       Decimal?  @db.Decimal(5, 2)
+  valableJusquA   DateTime?
+  sourceUrl       String
+  confiance       Float
+  fetchedAt       DateTime
+  actif           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+
+  @@index([bibliothequeId, actif, fetchedAt])
+  @@index([distributorNorm])
+}
+
+// Journal des rafraîchissements (1 requête / enseigne / jour max côté agent).
+model PromoFetchLog {
+  id             String   @id @default(cuid())
+  bibliothequeId String
+  userId         String?
+  fetchedAt      DateTime @default(now())
+  succes         Boolean
+  nbPromos       Int      @default(0)
+  message        String?
+
+  @@index([bibliothequeId, fetchedAt])
 }

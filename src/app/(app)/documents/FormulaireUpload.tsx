@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { IconeImportAnimee, OverlayImportAnime } from "./IconeImportAnimee";
 import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
 
@@ -31,6 +33,7 @@ interface FichierEnvoi {
   statut: StatutFichier;
   message?: string;
   doublon?: DoublonPotentiel;
+  documentId?: string;
 }
 
 function decrireDoublon(doublon: DoublonPotentiel): string {
@@ -49,6 +52,9 @@ export function FormulaireUpload({
   modeOnboarding = false,
   redirigerVersResume = false,
   autoOuvrirCamera = false,
+  variantPc = false,
+  variantCompact = false,
+  onImportReussi,
 }: {
   quotaAtteint?: boolean;
   // Préselectionne le type — utilisé par documents/page.tsx quand l'artisan arrive via
@@ -60,11 +66,18 @@ export function FormulaireUpload({
   redirigerVersResume?: boolean;
   /** Ouvre directement le sélecteur photo (bouton Scanner mobile). */
   autoOuvrirCamera?: boolean;
+  /** PC : explorateur de fichiers en premier, zone large pour glisser-déposer. */
+  variantPc?: boolean;
+  /** Panneau latéral : pas de choix de type (l'IA reclasse après analyse). */
+  variantCompact?: boolean;
+  /** Wizard onboarding : callback au lieu d'une navigation vers /onboarding/analyse. */
+  onImportReussi?: (nbSucces: number, documentId?: string) => void;
 }) {
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
   const inputFichierRef = useRef<HTMLInputElement>(null);
   const [type, setType] = useState<"DEVIS" | "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT">(typeInitial ?? "DEVIS");
+  const typeEnvoi = variantCompact ? "DEVIS" : type;
   const [fichiers, setFichiers] = useState<FichierEnvoi[]>([]);
   const [enCours, setEnCours] = useState(false);
   const [progression, setProgression] = useState<{ traites: number; total: number } | null>(null);
@@ -80,11 +93,12 @@ export function FormulaireUpload({
   const [apercuErreurId, setApercuErreurId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (autoOuvrirCamera && !quotaAtteint) {
-      // Laisse le layout peindre avant d'ouvrir le sélecteur natif.
-      const t = setTimeout(() => inputPhotoRef.current?.click(), 250);
-      return () => clearTimeout(t);
-    }
+    if (!autoOuvrirCamera || quotaAtteint) return;
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (!mobile) return;
+    // Laisse le layout peindre avant d'ouvrir le sélecteur natif (mobile uniquement).
+    const t = setTimeout(() => inputPhotoRef.current?.click(), 250);
+    return () => clearTimeout(t);
   }, [autoOuvrirCamera, quotaAtteint]);
 
   // Aperçu = dernier fichier ajouté (image uniquement, un PDF n'a pas de rendu utile ici).
@@ -156,19 +170,19 @@ export function FormulaireUpload({
     setFichiers((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
-  async function envoyerFichier(item: FichierEnvoi, options: { ignorerDoublon?: boolean } = {}): Promise<boolean> {
+  async function envoyerFichier(item: FichierEnvoi, options: { ignorerDoublon?: boolean } = {}): Promise<string | null> {
     majStatut(item.id, { statut: "envoi" });
 
     const formData = new FormData();
-    formData.append("type", type);
+    formData.append("type", typeEnvoi);
     formData.append("fichier", item.file);
     if (options.ignorerDoublon) formData.append("ignorerDoublon", "true");
 
     const resultat = await envoyerUnDocument(formData);
 
     if (resultat.succes) {
-      majStatut(item.id, { statut: "succes" });
-      return true;
+      majStatut(item.id, { statut: "succes", documentId: resultat.documentId });
+      return resultat.documentId;
     }
     if (resultat.erreur === "doublon_detecte") {
       majStatut(item.id, {
@@ -176,10 +190,10 @@ export function FormulaireUpload({
         doublon: resultat.doublon,
         message: `Déjà envoyé : ${decrireDoublon(resultat.doublon)}`,
       });
-      return false;
+      return null;
     }
     majStatut(item.id, { statut: "erreur", message: MESSAGES_ERREUR[resultat.erreur] });
-    return false;
+    return null;
   }
 
   // Retenté individuellement (pas via le bouton "Envoyer" principal, qui ne traite
@@ -198,14 +212,14 @@ export function FormulaireUpload({
     const aEnvoyer = fichiers.filter((f) => f.statut === "en_attente");
     setProgression({ traites: 0, total: aEnvoyer.length });
     let curseur = 0;
-    const succesIds: string[] = [];
+    const documentIdsEnvoyes: string[] = [];
 
     async function worker() {
       while (curseur < aEnvoyer.length) {
         const item = aEnvoyer[curseur];
         curseur += 1;
-        const ok = await envoyerFichier(item);
-        if (ok) succesIds.push(item.id);
+        const documentId = await envoyerFichier(item);
+        if (documentId) documentIdsEnvoyes.push(documentId);
         setProgression((prev) => (prev ? { ...prev, traites: prev.traites + 1 } : prev));
       }
     }
@@ -219,9 +233,20 @@ export function FormulaireUpload({
     if (inputPhotoRef.current) inputPhotoRef.current.value = "";
     if (inputFichierRef.current) inputFichierRef.current.value = "";
 
-    const succesCount = succesIds.length;
+    const succesCount = documentIdsEnvoyes.length;
+    const dernierDocumentId = documentIdsEnvoyes[documentIdsEnvoyes.length - 1];
+
     if ((modeOnboarding || redirigerVersResume) && succesCount > 0) {
-      router.push(`/onboarding/analyse?n=${succesCount}`);
+      onImportReussi?.(succesCount, dernierDocumentId);
+      if (!onImportReussi) {
+        router.push(`/onboarding/analyse?n=${succesCount}`);
+      }
+      return;
+    }
+
+    if (succesCount > 0 && dernierDocumentId) {
+      onImportReussi?.(succesCount, dernierDocumentId);
+      router.push(`/documents/${dernierDocumentId}`);
       return;
     }
 
@@ -230,38 +255,60 @@ export function FormulaireUpload({
 
   const enAttenteCount = fichiers.filter((f) => f.statut === "en_attente").length;
 
+  const titreZone =
+    quotaAtteint
+      ? "Quota mensuel atteint"
+      : glisserActif
+        ? "Déposez vos fichiers ici"
+        : variantPc
+          ? "Glissez vos documents ici"
+          : "Photographiez votre devis";
+
+  const sousTitreZone =
+    quotaAtteint
+      ? "Revenez le mois prochain pour continuer l'envoi"
+      : glisserActif
+        ? "Plusieurs fichiers à la fois, c'est possible"
+        : variantPc
+          ? "PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers"
+          : "Appuyez pour ouvrir l'appareil photo, ou glissez-déposez plusieurs fichiers";
+
   return (
-    <div className="space-y-4 rounded-[24px] bg-white p-6">
-      <fieldset>
-        <legend className="mb-3 text-sm font-normal text-[var(--muted)]">
-          Type de document (l&apos;IA corrige automatiquement si besoin)
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {OPTIONS_TYPE.map((option) => (
-            <label
-              key={option.valeur}
-              className={`rounded-full px-5 py-2.5 text-sm font-normal transition-colors outline outline-1 ${
-                enCoursOuBloque ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-              } ${
-                type === option.valeur
-                  ? "bg-[var(--app-surface-muted)] text-[var(--accent)] outline-[var(--accent)]"
-                  : "bg-white text-[var(--muted)] outline-[var(--app-divider)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="type"
-                value={option.valeur}
-                checked={type === option.valeur}
-                onChange={() => setType(option.valeur)}
-                disabled={enCoursOuBloque}
-                className="sr-only"
-              />
-              {option.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+    <div
+      className={`font-sans ${variantCompact ? "space-y-6" : "space-y-4"} ${variantCompact ? "" : "rounded-[24px] bg-white p-6"}`}
+    >
+      {!variantCompact && (
+        <fieldset>
+          <legend className="mb-3 text-sm font-normal text-muted-foreground">
+            Type de document (l&apos;IA corrige automatiquement si besoin)
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {OPTIONS_TYPE.map((option) => (
+              <label
+                key={option.valeur}
+                className={`rounded-full px-5 py-2.5 text-sm font-medium transition-colors outline outline-1 ${
+                  enCoursOuBloque ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                } ${
+                  type === option.valeur
+                    ? "bg-[#FFF0E8] text-primary outline-primary"
+                    : "bg-white text-foreground outline-border hover:bg-[#FFF0E8]/50 hover:text-primary hover:outline-primary/50"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="type"
+                  value={option.valeur}
+                  checked={type === option.valeur}
+                  onChange={() => setType(option.valeur)}
+                  disabled={enCoursOuBloque}
+                  className="sr-only"
+                />
+                {option.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <div>
         <input
@@ -295,73 +342,71 @@ export function FormulaireUpload({
           role="button"
           tabIndex={enCoursOuBloque ? -1 : 0}
           aria-disabled={enCoursOuBloque}
-          aria-label={dernierFichier ? "Ajouter une autre photo" : "Photographiez votre devis"}
-          onClick={() => !enCoursOuBloque && inputPhotoRef.current?.click()}
+          aria-label={
+            variantPc
+              ? dernierFichier
+                ? "Ajouter d'autres fichiers"
+                : "Choisir des fichiers à importer"
+              : dernierFichier
+                ? "Ajouter une autre photo"
+                : "Photographiez votre devis"
+          }
+          onClick={() => !enCoursOuBloque && (variantPc ? inputFichierRef.current?.click() : inputPhotoRef.current?.click())}
           onKeyDown={(e) => {
             if (enCoursOuBloque) return;
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              inputPhotoRef.current?.click();
+              if (variantPc) inputFichierRef.current?.click();
+              else inputPhotoRef.current?.click();
             }
           }}
           onDragEnter={onDragEnter}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
-          className={`relative flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 overflow-hidden rounded-[20px] border-2 border-dashed text-center transition-colors ${
-            glisserActif ? "border-[var(--accent)] bg-white" : "border-[var(--app-divider)] bg-[var(--app-surface-muted)]"
-          } ${
-            enCoursOuBloque ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:border-[var(--accent)] hover:bg-white"
+          className={`relative flex w-full flex-col items-center justify-center overflow-hidden text-center transition-colors ${
+            variantCompact
+              ? `gap-4 rounded-[16px] border border-dashed px-6 py-9 ${
+                  enCours ? "min-h-[200px] border-[#ec5821] bg-white" : glisserActif ? "border-[#ec5821] bg-white" : "border-[#d1d5db] bg-white"
+                } ${enCoursOuBloque && !enCours ? "cursor-not-allowed opacity-60" : enCours ? "cursor-wait" : "cursor-pointer hover:border-[#ec5821]"}`
+              : `aspect-[4/3] gap-3 rounded-[16px] border-2 border-dashed ${
+                  glisserActif ? "border-primary bg-[#FFF8F5]" : "border-[#DCDEE1] bg-[#F8F8F8]"
+                } ${enCoursOuBloque ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-primary hover:bg-[#FFF8F5]"}`
           }`}
         >
           {apercuUrl && !apercuEnErreur ? (
-            // eslint-disable-next-line @next/next/no-img-element -- aperçu local via blob:, next/image ne gère pas ce cas
-            <img
-              src={apercuUrl}
-              alt="Aperçu du document"
-              onError={() => dernierFichier && setApercuErreurId(dernierFichier.id)}
-              className="h-full w-full object-cover"
-            />
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local via blob:, next/image ne gère pas ce cas */}
+              <img
+                src={apercuUrl}
+                alt="Aperçu du document"
+                onError={() => dernierFichier && setApercuErreurId(dernierFichier.id)}
+                className={`w-full object-cover ${variantCompact ? "max-h-[220px] rounded-[12px]" : "h-full"}`}
+              />
+            </>
+          ) : variantCompact ? (
+            <>
+              <IconeImportAnimee variant="figma" actif pulseHalo />
+              <div className="flex w-full flex-col items-center gap-1.5 text-center">
+                <p className="w-full text-[14px] font-semibold leading-normal tracking-normal text-[#1f2937]">
+                  {titreZone}
+                </p>
+                <p className="w-full text-[12px] font-normal leading-[1.4] tracking-normal text-[#9ca3af]">
+                  {sousTitreZone}
+                </p>
+              </div>
+            </>
           ) : (
             <>
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white text-[var(--accent)]">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.75}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7"
-                  aria-hidden="true"
-                >
-                  <path d="M4 8a2 2 0 0 1 2-2h1.5l.8-1.2A2 2 0 0 1 10 4h4a2 2 0 0 1 1.7.9L16.5 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" />
-                  <circle cx="12" cy="13" r="3.25" />
-                </svg>
-              </span>
+              <IconeImportAnimee variant="large" actif pulseHalo />
               <div>
-                <p className="text-sm font-medium text-foreground">
-                  {quotaAtteint
-                    ? "Quota mensuel atteint"
-                    : glisserActif
-                      ? "Déposez vos fichiers ici"
-                      : "Photographiez votre devis"}
-                </p>
-                <p className="mt-0.5 text-xs text-muted">
-                  {quotaAtteint
-                    ? "Revenez le mois prochain pour continuer l'envoi"
-                    : glisserActif
-                      ? "Plusieurs fichiers à la fois, c'est possible"
-                      : "Appuyez pour ouvrir l'appareil photo, ou glissez-déposez plusieurs fichiers"}
-                </p>
+                <p className="text-sm font-semibold text-[#172935]">{titreZone}</p>
+                <p className="mt-1 max-w-[280px] text-xs leading-relaxed text-[#53616A]">{sousTitreZone}</p>
               </div>
             </>
           )}
 
-          {dernierFichier && (
+          {dernierFichier && !enCours && (
             <button
               type="button"
               onClick={(e) => {
@@ -371,34 +416,83 @@ export function FormulaireUpload({
               disabled={enCoursOuBloque}
               title="Retirer"
               aria-label="Retirer l'aperçu"
-              className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-background/80 text-white backdrop-blur hover:bg-red-500/80 disabled:opacity-50"
+              className="absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-[#172935]/70 text-white backdrop-blur hover:bg-red-600 disabled:opacity-50"
             >
               ✕
             </button>
           )}
-        </div>
 
-        <div className="mt-2 flex items-center justify-between gap-3 text-xs">
-          <button
-            type="button"
-            onClick={() => inputFichierRef.current?.click()}
-            disabled={enCoursOuBloque}
-            className="text-muted underline decoration-dotted underline-offset-2 hover:text-accent disabled:opacity-50"
-          >
-            ou choisir un fichier existant
-          </button>
-          {dernierFichier && (
-            <button
-              type="button"
-              onClick={() => inputPhotoRef.current?.click()}
-              disabled={enCoursOuBloque}
-              className="font-medium text-accent hover:opacity-80 disabled:opacity-50"
-            >
-              + Ajouter une page
-            </button>
+          {enCours && (
+            <OverlayImportAnime
+              label="Envoi en cours…"
+              sousLabel={
+                progression
+                  ? `${progression.traites}/${progression.total} document${progression.total > 1 ? "s" : ""}`
+                  : "Lecture et envoi sécurisé"
+              }
+            />
           )}
         </div>
+
+        {!variantCompact && (
+        <div className="mt-2 flex items-center justify-between gap-3 text-xs">
+          {variantPc ? (
+            <>
+              <button
+                type="button"
+                onClick={() => inputFichierRef.current?.click()}
+                disabled={enCoursOuBloque}
+                className="text-[#53616A] underline decoration-dotted underline-offset-2 hover:text-primary disabled:opacity-50"
+              >
+                Parcourir mes dossiers
+              </button>
+              {dernierFichier && (
+                <button
+                  type="button"
+                  onClick={() => inputFichierRef.current?.click()}
+                  disabled={enCoursOuBloque}
+                  className="font-medium text-primary hover:opacity-80 disabled:opacity-50"
+                >
+                  + Ajouter des fichiers
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => inputFichierRef.current?.click()}
+                disabled={enCoursOuBloque}
+                className="text-[#53616A] underline decoration-dotted underline-offset-2 hover:text-primary disabled:opacity-50"
+              >
+                ou choisir un fichier existant
+              </button>
+              {dernierFichier && (
+                <button
+                  type="button"
+                  onClick={() => inputPhotoRef.current?.click()}
+                  disabled={enCoursOuBloque}
+                  className="font-medium text-primary hover:opacity-80 disabled:opacity-50"
+                >
+                  + Ajouter une page
+                </button>
+              )}
+            </>
+          )}
+        </div>
+        )}
       </div>
+
+      {variantCompact && variantPc && (
+        <button
+          type="button"
+          onClick={() => inputFichierRef.current?.click()}
+          disabled={enCoursOuBloque}
+          className="text-left text-[14px] font-semibold leading-normal tracking-normal text-[#111827] underline decoration-solid underline-offset-2 hover:text-[#ec5821] disabled:opacity-50"
+        >
+          Parcourir mes dossiers
+        </button>
+      )}
 
       {fichiers.length > 0 && (
         <ul className="space-y-1.5 text-sm">
@@ -420,7 +514,7 @@ export function FormulaireUpload({
                           ? "text-xs text-amber-400"
                           : f.statut === "succes"
                             ? "text-xs text-green-400"
-                            : "text-xs text-muted"
+                            : "text-xs text-muted-foreground"
                     }
                   >
                     {f.statut === "en_attente" && "En attente"}
@@ -433,7 +527,7 @@ export function FormulaireUpload({
                     <button
                       type="button"
                       onClick={() => retirerFichier(f.id)}
-                      className="text-muted hover:text-red-400"
+                      className="text-muted-foreground hover:text-red-400"
                       title="Retirer"
                       aria-label={`Retirer ${f.file.name}`}
                     >
@@ -443,12 +537,12 @@ export function FormulaireUpload({
                 </span>
               </div>
               {f.statut === "doublon" && (
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-amber-900/40 pt-2">
-                  <p className="text-xs text-amber-300">{f.message}</p>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-amber-200 pt-2">
+                  <p className="text-xs text-amber-800">{f.message}</p>
                   <button
                     type="button"
                     onClick={() => envoyerQuandMeme(f.id)}
-                    className="shrink-0 rounded border border-amber-500/50 px-2.5 py-1 text-xs font-medium text-amber-300 hover:bg-amber-500/10"
+                    className="shrink-0 rounded-full border border-amber-400 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50"
                   >
                     Envoyer quand même
                   </button>
@@ -461,13 +555,13 @@ export function FormulaireUpload({
 
       {progression && (
         <div>
-          <div className="flex items-center justify-between text-xs text-muted">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>
               {progression.traites}/{progression.total} document{progression.total > 1 ? "s" : ""} traité
               {progression.traites > 1 ? "s" : ""}
             </span>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-background">
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E9EB]">
             <div
               className="h-full rounded-full bg-accent transition-all duration-300"
               style={{ width: `${progression.total > 0 ? (progression.traites / progression.total) * 100 : 0}%` }}
@@ -476,14 +570,29 @@ export function FormulaireUpload({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={lancerEnvoi}
-        disabled={enCoursOuBloque || enAttenteCount === 0}
-        className="w-full rounded-md bg-accent px-4 py-2 font-medium text-accent-foreground hover:opacity-90 disabled:opacity-50"
-      >
-        {enCours ? "Envoi en cours..." : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
-      </button>
+      {variantCompact ? (
+        <button
+          type="button"
+          onClick={lancerEnvoi}
+          disabled={enCoursOuBloque || enAttenteCount === 0}
+          className={`flex h-12 w-full items-center justify-center rounded-[12px] text-[15px] font-semibold leading-normal tracking-normal transition-colors ${
+            enCoursOuBloque || enAttenteCount === 0
+              ? "cursor-not-allowed bg-[#e5e7eb] text-[#9ca3af]"
+              : "bg-[#ec5821] text-white hover:bg-[#d44d1a]"
+          }`}
+        >
+          {enCours ? "Envoi en cours..." : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          onClick={lancerEnvoi}
+          disabled={enCoursOuBloque || enAttenteCount === 0}
+          className="h-12 w-full rounded-full text-base font-semibold disabled:bg-[#E1E3E5] disabled:text-[#8A969E] disabled:opacity-100"
+        >
+          {enCours ? "Envoi en cours..." : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
+        </Button>
+      )}
     </div>
   );
 }

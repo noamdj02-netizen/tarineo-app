@@ -1,12 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRightIcon, FileTextIcon, StarIcon, UploadIcon } from "lucide-react";
+import { BadgeHaussePrix } from "@/components/tarineo/BadgeStatutDocument";
 import { Badge } from "@/components/ui/badge";
 import { logoFournisseur } from "@/lib/logosFournisseurs";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { GraphiqueEconomiesSemaine, GraphiqueDepensesMensuelles } from "./AccueilCharts";
+import { ImportDocument } from "../documents/ImportDocument";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
@@ -32,14 +34,6 @@ const scoreObjectif = (f: FournisseurCarte) => {
   if (f.pourcentageAtteinte === null) return null;
   return Math.min(100, Math.round(f.pourcentageAtteinte));
 };
-
-function IconeStat() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth={1.75} className="size-[18px]" aria-hidden="true">
-      <path d="M3 14V8M9 14V3M15 14v-5" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 function LogoFournisseur({ nom, norm, size = 28, rounded = "md" }: { nom: string; norm?: string; size?: number; rounded?: "md" | "full" }) {
   const src = logoFournisseur(norm ?? nom);
@@ -96,14 +90,8 @@ export function DashboardHeroImport({ compteVide }: { compteVide: boolean }) {
         Commencez avec une facture ou un devis. Tarinéo s&apos;occupe du reste — fournisseurs, produits,
         historique de prix. Aucune donnée inventée.
       </p>
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button render={<Link href="/documents?scanner=1" />} className="h-auto rounded-full px-6 py-3">
-          <UploadIcon data-icon="inline-start" />
-          Scanner un document
-        </Button>
-        <Button variant="outline" render={<Link href="/documents?onboarding=1" />} className="h-auto rounded-full px-6 py-3">
-          Importer un PDF
-        </Button>
+      <div className="mt-6">
+        <ImportDocument label="Importer un document" className="h-auto rounded-full px-6 py-3" />
       </div>
     </section>
   );
@@ -116,13 +104,8 @@ export function DashboardBanniereReprise() {
       <p className="mt-2 text-sm text-muted-foreground">
         Vous aviez choisi de le faire plus tard — c&apos;est le bon moment, depuis ce téléphone ou votre ordinateur.
       </p>
-      <div className="mt-4 flex flex-wrap gap-3">
-        <Button render={<Link href="/documents?onboarding=1" />} className="rounded-full">
-          Importer mes documents
-        </Button>
-        <Button variant="outline" render={<Link href="/documents?scanner=1" />} className="rounded-full">
-          Scanner
-        </Button>
+      <div className="mt-4">
+        <ImportDocument label="Importer mes documents" className="rounded-full" />
       </div>
     </section>
   );
@@ -199,7 +182,7 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Button render={<Link href="/documents" />}>Importer un document</Button>
+                <ImportDocument label="Importer un document" />
               </EmptyContent>
             </Empty>
           </CardContent>
@@ -269,7 +252,7 @@ export function DashboardRecentDocuments({ documents }: { documents: DocumentRec
               <EmptyDescription>Vos derniers devis et factures apparaîtront ici dès le premier import.</EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
-              <Button render={<Link href="/documents" />}>Envoyer un document</Button>
+              <ImportDocument label="Envoyer un document" />
             </EmptyContent>
           </Empty>
         ) : (
@@ -291,9 +274,12 @@ export function DashboardRecentDocuments({ documents }: { documents: DocumentRec
                     <p className="text-base font-medium text-foreground">
                       {doc.totalHt !== null ? formaterEuros(Number(doc.totalHt)) : "—"}
                     </p>
-                    <Badge variant={doc.haussePositive ? "destructive" : "secondary"} className="mt-0.5">
-                      {doc.hausseLabel}
-                    </Badge>
+                    <BadgeHaussePrix
+                      label={doc.hausseLabel}
+                      haussePositive={doc.haussePositive}
+                      hausseNegative={doc.hausseNegative}
+                      className="mt-0.5"
+                    />
                   </div>
                 </Link>
               </li>
@@ -363,6 +349,7 @@ export function DashboardOverviewStats({
       suffix: "documents",
       href: `/documents?mois=${moisCourantStr}`,
       cliquable: nbDocumentsMois > 0,
+      icon: "/dashboard/icon-stat-documents.png",
     },
     {
       label: "Hausse moyenne détectée",
@@ -371,6 +358,7 @@ export function DashboardOverviewStats({
       suffix: hausseMoyenne !== null ? "%" : "",
       href: `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
       cliquable: payloadsCount > 0,
+      icon: "/dashboard/icon-stat-hausse.png",
     },
     {
       label: "Économies potentielles",
@@ -379,6 +367,7 @@ export function DashboardOverviewStats({
       suffix: "€",
       href: `/documents?hausse=1&mois=${moisCourantStr}#documents-envoyes`,
       cliquable: payloadsCount > 0,
+      icon: "/dashboard/icon-stat-economies.png",
     },
   ];
 
@@ -398,9 +387,14 @@ export function DashboardOverviewStats({
             const inner = (
               <div className="flex h-full min-h-[116px] flex-col justify-between rounded-[20px] bg-secondary p-4">
                 <div className="flex items-start gap-2">
-                  <div className="flex size-[31px] shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                    <IconeStat />
-                  </div>
+                  <Image
+                    src={s.icon}
+                    alt=""
+                    width={31}
+                    height={31}
+                    className="size-[31px] shrink-0"
+                    aria-hidden
+                  />
                   <div className="min-w-0 pt-0.5">
                     <p className="text-[11.5px] font-semibold leading-tight text-foreground">{s.label}</p>
                     <p className="mt-1 text-[10px] text-muted-foreground">{s.sub}</p>

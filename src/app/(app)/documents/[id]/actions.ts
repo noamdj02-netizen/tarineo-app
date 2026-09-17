@@ -1,11 +1,19 @@
 "use server";
 
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { normaliserReference, normaliserDistributeur } from "@/lib/normalisation";
 import { comparerLignesAuHistorique, creerAlertesHausse } from "@/lib/comparaisonPrix";
+import { redirect } from "next/navigation";
+import { analyserDocument } from "@/lib/extraction";
+import { isAnthropicConfigured } from "@/lib/anthropic";
+import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
+import { envoyerEmailDocument } from "@/lib/email";
+import { redigerEmailDocument, type IntentionEmailDocument } from "@/lib/redigerEmailDocument";
+import { LABELS_TYPE } from "@/lib/documentLabels";
 
 const ligneSchema = z.object({
   reference: z.string().trim().min(1),
@@ -139,6 +147,216 @@ export async function validerDocument(documentId: string, donnees: unknown): Pro
 
   revalidatePath(`/documents/${documentId}`);
   revalidatePath("/documents");
+
+  return { succes: true };
+}
+
+export type ResultatRelanceAnalyse =
+  | { succes: true }
+  | { succes: false; erreur: "non_autorise" | "introuvable" | "ia_non_configuree" | "erreur" };
+
+export async function relancerAnalyseDocument(documentId: string): Promise<ResultatRelanceAnalyse> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, erreur: "non_autorise" };
+  }
+
+  if (!isAnthropicConfigured()) {
+    return { succes: false, erreur: "ia_non_configuree" };
+  }
+
+  const document = await prisma.document.findFirst({
+    where: { id: documentId, userId: session.user.id },
+    select: { id: true },
+  });
+  if (!document) {
+    return { succes: false, erreur: "introuvable" };
+  }
+
+  await prisma.$transaction([
+    prisma.lineItem.deleteMany({ where: { documentId } }),
+    prisma.priceHistory.deleteMany({ where: { documentId } }),
+    prisma.document.update({
+      where: { id: documentId },
+      data: {
+        status: "PROCESSING",
+        distributor: null,
+        distributorNorm: null,
+        documentDate: null,
+        totalHt: null,
+        totalTtc: null,
+        rawExtraction: Prisma.JsonNull,
+        possibleDoublon: false,
+      },
+    }),
+  ]);
+
+  const analyseOk = await analyserDocument(documentId, session.user.id);
+
+  revalidatePath(`/documents/${documentId}`);
+  revalidatePath("/documents");
+
+  if (!analyseOk) {
+    return { succes: false, erreur: "erreur" };
+  }
+
+  return { succes: true };
+}
+
+export type ResultatActionDocument =
+  | { succes: true }
+  | { succes: false; erreur: string };
+
+export async function reouvrirDocumentPourCorrection(documentId: string): Promise<ResultatActionDocument> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, erreur: "Non authentifié." };
+  }
+
+  const document = await prisma.document.findFirst({
+    where: { id: documentId, userId: session.user.id },
+    select: { id: true, status: true },
+  });
+  if (!document) {
+    return { succes: false, erreur: "Document introuvable." };
+  }
+  if (document.status === "PROCESSING") {
+    return { succes: false, erreur: "Attendez la fin de l'analyse avant de modifier." };
+  }
+
+  await prisma.document.update({
+    where: { id: documentId },
+    data: { status: "NEEDS_REVIEW" },
+  });
+
+  revalidatePath(`/documents/${documentId}`);
+  return { succes: true };
+}
+
+export async function supprimerDocument(documentId: string): Promise<ResultatActionDocument> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, erreur: "Non authentifié." };
+  }
+
+  const document = await prisma.document.findFirst({
+    where: { id: documentId, userId: session.user.id },
+    select: { id: true, fileKey: true },
+  });
+  if (!document) {
+    return { succes: false, erreur: "Document introuvable." };
+  }
+
+  await prisma.$transaction([
+    prisma.lineItem.deleteMany({ where: { documentId } }),
+    prisma.priceHistory.deleteMany({ where: { documentId } }),
+    prisma.document.delete({ where: { id: documentId } }),
+  ]);
+
+  try {
+    await getSupabaseAdmin().storage.from(DOCUMENTS_BUCKET).remove([document.fileKey]);
+  } catch (erreur) {
+    console.error("Suppression fichier Supabase échouée :", erreur);
+  }
+
+  revalidatePath("/documents");
+  redirect("/documents");
+}
+
+export type ResultatEmailDocument =
+  | { succes: true; objet: string; corps: string }
+  | { succes: false; erreur: string };
+
+export async function genererEmailDocument(
+  documentId: string,
+  intention: IntentionEmailDocument,
+  destinataire?: string
+): Promise<ResultatEmailDocument> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, erreur: "Non authentifié." };
+  }
+
+  const document = await prisma.document.findFirst({
+    where: { id: documentId, userId: session.user.id },
+  });
+  if (!document) {
+    return { succes: false, erreur: "Document introuvable." };
+  }
+
+  const entreprise = await prisma.companyProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { raisonSociale: true, emailContact: true },
+  });
+
+  const extraction = document.rawExtraction as { numero?: string | null } | null;
+  const redaction = await redigerEmailDocument({
+    document,
+    entreprise,
+    extraction,
+    intention,
+    destinataire: destinataire?.trim() || undefined,
+  });
+
+  return { succes: true, objet: redaction.objet, corps: redaction.corps };
+}
+
+const schemaEnvoiEmail = z.object({
+  destinataire: z.string().trim().email("Adresse email invalide."),
+  objet: z.string().trim().min(1, "Objet requis."),
+  corps: z.string().trim().min(1, "Message requis."),
+});
+
+export async function envoyerDocumentParEmail(
+  documentId: string,
+  donnees: z.infer<typeof schemaEnvoiEmail>
+): Promise<ResultatActionDocument> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, erreur: "Non authentifié." };
+  }
+
+  const parsed = schemaEnvoiEmail.safeParse(donnees);
+  if (!parsed.success) {
+    return { succes: false, erreur: parsed.error.issues[0]?.message ?? "Formulaire invalide." };
+  }
+
+  const document = await prisma.document.findFirst({
+    where: { id: documentId, userId: session.user.id },
+  });
+  if (!document) {
+    return { succes: false, erreur: "Document introuvable." };
+  }
+
+  const { data, error } = await getSupabaseAdmin().storage.from(DOCUMENTS_BUCKET).download(document.fileKey);
+  if (error || !data) {
+    return { succes: false, erreur: "Fichier introuvable." };
+  }
+
+  const entreprise = await prisma.companyProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { emailContact: true },
+  });
+
+  const extension = document.fileKey.split(".").pop() ?? "pdf";
+  const typeLabel = (LABELS_TYPE[document.type] ?? "document").replace(/\s+/g, "-").toLowerCase();
+  const distributeur = (document.distributor ?? "fournisseur").replace(/\s+/g, "-").toLowerCase();
+
+  try {
+    await envoyerEmailDocument({
+      to: parsed.data.destinataire,
+      subject: parsed.data.objet,
+      body: parsed.data.corps,
+      replyTo: entreprise?.emailContact ?? session.user.email ?? undefined,
+      attachment: {
+        filename: `${typeLabel}-${distributeur}.${extension}`,
+        content: Buffer.from(await data.arrayBuffer()),
+      },
+    });
+  } catch (erreur) {
+    console.error("Envoi email document :", erreur);
+    return { succes: false, erreur: "L'email n'a pas pu être envoyé. Vérifiez la configuration Resend." };
+  }
 
   return { succes: true };
 }

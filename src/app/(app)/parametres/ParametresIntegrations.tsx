@@ -1,86 +1,114 @@
-import { Badge } from "@/components/ui/badge";
+import { INTEGRATIONS_CONNUES, type StatutIntegration } from "@/lib/integrationsConnues";
+import { origineActuelle } from "@/lib/origine";
+import { cn } from "@/lib/utils";
+import { LogoIntegration } from "./LogoIntegration";
 
-const INTEGRATIONS = [
-  {
-    id: "whatsapp",
-    nom: "WhatsApp Business",
-    desc: "Envoyer un bon de commande ou une photo de ticket à votre comptable en un clic depuis Tarineo.",
-    utilite: "Chef de chantier · achats urgents · preuve de dépense",
-    statut: "bientot" as const,
-  },
-  {
-    id: "google-drive",
-    nom: "Google Drive",
-    desc: "Sauvegarder automatiquement chaque facture et devis importé dans un dossier partagé (compta, bureau).",
-    utilite: "Dirigeant · secrétaire · expert-comptable",
-    statut: "bientot" as const,
-  },
-  {
-    id: "pennylane",
-    nom: "Pennylane / Sage",
-    desc: "Exporter les achats fournisseurs et notes de frais vers votre logiciel comptable sans ressaisie.",
-    utilite: "Comptabilité · clôture mensuelle",
-    statut: "bientot" as const,
-  },
-  {
-    id: "siret",
-    nom: "API Entreprise (INSEE)",
-    desc: "Auto-compléter SIRET, adresse et forme juridique du client lors de la création d'un devis.",
-    utilite: "Devis clients · conformité",
-    statut: "bientot" as const,
-  },
-  {
-    id: "push",
-    nom: "Notifications push",
-    desc: "Alerte immédiate sur téléphone quand une hausse de prix est détectée sur un devis reçu.",
-    utilite: "Artisan terrain · acheteur",
-    statut: "bientot" as const,
-  },
-  {
-    id: "email",
-    nom: "E-mail fournisseur",
-    desc: "Transférer un PDF reçu par mail vers Tarineo pour analyse automatique (alias dédié).",
-    utilite: "Bureau · sans photo",
-    statut: "bientot" as const,
-  },
-];
+function urlRedirection(baseUrl: string, chemin: string): string {
+  return chemin ? `${baseUrl}${chemin}` : baseUrl;
+}
 
-export function ParametresIntegrations() {
+function BadgeStatut({ statut }: { statut: StatutIntegration }) {
+  if (statut === "actif") {
+    return (
+      <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--app-badge-success-bg)] bg-[var(--app-badge-success-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--app-badge-success-fg)]">
+        Actif
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-full border border-[var(--app-badge-neutral-border)] bg-[var(--app-badge-neutral-bg)] px-2.5 py-0.5 text-xs font-medium text-[var(--app-badge-neutral-fg)]">
+      Bientôt
+    </span>
+  );
+}
+
+export async function ParametresIntegrations() {
+  const baseUrl = await origineActuelle();
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold">Connectez les outils que vous utilisez déjà</h2>
+        <h2 className="text-base font-semibold">Les outils utiles au quotidien</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Chaque intégration se connecte en un clic (OAuth ou clé API) — pas de ressaisie. Priorité : WhatsApp et
-          export compta pour les chefs de chantier.
+          Connexions pensées pour les artisans : retrouver un client, importer un devis fournisseur et partager avec
+          votre comptable — sans ressaisie.
         </p>
       </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
-        {INTEGRATIONS.map((int) => (
-          <div
-            key={int.id}
-            className="flex flex-col rounded-[20px] border border-[#E6E9EB] bg-white p-5 opacity-90"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <h3 className="font-medium text-foreground">{int.nom}</h3>
-              <Badge variant="secondary">Bientôt</Badge>
-            </div>
-            <p className="mt-2 flex-1 text-sm text-muted-foreground">{int.desc}</p>
-            <p className="mt-3 text-xs text-primary">{int.utilite}</p>
-            <button
-              type="button"
-              disabled
-              className="mt-4 inline-flex h-10 cursor-not-allowed items-center justify-center rounded-full border border-[#E6E9EB] px-4 text-sm text-muted-foreground"
+        {INTEGRATIONS_CONNUES.map((int) => {
+          const actif = int.statut === "actif";
+          return (
+            <div
+              key={int.id}
+              className="flex flex-col rounded-[20px] border border-[#E6E9EB] bg-white p-5"
             >
-              Connecter
-            </button>
-          </div>
-        ))}
+              <div className="flex items-start gap-3">
+                <div
+                  className={cn(
+                    "flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#EEF0F2] bg-white",
+                    int.conteneurLogo
+                  )}
+                >
+                  <LogoIntegration
+                    nom={int.nom}
+                    logo={int.logo}
+                    logoLocal={int.logoLocal}
+                    couleur={int.couleur}
+                    className={int.logoClassName}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-medium text-foreground">{int.nom}</h3>
+                    <BadgeStatut statut={int.statut} />
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{int.desc}</p>
+                </div>
+              </div>
+
+              <p className="mt-3 text-xs font-medium text-primary">{int.utilite}</p>
+
+              {int.redirections && int.redirections.length > 0 && (
+                <div className="mt-3 rounded-xl border border-[#EEF0F2] bg-[#F8F9FA] px-3 py-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Configuration externe
+                  </p>
+                  <ul className="mt-2 space-y-2">
+                    {int.redirections.map((redir) => (
+                      <li key={`${int.id}-${redir.label}`}>
+                        <p className="text-[11px] text-muted-foreground">{redir.label}</p>
+                        <code className="mt-0.5 block break-all text-xs font-medium text-foreground">
+                          {urlRedirection(baseUrl, redir.chemin)}
+                        </code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={!actif}
+                className={
+                  actif
+                    ? "mt-4 inline-flex h-10 cursor-default items-center justify-center rounded-full border border-[var(--app-badge-success-bg)] bg-[color-mix(in_srgb,var(--app-badge-success-bg)_14%,white)] px-4 text-sm font-medium text-[#172935]"
+                    : "mt-4 inline-flex h-10 cursor-not-allowed items-center justify-center rounded-full border border-[#E6E9EB] px-4 text-sm text-muted-foreground"
+                }
+              >
+                {int.action}
+              </button>
+            </div>
+          );
+        })}
       </div>
+
       <p className="rounded-xl bg-secondary px-4 py-3 text-sm text-muted-foreground">
-        <strong className="font-medium text-foreground">WhatsApp en priorité :</strong> le chef de chantier photographie
-        un ticket ou un bon, Tarineo l&apos;analyse, puis peut le renvoyer au dirigeant ou au comptable via WhatsApp —
-        sans quitter l&apos;app.
+        <strong className="font-medium text-foreground">INSEE déjà actif :</strong> quand vous créez un devis client,
+        la recherche d&apos;entreprise utilise l&apos;API Entreprise — aucune URI à configurer.
+        <br />
+        <strong className="mt-2 inline-block font-medium text-foreground">Connexion Google :</strong>{" "}
+        <code className="break-all text-xs">{baseUrl}/api/auth/callback/google</code>
       </p>
     </div>
   );

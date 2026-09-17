@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { calculerResumeAnalyse } from "@/lib/onboarding";
-import { marquerOnboardingTermine } from "../actions";
+import { calculerResumeAnalyse, completerOnboardingFlow } from "@/lib/onboarding";
 
 const formaterEuros = (v: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v);
@@ -12,7 +11,7 @@ export default async function OnboardingResumePage() {
   if (!session?.user?.id) redirect("/connexion");
 
   // Marque le parcours comme vu dès l'affichage du résumé (chiffres réels).
-  await marquerOnboardingTermine();
+  await completerOnboardingFlow(session.user.id);
 
   const resume = await calculerResumeAnalyse(session.user.id);
 

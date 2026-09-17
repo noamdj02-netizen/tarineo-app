@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
@@ -44,7 +44,7 @@ function normCle(valeur: string) {
 }
 
 export default async function FournisseursPage() {
-  const session = await auth();
+  const session = await getSession();
   if (!session?.user?.id) redirect("/connexion");
   const userId = session.user.id;
 
@@ -219,10 +219,10 @@ export default async function FournisseursPage() {
               <Button
                 size="sm"
                 variant="outline"
-                render={<Link href={`/documents?enseigne=${encodeURIComponent(e.nom)}`} />}
+                render={<Link href={`/fournisseurs/${e.id}`} />}
                 className="w-full rounded-full"
               >
-                Importer un devis {e.nom}
+                Voir la fiche {e.nom}
               </Button>
             </div>
           ))}

@@ -8,6 +8,7 @@ const stroke = {
   strokeLinejoin: "round" as const,
 };
 
+/** Dashboard — grille 4 cases */
 export function IconWidget({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
@@ -19,6 +20,7 @@ export function IconWidget({ className }: { className?: string }) {
   );
 }
 
+/** Mes documents — fichier avec lignes */
 export function IconDocument({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
@@ -29,22 +31,65 @@ export function IconDocument({ className }: { className?: string }) {
   );
 }
 
-export function IconInvoice({ className }: { className?: string }) {
+/** Fournisseurs — enseigne / bâtiment */
+export function IconFournisseurs({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
-      <path d="M6.25 4.25h8.2L18.75 8.6v10.9A1.25 1.25 0 0 1 17.5 20.75h-11A1.25 1.25 0 0 1 5.25 19.5V5.5A1.25 1.25 0 0 1 6.25 4.25Z" />
-      <path d="M14.1 4.4v3.85h3.9" />
-      <path d="M8.5 12.25h7M8.5 15.5h5" />
-      <circle cx="16.25" cy="15.5" r="1.05" />
+      <path d="M3 21h18" />
+      <path d="M5 21V7l7-4 7 4v14" />
+      <path d="M9 21v-6h6v6" />
     </svg>
   );
 }
 
+/** Facturation clients — carte bancaire */
+export function IconInvoice({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <rect x="2.5" y="5.5" width="19" height="13" rx="2.2" />
+      <path d="M2.5 10.5h19" />
+      <path d="M6.5 15.5h4.5" />
+    </svg>
+  );
+}
+
+/** Paramètres — roue crantée */
 export function IconSettings({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
-      <circle cx="12" cy="12" r="3.1" />
-      <path d="M12 4.25v1.6M12 18.15v1.6M4.25 12h1.6M18.15 12h1.6M6.4 6.4l1.13 1.13M16.47 16.47l1.13 1.13M17.6 6.4l-1.13 1.13M7.53 16.47l-1.13 1.13" />
+      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 12 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 12a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V12c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
+/** Accueil mobile */
+export function IconHome({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <path d="M4 11.5 12 4l8 7.5" />
+      <path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" />
+    </svg>
+  );
+}
+
+/** Scanner document */
+export function IconScanner({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <path d="M7 3h3M14 3h3M21 7v3M21 14v3M17 21h-3M10 21H7M3 17v-3M3 10V7" />
+      <circle cx="12" cy="12" r="3.5" />
+    </svg>
+  );
+}
+
+/** Menu « Plus » mobile */
+export function IconMore({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" fill="currentColor" stroke="none">
+      <circle cx="5" cy="12" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="19" cy="12" r="1.5" />
     </svg>
   );
 }

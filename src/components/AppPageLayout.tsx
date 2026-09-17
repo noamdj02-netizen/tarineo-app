@@ -14,7 +14,7 @@ export function AppPageLayout({ title, description, wide, extraWide, children }:
       {(title || description) && (
         <header className="mb-6">
           {title && <h1 className="app-display text-2xl font-semibold text-[var(--foreground)]">{title}</h1>}
-          {description && <p className="mt-2 text-sm text-[var(--muted)]">{description}</p>}
+          {description && <p className="mt-2 text-sm text-muted-foreground">{description}</p>}
         </header>
       )}
       <div className="flex flex-col gap-5">{children}</div>

@@ -51,6 +51,26 @@ export const SOUS_TITRES_PAGE_DOCUMENTS: Record<"tous" | DocumentType, string> =
   BON_ENLEVEMENT: "Bons d'enlèvement et retraits en agence.",
 };
 
+/** URL dédiée par type — une page à part entière dans la sidebar. */
+export const ROUTES_DOCUMENTS_PAR_TYPE: Record<DocumentType, string> = {
+  DEVIS: "/documents/devis-fournisseurs",
+  FACTURE: "/documents/factures-fournisseurs",
+  BON_COMMANDE: "/bons-de-commande",
+  BON_ENLEVEMENT: "/bons-enlevement",
+};
+
+/** Explication affichée sur chaque page type (état vide ou bandeau d'aide). */
+export const AIDE_PAGE_DOCUMENTS: Record<DocumentType, string> = {
+  DEVIS:
+    "Importez un devis reçu par email ou en photo. Tarinéo lit les références et compare chaque prix à ce que vous avez déjà payé chez ce distributeur.",
+  FACTURE:
+    "Une facture fournisseur valide un achat réel. Elle alimente votre historique de prix, vos dépenses et les alertes de hausse.",
+  BON_COMMANDE:
+    "Le bon de commande engage un achat avant facturation. Importez-le pour suivre vos commandes chez Cedeo, Point P, Rexel…",
+  BON_ENLEVEMENT:
+    "Remis en agence lors du retrait de marchandise. Importez-le pour compléter votre historique — Tarinéo le classe automatiquement.",
+};
+
 /** Libellé zone photo — adapté au filtre actif ou générique sur « Mes documents ». */
 export const LIBELLE_UPLOAD_PHOTO: Record<"tous" | DocumentType, string> = {
   tous: "Photographiez votre document",

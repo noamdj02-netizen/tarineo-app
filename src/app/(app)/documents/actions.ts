@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -76,9 +77,13 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
   const resultat = await enregistrerDocument(session.user.id, parsed.data.type, file, fileHash);
 
   if (resultat.succes) {
-    // L'échec de l'analyse ne doit pas faire échouer l'upload : le fichier est
-    // déjà stocké, le document passera simplement en statut ERROR.
-    await analyserDocument(resultat.documentId, session.user.id);
+    // L'analyse IA prend 10–60 s : on la lance après la réponse pour ne pas bloquer
+    // l'upload ni faire expirer la server action côté navigateur.
+    const documentId = resultat.documentId;
+    const userId = session.user.id;
+    after(async () => {
+      await analyserDocument(documentId, userId);
+    });
   }
 
   return resultat;

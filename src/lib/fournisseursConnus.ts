@@ -14,7 +14,7 @@
 // le navigateur de l'artisan : logo.dev ne voit jamais son adresse IP.
 const LOGO_DEV_TOKEN = "pk_YxuymbRCRTudbtCcGWx0EQ";
 
-function logoDev(domaine: string): string {
+export function logoDev(domaine: string): string {
   return `https://img.logo.dev/${domaine}?token=${LOGO_DEV_TOKEN}&size=200&format=png`;
 }
 

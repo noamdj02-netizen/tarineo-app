@@ -154,14 +154,14 @@ export function EcranPaiementRequis({ bloque = true }: { bloque?: boolean }) {
                 selectionne ? "border-[var(--accent)] bg-[#fff4eb]" : "hover:border-[var(--accent)]/50"
               }`}
             >
-              <p className="text-sm font-bold uppercase tracking-wider text-[var(--muted)]">{p.nom}</p>
+              <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{p.nom}</p>
               <p className="mt-1 font-extrabold text-[var(--foreground)]">
                 <span className="align-top text-base">€</span>
                 <span className="text-2xl">{p.prix}</span>
-                <span className="text-xs font-normal text-muted">/mois</span>
+                <span className="text-xs font-normal text-muted-foreground">/mois</span>
               </p>
-              <p className="mt-1 text-xs text-muted">{p.quota} documents/mois</p>
-              <p className="mt-0.5 text-xs text-muted">+ {p.historique} documents d&apos;import initial</p>
+              <p className="mt-1 text-xs text-muted-foreground">{p.quota} documents/mois</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">+ {p.historique} documents d&apos;import initial</p>
               <p className={`mt-2 text-xs font-medium ${selectionne ? "text-accent" : "text-transparent"}`}>
                 ✓ Sélectionné
               </p>
@@ -183,7 +183,7 @@ export function EcranPaiementRequis({ bloque = true }: { bloque?: boolean }) {
       {etape !== "choix_plan" && (
         <form onSubmit={validerCarte} className="mt-5">
           {etape === "chargement_formulaire" && (
-            <p className="text-sm text-muted">Chargement du formulaire de paiement…</p>
+            <p className="text-sm text-muted-foreground">Chargement du formulaire de paiement…</p>
           )}
           <div ref={conteneurRef} />
 
@@ -195,19 +195,19 @@ export function EcranPaiementRequis({ bloque = true }: { bloque?: boolean }) {
               >
                 Valider ma carte
               </button>
-              <button type="button" onClick={annuler} className="text-sm text-muted hover:text-foreground">
+              <button type="button" onClick={annuler} className="text-sm text-muted-foreground hover:text-foreground">
                 Annuler
               </button>
             </div>
           )}
-          {etape === "confirmation" && <p className="mt-3 text-sm text-muted">Vérification de la carte…</p>}
+          {etape === "confirmation" && <p className="mt-3 text-sm text-muted-foreground">Vérification de la carte…</p>}
           {etape === "activation" && (
             <p className="mt-3 text-sm text-accent">Carte enregistrée — activation de votre compte…</p>
           )}
           {erreur && (
             <div className="mt-3">
               <p className="text-sm text-red-400">{erreur}</p>
-              <button type="button" onClick={annuler} className="mt-2 text-sm text-muted hover:text-foreground">
+              <button type="button" onClick={annuler} className="mt-2 text-sm text-muted-foreground hover:text-foreground">
                 Recommencer
               </button>
             </div>
@@ -216,7 +216,7 @@ export function EcranPaiementRequis({ bloque = true }: { bloque?: boolean }) {
       )}
 
       {etape === "choix_plan" && (
-        <p className="mt-2 text-center text-xs text-muted">Paiement sécurisé par Stripe · sans engagement.</p>
+        <p className="mt-2 text-center text-xs text-muted-foreground">Paiement sécurisé par Stripe · sans engagement.</p>
       )}
     </div>
   );

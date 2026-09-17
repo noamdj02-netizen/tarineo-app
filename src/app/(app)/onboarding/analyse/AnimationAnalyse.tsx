@@ -23,9 +23,12 @@ const ETAPES = [
 export function AnimationAnalyse({
   nbDocuments,
   redirectTo = "/onboarding/resume",
+  onTermine,
 }: {
   nbDocuments: number;
   redirectTo?: string;
+  /** Mode wizard inline : pas de navigation, l'appelant enchaîne l'étape suivante. */
+  onTermine?: () => void;
 }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
@@ -35,6 +38,10 @@ export function AnimationAnalyse({
   useEffect(() => {
     if (termine) {
       const t = setTimeout(() => {
+        if (onTermine) {
+          onTermine();
+          return;
+        }
         startTransition(async () => {
           await marquerOnboardingTermine();
           router.push(redirectTo);
@@ -47,10 +54,10 @@ export function AnimationAnalyse({
     const etape = ETAPES[index];
     const t = setTimeout(() => setIndex((i) => i + 1), etape.duree);
     return () => clearTimeout(t);
-  }, [index, termine, redirectTo, router]);
+  }, [index, termine, redirectTo, router, onTermine]);
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-md flex-col justify-center px-2 py-10">
+    <div className="mx-auto flex w-full max-w-md flex-col justify-center px-2 py-4">
       <p className="text-sm font-medium uppercase tracking-wider text-primary">Analyse en cours</p>
       <h1 className="mt-3 text-3xl font-semibold leading-tight text-foreground">
         Tarinéo construit votre espace…

@@ -21,7 +21,7 @@ export default async function EntreprisePage() {
   return (
     <div className="app-page flex flex-col gap-5">
       <h1 className="app-display text-2xl font-semibold text-[var(--foreground)]">Mon entreprise</h1>
-      <p className="mt-2 text-muted">
+      <p className="mt-2 text-muted-foreground">
         Ces informations sont reprises sur chaque devis généré pour vos clients — à renseigner une seule fois.
       </p>
 

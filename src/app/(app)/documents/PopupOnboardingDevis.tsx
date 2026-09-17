@@ -36,7 +36,7 @@ export function PopupOnboardingDevis() {
         <p id="titre-popup-onboarding" className="app-display text-lg font-semibold text-[var(--foreground)]">
           Votre historique est prêt !
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Importez maintenant un devis reçu récemment pour voir Tarineo détecter une éventuelle hausse de prix.
         </p>
         <button type="button" onClick={allerVersImport} className="mt-5 w-full app-btn-primary">
@@ -45,7 +45,7 @@ export function PopupOnboardingDevis() {
         <button
           type="button"
           onClick={() => setVisible(false)}
-          className="mt-2 w-full py-2 text-sm text-muted hover:text-foreground"
+          className="mt-2 w-full py-2 text-sm text-muted-foreground hover:text-foreground"
         >
           Plus tard
         </button>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LABELS_TYPE_PLURIEL, TYPES_FILTRABLES } from "@/lib/documentLabels";
+import { LABELS_TYPE_PLURIEL, ROUTES_DOCUMENTS_PAR_TYPE, TYPES_FILTRABLES } from "@/lib/documentLabels";
 import type { DocumentType } from "@prisma/client";
 
 const classeOnglet = (actif: boolean) =>
@@ -31,7 +31,7 @@ export function NavTypeMobile({
       {TYPES_FILTRABLES.map((t) => (
         <Link
           key={t}
-          href={`/documents?type=${t}`}
+          href={ROUTES_DOCUMENTS_PAR_TYPE[t]}
           aria-current={typeActif === t ? "page" : undefined}
           className={classeOnglet(typeActif === t)}
         >

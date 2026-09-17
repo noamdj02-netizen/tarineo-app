@@ -48,7 +48,7 @@ export function GraphiqueDepensesMensuelles({ donnees }: { donnees: { mois: stri
               x={x + largeurBarre / 2}
               y={HAUTEUR - 6}
               textAnchor="middle"
-              className={`text-[10px] ${actif ? "fill-[var(--foreground)] font-semibold" : "fill-[var(--muted)]"}`}
+              className={`text-[10px] ${actif ? "fill-[var(--foreground)] font-semibold" : "fill-[var(--muted-foreground)]"}`}
             >
               {formaterMoisCourt(d.mois)}
             </text>
@@ -68,7 +68,7 @@ export function GraphiqueEconomiesSemaine({ donnees }: { donnees: { jour: string
 
   return (
     <div className="flex items-end gap-[23px]" role="img" aria-label="Économies détectées par jour cette semaine">
-      <div className="flex h-[206px] flex-col justify-between pb-5 text-sm font-normal text-[var(--muted)]">
+      <div className="flex h-[206px] flex-col justify-between pb-5 text-sm font-normal text-muted-foreground">
         {yLabels.map((label) => (
           <span key={label}>{label}</span>
         ))}
@@ -88,7 +88,7 @@ export function GraphiqueEconomiesSemaine({ donnees }: { donnees: { jour: string
                   />
                 )}
               </div>
-              <span className="text-sm font-normal text-[var(--muted)]">{d.jour}</span>
+              <span className="text-sm font-normal text-muted-foreground">{d.jour}</span>
             </div>
           );
         })}
@@ -125,7 +125,7 @@ export function GraphiqueRepartitionDistributeurs({
         >
           <div className="flex items-baseline justify-between text-xs">
             <span className="font-medium text-[var(--foreground)] group-hover:text-[var(--accent)]">{d.distributor}</span>
-            <span className="text-[var(--muted)]">
+            <span className="text-muted-foreground">
               {d.count} hausse{d.count > 1 ? "s" : ""}
             </span>
           </div>

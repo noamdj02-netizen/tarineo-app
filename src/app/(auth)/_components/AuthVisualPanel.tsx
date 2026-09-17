@@ -14,6 +14,7 @@ const PANELS = {
     mockupMaxW: 644,
     mockupMaxH: 282,
     mockupMt: "mt-[clamp(24px,4vh,40px)]",
+    mockupOffset: "",
   },
   inscription: {
     background: "/auth/bg-visual-story-inscription.png",
@@ -27,7 +28,8 @@ const PANELS = {
     mockupHeight: 571,
     mockupMaxW: 427,
     mockupMaxH: 571,
-    mockupMt: "mt-[clamp(12px,2vh,19px)]",
+    mockupMt: "",
+    mockupOffset: "translate-y-[14%]",
   },
 } as const;
 
@@ -55,24 +57,40 @@ export function AuthVisualPanel({ variant }: { variant: Variant }) {
           <div className="h-[5px] w-[120px] rounded-full bg-[#f24f0a]" />
         </div>
 
-        <div
-          className={`flex min-h-0 flex-1 items-end justify-center ${panel.mockupMt} ${variant === "inscription" ? "pb-0" : "pb-2"}`}
-        >
-          {/* Mockup à taille native max — jamais agrandi au-delà des pixels Figma */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={panel.mockup}
-            alt=""
-            width={panel.mockupWidth}
-            height={panel.mockupHeight}
-            className="block h-auto w-auto object-contain object-bottom drop-shadow-[0_32px_64px_rgba(0,0,0,0.45)]"
-            style={{
-              maxWidth: `min(${panel.mockupMaxW}px, 100%)`,
-              maxHeight: `min(${panel.mockupMaxH}px, calc(100dvh - 240px))`,
-            }}
-            decoding="async"
-          />
-        </div>
+        {variant === "inscription" ? (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
+            {/* Mockup à taille native max — jamais agrandi au-delà des pixels Figma */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={panel.mockup}
+              alt=""
+              width={panel.mockupWidth}
+              height={panel.mockupHeight}
+              className={`block h-auto w-auto object-contain object-bottom drop-shadow-[0_32px_64px_rgba(0,0,0,0.45)] ${panel.mockupOffset}`}
+              style={{
+                maxWidth: `min(${panel.mockupMaxW}px, 100%)`,
+                maxHeight: `min(${panel.mockupMaxH}px, 78dvh)`,
+              }}
+              decoding="async"
+            />
+          </div>
+        ) : (
+          <div className={`flex min-h-0 flex-1 items-end justify-center ${panel.mockupMt} pb-2`}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={panel.mockup}
+              alt=""
+              width={panel.mockupWidth}
+              height={panel.mockupHeight}
+              className="block h-auto w-auto object-contain object-bottom drop-shadow-[0_32px_64px_rgba(0,0,0,0.45)]"
+              style={{
+                maxWidth: `min(${panel.mockupMaxW}px, 100%)`,
+                maxHeight: `min(${panel.mockupMaxH}px, calc(100dvh - 240px))`,
+              }}
+              decoding="async"
+            />
+          </div>
+        )}
       </div>
     </aside>
   );

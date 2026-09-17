@@ -39,7 +39,7 @@ export function FormulaireMotDePasse() {
       <h2 className="text-lg font-semibold">Changer de mot de passe</h2>
       <form onSubmit={soumettre} className="mt-4 space-y-3">
         <div>
-          <label htmlFor="ancien" className="mb-1 block text-xs text-muted">
+          <label htmlFor="ancien" className="mb-1 block text-xs text-muted-foreground">
             Mot de passe actuel
           </label>
           <input
@@ -53,7 +53,7 @@ export function FormulaireMotDePasse() {
           />
         </div>
         <div>
-          <label htmlFor="nouveau" className="mb-1 block text-xs text-muted">
+          <label htmlFor="nouveau" className="mb-1 block text-xs text-muted-foreground">
             Nouveau mot de passe
           </label>
           <input
@@ -68,7 +68,7 @@ export function FormulaireMotDePasse() {
           />
         </div>
         <div>
-          <label htmlFor="confirmation" className="mb-1 block text-xs text-muted">
+          <label htmlFor="confirmation" className="mb-1 block text-xs text-muted-foreground">
             Confirmer le nouveau mot de passe
           </label>
           <input

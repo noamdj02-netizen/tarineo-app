@@ -8,20 +8,18 @@ import { MobileAuthShell } from "../_components/MobileAuthShell";
 import { PasswordInput } from "../_components/PasswordInput";
 import { seConnecter, seConnecterAvecGoogle } from "./actions";
 
+const AUTH_PANEL_CLASS =
+  "flex w-full flex-col gap-3.5 rounded-[24px] border border-[#E6E9EB] bg-white p-5 shadow-[0_8px_30px_rgba(23,41,53,0.06)] md:p-6 lg:p-7";
+
 function ConnexionFormPanel({
   erreur,
-  variant = "glass",
   showSocial = true,
 }: {
   erreur?: string;
-  variant?: "glass" | "solid";
   showSocial?: boolean;
 }) {
-  const panelClass =
-    "rounded-[24px] border border-[#E6E9EB] bg-white p-5 shadow-[0_8px_30px_rgba(23,41,53,0.06)] md:p-6 lg:p-7";
-
   return (
-    <div className={`flex w-full flex-col gap-3.5 ${panelClass}`}>
+    <div className={AUTH_PANEL_CLASS}>
       <form action={seConnecter} className="flex w-full flex-col gap-3.5">
         <AuthField
           id="email"
@@ -31,7 +29,6 @@ function ConnexionFormPanel({
           placeholder="vous@entreprise.fr"
           required
           autoComplete="email"
-          variant={variant}
         />
         <PasswordInput
           id="password"
@@ -39,18 +36,17 @@ function ConnexionFormPanel({
           label="Mot de passe"
           required
           autoComplete="current-password"
-          variant={variant}
         />
         <Link
           href="/mot-de-passe-oublie"
-          className="text-right text-[13px] font-bold text-[#ff6a24] hover:opacity-90"
+          className="text-right text-[13px] font-bold text-[#EC5821] hover:opacity-90"
         >
           Mot de passe oublié ?
         </Link>
         {erreur && <p className="text-sm text-red-600">Email ou mot de passe incorrect.</p>}
         <button
           type="submit"
-          className="flex h-14 items-center justify-center rounded-full bg-[#f24f0a] text-[16px] font-extrabold text-white transition hover:bg-[#e8520e] md:h-[54px]"
+          className="flex h-14 items-center justify-center rounded-full bg-[#EC5821] text-[16px] font-extrabold text-white transition hover:bg-[#d44d1a] md:h-[54px]"
         >
           Se connecter
         </button>

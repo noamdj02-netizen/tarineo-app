@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { DocumentsPage } from "../documents/page";
 
-/** Ancienne démo → historique fournisseur filtré. */
-export default function BonsEnlevementPage() {
-  redirect("/documents?type=BON_ENLEVEMENT");
+export default function BonsEnlevementPage(props: { searchParams: Promise<Record<string, string | undefined>> }) {
+  return DocumentsPage({ ...props, typeFixe: "BON_ENLEVEMENT" });
 }
