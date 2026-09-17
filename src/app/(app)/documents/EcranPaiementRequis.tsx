@@ -6,7 +6,7 @@ import { loadStripe, type Stripe, type StripeElements } from "@stripe/stripe-js"
 import { creerSetupIntentPaiement, verifierActivationCompte, type PlanValide } from "./stripeActions";
 
 const PLANS: { nom: string; cle: PlanValide; prix: string; quota: string; historique: string }[] = [
-  { nom: "Starter", cle: "starter", prix: "17", quota: "150", historique: "100" },
+  { nom: "Starter", cle: "starter", prix: "17", quota: "150", historique: "150" },
   { nom: "Pro", cle: "pro", prix: "29", quota: "400", historique: "200" },
   { nom: "Équipe", cle: "equipe", prix: "49", quota: "1 000", historique: "400" },
 ];

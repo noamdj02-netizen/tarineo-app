@@ -16,6 +16,7 @@ import { FormulaireUpload } from "./FormulaireUpload";
 
 type Props = {
   quotaAtteint?: boolean;
+  maxFichiers?: number;
   autoOpen?: boolean;
   preferCamera?: boolean;
   label?: string;
@@ -28,6 +29,7 @@ type Props = {
 
 export function ImportDocument({
   quotaAtteint = false,
+  maxFichiers,
   autoOpen = false,
   preferCamera = false,
   label = "Importer",
@@ -84,6 +86,7 @@ export function ImportDocument({
         </DialogHeader>
         <FormulaireUpload
           quotaAtteint={quotaAtteint}
+          maxFichiers={maxFichiers}
           variantCompact
           variantPc={!preferCamera}
           autoOuvrirCamera={preferCamera && open}

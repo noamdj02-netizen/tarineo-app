@@ -18,9 +18,10 @@ type Props = {
   email: string;
   telephone?: string;
   entrepriseNom?: string;
+  maxFichiersImport: number;
 };
 
-export function OnboardingWizard({ prenom, email, telephone, entrepriseNom }: Props) {
+export function OnboardingWizard({ prenom, email, telephone, entrepriseNom, maxFichiersImport }: Props) {
   const [etape, setEtape] = useState<EtapeId>("accueil");
   const [etapeMax, setEtapeMax] = useState(1);
   const [nbDocuments, setNbDocuments] = useState(0);
@@ -91,7 +92,8 @@ export function OnboardingWizard({ prenom, email, telephone, entrepriseNom }: Pr
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Factures, devis, bons de commande — PDF ou photos. Plusieurs fichiers à la fois.
+            Factures, devis, bons de commande — PDF ou photos. Jusqu&apos;à {maxFichiersImport} documents en une
+            fois.
           </p>
         </div>
       )}
@@ -100,13 +102,15 @@ export function OnboardingWizard({ prenom, email, telephone, entrepriseNom }: Pr
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Choisissez vos documents</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Glissez-déposez ou parcourez vos dossiers — comme dans l&apos;explorateur Windows.
+            Glissez-déposez ou parcourez vos dossiers — jusqu&apos;à {maxFichiersImport} fichiers d&apos;un coup (PDF,
+            JPEG, PNG, HEIC).
           </p>
           <div className="mt-6">
             <FormulaireUpload
               modeOnboarding
               variantPc
               variantCompact
+              maxFichiers={maxFichiersImport}
               onImportReussi={(count) => {
                 setNbDocuments(count);
                 allerA("analyse");

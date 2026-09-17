@@ -21,7 +21,7 @@ import {
 import { NavTypeMobile } from "./NavTypeMobile";
 import { normaliserReference } from "@/lib/normalisation";
 import { historiqueEstSuffisant } from "@/lib/historique";
-import { calculerEtatQuota, debutMoisUTC } from "@/lib/quota";
+import { calculerEtatQuota, debutMoisUTC, documentsRestantsEnvoi, MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
 import { parserPayloadsAlertesHausse, type PayloadAlerteHausse } from "@/lib/comparaisonPrix";
 import type { DocumentType, Prisma } from "@prisma/client";
 
@@ -260,6 +260,10 @@ export async function DocumentsPage({
     : null;
   const afficherPopupOnboarding = historiqueSuffisant && utilisateur !== null && !utilisateur.onboardingDevisPopupVu;
   const bloquePaiementRequis = etatQuota?.phase === "bloque_paiement_requis";
+  const maxFichiersImport =
+    etatQuota && !bloquePaiementRequis
+      ? Math.min(MAX_FICHIERS_PAR_LOT, Math.max(0, documentsRestantsEnvoi(etatQuota)))
+      : MAX_FICHIERS_PAR_LOT;
 
   return (
     <div className="app-page flex flex-col gap-6">
@@ -277,6 +281,7 @@ export async function DocumentsPage({
         {!bloquePaiementRequis && (
           <ImportDocument
             quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
+            maxFichiers={maxFichiersImport}
             autoOpen={onboarding === "1" || scanner === "1"}
             preferCamera={scanner === "1"}
           />
@@ -549,6 +554,7 @@ export async function DocumentsPage({
               <EmptyContent>
                 <ImportDocument
                   quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
+                  maxFichiers={maxFichiersImport}
                   label={`Importer un ${LABELS_TYPE_MINUSCULE[typeValide]}`}
                 />
               </EmptyContent>

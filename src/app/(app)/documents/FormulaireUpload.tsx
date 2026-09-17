@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { IconeImportAnimee, OverlayImportAnime } from "./IconeImportAnimee";
 import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
+import { MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
 
 const TAILLE_MAX_OCTETS = 20 * 1024 * 1024; // 20 Mo — doit rester synchronisé avec src/lib/documents.ts
 const ENVOIS_PARALLELES_MAX = 3;
@@ -54,9 +55,12 @@ export function FormulaireUpload({
   autoOuvrirCamera = false,
   variantPc = false,
   variantCompact = false,
+  maxFichiers,
   onImportReussi,
 }: {
   quotaAtteint?: boolean;
+  /** Plafond de la file d'attente (défaut 150). Réduit si le quota utilisateur est plus bas. */
+  maxFichiers?: number;
   // Préselectionne le type — utilisé par documents/page.tsx quand l'artisan arrive via
   // le bouton "Importer" de l'état vide d'un type filtré (ex. ?type=BON_ENLEVEMENT).
   typeInitial?: "DEVIS" | "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT";
@@ -91,6 +95,11 @@ export function FormulaireUpload({
   // sélectionner des fichiers pour se les voir refuser un par un à l'envoi).
   const enCoursOuBloque = enCours || quotaAtteint;
   const [apercuErreurId, setApercuErreurId] = useState<string | null>(null);
+  const [avertissementLimite, setAvertissementLimite] = useState<string | null>(null);
+  const plafondFichiers = Math.max(
+    1,
+    Math.min(maxFichiers ?? MAX_FICHIERS_PAR_LOT, MAX_FICHIERS_PAR_LOT)
+  );
 
   useEffect(() => {
     if (!autoOuvrirCamera || quotaAtteint) return;
@@ -120,7 +129,22 @@ export function FormulaireUpload({
   function onSelectionFichiers(liste: FileList | null) {
     if (!liste || liste.length === 0) return;
 
-    const nouveaux: FichierEnvoi[] = Array.from(liste).map((f) => {
+    const placesRestantes = plafondFichiers - fichiers.length;
+    if (placesRestantes <= 0) {
+      setAvertissementLimite(`Limite atteinte : ${plafondFichiers} documents maximum par envoi.`);
+      return;
+    }
+
+    const selection = Array.from(liste).slice(0, placesRestantes);
+    if (liste.length > placesRestantes) {
+      setAvertissementLimite(
+        `Seuls ${placesRestantes} fichier${placesRestantes > 1 ? "s" : ""} ajouté${placesRestantes > 1 ? "s" : ""} — maximum ${plafondFichiers} par envoi.`
+      );
+    } else {
+      setAvertissementLimite(null);
+    }
+
+    const nouveaux: FichierEnvoi[] = selection.map((f) => {
       const tropVolumineux = f.size === 0 || f.size > TAILLE_MAX_OCTETS;
       return {
         id: crypto.randomUUID(),
@@ -268,10 +292,10 @@ export function FormulaireUpload({
     quotaAtteint
       ? "Revenez le mois prochain pour continuer l'envoi"
       : glisserActif
-        ? "Plusieurs fichiers à la fois, c'est possible"
+        ? `Jusqu'à ${plafondFichiers} fichiers à la fois`
         : variantPc
-          ? "PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers"
-          : "Appuyez pour ouvrir l'appareil photo, ou glissez-déposez plusieurs fichiers";
+          ? `PDF, JPEG, PNG ou HEIC — jusqu'à ${plafondFichiers} fichiers par envoi`
+          : `Appareil photo ou glisser-déposer — jusqu'à ${plafondFichiers} fichiers`;
 
   return (
     <div
@@ -492,6 +516,19 @@ export function FormulaireUpload({
         >
           Parcourir mes dossiers
         </button>
+      )}
+
+      {avertissementLimite && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {avertissementLimite}
+        </p>
+      )}
+
+      {fichiers.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {fichiers.length} / {plafondFichiers} fichier{fichiers.length > 1 ? "s" : ""} sélectionné
+          {fichiers.length > 1 ? "s" : ""}.
+        </p>
       )}
 
       {fichiers.length > 0 && (

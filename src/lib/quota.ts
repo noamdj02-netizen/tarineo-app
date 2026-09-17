@@ -29,17 +29,20 @@ export const QUOTAS_PLAN: Record<string, number> = {
 // enregistré (voir calculerEtatQuota).
 export const QUOTA_MENSUEL_ESSAI = 150;
 
+/** Nombre maximal de fichiers sélectionnables en un seul envoi (onboarding / import batch). */
+export const MAX_FICHIERS_PAR_LOT = 150;
+
 // Quotas d'import initial différenciés par plan, applicables une fois le premier
 // moyen de paiement enregistré (voir LIMITE_HISTORIQUE_ESSAI pour l'essai).
 export const LIMITES_HISTORIQUE_PLAN: Record<string, number> = {
-  starter: 100,
+  starter: 150,
   pro: 200,
   equipe: 400,
 };
 
 // Palier fixe pendant l'essai gratuit, identique quel que soit le plan visé —
 // remplacé par LIMITES_HISTORIQUE_PLAN[plan] dès le premier moyen de paiement.
-export const LIMITE_HISTORIQUE_ESSAI = 100;
+export const LIMITE_HISTORIQUE_ESSAI = 150;
 
 // Durée de l'essai gratuit avant blocage si aucun moyen de paiement n'est enregistré.
 export const DUREE_ESSAI_MOIS = 1;
@@ -91,6 +94,13 @@ export const QUOTA_DEVIS_IA_ESSAI = 10;
 export function quotaDevisIA(plan: string | null, subscriptionStatus: string | null): number {
   const paye = subscriptionStatus === "active";
   return paye ? (QUOTAS_DEVIS_IA_PLAN[plan ?? ""] ?? QUOTA_DEVIS_IA_ESSAI) : QUOTA_DEVIS_IA_ESSAI;
+}
+
+/** Places restantes pour un nouvel envoi (import initial ou quota mensuel). */
+export function documentsRestantsEnvoi(etatQuota: EtatQuota): number {
+  if (etatQuota.phase === "historique") return etatQuota.documentsRestantsHistorique;
+  if (etatQuota.phase === "mensuel") return etatQuota.documentsRestantsCeMois;
+  return 0;
 }
 
 export function calculerEtatQuota(params: {
