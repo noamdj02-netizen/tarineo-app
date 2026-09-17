@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Building2, Mail, Search, Users, X } from "lucide-react";
+import { Building2, Mail, Search, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClientRecherche, SourceClient } from "@/lib/rechercheClient";
 import { rechercherClientsAction } from "./rechercheClientActions";

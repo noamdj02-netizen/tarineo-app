@@ -397,7 +397,7 @@ function TopBar({
   }
 
   return (
-    <header className="sticky top-0 z-30 hidden bg-background lg:block">
+    <header className="sticky top-0 z-30 hidden min-h-[108px] bg-background lg:block">
       <div className="w-full px-6 pt-6 xl:px-8 xl:pt-8">
         <div className="flex h-16 items-center justify-between gap-3 rounded-full bg-card py-2 pl-4 pr-2 xl:h-[76px] xl:py-[10px] xl:pl-6 xl:pr-[10px]">
           <div className="flex min-w-0 items-center gap-4 xl:gap-[70px]">
@@ -458,7 +458,7 @@ export function AppShell({
 
   return (
     <>
-      <Suspense fallback={<div className="hidden h-[108px] lg:block" />}>
+      <Suspense fallback={<div className="hidden min-h-[108px] lg:block" aria-hidden="true" />}>
         <TopBar prenom={prenom} email={email} notifications={notifications} />
       </Suspense>
 

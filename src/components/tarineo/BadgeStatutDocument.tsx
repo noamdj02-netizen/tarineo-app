@@ -32,7 +32,7 @@ export function BadgeStatutDocument({
 export function BadgeHaussePrix({
   label,
   haussePositive,
-  hausseNegative,
+  hausseNegative: _hausseNegative,
   className,
 }: {
   label: string;

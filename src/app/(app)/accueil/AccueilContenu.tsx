@@ -15,10 +15,12 @@ import {
   DashboardSupplierRow,
   DashboardWeeklySavings,
 } from "./DashboardSections";
+import { MascotteAnalyse } from "@/components/tarineo/MascotteAnalyse";
+import { MascotteDashboard } from "@/components/tarineo/MascotteDashboard";
 import { Button } from "@/components/ui/button";
 import { ImportDocument } from "../documents/ImportDocument";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { AccueilErreur } from "./AccueilErreur";
 
 const MOIS_FR = [
@@ -96,12 +98,17 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
       <DashboardHeroImport compteVide={compteVide && !etatOnboarding.doitVoirBanniereReprise} />
 
       {documentsEnCours > 0 && tableauPeuRempli && (
-        <section className="rounded-[24px] border border-[#E6E9EB] bg-card p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-foreground">Analyse en cours</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {documentsEnCours} document{documentsEnCours > 1 ? "s" : ""} en traitement — votre tableau de bord se
-            remplira dès que l&apos;extraction est terminée.
-          </p>
+        <section className="rounded-[24px] border border-[#FFE4D6] bg-gradient-to-br from-[#FFF8F5] to-card p-5 sm:p-6">
+          <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 text-center sm:text-left">
+              <h2 className="text-lg font-semibold text-foreground">Analyse en cours</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {documentsEnCours} document{documentsEnCours > 1 ? "s" : ""} en traitement — votre tableau de bord se
+                remplira dès que l&apos;extraction est terminée.
+              </p>
+            </div>
+            <MascotteAnalyse size="md" className="shrink-0" />
+          </div>
         </section>
       )}
 
@@ -144,6 +151,9 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
               ) : (
                 <Empty>
                   <EmptyHeader>
+                    <EmptyMedia>
+                      <MascotteDashboard variant="pouceLeve" />
+                    </EmptyMedia>
                     <EmptyTitle>Aucune hausse détectée</EmptyTitle>
                     <EmptyDescription>
                       Continuez à importer : dès qu&apos;un même produit revient à un prix plus élevé, Tarinéo
@@ -188,9 +198,17 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
           </div>
 
           {depenses.length === 0 ? (
-            <p className="mt-6 text-sm text-muted-foreground">
-              Aucun achat validé pour l&apos;instant. Les factures et bons validés apparaîtront ici.
-            </p>
+            <Empty className="mt-6 border-0">
+              <EmptyHeader>
+                <EmptyMedia>
+                  <MascotteDashboard variant="brasCroises" />
+                </EmptyMedia>
+                <EmptyTitle>Aucun achat validé</EmptyTitle>
+                <EmptyDescription>
+                  Les factures et bons validés apparaîtront ici dès que vous en aurez importé et validé.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           ) : (
             <>
               {distributeursAvecObjectif.length > 0 && (

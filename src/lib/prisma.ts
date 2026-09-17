@@ -35,8 +35,14 @@ function creerClientPrisma(): PrismaClient {
 
 /** Après `prisma migrate` + `generate`, le singleton HMR peut garder un client sans les nouveaux modèles. */
 function clientPrismaAJour(client: PrismaClient): boolean {
-  const delegate = (client as PrismaClient & { promoFetchLog?: { findFirst?: unknown } }).promoFetchLog;
-  return Boolean(delegate && typeof delegate.findFirst === "function");
+  const c = client as PrismaClient & {
+    promoFetchLog?: { findFirst?: unknown };
+    distributorLogo?: { findMany?: unknown };
+  };
+  return (
+    Boolean(c.promoFetchLog && typeof c.promoFetchLog.findFirst === "function") &&
+    Boolean(c.distributorLogo && typeof c.distributorLogo.findMany === "function")
+  );
 }
 
 const datasourceUrl = urlBaseDonnees();

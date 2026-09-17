@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRightIcon, FileTextIcon, StarIcon, UploadIcon } from "lucide-react";
+import { ArrowUpRightIcon, StarIcon } from "lucide-react";
 import { BadgeHaussePrix } from "@/components/tarineo/BadgeStatutDocument";
+import { MascotteAnalyse } from "@/components/tarineo/MascotteAnalyse";
+import { MascotteDashboard } from "@/components/tarineo/MascotteDashboard";
 import { Badge } from "@/components/ui/badge";
 import { logoFournisseur } from "@/lib/logosFournisseurs";
 import { Button } from "@/components/ui/button";
@@ -13,12 +15,12 @@ import { ImportDocument } from "../documents/ImportDocument";
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
 
-const MOIS_COURTS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MOIS_COURTS_FR = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
 
 const formaterDateFigma = (date: Date | null) => {
   if (!date) return "—";
   const day = String(date.getUTCDate()).padStart(2, "0");
-  const month = MOIS_COURTS_EN[date.getUTCMonth()];
+  const month = MOIS_COURTS_FR[date.getUTCMonth()];
   return `${day} ${month}, ${date.getUTCFullYear()}`;
 };
 
@@ -35,8 +37,20 @@ const scoreObjectif = (f: FournisseurCarte) => {
   return Math.min(100, Math.round(f.pourcentageAtteinte));
 };
 
-function LogoFournisseur({ nom, norm, size = 28, rounded = "md" }: { nom: string; norm?: string; size?: number; rounded?: "md" | "full" }) {
-  const src = logoFournisseur(norm ?? nom);
+function LogoFournisseur({
+  nom,
+  norm,
+  logoUrl,
+  size = 28,
+  rounded = "md",
+}: {
+  nom: string;
+  norm?: string;
+  logoUrl?: string | null;
+  size?: number;
+  rounded?: "md" | "full";
+}) {
+  const src = logoUrl ?? logoFournisseur(norm ?? nom);
   const radius = rounded === "full" ? "rounded-full" : "rounded-[4px]";
   if (src) {
     return (
@@ -45,7 +59,7 @@ function LogoFournisseur({ nom, norm, size = 28, rounded = "md" }: { nom: string
         alt=""
         width={size}
         height={size}
-        className={`shrink-0 object-cover ${radius}`}
+        className={`shrink-0 object-contain ${radius}`}
         style={{ width: size, height: size }}
       />
     );
@@ -63,6 +77,7 @@ function LogoFournisseur({ nom, norm, size = 28, rounded = "md" }: { nom: string
 export type FournisseurCarte = {
   distributor: string;
   distributorNorm: string;
+  logoUrl: string | null;
   depenses: number;
   pourcentageAtteinte: number | null;
   objectif: number | null;
@@ -71,6 +86,8 @@ export type FournisseurCarte = {
 export type DocumentRecent = {
   id: string;
   distributor: string;
+  distributorNorm: string | null;
+  logoUrl: string | null;
   documentDate: Date | null;
   totalHt: number | null;
   hausseLabel: string;
@@ -82,16 +99,21 @@ export function DashboardHeroImport({ compteVide }: { compteVide: boolean }) {
   if (!compteVide) return null;
   return (
     <section className="w-full min-w-0 rounded-[24px] bg-gradient-to-br from-[#FFF0E8] via-card to-[#F3F7FA] p-6 sm:p-8">
-      <p className="text-sm font-medium uppercase tracking-wider text-primary">Votre espace est prêt</p>
-      <h2 className="mt-2 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
-        Vous n&apos;avez encore aucun document
-      </h2>
-      <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-        Commencez avec une facture ou un devis. Tarinéo s&apos;occupe du reste — fournisseurs, produits,
-        historique de prix. Aucune donnée inventée.
-      </p>
-      <div className="mt-6">
-        <ImportDocument label="Importer un document" className="h-auto rounded-full px-6 py-3" />
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium uppercase tracking-wider text-primary">Votre espace est prêt</p>
+          <h2 className="mt-2 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+            Vous n&apos;avez encore aucun document
+          </h2>
+          <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+            Commencez avec une facture ou un devis. Tarinéo s&apos;occupe du reste — fournisseurs, produits,
+            historique de prix. Aucune donnée inventée.
+          </p>
+          <div className="mt-6">
+            <ImportDocument label="Importer un document" className="h-auto rounded-full px-6 py-3" />
+          </div>
+        </div>
+        <MascotteDashboard variant="bulleProjets" className="mx-auto sm:mx-0 sm:shrink-0" priority />
       </div>
     </section>
   );
@@ -100,12 +122,20 @@ export function DashboardHeroImport({ compteVide }: { compteVide: boolean }) {
 export function DashboardBanniereReprise() {
   return (
     <section className="w-full min-w-0 rounded-[24px] border border-primary/20 bg-[#FFF0E8] p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-foreground">Votre espace est prêt. Importez vos premiers documents pour commencer.</h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Vous aviez choisi de le faire plus tard — c&apos;est le bon moment, depuis ce téléphone ou votre ordinateur.
-      </p>
-      <div className="mt-4">
-        <ImportDocument label="Importer mes documents" className="rounded-full" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-semibold text-foreground">
+            Votre espace est prêt. Importez vos premiers documents pour commencer.
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Vous aviez choisi de le faire plus tard — c&apos;est le bon moment, depuis ce téléphone ou votre
+            ordinateur.
+          </p>
+          <div className="mt-4">
+            <ImportDocument label="Importer mes documents" className="rounded-full" />
+          </div>
+        </div>
+        <MascotteDashboard variant="salut" className="mx-auto sm:mx-0" />
       </div>
     </section>
   );
@@ -123,37 +153,60 @@ export function DashboardAFaire({
   if (aVerifier === 0 && hausses === 0) return null;
 
   return (
-    <section className="w-full min-w-0 rounded-[24px] bg-card p-5 sm:p-6">
-      <h2 className="text-lg font-semibold text-foreground">À vérifier</h2>
-      <p className="mt-1 text-sm text-muted-foreground">Ce qui mérite votre attention aujourd&apos;hui.</p>
-      <ul className="mt-4 flex flex-col gap-3">
-        {aVerifier > 0 && (
-          <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-secondary px-4 py-3">
-            <div>
-              <p className="font-medium text-foreground">
-                {aVerifier} document{aVerifier > 1 ? "s" : ""} à vérifier
-              </p>
-              <p className="text-xs text-muted-foreground">Confiance faible — Tarinéo n&apos;a rien inventé.</p>
-            </div>
-            <Button size="sm" render={<Link href="/documents" />} className="rounded-full">
-              Vérifier
-            </Button>
-          </li>
-        )}
-        {hausses > 0 && (
-          <li className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#FFF0E8] px-4 py-3">
-            <div>
-              <p className="font-medium text-foreground">
-                {hausses} hausse{hausses > 1 ? "s" : ""} de prix détectée{hausses > 1 ? "s" : ""}
-              </p>
-              <p className="text-xs text-muted-foreground">Basées sur votre historique d&apos;achats.</p>
-            </div>
-            <Button size="sm" render={<Link href={`/documents?hausse=1&mois=${moisCourantStr}`} />} className="rounded-full">
-              Voir les hausses
-            </Button>
-          </li>
-        )}
-      </ul>
+    <section className="w-full min-w-0 rounded-[24px] border border-[#E8EAED] bg-card p-5 sm:p-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-8">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-lg font-semibold text-foreground">À vérifier</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Ce qui mérite votre attention aujourd&apos;hui.</p>
+
+          <ul className="mt-4 flex flex-col gap-3">
+            {aVerifier > 0 && (
+              <li className="flex items-center gap-3 rounded-2xl bg-secondary px-4 py-3.5 sm:gap-4">
+                <span
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-semibold tabular-nums text-primary"
+                  aria-hidden
+                >
+                  {aVerifier}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-foreground">
+                    Document{aVerifier > 1 ? "s" : ""} à vérifier
+                  </p>
+                  <p className="text-xs text-muted-foreground">Confiance faible — Tarinéo n&apos;a rien inventé.</p>
+                </div>
+                <Button size="sm" render={<Link href="/documents" />} className="shrink-0 rounded-full">
+                  Vérifier
+                </Button>
+              </li>
+            )}
+            {hausses > 0 && (
+              <li className="flex items-center gap-3 rounded-2xl bg-[#FFF0E8] px-4 py-3.5 sm:gap-4">
+                <span
+                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-lg font-semibold tabular-nums text-primary"
+                  aria-hidden
+                >
+                  {hausses}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-foreground">
+                    Hausse{hausses > 1 ? "s" : ""} de prix détectée{hausses > 1 ? "s" : ""}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Basées sur votre historique d&apos;achats.</p>
+                </div>
+                <Button
+                  size="sm"
+                  render={<Link href={`/documents?hausse=1&mois=${moisCourantStr}`} />}
+                  className="shrink-0 rounded-full"
+                >
+                  Voir
+                </Button>
+              </li>
+            )}
+          </ul>
+        </div>
+
+        <MascotteAnalyse size="sm" className="mx-auto shrink-0 sm:mx-0" />
+      </div>
     </section>
   );
 }
@@ -173,8 +226,8 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
           <CardContent>
             <Empty className="py-8">
               <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <UploadIcon />
+                <EmptyMedia>
+                  <MascotteDashboard variant="clinOeilPointe" />
                 </EmptyMedia>
                 <EmptyTitle>Aucun fournisseur suivi</EmptyTitle>
                 <EmptyDescription>
@@ -195,7 +248,7 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
               <Card key={f.distributorNorm} className="h-full rounded-[24px] ring-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} />
+                    <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} logoUrl={f.logoUrl} />
                     <span className="truncate text-base font-medium">{f.distributor}</span>
                   </CardTitle>
                   {score !== null && (
@@ -233,8 +286,8 @@ export function DashboardRecentDocuments({ documents }: { documents: DocumentRec
   return (
     <Card className="min-h-0 w-full rounded-[24px] ring-0 lg:min-h-[538px]">
       <CardHeader>
-        <CardTitle className="text-xl">Devis récents</CardTitle>
-        <CardDescription>Scans de la semaine</CardDescription>
+        <CardTitle className="text-xl">Documents récents</CardTitle>
+        <CardDescription>Importés cette semaine</CardDescription>
         <CardAction>
           <Button variant="ghost" size="sm" render={<Link href="/documents" />} className="text-muted-foreground">
             Voir tout
@@ -245,8 +298,8 @@ export function DashboardRecentDocuments({ documents }: { documents: DocumentRec
         {documents.length === 0 ? (
           <Empty className="flex-1 py-10">
             <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <FileTextIcon />
+              <EmptyMedia>
+                <MascotteDashboard variant="regardeGauche" />
               </EmptyMedia>
               <EmptyTitle>Aucun document cette semaine</EmptyTitle>
               <EmptyDescription>Vos derniers devis et factures apparaîtront ici dès le premier import.</EmptyDescription>
@@ -264,7 +317,13 @@ export function DashboardRecentDocuments({ documents }: { documents: DocumentRec
                   className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-secondary"
                 >
                   <div className="flex min-w-0 items-center gap-3">
-                    <LogoFournisseur nom={doc.distributor} size={48} rounded="full" />
+                    <LogoFournisseur
+                      nom={doc.distributor}
+                      norm={doc.distributorNorm ?? undefined}
+                      logoUrl={doc.logoUrl}
+                      size={48}
+                      rounded="full"
+                    />
                     <div className="min-w-0">
                       <p className="truncate text-base font-medium text-foreground">{doc.distributor}</p>
                       <p className="text-[13px] text-muted-foreground">{formaterDateFigma(doc.documentDate)}</p>
@@ -300,6 +359,8 @@ export function DashboardWeeklySavings({
   evolutionPct: number | null;
   donneesSemaine: { jour: string; montant: number }[];
 }) {
+  const semaineVide = totalSemaine === 0 && donneesSemaine.every((d) => d.montant === 0);
+
   return (
     <Card className="w-full min-w-0 rounded-[24px] ring-0">
       <CardHeader>
@@ -311,18 +372,35 @@ export function DashboardWeeklySavings({
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-start gap-1.5">
-          <p className="text-[32px] font-medium leading-none text-foreground">{formaterEuros(totalSemaine)}</p>
-          {evolutionPct !== null && (
-            <Badge className="bg-[var(--app-green)] text-white">
-              {evolutionPct >= 0 ? "+" : ""}
-              {evolutionPct.toFixed(0)}%
-            </Badge>
-          )}
-        </div>
-        <div className="overflow-x-auto">
-          <GraphiqueEconomiesSemaine donnees={donneesSemaine} />
-        </div>
+        {semaineVide ? (
+          <Empty className="border-0 py-6">
+            <EmptyHeader>
+              <EmptyMedia>
+                <MascotteDashboard variant="loupe" />
+              </EmptyMedia>
+              <EmptyTitle>Pas encore d&apos;économie repérée</EmptyTitle>
+              <EmptyDescription>
+                Dès qu&apos;une hausse est détectée et qu&apos;un prix plus bas existe dans votre historique, le
+                montant apparaît ici.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-start gap-1.5">
+              <p className="text-[32px] font-medium leading-none text-foreground">{formaterEuros(totalSemaine)}</p>
+              {evolutionPct !== null && (
+                <Badge className="bg-[var(--app-green)] text-white">
+                  {evolutionPct >= 0 ? "+" : ""}
+                  {evolutionPct.toFixed(0)}%
+                </Badge>
+              )}
+            </div>
+            <div className="overflow-x-auto">
+              <GraphiqueEconomiesSemaine donnees={donneesSemaine} />
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
@@ -343,7 +421,7 @@ export function DashboardOverviewStats({
 }) {
   const stats = [
     {
-      label: "Devis scannés",
+      label: "Documents ce mois",
       sub: "Ce mois-ci",
       value: String(nbDocumentsMois),
       suffix: "documents",
@@ -438,6 +516,9 @@ export function DashboardDepensesChart({
         ) : (
           <Empty>
             <EmptyHeader>
+              <EmptyMedia>
+                <MascotteDashboard variant="panneauTerrain" />
+              </EmptyMedia>
               <EmptyTitle>Pas encore de courbe</EmptyTitle>
               <EmptyDescription>Validez des factures ou bons de commande pour tracer vos dépenses.</EmptyDescription>
             </EmptyHeader>

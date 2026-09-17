@@ -8,6 +8,7 @@ import { EtapeEntreprise } from "./EtapeEntreprise";
 import { EtapeReveal } from "./EtapeReveal";
 import type { ResumeAnalyse } from "@/lib/onboarding";
 import { choisirImportPlusTard, chargerResumeOnboarding } from "./actions";
+import { MascotteOnboarding } from "./MascotteOnboarding";
 
 const ETAPES = ["Bienvenue", "Import", "Analyse", "Entreprise", "Votre espace"];
 
@@ -63,7 +64,8 @@ export function OnboardingWizard({ prenom, email, telephone, entrepriseNom, maxF
 
       {etape === "accueil" && (
         <div className="flex min-h-[60vh] flex-col justify-center">
-          <p className="text-sm font-medium uppercase tracking-wider text-primary">Bienvenue</p>
+          <MascotteOnboarding />
+          <p className="text-sm font-medium uppercase tracking-[0.07em] text-primary">Bienvenue</p>
           <h1 className="mt-3 text-3xl font-semibold leading-tight text-foreground sm:text-4xl">
             Bonjour {prenom}.
           </h1>

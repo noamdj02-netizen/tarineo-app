@@ -69,9 +69,10 @@ model User {
   clientQuotes     ClientQuote[]
   clientInvoices   ClientInvoice[]
   alerts           Alert[]
-  distributorGoals DistributorGoal[]
-  companyProfile   CompanyProfile?
-  generationsIA    GenerationIA[]
+  distributorGoals  DistributorGoal[]
+  distributorLogos  DistributorLogo[]
+  companyProfile    CompanyProfile?
+  generationsIA     GenerationIA[]
 }
 
 model Account {
@@ -197,6 +198,23 @@ model PriceHistory {
 
   @@index([userId, referenceNorm, distributorNorm])
   @@index([userId, manufacturerRefNorm])
+}
+
+// Logo d'enseigne extrait d'un document importé (photo/PDF), propre à l'utilisateur.
+// Prioritaire sur logo.dev pour l'affichage (dashboard, fournisseurs, documents).
+model DistributorLogo {
+  id              String   @id @default(cuid())
+  userId          String
+  distributorNorm String
+  distributor     String
+  logoKey         String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, distributorNorm])
+  @@index([userId])
 }
 
 model DistributorGoal {

@@ -41,7 +41,7 @@ export async function demanderReinitialisation(formData: FormData) {
     // comptes) ni la faire réussir silencieusement sans trace — on journalise et on
     // continue, même pattern que resilierAbonnement dans compte/actions.ts.
     try {
-      await envoyerEmailReinitialisation(email, url);
+      await envoyerEmailReinitialisation(email, url, { origine });
     } catch (erreur) {
       console.error("Échec de l'envoi de l'email de réinitialisation :", erreur);
     }

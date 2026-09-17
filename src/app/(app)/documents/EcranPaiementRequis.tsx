@@ -49,9 +49,15 @@ type Etape = "choix_plan" | "chargement_formulaire" | "formulaire" | "confirmati
 // immédiat) ; c'est le webhook (src/app/api/stripe/webhook/route.ts), pas la
 // confirmation côté navigateur, qui active réellement le compte — voir
 // verifierActivationCompte ci-dessous.
-export function EcranPaiementRequis({ bloque = true }: { bloque?: boolean }) {
+export function EcranPaiementRequis({
+  bloque = true,
+  planInitial = "pro",
+}: {
+  bloque?: boolean;
+  planInitial?: PlanValide;
+}) {
   const router = useRouter();
-  const [planChoisi, setPlanChoisi] = useState<PlanValide>("pro");
+  const [planChoisi, setPlanChoisi] = useState<PlanValide>(planInitial);
   const [etape, setEtape] = useState<Etape>("choix_plan");
   const [erreur, setErreur] = useState<string | null>(null);
   const conteneurRef = useRef<HTMLDivElement>(null);

@@ -40,7 +40,9 @@ export default function RootLayout({
       lang="fr"
       className={cn("h-full antialiased", barlow.variable, inter.variable, manrope.variable, "font-sans")}
     >
-      <body className="min-h-full flex flex-col font-sans antialiased">{children}</body>
+      <body className="min-h-full flex flex-col font-sans antialiased">
+        {children}
+      </body>
     </html>
   );
 }

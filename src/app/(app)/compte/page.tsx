@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
-import { DEMO_UTILISATEUR } from "@/lib/uiDemo";
 import { BoutonSuppression } from "./BoutonSuppression";
 import { FormulaireMotDePasse } from "./FormulaireMotDePasse";
 import { GestionAbonnement } from "./GestionAbonnement";
@@ -29,14 +28,6 @@ export default async function ComptePage() {
     redirect("/connexion");
   }
 
-  const emailSession = session.user.email ?? "";
-  const email =
-    emailSession ||
-    (session.user.id ? DEMO_UTILISATEUR.email : "");
-  const nom =
-    session.user.name ??
-    (email.toLowerCase() === DEMO_UTILISATEUR.email ? DEMO_UTILISATEUR.nom : null);
-
   let utilisateur: {
     passwordHash: string | null;
     plan: string | null;
@@ -59,8 +50,8 @@ export default async function ComptePage() {
     redirect("/connexion");
   }
 
-  const nomAffiche = utilisateur?.name ?? nom ?? DEMO_UTILISATEUR.nom;
-  const emailAffiche = utilisateur?.email ?? email;
+  const nomAffiche = utilisateur?.name ?? session.user.name ?? "—";
+  const emailAffiche = utilisateur?.email ?? session.user.email ?? "—";
 
   let abonnement: { intervalle: "month" | "year"; dateFin: string; resiliationProgrammee: boolean } | null = null;
   if (utilisateur?.stripeSubscriptionId) {

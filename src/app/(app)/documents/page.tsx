@@ -9,6 +9,7 @@ import { ImportDocument } from "./ImportDocument";
 import { ActionsDocument } from "./ActionsDocument";
 import { PopupOnboardingDevis } from "./PopupOnboardingDevis";
 import { EcranPaiementRequis } from "./EcranPaiementRequis";
+import { planStripeValide } from "@/lib/plansStripe";
 import {
   AIDE_PAGE_DOCUMENTS,
   LABELS_TYPE,
@@ -30,6 +31,7 @@ interface Recherche {
   distributeur?: string;
   reference?: string;
   upgrade?: string;
+  plan?: string;
   hausse?: string;
   type?: string;
   enseigne?: string;
@@ -71,7 +73,8 @@ export async function DocumentsPage({
   const userId = session.user.id;
   const maintenant = new Date();
 
-  const { mois, distributeur, reference, upgrade, hausse, type, enseigne, onboarding, scanner } = await searchParams;
+  const { mois, distributeur, reference, upgrade, plan, hausse, type, enseigne, onboarding, scanner } =
+    await searchParams;
 
   if (!typeFixe && estTypeValide(type)) {
     redirect(ROUTES_DOCUMENTS_PAR_TYPE[type]);
@@ -713,7 +716,7 @@ export async function DocumentsPage({
       )}
       {upgrade === "1" && !bloquePaiementRequis && (
         <div className="mt-8">
-          <EcranPaiementRequis bloque={false} />
+          <EcranPaiementRequis bloque={false} planInitial={planStripeValide(plan) ?? "pro"} />
         </div>
       )}
 

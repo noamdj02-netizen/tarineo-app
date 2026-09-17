@@ -7,7 +7,10 @@ import { BrandMark } from "@/components/tarineo/BrandMark";
 import { EmptyState } from "@/components/tarineo/EmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
 import { detecterDerivesSilencieuses } from "@/lib/derivePrix";
-import { logoFournisseur } from "@/lib/logosFournisseurs";
+import {
+  chargerLogosFournisseursUtilisateur,
+  resoudreLogoFournisseur,
+} from "@/lib/logosFournisseursPersistants";
 import { trouverFournisseurConnu } from "@/lib/fournisseursConnus";
 
 const euros = (v: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(v);
@@ -48,6 +51,10 @@ export default async function VeillePage() {
   }
 
   const surcoutTotal = derives.reduce((somme, d) => somme + (d.surcoutAnnuelEstime ?? 0), 0);
+  const logosImportes = await chargerLogosFournisseursUtilisateur(
+    session.user.id,
+    derives.map((d) => d.distributorNorm),
+  );
 
   return (
     <div>
@@ -94,7 +101,11 @@ export default async function VeillePage() {
                     href={`/fournisseurs/${encodeURIComponent(d.distributorNorm)}`}
                     className="inline-flex items-center gap-2.5 hover:text-primary"
                   >
-                    <BrandMark nom={connu?.nom ?? d.distributor} logo={logoFournisseur(d.distributor)} size={24} />
+                    <BrandMark
+                      nom={connu?.nom ?? d.distributor}
+                      logo={resoudreLogoFournisseur(d.distributor, d.distributorNorm, logosImportes)}
+                      size={24}
+                    />
                     <span className="truncate">{connu?.nom ?? d.distributor}</span>
                   </Link>
                 </TableCell>

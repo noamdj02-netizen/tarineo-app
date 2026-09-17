@@ -4,6 +4,10 @@ import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { normaliserDistributeur } from "@/lib/normalisation";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
+import {
+  chargerLogosFournisseursUtilisateur,
+  resoudreLogoFournisseur,
+} from "@/lib/logosFournisseursPersistants";
 import type { DocumentRecent, FournisseurCarte } from "@/app/(app)/accueil/DashboardSections";
 
 const JOURS_COURTS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
@@ -100,10 +104,16 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
         where: { userId, createdAt: { gte: debutSemaine } },
         orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
         take: 6,
-        select: { id: true, distributor: true, documentDate: true, totalHt: true },
+        select: { id: true, distributor: true, distributorNorm: true, documentDate: true, totalHt: true },
       }),
       calculerDepensesParDistributeur(userId),
     ]);
+
+    const normsLogos = [
+      ...docsSemaine.map((d) => d.distributorNorm),
+      ...depenses.map((d) => d.distributorNorm),
+    ].filter((n): n is string => Boolean(n));
+    const logosImportes = await chargerLogosFournisseursUtilisateur(userId, normsLogos);
 
     const alertesCeMois = alertes12Mois.filter((a) => a.createdAt >= debutMois);
     const alertesSemaine = alertes12Mois.filter((a) => a.createdAt >= debutSemaine);
@@ -174,9 +184,12 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
         if (pct > 3) hausseLabel = `+${pct.toFixed(0)}% hausse`;
         else if (pct < -3) hausseLabel = `${pct.toFixed(0)}% baisse`;
       }
+      const distributor = doc.distributor ?? "Fournisseur";
       return {
         id: doc.id,
-        distributor: doc.distributor ?? "Fournisseur",
+        distributor,
+        distributorNorm: doc.distributorNorm,
+        logoUrl: resoudreLogoFournisseur(distributor, doc.distributorNorm, logosImportes),
         documentDate: doc.documentDate,
         totalHt: doc.totalHt !== null ? Number(doc.totalHt) : null,
         hausseLabel,
@@ -230,6 +243,7 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       .map((d) => ({
         distributor: d.distributor,
         distributorNorm: d.distributorNorm,
+        logoUrl: resoudreLogoFournisseur(d.distributor, d.distributorNorm, logosImportes),
         depenses: d.depenses,
         pourcentageAtteinte: d.pourcentageAtteinte,
         objectif: d.objectif,

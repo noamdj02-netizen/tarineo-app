@@ -2,12 +2,10 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { type PlanStripe, PLANS_STRIPE } from "@/lib/plansStripe";
 import { stripe } from "@/lib/stripe";
 
-// Les 3 plans facturables (voir src/lib/quota.ts) — "Équipe" affiché côté UI mappe
-// vers cette clé "equipe" sans accent, comme le reste du modèle de quotas.
-const PLANS_VALIDES = ["starter", "pro", "equipe"] as const;
-export type PlanValide = (typeof PLANS_VALIDES)[number];
+export type PlanValide = PlanStripe;
 
 export type ResultatSetupIntent = { succes: true; clientSecret: string } | { succes: false; erreur: string };
 
@@ -21,7 +19,7 @@ export async function creerSetupIntentPaiement(plan: string): Promise<ResultatSe
   if (!session?.user?.id) {
     return { succes: false, erreur: "Vous devez être connecté." };
   }
-  if (!PLANS_VALIDES.includes(plan as PlanValide)) {
+  if (!PLANS_STRIPE.includes(plan as PlanValide)) {
     return { succes: false, erreur: "Plan invalide." };
   }
 

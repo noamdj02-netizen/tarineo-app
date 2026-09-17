@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BoutonPortailStripe } from "../parametres/BoutonPortailStripe";
 import { resilierAbonnement } from "./actions";
 
 interface Props {
@@ -53,6 +54,10 @@ export function GestionAbonnement({ planLabel, intervalle, dateFin, resiliationD
       <p className="mt-1 text-sm text-muted-foreground">
         Plan {planLabel} · {intervalle === "month" ? "facturation mensuelle" : "engagement annuel"}
       </p>
+
+      <div className="mt-4">
+        <BoutonPortailStripe />
+      </div>
 
       {intervalle === "month" ? (
         programmee ? (

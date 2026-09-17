@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { MascotteAnalyse } from "@/components/tarineo/MascotteAnalyse";
 import { marquerOnboardingTermine } from "../actions";
 
 const ETAPES = [
@@ -58,6 +59,7 @@ export function AnimationAnalyse({
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col justify-center px-2 py-4">
+      <MascotteAnalyse className="mx-auto mb-4 sm:mx-0" size="lg" priority />
       <p className="text-sm font-medium uppercase tracking-wider text-primary">Analyse en cours</p>
       <h1 className="mt-3 text-3xl font-semibold leading-tight text-foreground">
         Tarinéo construit votre espace…

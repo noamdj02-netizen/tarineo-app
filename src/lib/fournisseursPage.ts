@@ -1,7 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
-import { logoFournisseur } from "@/lib/logosFournisseurs";
+import {
+  chargerLogosFournisseursUtilisateur,
+  resoudreLogoFournisseur,
+} from "@/lib/logosFournisseursPersistants";
 import {
   listerCatalogueFournisseurs,
   slugFournisseurConnu,
@@ -64,6 +67,11 @@ export async function listerFournisseursUtilisateur(userId: string): Promise<Fou
     haussesParDistributeur.set(norm, (haussesParDistributeur.get(norm) ?? 0) + 1);
   }
 
+  const logosImportes = await chargerLogosFournisseursUtilisateur(
+    userId,
+    depenses.map((d) => d.distributorNorm),
+  );
+
   return depenses
     .map((d) => {
       const stats = comptesParNorm.get(d.distributorNorm);
@@ -75,7 +83,7 @@ export async function listerFournisseursUtilisateur(userId: string): Promise<Fou
       return {
         distributorNorm: d.distributorNorm,
         nom: connu?.nom ?? d.distributor,
-        logo: logoFournisseur(d.distributorNorm) ?? logoFournisseur(d.distributor),
+        logo: resoudreLogoFournisseur(d.distributor, d.distributorNorm, logosImportes),
         groupe: connu?.groupe ?? null,
         specialite: connu?.specialite ?? null,
         depenses: d.depenses,

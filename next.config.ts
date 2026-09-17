@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 import path from "path";
 
+const supabaseHostname = process.env.SUPABASE_URL
+  ? new URL(process.env.SUPABASE_URL).hostname
+  : null;
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
@@ -15,7 +19,12 @@ const nextConfig: NextConfig = {
     // plutôt que par une balise <img> a deux avantages ici : le téléchargement se fait
     // depuis notre serveur, donc logo.dev ne voit jamais l'IP de l'artisan, et le
     // résultat est mis en cache au lieu d'être rechargé à chaque affichage.
-    remotePatterns: [{ protocol: "https", hostname: "img.logo.dev" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "img.logo.dev" },
+      ...(supabaseHostname
+        ? [{ protocol: "https" as const, hostname: supabaseHostname, pathname: "/storage/v1/object/sign/**" }]
+        : []),
+    ],
   },
   experimental: {
     serverActions: {

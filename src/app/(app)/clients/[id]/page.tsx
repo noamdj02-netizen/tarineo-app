@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { agregerClientsUtilisateur, cleClient } from "@/lib/clients";
+import { agregerClientsUtilisateur } from "@/lib/clients";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { BtnPrimary } from "@/components/tarineo/Actions";
 import { DataTable, RowActions, TableCell, TableRow } from "@/components/tarineo/DataTable";

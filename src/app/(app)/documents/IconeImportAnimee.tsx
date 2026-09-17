@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { MascotteAnalyse } from "@/components/tarineo/MascotteAnalyse";
 import { cn } from "@/lib/utils";
 
 function IconeDocument({ className }: { className?: string }) {
@@ -179,11 +180,11 @@ export function OverlayImportAnime({
   sousLabel?: string;
 }) {
   return (
-    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded-[16px] bg-white/90 px-4 backdrop-blur-[3px]">
-      <IconeImportAnimee variant="figma" vitesse="rapide" actif pulseHalo />
-      <div className="text-center">
-        <p className="text-[14px] font-semibold text-[#1f2937]">{label ?? "Envoi en cours…"}</p>
-        {sousLabel && <p className="mt-1 text-[12px] text-[#6b7280]">{sousLabel}</p>}
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-[16px] bg-[#FFFBF8]/96 px-6 py-8 backdrop-blur-[4px]">
+      <MascotteAnalyse size="lg" priority />
+      <div className="max-w-[260px] text-center">
+        <p className="text-[15px] font-semibold text-[#172935]">{label ?? "Analyse en cours…"}</p>
+        {sousLabel && <p className="mt-1.5 text-[13px] leading-relaxed text-[#53616A]">{sousLabel}</p>}
       </div>
     </div>
   );

@@ -7,6 +7,10 @@ import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
 import { analyserFournisseurPourArtisan, type TonVerdictFournisseur } from "@/lib/analyseFournisseur";
 import { logoFournisseur } from "@/lib/logosFournisseurs";
+import {
+  chargerLogosFournisseursUtilisateur,
+  resoudreLogoFournisseur,
+} from "@/lib/logosFournisseursPersistants";
 import { LABELS_TYPE } from "@/lib/documentLabels";
 import { BadgeStatutDocument } from "@/components/tarineo/BadgeStatutDocument";
 import { enseigneParId, enseigneParNorm } from "@/lib/bibliothequeFournisseurs";
@@ -127,7 +131,8 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
   });
 
   const fiche = ficheParBibliothequeId(enseigneLib?.id ?? id, nom);
-  const logo = logoFournisseur(norm || nom);
+  const logosImportes = await chargerLogosFournisseursUtilisateur(userId, [norm]);
+  const logo = resoudreLogoFournisseur(nom, norm, logosImportes) ?? logoFournisseur(norm || nom);
   const totalHt = documents.reduce((s, d) => s + Number(d.totalHt ?? 0), 0);
   const totalDepensesTous = depensesToutes.reduce((s, d) => s + d.depenses, 0);
   const rangDepenses =

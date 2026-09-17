@@ -413,7 +413,7 @@ export function FormulaireUpload({
           className={`relative flex w-full flex-col items-center justify-center overflow-hidden text-center transition-colors ${
             variantCompact
               ? `gap-4 rounded-[16px] border border-dashed px-6 py-9 ${
-                  enCours ? "min-h-[200px] border-[#ec5821] bg-white" : glisserActif ? "border-[#ec5821] bg-white" : "border-[#d1d5db] bg-white"
+                  enCours ? "min-h-[300px] border-[#ec5821] bg-[#FFFBF8]" : glisserActif ? "border-[#ec5821] bg-white" : "border-[#d1d5db] bg-white"
                 } ${enCoursOuBloque && !enCours ? "cursor-not-allowed opacity-60" : enCours ? "cursor-wait" : "cursor-pointer hover:border-[#ec5821]"}`
               : `aspect-[4/3] gap-3 rounded-[16px] border-2 border-dashed ${
                   glisserActif ? "border-primary bg-[#FFF8F5]" : "border-[#DCDEE1] bg-[#F8F8F8]"
@@ -470,11 +470,11 @@ export function FormulaireUpload({
 
           {enCours && (
             <OverlayImportAnime
-              label="Envoi en cours…"
+              label="Analyse en cours…"
               sousLabel={
                 progression
-                  ? `${progression.traites}/${progression.total} document${progression.total > 1 ? "s" : ""}`
-                  : "Lecture et envoi sécurisé"
+                  ? `${progression.traites}/${progression.total} document${progression.total > 1 ? "s" : ""} — Tarinéo lit votre fichier`
+                  : "Tarinéo lit et classe votre document"
               }
             />
           )}

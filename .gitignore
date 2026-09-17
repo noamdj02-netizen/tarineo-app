@@ -20,6 +20,9 @@
 # production
 /build
 
+# figma capture (session navigateur locale)
+.figma-capture-profile/
+
 # misc
 .DS_Store
 *.pem

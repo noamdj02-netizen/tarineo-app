@@ -7,26 +7,41 @@ import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { PageTabs } from "@/components/tarineo/PageTabs";
 import { ParametresAbonnement } from "./ParametresAbonnement";
 import { ParametresIntegrations } from "./ParametresIntegrations";
+import { EcranPaiementRequis } from "../documents/EcranPaiementRequis";
+import { planStripeValide } from "@/lib/plansStripe";
 import Link from "next/link";
 
-export default async function ParametresPage({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
+export default async function ParametresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ onglet?: string; plan?: string }>;
+}) {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
-  const { onglet = "profil" } = await searchParams;
+  const { onglet = "profil", plan: planQuery } = await searchParams;
+  const planSelectionne = planStripeValide(planQuery);
 
   let profil = null;
   let planActuel: string | null = null;
+  let subscriptionStatus: string | null = null;
+  let aCompteStripe = false;
   let dbIndisponible = false;
   try {
     const [profilRow, userRow] = await Promise.all([
       prisma.companyProfile.findUnique({ where: { userId: session.user.id } }),
-      prisma.user.findUnique({ where: { id: session.user.id }, select: { plan: true } }),
+      prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { plan: true, subscriptionStatus: true, stripeCustomerId: true },
+      }),
     ]);
     profil = profilRow;
     planActuel = userRow?.plan ?? null;
+    subscriptionStatus = userRow?.subscriptionStatus ?? null;
+    aCompteStripe = Boolean(userRow?.stripeCustomerId);
   } catch {
     dbIndisponible = true;
   }
+  const abonnementActif = subscriptionStatus === "active";
   let logoUrl: string | null = null;
   if (profil?.logoKey && isSupabaseConfigured()) {
     try {
@@ -91,7 +106,17 @@ export default async function ParametresPage({ searchParams }: { searchParams: P
       )}
       {onglet === "abonnement" && (
         <PageCard>
-          <ParametresAbonnement planActuel={planActuel} />
+          <ParametresAbonnement
+            planActuel={planActuel}
+            abonnementActif={abonnementActif}
+            aCompteStripe={aCompteStripe}
+            planSelectionne={planSelectionne}
+          />
+          {planSelectionne && !abonnementActif && (
+            <div id="paiement-stripe" className="mt-8 scroll-mt-24">
+              <EcranPaiementRequis bloque={false} planInitial={planSelectionne} />
+            </div>
+          )}
         </PageCard>
       )}
       {onglet === "integrations" && (

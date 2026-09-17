@@ -6,6 +6,10 @@ import { prisma } from "@/lib/prisma";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
 import { logoFournisseur } from "@/lib/logosFournisseurs";
+import {
+  chargerLogosFournisseursUtilisateur,
+  resoudreLogoFournisseur,
+} from "@/lib/logosFournisseursPersistants";
 import { normaliserDistributeur } from "@/lib/normalisation";
 import { BIBLIOTHEQUE_FOURNISSEURS, enseigneParNorm } from "@/lib/bibliothequeFournisseurs";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
@@ -18,8 +22,18 @@ import { UploadIcon } from "lucide-react";
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
 
-function Logo({ nom, norm, size = 40 }: { nom: string; norm: string; size?: number }) {
-  const src = logoFournisseur(norm || nom);
+function Logo({
+  nom,
+  norm,
+  logoUrl,
+  size = 40,
+}: {
+  nom: string;
+  norm: string;
+  logoUrl?: string | null;
+  size?: number;
+}) {
+  const src = logoUrl ?? logoFournisseur(norm || nom);
   if (src) {
     return (
       <Image src={src} alt="" width={size} height={size} className="shrink-0 rounded-lg object-cover" style={{ width: size, height: size }} />
@@ -124,6 +138,11 @@ export default async function FournisseursPage() {
 
   const suivis = [...suivisMap.values()].sort((a, b) => b.depenses - a.depenses || b.nbDocs - a.nbDocs);
 
+  const logosImportes = await chargerLogosFournisseursUtilisateur(
+    userId,
+    suivis.map((s) => s.distributorNorm),
+  );
+
   const normsSuivis = new Set(suivis.map((s) => normCle(s.distributorNorm)));
   const bibliotheque = BIBLIOTHEQUE_FOURNISSEURS.filter((e) => {
     const hint = normCle(e.normHint);
@@ -168,7 +187,11 @@ export default async function FournisseursPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Logo nom={f.distributor} norm={f.distributorNorm} />
+                    <Logo
+                      nom={f.distributor}
+                      norm={f.distributorNorm}
+                      logoUrl={resoudreLogoFournisseur(f.distributor, f.distributorNorm, logosImportes)}
+                    />
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-foreground">{f.distributor}</p>
                       <p className="text-xs text-muted-foreground">

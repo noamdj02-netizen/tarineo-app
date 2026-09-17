@@ -268,15 +268,6 @@ export async function rafraichirPromosFournisseur(
   };
 }
 
-function tokensPertinence(texte: string): string[] {
-  return texte
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .split(/[^a-z0-9]+/)
-    .filter((t) => t.length >= 5);
-}
-
 export async function promosPersonnaliseesPourArtisan(
   userId: string,
   bibliothequeId: string,

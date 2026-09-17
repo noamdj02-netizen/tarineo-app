@@ -4,6 +4,7 @@ import { anthropic, isAnthropicConfigured } from "@/lib/anthropic";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { comparerLignesAuHistorique, creerAlertesHausse } from "@/lib/comparaisonPrix";
+import { extraireEtEnregistrerLogoFournisseur } from "@/lib/logoFournisseurDocument";
 import { normaliserReference, normaliserDistributeur } from "@/lib/normalisation";
 import type { DocumentType } from "@prisma/client";
 
@@ -28,6 +29,16 @@ const ligneSchema = z.object({
   total_ligne_ht: z.number(),
 });
 
+const logoZoneSchema = z
+  .object({
+    x_pct: z.number(),
+    y_pct: z.number(),
+    width_pct: z.number(),
+    height_pct: z.number(),
+    confiance: z.number(),
+  })
+  .nullable();
+
 const extractionSchema = z.object({
   distributeur: z.string(),
   date_document: z.string().nullable(),
@@ -38,6 +49,7 @@ const extractionSchema = z.object({
   tva: z.number(),
   total_ttc: z.number(),
   confiance: z.number(),
+  logo_zone: logoZoneSchema,
 });
 
 // Doit rester en phase avec extractionSchema ci-dessus. Sous-ensemble JSON Schema
@@ -80,6 +92,18 @@ const JSON_SCHEMA = {
     tva: { type: "number" },
     total_ttc: { type: "number" },
     confiance: { type: "number" },
+    logo_zone: {
+      type: ["object", "null"],
+      properties: {
+        x_pct: { type: "number" },
+        y_pct: { type: "number" },
+        width_pct: { type: "number" },
+        height_pct: { type: "number" },
+        confiance: { type: "number" },
+      },
+      required: ["x_pct", "y_pct", "width_pct", "height_pct", "confiance"],
+      additionalProperties: false,
+    },
   },
   required: [
     "distributeur",
@@ -91,6 +115,7 @@ const JSON_SCHEMA = {
     "tva",
     "total_ttc",
     "confiance",
+    "logo_zone",
   ],
   additionalProperties: false,
 } as const;
@@ -127,6 +152,10 @@ Extrais les informations dans le JSON demandé :
 - confiance : ton niveau de confiance global dans l'extraction, entre 0 et 1. Baisse-la aussi si
   le type de document est ambigu ou difficile à déterminer.
 - date_document au format AAAA-MM-JJ
+- logo_zone : emplacement du logo de l'enseigne émettrice sur la première page, en pourcentages
+  de la page (x_pct et y_pct = coin supérieur gauche du rectangle ; width_pct et height_pct =
+  largeur et hauteur). Cadre uniquement le logo/marque visible, pas tout l'en-tête ni le texte
+  juridique. confiance entre 0 et 1 sur la localisation du logo. null si aucun logo identifiable.
 
 Si une information est illisible ou absente, mets une valeur vide ("" ou 0) plutôt que d'inventer,
 et baisse la confiance en conséquence.`;
@@ -229,6 +258,8 @@ export async function analyserDocument(documentId: string, userId: string): Prom
     const statut =
       extraction.confiance >= SEUIL_CONFIANCE && !totalManquant && !possibleDoublon ? "VALIDATED" : "NEEDS_REVIEW";
 
+    const distributorNorm = extraction.distributeur ? normaliserDistributeur(extraction.distributeur) : null;
+
     await prisma.document.update({
       where: { id: documentId },
       data: {
@@ -236,7 +267,7 @@ export async function analyserDocument(documentId: string, userId: string): Prom
         // l'artisan (simple pré-sélection avant analyse, faite sans avoir lu le document).
         type: TYPE_EXTRAIT_VERS_ENUM[extraction.type] ?? document.type,
         distributor: extraction.distributeur || null,
-        distributorNorm: extraction.distributeur ? normaliserDistributeur(extraction.distributeur) : null,
+        distributorNorm,
         documentDate: extraction.date_document ? new Date(extraction.date_document) : null,
         totalHt: extraction.total_ht,
         totalTtc: extraction.total_ttc,
@@ -245,6 +276,21 @@ export async function analyserDocument(documentId: string, userId: string): Prom
         possibleDoublon,
       },
     });
+
+    if (extraction.distributeur && distributorNorm) {
+      try {
+        await extraireEtEnregistrerLogoFournisseur({
+          userId,
+          distributor: extraction.distributeur,
+          distributorNorm,
+          fileBuffer: buffer,
+          extension: extension ?? "jpg",
+          logoZone: extraction.logo_zone,
+        });
+      } catch (erreurLogo) {
+        console.warn("Logo fournisseur non extrait pour le document", documentId, ":", erreurLogo);
+      }
+    }
 
     const lignesAvecRef = extraction.lignes.map((ligne) => ({
       ...ligne,
