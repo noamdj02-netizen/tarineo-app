@@ -5,7 +5,6 @@ import { chargerNotifications } from "@/lib/notifications";
 import { AppShell } from "./AppShell";
 import { AppThemeScope } from "./AppThemeScope";
 import { BottomNav } from "./BottomNav";
-import { EcranLancementMobile } from "./EcranLancementMobile";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -53,7 +52,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <AppThemeScope>
       <div className={`${geist.variable} ${manrope.variable} ${inter.variable} app-theme flex min-h-full flex-1 flex-col`}>
-        <EcranLancementMobile />
         <AppShell email={email} prenom={prenom} dateLabel={dateLabel} notifications={notifications}>
           {children}
         </AppShell>

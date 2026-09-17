@@ -11,7 +11,7 @@ export function SuiviAnalyseDocument({ actif }: { actif: boolean }) {
 
     const intervalle = setInterval(() => {
       router.refresh();
-    }, 3000);
+    }, 10000);
 
     return () => clearInterval(intervalle);
   }, [actif, router]);

@@ -1,9 +1,7 @@
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { chargerEtatOnboarding } from "@/lib/onboarding";
 import { AccueilContenu } from "./AccueilContenu";
-import { AccueilSkeleton } from "./AccueilSkeleton";
 
 export default async function AccueilPage() {
   const session = await getSession();
@@ -31,9 +29,7 @@ export default async function AccueilPage() {
 
   return (
     <div className="w-full min-w-0 py-0">
-      <Suspense fallback={<AccueilSkeleton />}>
-        <AccueilContenu userId={userId} etatOnboarding={etatOnboarding} />
-      </Suspense>
+      <AccueilContenu userId={userId} etatOnboarding={etatOnboarding} />
     </div>
   );
 }
