@@ -9,9 +9,6 @@ export interface PointHistoriquePrix {
   distributorNorm: string;
 }
 
-// Orange en premier (distributeur le plus récent, généralement celui du document
-// courant), puis quelques teintes secondaires bien distinctes du rouge/vert déjà
-// utilisés pour les hausses/baisses ailleurs dans la carte.
 const PALETTE_COURBES = ["#F97316", "#38BDF8", "#A78BFA", "#FB923C", "#F472B6"];
 
 const formaterEuros = (valeur: number) =>
@@ -23,13 +20,60 @@ const formaterDateCourte = (iso: string) =>
 const formaterMoisAnnee = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", { month: "short", year: "numeric" });
 
-// Repliée par défaut sous les infos de prix de chaque carte produit (voir page.tsx) :
-// un clic dévoile la courbe d'évolution, construite à partir des mêmes PriceHistory
-// que "Moy. 12 mois" et l'alerte de hausse, mais tous distributeurs confondus.
-export function GraphiqueHistoriquePrix({ points }: { points: PointHistoriquePrix[] }) {
-  const [ouvert, setOuvert] = useState(false);
+const formaterMoisAnneeCourt = (iso: string) =>
+  new Date(iso).toLocaleDateString("fr-FR", { month: "short", year: "2-digit" });
+
+export function MiniSparklinePrix({ points }: { points: PointHistoriquePrix[] }) {
+  if (points.length < 2) return null;
+
+  const pointsTries = [...points].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const prix = pointsTries.map((p) => p.prix);
+  const min = Math.min(...prix);
+  const max = Math.max(...prix);
+  const etendue = max - min || 1;
+  const w = 88;
+  const h = 28;
+  const coords = pointsTries.map((p, i) => {
+    const x = (i / (pointsTries.length - 1)) * w;
+    const y = h - ((p.prix - min) / etendue) * (h - 4) - 2;
+    return `${x},${y}`;
+  });
+
+  const dernier = pointsTries[pointsTries.length - 1];
+  const premier = pointsTries[0];
+  const tendance = dernier.prix > premier.prix ? "#EF4444" : dernier.prix < premier.prix ? "#22C55E" : "#F97316";
+
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      className="h-7 w-[88px]"
+      role="img"
+      aria-label="Mini-graphique d'évolution du prix"
+    >
+      <polyline
+        points={coords.join(" ")}
+        fill="none"
+        stroke={tendance}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function GraphiqueHistoriquePrix({
+  points,
+  defautOuvert = false,
+}: {
+  points: PointHistoriquePrix[];
+  defautOuvert?: boolean;
+}) {
+  const [ouvert, setOuvert] = useState(defautOuvert);
 
   if (points.length === 0) return null;
+
+  const pointsTries = [...points].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   return (
     <div className="mt-3 border-t border-border/60 pt-3">
@@ -57,131 +101,204 @@ export function GraphiqueHistoriquePrix({ points }: { points: PointHistoriquePri
         {ouvert ? "Masquer l'historique des prix" : "Voir l'historique des prix"}
       </button>
 
-      {ouvert &&
-        (points.length === 1 ? (
-          <div className="mt-3 flex items-start gap-2.5 rounded-lg bg-background px-3 py-2.5 text-xs text-muted-foreground">
-            <span
-              className="mt-1 h-2 w-2 shrink-0 rounded-full"
-              style={{ backgroundColor: PALETTE_COURBES[0] }}
-              aria-hidden="true"
-            />
-            <span>
-              Un seul achat enregistré pour l&apos;instant : {formaterEuros(points[0].prix)} le{" "}
-              {formaterDateCourte(points[0].date)}. L&apos;historique se construira au fil de vos prochains devis.
-            </span>
-          </div>
-        ) : (
-          <GraphiqueLignes points={points} />
-        ))}
+      {ouvert && (
+        <div className="mt-3 space-y-3">
+          <GraphiqueBarres points={pointsTries} />
+          <ListeAchats points={pointsTries} />
+        </div>
+      )}
     </div>
   );
 }
 
-function GraphiqueLignes({ points }: { points: PointHistoriquePrix[] }) {
-  const groupes = new Map<string, PointHistoriquePrix[]>();
-  for (const p of points) {
-    const liste = groupes.get(p.distributorNorm) ?? [];
-    liste.push(p);
-    groupes.set(p.distributorNorm, liste);
-  }
-  // Le distributeur dont l'achat le plus récent est le plus proche d'aujourd'hui passe
-  // en premier (couleur accent) — c'est le plus pertinent pour l'artisan qui consulte
-  // ce document.
-  const groupesTries = [...groupes.values()]
-    .map((groupe) => [...groupe].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()))
-    .sort((a, b) => new Date(b[b.length - 1].date).getTime() - new Date(a[a.length - 1].date).getTime());
-  const multiDistributeurs = groupesTries.length > 1;
+function couleurDistributeur(
+  distributorNorm: string,
+  indexParDistributeur: Map<string, number>,
+): string {
+  const index = indexParDistributeur.get(distributorNorm) ?? 0;
+  return PALETTE_COURBES[index % PALETTE_COURBES.length];
+}
+
+function GraphiqueBarres({ points }: { points: PointHistoriquePrix[] }) {
+  const distributeursUniques = [...new Set(points.map((p) => p.distributorNorm))];
+  const indexParDistributeur = new Map(distributeursUniques.map((d, i) => [d, i]));
+  const multiDistributeurs = distributeursUniques.length > 1;
 
   const prix = points.map((p) => p.prix);
   const min = Math.min(...prix);
   const max = Math.max(...prix);
-  const marge = (max - min) * 0.2 || Math.max(max * 0.1, 1);
+  const marge = (max - min) * 0.15 || Math.max(max * 0.1, 1);
   const yMin = Math.max(0, min - marge);
   const yMax = max + marge;
-
-  const dates = points.map((p) => new Date(p.date).getTime());
-  const xMin = Math.min(...dates);
-  const xMax = Math.max(...dates);
-  const etendueX = xMax - xMin || 1;
   const etendueY = yMax - yMin || 1;
 
-  const LARGEUR = 320;
-  const HAUTEUR = 108;
-  const PAD_X = 6;
-  const PAD_TOP = 16;
-  const PAD_BOTTOM = 8;
+  const LARGEUR = 340;
+  const HAUTEUR = 148;
+  const PAD_LEFT = 46;
+  const PAD_RIGHT = 10;
+  const PAD_TOP = 10;
+  const PAD_BOTTOM = 34;
 
-  const posX = (t: number) => PAD_X + ((t - xMin) / etendueX) * (LARGEUR - PAD_X * 2);
-  const posY = (v: number) => HAUTEUR - PAD_BOTTOM - ((v - yMin) / etendueY) * (HAUTEUR - PAD_TOP - PAD_BOTTOM);
+  const zoneW = LARGEUR - PAD_LEFT - PAD_RIGHT;
+  const zoneH = HAUTEUR - PAD_TOP - PAD_BOTTOM;
+  const n = points.length;
+  const gap = n > 1 ? Math.min(10, zoneW / (n * 4)) : 0;
+  const barW = Math.min(52, (zoneW - gap * (n - 1)) / n);
 
-  const dernierPoint = points[points.length - 1];
+  const posY = (v: number) => PAD_TOP + zoneH - ((v - yMin) / etendueY) * zoneH;
+  const baseY = PAD_TOP + zoneH;
+
+  const graduationsY = [yMin, yMin + etendueY / 2, yMax];
 
   return (
-    <div className="mt-3">
+    <div className="rounded-lg bg-background px-2 py-2">
+      <p className="mb-2 px-1 text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+        Évolution des prix d&apos;achat
+      </p>
       <svg
         viewBox={`0 0 ${LARGEUR} ${HAUTEUR}`}
         className="w-full overflow-visible"
         role="img"
-        aria-label="Évolution du prix de ce produit dans le temps"
+        aria-label="Diagramme des prix d'achat par mois"
       >
+        {graduationsY.map((v, i) => (
+          <g key={i}>
+            <line
+              x1={PAD_LEFT}
+              y1={posY(v)}
+              x2={LARGEUR - PAD_RIGHT}
+              y2={posY(v)}
+              className="stroke-border/70"
+              strokeWidth={1}
+              strokeDasharray={i === 1 ? "3 3" : undefined}
+            />
+            <text
+              x={PAD_LEFT - 6}
+              y={posY(v) + 3}
+              textAnchor="end"
+              className="fill-muted-foreground text-[8px]"
+            >
+              {formaterEuros(v).replace(/\s/g, "\u202f")}
+            </text>
+          </g>
+        ))}
+
         <line
-          x1={PAD_X}
-          y1={HAUTEUR - PAD_BOTTOM}
-          x2={LARGEUR - PAD_X}
-          y2={HAUTEUR - PAD_BOTTOM}
+          x1={PAD_LEFT}
+          y1={baseY}
+          x2={LARGEUR - PAD_RIGHT}
+          y2={baseY}
           className="stroke-border"
           strokeWidth={1}
         />
-        {groupesTries.map((groupe, i) => {
-          const couleur = PALETTE_COURBES[i % PALETTE_COURBES.length];
-          const chemin = groupe.map((p) => `${posX(new Date(p.date).getTime())},${posY(p.prix)}`).join(" ");
+
+        {points.map((p, i) => {
+          const x = PAD_LEFT + i * (barW + gap) + (zoneW - n * barW - gap * (n - 1)) / 2;
+          const y = posY(p.prix);
+          const h = baseY - y;
+          const couleur = couleurDistributeur(p.distributorNorm, indexParDistributeur);
+          const labelX = x + barW / 2;
+
           return (
-            <g key={groupe[0].distributorNorm}>
-              {groupe.length > 1 && (
-                <polyline
-                  points={chemin}
-                  fill="none"
-                  stroke={couleur}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+            <g key={`${p.date}-${p.distributorNorm}-${p.prix}`}>
+              <rect
+                x={x}
+                y={y}
+                width={barW}
+                height={Math.max(h, 2)}
+                rx={3}
+                fill={couleur}
+                opacity={0.9}
+              >
+                <title>{`${p.distributor} · ${formaterEuros(p.prix)} · ${formaterDateCourte(p.date)}`}</title>
+              </rect>
+              <text
+                x={labelX}
+                y={baseY + 12}
+                textAnchor="middle"
+                className="fill-muted-foreground text-[8px]"
+              >
+                {formaterMoisAnneeCourt(p.date)}
+              </text>
+              {n <= 6 && (
+                <text
+                  x={labelX}
+                  y={baseY + 22}
+                  textAnchor="middle"
+                  className="fill-muted-foreground text-[7px]"
+                >
+                  {new Date(p.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" })}
+                </text>
               )}
-              {groupe.map((p) => (
-                <circle key={p.date + p.prix} cx={posX(new Date(p.date).getTime())} cy={posY(p.prix)} r={3} fill={couleur}>
-                  <title>{`${p.distributor} · ${formaterEuros(p.prix)} · ${formaterDateCourte(p.date)}`}</title>
-                </circle>
-              ))}
+              <text
+                x={labelX}
+                y={Math.max(PAD_TOP + 8, y - 4)}
+                textAnchor="middle"
+                className="fill-foreground text-[8px] font-semibold"
+              >
+                {formaterEuros(p.prix).replace(/\s/g, "\u202f")}
+              </text>
             </g>
           );
         })}
-        <text
-          x={posX(new Date(dernierPoint.date).getTime())}
-          y={Math.max(9, posY(dernierPoint.prix) - 8)}
-          textAnchor="end"
-          className="fill-foreground text-[9px] font-semibold"
-        >
-          {formaterEuros(dernierPoint.prix)}
-        </text>
       </svg>
-      <div className="mt-1 flex items-center justify-between text-[0.65rem] text-muted-foreground">
-        <span>{formaterMoisAnnee(points[0].date)}</span>
-        <span>{formaterMoisAnnee(dernierPoint.date)}</span>
-      </div>
+
       {multiDistributeurs && (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-          {groupesTries.map((groupe, i) => (
-            <span key={groupe[0].distributorNorm} className="flex items-center gap-1.5 text-[0.65rem] text-muted-foreground">
-              <span
-                className="h-2 w-2 shrink-0 rounded-full"
-                style={{ backgroundColor: PALETTE_COURBES[i % PALETTE_COURBES.length] }}
-                aria-hidden="true"
-              />
-              {groupe[0].distributor}
-            </span>
-          ))}
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 px-1">
+          {distributeursUniques.map((norm, i) => {
+            const nom = points.find((p) => p.distributorNorm === norm)?.distributor ?? norm;
+            return (
+              <span key={norm} className="flex items-center gap-1.5 text-[0.65rem] text-muted-foreground">
+                <span
+                  className="h-2 w-2 shrink-0 rounded-sm"
+                  style={{ backgroundColor: PALETTE_COURBES[i % PALETTE_COURBES.length] }}
+                  aria-hidden="true"
+                />
+                {nom}
+              </span>
+            );
+          })}
         </div>
       )}
+
+      {points.length === 1 && (
+        <p className="mt-2 px-1 text-[0.65rem] text-muted-foreground">
+          Premier achat enregistré — le diagramme se complétera à chaque nouvelle facture ou bon de commande.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ListeAchats({ points }: { points: PointHistoriquePrix[] }) {
+  const pointsRecents = [...points].reverse();
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-background px-3 py-2.5">
+      <p className="mb-2 text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground">
+        Achats par date
+      </p>
+      <ul className="space-y-1.5">
+        {pointsRecents.map((p) => (
+          <li
+            key={`${p.date}-${p.distributorNorm}-${p.prix}`}
+            className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 text-xs"
+          >
+            <span className="text-muted-foreground">
+              <span className="font-medium text-foreground">{formaterMoisAnnee(p.date)}</span>
+              <span className="mx-1.5 text-border">·</span>
+              {new Date(p.date).toLocaleDateString("fr-FR", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+              <span className="mx-1.5 text-border">·</span>
+              {p.distributor}
+            </span>
+            <span className="shrink-0 font-semibold tabular-nums text-foreground">{formaterEuros(p.prix)}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

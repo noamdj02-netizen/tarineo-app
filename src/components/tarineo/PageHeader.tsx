@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { AppMotionCard } from "./motion/AppMotionCard";
+import { AppReveal } from "./motion/AppReveal";
 
 export function PageHeader({
   title,
@@ -15,23 +19,30 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <AppReveal className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
         {backHref && (
-          <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <Link
+            href={backHref}
+            className="mb-3 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground active:scale-[0.98]"
+          >
             ← {backLabel}
           </Link>
         )}
-        <h1 className="text-[28px] font-semibold leading-none tracking-tight text-[#172935] sm:text-[32px]">{title}</h1>
+        <h1 className="text-[22px] font-semibold leading-tight tracking-tight text-[#172935] sm:text-[26px]">{title}</h1>
         {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
-    </div>
+    </AppReveal>
   );
 }
 
 export function PageCard({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <section className={cn("rounded-[24px] bg-white p-5 sm:p-6", className)}>{children}</section>;
+  return (
+    <AppMotionCard>
+      <section className={cn("rounded-[20px] bg-white p-4 sm:p-5", className)}>{children}</section>
+    </AppMotionCard>
+  );
 }
 
 export function SearchField({

@@ -36,7 +36,7 @@ export async function ParametresIntegrations() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {INTEGRATIONS_CONNUES.map((int) => {
+        {INTEGRATIONS_CONNUES.filter((int) => int.id !== "pennylane").map((int) => {
           const actif = int.statut === "actif";
           return (
             <div

@@ -62,8 +62,8 @@ export const INTEGRATIONS_CONNUES: IntegrationConnue[] = [
     couleur: "bg-[#FFF0E8] text-[#EC5821]",
     desc: "Transférez les PDF reçus de Cedeo, Point P ou Rexel vers Tarinéo — l'IA les analyse sans photo.",
     utilite: "Import documents · bureau",
-    statut: "bientot",
-    action: "Connecter",
+    statut: "actif",
+    action: "Configurer dans Paramètres",
     redirections: [{ label: "Webhook Resend (réception des e-mails)", chemin: "/api/webhooks/resend/inbound" }],
   },
   {

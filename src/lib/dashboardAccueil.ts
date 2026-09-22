@@ -50,6 +50,11 @@ export type DonneesDashboardAccueil = {
 };
 
 export async function chargerDonneesDashboardAccueil(userId: string): Promise<DonneesDashboardAccueil> {
+  const { synchroniserAlertesBfa } = await import("@/lib/alertesBfa");
+  await synchroniserAlertesBfa(userId).catch((erreur) => {
+    console.error("Synchronisation alertes BFA (dashboard) :", erreur);
+  });
+
   const maintenant = new Date();
   const debutMois = debutMoisUTC(maintenant);
   const moisCourantStr = `${maintenant.getUTCFullYear()}-${String(maintenant.getUTCMonth() + 1).padStart(2, "0")}`;

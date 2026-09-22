@@ -7,6 +7,7 @@ import { ExportBouton } from "../depenses/ExportBouton";
 import { GraphiqueRepartitionDistributeurs } from "./AccueilCharts";
 import {
   DashboardAFaire,
+  DashboardAnalyseEnCours,
   DashboardBanniereReprise,
   DashboardDepensesChart,
   DashboardHeroImport,
@@ -15,13 +16,15 @@ import {
   DashboardSupplierRow,
   DashboardWeeklySavings,
 } from "./DashboardSections";
-import { MascotteAnalyse } from "@/components/tarineo/MascotteAnalyse";
+import { chargerEtatQuotaUtilisateur } from "@/lib/quota";
 import { MascotteDashboard } from "@/components/tarineo/MascotteDashboard";
 import { Button } from "@/components/ui/button";
 import { ImportDocument } from "../documents/ImportDocument";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { AccueilErreur } from "./AccueilErreur";
+import { accesExportComptable } from "@/lib/planGating";
+import { AppStagger, AppStaggerItem } from "@/components/tarineo/motion/AppStagger";
 
 const MOIS_FR = [
   "janvier",
@@ -52,12 +55,19 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
   let donnees: Awaited<ReturnType<typeof chargerDonneesDashboardAccueil>>;
   let aVerifier = 0;
   let documentsEnCours = 0;
+  let utilisateur: { plan: string | null; subscriptionStatus: string | null } | null = null;
+  let etatQuota: Awaited<ReturnType<typeof chargerEtatQuotaUtilisateur>>;
 
   try {
-    [donnees, aVerifier, documentsEnCours] = await Promise.all([
+    [donnees, aVerifier, documentsEnCours, utilisateur, etatQuota] = await Promise.all([
       chargerDonneesDashboardAccueil(userId),
       prisma.document.count({ where: { userId, status: "NEEDS_REVIEW" } }),
       prisma.document.count({ where: { userId, status: "PROCESSING" } }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { plan: true, subscriptionStatus: true },
+      }),
+      chargerEtatQuotaUtilisateur(userId),
     ]);
   } catch (e) {
     console.error("Échec du rendu AccueilContenu :", e);
@@ -92,33 +102,47 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
     nbDocumentsMois === 0;
   const compteVide = !etatOnboarding.aDesDocuments && tableauPeuRempli;
 
+  const enAttenteDeDonnees = tableauPeuRempli && !compteVide;
+
   return (
-    <div className="flex flex-col gap-8">
-      {etatOnboarding.doitVoirBanniereReprise && <DashboardBanniereReprise />}
-      <DashboardHeroImport compteVide={compteVide && !etatOnboarding.doitVoirBanniereReprise} />
+    <AppStagger className="flex flex-col gap-8" stagger={0.06}>
+      {etatOnboarding.doitVoirBanniereReprise && (
+        <AppStaggerItem>
+          <DashboardBanniereReprise etatQuota={etatQuota} />
+        </AppStaggerItem>
+      )}
 
-      {documentsEnCours > 0 && tableauPeuRempli && (
-        <section className="rounded-[24px] border border-[#FFE4D6] bg-gradient-to-br from-[#FFF8F5] to-card p-5 sm:p-6">
-          <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 text-center sm:text-left">
-              <h2 className="text-lg font-semibold text-foreground">Analyse en cours</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {documentsEnCours} document{documentsEnCours > 1 ? "s" : ""} en traitement — votre tableau de bord se
-                remplira dès que l&apos;extraction est terminée.
-              </p>
-            </div>
-            <MascotteAnalyse size="md" className="shrink-0" />
-          </div>
-        </section>
+      {(aVerifier > 0 || payloadsCount > 0) && (
+        <AppStaggerItem>
+          <DashboardAFaire aVerifier={aVerifier} hausses={payloadsCount} moisCourantStr={moisCourantStr} />
+        </AppStaggerItem>
+      )}
+
+      {!etatOnboarding.doitVoirBanniereReprise && (
+        <AppStaggerItem>
+          <DashboardHeroImport
+            compteVide={compteVide}
+            enAttenteDeDonnees={enAttenteDeDonnees}
+            etatQuota={etatQuota}
+            documentsEnCours={documentsEnCours}
+          />
+        </AppStaggerItem>
+      )}
+
+      {tableauPeuRempli && (
+        <AppStaggerItem>
+          <DashboardAnalyseEnCours documentsEnCours={documentsEnCours} />
+        </AppStaggerItem>
+      )}
+
+      {!compteVide && !tableauPeuRempli && (
+        <AppStaggerItem>
+          <DashboardSupplierRow fournisseurs={fournisseursTop} />
+        </AppStaggerItem>
       )}
 
       {!tableauPeuRempli && (
-        <DashboardAFaire aVerifier={aVerifier} hausses={payloadsCount} moisCourantStr={moisCourantStr} />
-      )}
-
-      {!compteVide && <DashboardSupplierRow fournisseurs={fournisseursTop} />}
-
-      {!tableauPeuRempli && (
+        <AppStaggerItem>
         <div className="grid min-w-0 grid-cols-1 gap-6 xl:grid-cols-[minmax(0,425px)_minmax(0,1fr)]">
           <DashboardRecentDocuments documents={documentsRecentsUi} />
           <div className="flex min-w-0 flex-col gap-6">
@@ -136,9 +160,11 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
             />
           </div>
         </div>
+        </AppStaggerItem>
       )}
 
       {!tableauPeuRempli && (
+        <AppStaggerItem>
         <div className="grid min-w-0 gap-6 lg:grid-cols-2">
           <DashboardDepensesChart donnees={evolutionDepenses} aDesDepenses={aDesDepenses} />
           <Card className="min-w-0 rounded-[24px] ring-0">
@@ -165,9 +191,11 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
             </CardContent>
           </Card>
         </div>
+        </AppStaggerItem>
       )}
 
       {!tableauPeuRempli && (
+        <AppStaggerItem>
         <div className="flex flex-wrap justify-center gap-3 pt-2">
           <ImportDocument label="Importer un document" className="h-auto rounded-full px-6 py-3" />
           <Button render={<Link prefetch={false} href="/documents" />} variant="outline" className="h-auto rounded-full px-6 py-3">
@@ -181,9 +209,11 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
             Créer un devis client
           </Button>
         </div>
+        </AppStaggerItem>
       )}
 
       {!tableauPeuRempli && (
+        <AppStaggerItem>
         <section id="objectifs" className="app-card scroll-mt-24 p-5 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -194,6 +224,7 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
             </div>
             <ExportBouton
               distributeurs={[...distributeursOptions.entries()].map(([norm, label]) => ({ norm, label }))}
+              accesExport={accesExportComptable(utilisateur?.plan ?? null, utilisateur?.subscriptionStatus ?? null)}
             />
           </div>
 
@@ -261,7 +292,8 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
             </>
           )}
         </section>
+        </AppStaggerItem>
       )}
-    </div>
+    </AppStagger>
   );
 }

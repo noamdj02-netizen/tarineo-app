@@ -4,6 +4,7 @@ import { anthropic, isAnthropicConfigured } from "@/lib/anthropic";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { comparerLignesAuHistorique, creerAlertesHausse } from "@/lib/comparaisonPrix";
+import { dateMinHistoriquePlan } from "@/lib/planGating";
 import { extraireEtEnregistrerLogoFournisseur } from "@/lib/logoFournisseurDocument";
 import { normaliserReference, normaliserDistributeur } from "@/lib/normalisation";
 import type { DocumentType } from "@prisma/client";
@@ -324,11 +325,21 @@ export async function analyserDocument(documentId: string, userId: string): Prom
 
       // Comparé à l'historique AVANT d'y insérer les prix de ce document, sinon
       // chaque ligne se comparerait à elle-même.
+      const utilisateur = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { plan: true, subscriptionStatus: true },
+      });
+      const dateMinHistorique = dateMinHistoriquePlan(
+        utilisateur?.plan ?? null,
+        utilisateur?.subscriptionStatus ?? null,
+        documentDate,
+      );
       const comparaisons = await comparerLignesAuHistorique(prisma, {
         userId,
         distributor: distributeur,
         documentId,
         documentDate,
+        dateMinHistorique,
         lignes: lignesAvecRef.map((l) => ({
           referenceNorm: l.referenceNorm,
           unitPriceHt: l.prix_unitaire_ht,

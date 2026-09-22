@@ -7,10 +7,17 @@ import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { PageTabs } from "@/components/tarineo/PageTabs";
 import { ParametresAbonnement } from "./ParametresAbonnement";
 import { ParametresIntegrations } from "./ParametresIntegrations";
+import { ParametresComptable } from "./ParametresComptable";
+import { ParametresEquipe } from "./ParametresEquipe";
+import { PennylaneCarte } from "./PennylaneCarte";
+import { BanniereLimitesPlan } from "@/components/tarineo/BanniereLimitesPlan";
+import { accesExportComptable } from "@/lib/planGating";
+import { accesEquipe, chargerEquipe, obtenirOuCreerEquipe } from "@/lib/equipe";
+import { pennylaneConfigure } from "@/lib/pennylane";
+import { origineActuelle } from "@/lib/origine";
+import { ParametresImportEmail } from "./ParametresImportEmail";
 import { EcranPaiementRequis } from "../documents/EcranPaiementRequis";
 import { planStripeValide } from "@/lib/plansStripe";
-import Link from "next/link";
-
 export default async function ParametresPage({
   searchParams,
 }: {
@@ -42,6 +49,21 @@ export default async function ParametresPage({
     dbIndisponible = true;
   }
   const abonnementActif = subscriptionStatus === "active";
+  const accesEquipePlan = accesEquipe(planActuel, subscriptionStatus);
+  let equipeData: Awaited<ReturnType<typeof chargerEquipe>> = null;
+  let pennylaneConnecte = false;
+  if (onglet === "equipe" && session.user.id) {
+    equipeData = await chargerEquipe(session.user.id);
+    if (!equipeData && accesEquipePlan) {
+      await obtenirOuCreerEquipe(session.user.id);
+      equipeData = await chargerEquipe(session.user.id);
+    }
+  }
+  if (onglet === "integrations") {
+    pennylaneConnecte = Boolean(await prisma.pennylaneConnection.findUnique({ where: { userId: session.user.id } }));
+  }
+  const origine = await origineActuelle();
+
   let logoUrl: string | null = null;
   if (profil?.logoKey && isSupabaseConfigured()) {
     try {
@@ -106,6 +128,11 @@ export default async function ParametresPage({
       )}
       {onglet === "abonnement" && (
         <PageCard>
+          <BanniereLimitesPlan
+            plan={planActuel}
+            subscriptionStatus={subscriptionStatus}
+            className="mb-6"
+          />
           <ParametresAbonnement
             planActuel={planActuel}
             abonnementActif={abonnementActif}
@@ -120,20 +147,55 @@ export default async function ParametresPage({
         </PageCard>
       )}
       {onglet === "integrations" && (
-        <PageCard>
+        <PageCard className="space-y-8">
+          <ParametresImportEmail userId={session.user.id} />
+          <hr className="border-border" />
+          <ParametresComptable
+            emailComptable={profil?.emailComptable ?? null}
+            exportComptableAuto={profil?.exportComptableAuto ?? false}
+            accesExport={accesExportComptable(planActuel, subscriptionStatus)}
+          />
+          <hr className="border-border" />
+          <PennylaneCarte
+            connecte={pennylaneConnecte}
+            configure={pennylaneConfigure()}
+            accesExport={accesExportComptable(planActuel, subscriptionStatus)}
+            redirectUri={`${origine}/api/integrations/pennylane/callback`}
+          />
+          <hr className="border-border" />
           <ParametresIntegrations />
         </PageCard>
       )}
-      {(onglet === "notifications" || onglet === "equipe") && (
+      {onglet === "equipe" && (
         <PageCard>
-          <h2 className="text-base font-semibold">Notifications & équipe</h2>
+          <ParametresEquipe
+            accesEquipe={accesEquipePlan}
+            nomEquipe={equipeData?.name ?? profil?.raisonSociale ?? "Mon équipe"}
+            membres={
+              equipeData?.members.map((m) => ({
+                id: m.id,
+                userId: m.userId,
+                role: m.role,
+                email: m.user.email,
+                name: m.user.name,
+              })) ?? []
+            }
+            invitations={
+              equipeData?.invitations.map((i) => ({
+                id: i.id,
+                email: i.email,
+                expiresAt: i.expiresAt.toISOString(),
+              })) ?? []
+            }
+          />
+        </PageCard>
+      )}
+      {onglet === "notifications" && (
+        <PageCard>
+          <h2 className="text-base font-semibold">Notifications</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Alertes push sur hausse de prix, rappels BFA et accès multi-utilisateurs pour les chefs de chantier —
-            disponibles avec le plan Équipe (prochaine version).
+            Alertes email sur les hausse de prix et rappels BFA — configurables prochainement.
           </p>
-          <Link href="/parametres?onglet=abonnement" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
-            Voir les offres
-          </Link>
         </PageCard>
       )}
     </div>

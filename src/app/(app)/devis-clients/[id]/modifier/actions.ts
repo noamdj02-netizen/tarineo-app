@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { calculerTotauxDevis, genererEtStockerPdfDevis } from "@/lib/devisClients";
 import { genererLignesDevisModifiees } from "@/lib/genererDevisIA";
 import { quotaDevisIA, debutMoisUTC } from "@/lib/quota";
+import { verifierRateLimitDevisIA } from "@/lib/rateLimitIA";
 import { suggererPrixAchat, type SuggestionPrix } from "@/lib/suggestionPrix";
 
 const ligneSchema = z.object({
@@ -164,6 +165,13 @@ export async function modifierLignesAvecIA(
     return {
       succes: false,
       erreur: `Quota de génération IA atteint pour ce mois (${quotaMensuel}). Vous pouvez toujours modifier les lignes manuellement.`,
+    };
+  }
+
+  if (!verifierRateLimitDevisIA(userId)) {
+    return {
+      succes: false,
+      erreur: "Trop de générations IA en peu de temps. Réessayez dans une heure.",
     };
   }
 

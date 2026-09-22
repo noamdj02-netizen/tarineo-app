@@ -26,12 +26,32 @@ function formaterDateRelative(date: Date, maintenant: Date): string {
 async function chargerNotificationsBrut(userId: string): Promise<NotifUi[]> {
   const maintenant = new Date();
   const alertes = await prisma.alert.findMany({
-    where: { userId, type: "PRICE_INCREASE" },
+    where: { userId, type: { in: ["PRICE_INCREASE", "YEAR_END_DISCOUNT"] } },
     orderBy: { createdAt: "desc" },
     take: 8,
   });
 
   return alertes.map((a) => {
+    if (a.type === "YEAR_END_DISCOUNT") {
+      const p = a.payload as {
+        distributor?: string;
+        pourcentageAtteinte?: number;
+        seuil?: number;
+      };
+      const titre = p.seuil && p.seuil >= 100 ? "Objectif BFA atteint" : "Objectif BFA proche";
+      const message = p.distributor
+        ? `${p.distributor} : ${p.pourcentageAtteinte ?? 0} % de l'objectif annuel`
+        : "Consultez vos objectifs fournisseurs.";
+      return {
+        id: a.id,
+        titre,
+        message,
+        date: formaterDateRelative(a.createdAt, maintenant),
+        href: "/accueil",
+        nonLu: a.seenAt === null,
+      };
+    }
+
     const payloads = parserPayloadsAlertesHausse([a]);
     const p = payloads[0];
     const pct = p?.ecartPourcent;

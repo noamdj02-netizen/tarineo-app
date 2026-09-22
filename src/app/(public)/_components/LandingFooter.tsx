@@ -3,29 +3,16 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { NAV_LANDING_FOOTER_PRODUIT, NAV_LANDING_FOOTER_RAPIDES } from "@/lib/landingNavigation";
 import { LandingLogo } from "./LandingLogo";
-
-const LIENS_RAPIDES = [
-  { href: "/", label: "Accueil" },
-  { href: "/blog", label: "À propos" },
-  { href: "/#fonctionnalites", label: "Fonctionnalités" },
-  { href: "/#contact", label: "Contact" },
-];
-
-const LIENS_PRODUIT = [
-  { href: "/#fonctionnalites", label: "Analyse IA" },
-  { href: "/inscription", label: "Application mobile" },
-  { href: "/connexion", label: "Mon compte" },
-  { href: "/#tarifs", label: "Tarifs" },
-];
 
 type LegalModal = "legal" | "privacy" | null;
 
 const LIENS_ENTREPRISE: Array<{ label: string; href?: string; modal?: LegalModal }> = [
-  { href: "/blog", label: "À propos" },
-  { modal: "privacy", label: "Politique de confidentialité" },
+  { href: "/a-propos", label: "À propos" },
+  { href: "/legal/confidentialite", label: "Politique de confidentialité" },
   { href: "mailto:contact@tarineo.com", label: "Support" },
-  { modal: "legal", label: "Conditions d'utilisation" },
+  { href: "/legal/cgu", label: "Conditions d'utilisation" },
 ];
 
 const SOCIAL = [
@@ -53,14 +40,19 @@ export function LandingFooter() {
           />
           <div className="relative">
             <h2 className="landing-display mb-4 text-2xl font-bold text-white sm:text-[2rem]">
-              Téléchargez l&apos;application Tarineo
+              Utilisez Tarineo depuis votre navigateur
             </h2>
             <p className="landing-body mx-auto mb-8 max-w-xl text-sm leading-normal text-white/90 sm:text-base">
-              Scannez vos devis directement depuis le chantier, suivez vos fournisseurs et protégez votre marge.
+              Importez vos devis depuis le chantier sur mobile — aucune installation requise. Application native
+              bientôt disponible.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <span className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white">Disponible sur Google Play</span>
-              <span className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white">Télécharger sur l&apos;App Store</span>
+              <Link
+                href="/inscription"
+                className="rounded-xl bg-[var(--landing-accent)] px-6 py-2.5 text-sm font-semibold text-white shadow-[var(--landing-shadow-btn)]"
+              >
+                Créer un compte gratuit
+              </Link>
             </div>
           </div>
         </div>
@@ -108,9 +100,12 @@ export function LandingFooter() {
               <div>
                 <p className="landing-display mb-5 text-base font-bold text-[var(--landing-text)]">Liens rapides</p>
                 <ul className="landing-body space-y-5 text-base text-[var(--landing-muted)]">
-                  {LIENS_RAPIDES.map((l) => (
-                    <li key={l.label}>
-                      <Link href={l.href} className="transition-colors hover:text-[var(--landing-text)]">
+                  {NAV_LANDING_FOOTER_RAPIDES.map((l) => (
+                    <li key={l.id}>
+                      <Link
+                        href={l.hrefApp.startsWith("mailto:") ? l.hrefApp : l.hrefLanding}
+                        className="transition-colors hover:text-[var(--landing-text)]"
+                      >
                         {l.label}
                       </Link>
                     </li>
@@ -120,9 +115,9 @@ export function LandingFooter() {
               <div>
                 <p className="landing-display mb-5 text-base font-bold text-[var(--landing-text)]">Produit</p>
                 <ul className="landing-body space-y-5 text-base text-[var(--landing-muted)]">
-                  {LIENS_PRODUIT.map((l) => (
-                    <li key={l.label}>
-                      <Link href={l.href} className="transition-colors hover:text-[var(--landing-text)]">
+                  {NAV_LANDING_FOOTER_PRODUIT.map((l) => (
+                    <li key={l.id}>
+                      <Link href={l.hrefApp} className="transition-colors hover:text-[var(--landing-text)]">
                         {l.label}
                       </Link>
                     </li>

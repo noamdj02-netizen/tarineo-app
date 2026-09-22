@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { WizardSteps } from "@/components/tarineo/WizardSteps";
 import type { SuggestionPrix } from "@/lib/suggestionPrix";
 import { RechercheClient } from "./RechercheClient";
+import { PRESETS_CONDITIONS_PAIEMENT, PRESETS_VALIDITE_JOURS } from "@/lib/devisClients";
 
 // Étapes du wizard de création/modification. L'étape 1 (IA) reste facultative : on peut
 // la traverser sans rien écrire et saisir les lignes à la main à l'étape 3.
@@ -98,8 +99,25 @@ const labelClasse = "mb-1 block text-xs text-muted-foreground";
 // (devis-clients/[id]/modifier/page.tsx, actions modifierLignesAvecIA/mettreAJourDevis,
 // activée via `devisExistant`) — seuls les libellés et le point d'entrée IA/soumission
 // diffèrent, la logique de saisie des lignes est identique dans les deux cas.
+function BoutonPreset({ actif, onClick, children }: { actif?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+        actif
+          ? "border-primary bg-[#FFF0E8] text-primary"
+          : "border-border bg-white text-muted-foreground hover:border-primary/40 hover:text-foreground"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function FormulaireDevis({
   conditionsPaiementParDefaut,
+  dureeValiditeParDefaut = 30,
   quotaIA,
   devisExistant,
   actionGenererIA,
@@ -107,6 +125,7 @@ export function FormulaireDevis({
   actionSuggererPrix,
 }: {
   conditionsPaiementParDefaut: string;
+  dureeValiditeParDefaut?: number;
   quotaIA: { restantes: number; total: number };
   devisExistant?: DevisExistantPourFormulaire;
   actionGenererIA: (texte: string, lignesActuelles: LigneEnvoi[]) => Promise<ResultatGenerationIA>;
@@ -185,7 +204,9 @@ export function FormulaireDevis({
   const [clientAdresse, setClientAdresse] = useState(devisExistant?.clientAdresse ?? "");
   const [clientSiret, setClientSiret] = useState(devisExistant?.clientSiret ?? "");
   const [clientEmail, setClientEmail] = useState(devisExistant?.clientEmail ?? "");
-  const [dureeValiditeJours, setDureeValiditeJours] = useState(String(devisExistant?.dureeValiditeJours ?? 30));
+  const [dureeValiditeJours, setDureeValiditeJours] = useState(
+    String(devisExistant?.dureeValiditeJours ?? dureeValiditeParDefaut)
+  );
   const [conditionsPaiement, setConditionsPaiement] = useState(
     devisExistant?.conditionsPaiement ?? conditionsPaiementParDefaut
   );
@@ -653,13 +674,25 @@ export function FormulaireDevis({
 
           {etape === 4 && (
             <>
-            <section className="app-card p-5 sm:p-6">
-              <h2 className="text-lg font-semibold">Conditions</h2>
+            <section className="app-card p-4 sm:p-5">
+              <h2 className="text-base font-semibold">Conditions</h2>
+              <p className="mt-1 text-xs text-muted-foreground">Pré-réglages courants — modifiables à tout moment.</p>
               <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_2fr]">
                 <div>
                   <label htmlFor="dureeValiditeJours" className={labelClasse}>
                     Validité (jours)
                   </label>
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {PRESETS_VALIDITE_JOURS.map((jours) => (
+                      <BoutonPreset
+                        key={jours}
+                        actif={dureeValiditeJours === String(jours)}
+                        onClick={() => setDureeValiditeJours(String(jours))}
+                      >
+                        {jours} j
+                      </BoutonPreset>
+                    ))}
+                  </div>
                   <input
                     id="dureeValiditeJours"
                     type="number"
@@ -674,6 +707,17 @@ export function FormulaireDevis({
                   <label htmlFor="conditionsPaiement" className={labelClasse}>
                     Conditions de paiement
                   </label>
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    {PRESETS_CONDITIONS_PAIEMENT.map((preset) => (
+                      <BoutonPreset
+                        key={preset.label}
+                        actif={conditionsPaiement === preset.valeur}
+                        onClick={() => setConditionsPaiement(preset.valeur)}
+                      >
+                        {preset.label}
+                      </BoutonPreset>
+                    ))}
+                  </div>
                   <input
                     id="conditionsPaiement"
                     required

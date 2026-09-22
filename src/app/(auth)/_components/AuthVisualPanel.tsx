@@ -1,4 +1,4 @@
-type Variant = "connexion" | "inscription";
+type Variant = "connexion" | "inscription" | "mot-de-passe";
 
 const PANELS = {
   connexion: {
@@ -15,6 +15,21 @@ const PANELS = {
     mockupMaxH: 282,
     mockupMt: "mt-[clamp(24px,4vh,40px)]",
     mockupOffset: "",
+  },
+  "mot-de-passe": {
+    background: "/auth/bg-visual-story-connexion.png",
+    kicker: "Matériaux · Sanitaire · Électricité · Outillage",
+    title: "Retrouvez l'accès à votre compte en toute sécurité.",
+    titleClass: "text-[clamp(28px,2.8vw,48px)]",
+    shellPadding: "px-[clamp(24px,4vw,58px)] py-[clamp(28px,4vh,52px)]",
+    promiseMaxW: "max-w-[570px]",
+    mockup: "/auth/mascot-mot-de-passe-oublie.png",
+    mockupWidth: 965,
+    mockupHeight: 1024,
+    mockupMaxW: 520,
+    mockupMaxH: 560,
+    mockupMt: "",
+    mockupOffset: "translate-y-[8%]",
   },
   inscription: {
     background: "/auth/bg-visual-story-inscription.png",
@@ -57,7 +72,7 @@ export function AuthVisualPanel({ variant }: { variant: Variant }) {
           <div className="h-[5px] w-[120px] rounded-full bg-[#f24f0a]" />
         </div>
 
-        {variant === "inscription" ? (
+        {variant === "inscription" || variant === "mot-de-passe" ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
             {/* Mockup à taille native max — jamais agrandi au-delà des pixels Figma */}
             {/* eslint-disable-next-line @next/next/no-img-element */}

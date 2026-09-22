@@ -1,30 +1,31 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
+import {
+  calculerStatsDevis,
+  filtrerDevis,
+  formaterDateDevis,
+  formaterMontantDevis,
+  listerDevisUtilisateur,
+} from "@/lib/devisClients";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { EmptyState } from "@/components/tarineo/EmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
 import { IconPlus } from "@/components/tarineo/NavIcons";
+import { StatusBadge } from "@/components/tarineo/StatusBadge";
+import { CarteResumeMotion, GrilleStatsMotion } from "@/components/tarineo/motion/GrilleStatsMotion";
+import { RechercheDevis } from "./RechercheDevis";
 
-const formaterEuros = (valeur: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(valeur);
-
-const formaterDate = (date: Date) =>
-  date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-
-export default async function DevisClientsPage() {
+export default async function DevisClientsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
 
-  const devis = await prisma.clientQuote.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    include: { invoice: { select: { id: true } } },
-  });
+  const { q = "" } = await searchParams;
+  const tousLesDevis = await listerDevisUtilisateur(session.user.id);
 
-  if (devis.length === 0) {
+  if (tousLesDevis.length === 0) {
     return (
       <EmptyState
         title="Devis clients"
@@ -38,38 +39,56 @@ export default async function DevisClientsPage() {
     );
   }
 
+  const stats = calculerStatsDevis(tousLesDevis);
+  const devis = filtrerDevis(tousLesDevis, q);
+
   return (
     <div>
       <PageHeader
         title="Devis clients"
-        subtitle="Propositions envoyées à vos clients (distinctes des devis fournisseurs)."
+        subtitle="Propositions envoyées à vos clients — distinctes des devis fournisseurs."
         actions={
           <BtnPrimary href="/devis-clients/nouveau">
             <IconPlus /> Nouveau devis
           </BtnPrimary>
         }
       />
+
+      <GrilleStatsMotion className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <CarteResumeMotion label="Devis" valeur={String(stats.total)} />
+        <CarteResumeMotion label="En cours" valeur={String(stats.enCours)} hint={`${stats.expires} expiré${stats.expires > 1 ? "s" : ""}`} />
+        <CarteResumeMotion label="Transformés" valeur={String(stats.acceptes)} hint={`${stats.tauxTransformation} % du total`} />
+        <CarteResumeMotion label="Montant total HT" valeur={formaterMontantDevis(stats.totalHt)} />
+      </GrilleStatsMotion>
+
+      <div className="mb-4">
+        <Suspense fallback={null}>
+          <RechercheDevis valeurInitiale={q} />
+        </Suspense>
+      </div>
+
       <PageCard>
-        <DataTable columns={["N° de devis", "Client", "Montant HT", "Statut", "Date", ""]}>
-          {devis.map((d) => (
-            <TableRow key={d.id}>
-              <TableCell>
-                <Link href={`/devis-clients/${d.id}`} className="font-medium hover:text-primary">
-                  {d.numero}
-                </Link>
-              </TableCell>
-              <TableCell>{d.clientNom}</TableCell>
-              <TableCell>{formaterEuros(Number(d.totalHt))}</TableCell>
-              <TableCell>{d.invoice ? "Facturé" : "Ouvert"}</TableCell>
-              <TableCell>{formaterDate(d.dateEmission)}</TableCell>
-              <TableCell>
-                <Link href={`/devis-clients/${d.id}`} className="text-sm text-primary hover:underline">
-                  Ouvrir
-                </Link>
-              </TableCell>
-            </TableRow>
-          ))}
-        </DataTable>
+        {devis.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Aucun devis ne correspond à « {q} ».</p>
+        ) : (
+          <DataTable columns={["N° de devis", "Client", "Montant HT", "Statut", "Émission"]}>
+            {devis.map((d) => (
+              <TableRow key={d.id}>
+                <TableCell>
+                  <Link href={`/devis-clients/${d.id}`} className="font-medium hover:text-primary">
+                    {d.numero}
+                  </Link>
+                </TableCell>
+                <TableCell>{d.clientNom}</TableCell>
+                <TableCell>{formaterMontantDevis(d.montantHt)}</TableCell>
+                <TableCell>
+                  <StatusBadge statut={d.statut} />
+                </TableCell>
+                <TableCell className="text-muted-foreground">{formaterDateDevis(d.dateEmission)}</TableCell>
+              </TableRow>
+            ))}
+          </DataTable>
+        )}
       </PageCard>
     </div>
   );

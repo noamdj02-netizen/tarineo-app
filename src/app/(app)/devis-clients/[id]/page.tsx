@@ -7,6 +7,10 @@ import { StatusBadge } from "@/components/tarineo/StatusBadge";
 import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
 import { BoutonTransformerEnFacture } from "./BoutonTransformerEnFacture";
 import { BoutonRegenererPdf } from "./BoutonRegenererPdf";
+import { BoutonEnvoyerDevis } from "./BoutonEnvoyerDevis";
+import { accesDevisClientPdf } from "@/lib/planGating";
+import { BanniereLimitesPlan } from "@/components/tarineo/BanniereLimitesPlan";
+import { dateFinValiditeDevis, deduireStatutDevis } from "@/lib/devisClients";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(valeur);
@@ -16,20 +20,34 @@ export default async function DevisClientDetailPage({ params }: { params: Promis
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
 
-  const quote = await prisma.clientQuote.findFirst({
-    where: { id, userId: session.user.id },
-    include: { lines: { orderBy: { ordre: "asc" } }, invoice: { select: { id: true, numero: true } } },
-  });
+  const [quote, utilisateur] = await Promise.all([
+    prisma.clientQuote.findFirst({
+      where: { id, userId: session.user.id },
+      include: { lines: { orderBy: { ordre: "asc" } }, invoice: { select: { id: true, numero: true } } },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true, subscriptionStatus: true },
+    }),
+  ]);
   if (!quote) notFound();
+  const accesPdf = accesDevisClientPdf(utilisateur?.plan ?? null, utilisateur?.subscriptionStatus ?? null);
+  const statut = deduireStatutDevis(quote);
+  const finValidite = dateFinValiditeDevis(quote.dateEmission, quote.dureeValiditeJours);
 
   return (
     <div>
+      <BanniereLimitesPlan
+        plan={utilisateur?.plan ?? null}
+        subscriptionStatus={utilisateur?.subscriptionStatus ?? null}
+        className="mb-4"
+      />
       <PageHeader
         backHref="/devis-clients"
         title={
           <span className="inline-flex flex-wrap items-center gap-3">
             Devis n° {quote.numero}
-            <StatusBadge statut={quote.invoice ? "accepte" : "envoye"} />
+            <StatusBadge statut={statut} />
           </span>
         }
         actions={
@@ -63,6 +81,19 @@ export default async function DevisClientDetailPage({ params }: { params: Promis
             <dd>
               {quote.dateEmission.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
             </dd>
+          </div>
+          {!quote.invoice && (
+            <div>
+              <dt className="text-muted-foreground">Validité</dt>
+              <dd>
+                {quote.dureeValiditeJours} jours — jusqu&apos;au{" "}
+                {finValidite.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+              </dd>
+            </div>
+          )}
+          <div className="sm:col-span-2">
+            <dt className="text-muted-foreground">Conditions de paiement</dt>
+            <dd>{quote.conditionsPaiement}</dd>
           </div>
           {quote.clientSiret && (
             <div>
@@ -101,7 +132,16 @@ export default async function DevisClientDetailPage({ params }: { params: Promis
             Total HT {formaterEuros(Number(quote.totalHt))} · TVA {formaterEuros(Number(quote.totalTva))} ·{" "}
             <span className="font-semibold text-foreground">TTC {formaterEuros(Number(quote.totalTtc))}</span>
           </p>
-          <BoutonRegenererPdf clientQuoteId={quote.id} />
+          <div className="flex flex-wrap items-center gap-2">
+            {!quote.invoice && (
+              <BoutonEnvoyerDevis
+                clientQuoteId={quote.id}
+                clientEmail={quote.clientEmail}
+                accesPdf={accesPdf}
+              />
+            )}
+            <BoutonRegenererPdf clientQuoteId={quote.id} accesPdf={accesPdf} />
+          </div>
         </div>
       </PageCard>
     </div>

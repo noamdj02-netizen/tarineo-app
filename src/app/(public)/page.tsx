@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { urlSite } from "@/lib/siteUrl";
+import { LandingJsonLd } from "./_components/LandingJsonLd";
 import { LandingHero } from "./LandingHero";
 import { LandingAnnouncementBar } from "./_components/LandingAnnouncementBar";
 import { LandingHowItWorksSection } from "./LandingHowItWorksSection";
@@ -24,7 +25,7 @@ const LandingFooter = dynamic(() =>
 );
 
 export const metadata: Metadata = {
-  title: "Tarineo | L'assistant qui protège votre marge",
+  title: "Tarineo — Contrôlez vos devis fournisseurs et détectez les hausses de prix",
   description:
     "Comparez vos devis fournisseurs à votre historique d'achats. Détectez les hausse de prix chez Cedeo, Point P, Rexel et 30+ distributeurs.",
   alternates: { canonical: urlSite() },
@@ -44,6 +45,7 @@ const CTA_INSCRIPTION = "/inscription";
 export default function Home() {
   return (
     <div>
+      <LandingJsonLd />
       <LandingHero ctaHref={CTA_INSCRIPTION} ctaLabel="Vérifier mon premier devis" />
       <LandingAnnouncementBar limiteTotal={ACCES_ANTICIPE_LIMITE_TOTAL} />
       <LandingHowItWorksSection />

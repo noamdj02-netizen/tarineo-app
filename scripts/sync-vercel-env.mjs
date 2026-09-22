@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { parse } from "dotenv";
 
-const PROD_URL = "https://tarineo-app-chi.vercel.app";
+const PROD_URL = "https://app.tarineo.com";
 
 const CLES = [
   "DATABASE_URL",

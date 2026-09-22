@@ -9,6 +9,7 @@ import { BtnPrimary } from "@/components/tarineo/Actions";
 import { DataTable, RowActions, TableCell, TableRow } from "@/components/tarineo/DataTable";
 import { IconPlus } from "@/components/tarineo/NavIcons";
 import { RechercheClients } from "./RechercheClients";
+import { CarteResumeMotion, GrilleStatsMotion } from "@/components/tarineo/motion/GrilleStatsMotion";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
@@ -23,15 +24,6 @@ function AvatarClient({ nom }: { nom: string }) {
   return (
     <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#FFF0E8] text-sm font-bold text-primary">
       {initiale}
-    </div>
-  );
-}
-
-function CarteResume({ label, valeur }: { label: string; valeur: string }) {
-  return (
-    <div className="rounded-[20px] bg-secondary px-4 py-3">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-foreground">{valeur}</p>
     </div>
   );
 }
@@ -74,12 +66,12 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         }
       />
 
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <CarteResume label="Clients" valeur={String(tousLesClients.length)} />
-        <CarteResume label="Devis émis" valeur={String(totalDevis)} />
-        <CarteResume label="Factures émises" valeur={String(totalFactures)} />
-        <CarteResume label="Facturé (HT)" valeur={formaterEuros(totalFacture)} />
-      </div>
+      <GrilleStatsMotion className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <CarteResumeMotion label="Clients" valeur={String(tousLesClients.length)} />
+        <CarteResumeMotion label="Devis émis" valeur={String(totalDevis)} />
+        <CarteResumeMotion label="Factures émises" valeur={String(totalFactures)} />
+        <CarteResumeMotion label="Facturé (HT)" valeur={formaterEuros(totalFacture)} />
+      </GrilleStatsMotion>
 
       <PageCard>
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

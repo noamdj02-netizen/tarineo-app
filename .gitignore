@@ -20,6 +20,15 @@
 # production
 /build
 
+# remotion video
+remotion/node_modules/
+remotion/out/
+remotion/.cache/
+
+# IDE / audits locaux
+.cursor/
+www.tarineo.com-audit/
+
 # figma capture (session navigateur locale)
 .figma-capture-profile/
 

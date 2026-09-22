@@ -1,25 +1,16 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import { estCleStockageAvatar, resoudreUrlAvatar } from "@/lib/avatarUtilisateur";
 import { BoutonSuppression } from "./BoutonSuppression";
 import { FormulaireMotDePasse } from "./FormulaireMotDePasse";
 import { GestionAbonnement } from "./GestionAbonnement";
+import { PhotoProfil } from "./PhotoProfil";
+import { supprimerMonCompte } from "./actions";
 
 const LIBELLE_PLAN: Record<string, string> = { starter: "Starter", pro: "Pro", equipe: "Équipe" };
-
-async function supprimerMonCompte() {
-  "use server";
-
-  const session = await auth();
-  if (!session?.user?.id) {
-    redirect("/connexion");
-  }
-
-  await prisma.user.delete({ where: { id: session.user.id } });
-
-  await signOut({ redirectTo: "/" });
-}
 
 export default async function ComptePage() {
   const session = await auth();
@@ -34,13 +25,21 @@ export default async function ComptePage() {
     stripeSubscriptionId: string | null;
     name: string | null;
     email: string;
+    image: string | null;
   } | null = null;
   let dbIndisponible = false;
 
   try {
     utilisateur = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { passwordHash: true, plan: true, stripeSubscriptionId: true, name: true, email: true },
+      select: {
+        passwordHash: true,
+        plan: true,
+        stripeSubscriptionId: true,
+        name: true,
+        email: true,
+        image: true,
+      },
     });
   } catch {
     dbIndisponible = true;
@@ -52,6 +51,9 @@ export default async function ComptePage() {
 
   const nomAffiche = utilisateur?.name ?? session.user.name ?? "—";
   const emailAffiche = utilisateur?.email ?? session.user.email ?? "—";
+  const avatarUrl = await resoudreUrlAvatar(utilisateur?.image);
+  const initiale = (nomAffiche.charAt(0) || "T").toUpperCase();
+  const photoPersonnalisee = Boolean(utilisateur?.image && estCleStockageAvatar(utilisateur.image));
 
   let abonnement: { intervalle: "month" | "year"; dateFin: string; resiliationProgrammee: boolean } | null = null;
   if (utilisateur?.stripeSubscriptionId) {
@@ -84,6 +86,10 @@ export default async function ComptePage() {
         </p>
       )}
 
+      {!dbIndisponible && (
+        <PhotoProfil avatarUrl={avatarUrl} initiale={initiale} photoPersonnalisee={photoPersonnalisee} />
+      )}
+
       <section className="app-card p-5 sm:p-6">
         <h2 className="text-sm font-medium text-muted-foreground">Nom</h2>
         <p className="mt-1 text-base font-medium text-foreground">{nomAffiche}</p>
@@ -105,6 +111,31 @@ export default async function ComptePage() {
         />
       )}
 
+      <section className="app-card p-5 sm:p-6">
+        <h2 className="text-sm font-medium text-muted-foreground">Informations légales</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Consultez les politiques et conditions applicables à votre utilisation de Tarineo.
+        </p>
+        <Link href="/legal" className="mt-4 inline-flex app-btn-secondary">
+          Voir les documents légaux
+        </Link>
+      </section>
+
+      <section className="app-card p-5 sm:p-6">
+        <h2 className="text-sm font-medium text-muted-foreground">Vos données (RGPD)</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Téléchargez une copie de vos documents et informations enregistrées chez Tarineo.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href="/api/compte/export-donnees" className="inline-flex app-btn-secondary" download>
+            Export JSON
+          </Link>
+          <Link href="/api/compte/export-donnees?format=zip" className="inline-flex app-btn-secondary" download>
+            Export ZIP
+          </Link>
+        </div>
+      </section>
+
       <form
         action={async () => {
           "use server";
@@ -121,8 +152,8 @@ export default async function ComptePage() {
         <section className="mt-8 app-banner-warn">
           <h2 className="text-lg font-semibold text-red-600">Supprimer mon compte</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Cette action est définitive et efface immédiatement toutes vos données : devis, factures, historique de
-            prix, et informations personnelles, conformément au RGPD.
+            Cette action est définitive : abonnement Stripe annulé, fichiers supprimés du stockage, et données effacées
+            en base, conformément au RGPD.
           </p>
           <form action={supprimerMonCompte} className="mt-4">
             <BoutonSuppression />

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 /** Paramètres obligatoires pour le pooler Supabase (port 6543, pgbouncer). */
 function normaliserUrlPooler(raw: string): string {
@@ -25,7 +25,16 @@ function urlBaseDonnees(): string {
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
   prismaDatasourceUrl?: string;
+  prismaSchemaFingerprint?: string;
 };
+
+/** Empreinte du schéma généré — invalide le singleton HMR après `prisma generate`. */
+function empreinteSchemaPrisma(): string {
+  return Prisma.dmmf.datamodel.models
+    .map((m) => `${m.name}:${m.fields.map((f) => f.name).sort().join(",")}`)
+    .sort()
+    .join("|");
+}
 
 function creerClientPrisma(): PrismaClient {
   return new PrismaClient({
@@ -33,34 +42,58 @@ function creerClientPrisma(): PrismaClient {
   });
 }
 
-/** Après `prisma migrate` + `generate`, le singleton HMR peut garder un client sans les nouveaux modèles. */
-function clientPrismaAJour(client: PrismaClient): boolean {
-  const c = client as PrismaClient & {
-    promoFetchLog?: { findFirst?: unknown };
-    distributorLogo?: { findMany?: unknown };
-  };
-  return (
-    Boolean(c.promoFetchLog && typeof c.promoFetchLog.findFirst === "function") &&
-    Boolean(c.distributorLogo && typeof c.distributorLogo.findMany === "function")
-  );
+/** Vérifie que le client exposé possède les délégués des migrations récentes. */
+function clientPrismaComplet(client: PrismaClient): boolean {
+  const c = client as unknown as Record<string, { findMany?: unknown; findFirst?: unknown; create?: unknown } | undefined>;
+  const requis = [
+    "enseignePersonnalisee",
+    "distributorLogo",
+    "pennylaneConnection",
+    "team",
+    "teamMember",
+    "teamInvitation",
+  ] as const;
+  return requis.every((nom) => {
+    const delegate = c[nom];
+    return Boolean(
+      delegate &&
+        (typeof delegate.findMany === "function" ||
+          typeof delegate.findFirst === "function" ||
+          typeof delegate.create === "function"),
+    );
+  });
 }
 
-const datasourceUrl = urlBaseDonnees();
+function initialiserPrisma(): PrismaClient {
+  const datasourceUrl = urlBaseDonnees();
+  const schemaFingerprint = empreinteSchemaPrisma();
 
-// En dev, Next recharge .env sans recréer le singleton : on reconnecte si l'URL change
-// ou si le client Prisma a été généré avant une migration récente.
-if (
-  globalForPrisma.prisma &&
-  ((globalForPrisma.prismaDatasourceUrl && globalForPrisma.prismaDatasourceUrl !== datasourceUrl) ||
-    !clientPrismaAJour(globalForPrisma.prisma))
-) {
-  void globalForPrisma.prisma.$disconnect();
-  globalForPrisma.prisma = undefined;
+  const clientPerime =
+    globalForPrisma.prisma &&
+    (globalForPrisma.prismaDatasourceUrl !== datasourceUrl ||
+      globalForPrisma.prismaSchemaFingerprint !== schemaFingerprint ||
+      !clientPrismaComplet(globalForPrisma.prisma));
+
+  if (clientPerime && globalForPrisma.prisma) {
+    void globalForPrisma.prisma.$disconnect();
+    globalForPrisma.prisma = undefined;
+  }
+
+  const client = globalForPrisma.prisma ?? creerClientPrisma();
+
+  if (!clientPrismaComplet(client) && process.env.NODE_ENV === "development") {
+    console.warn(
+      "[prisma] Client incomplet (migration récente ?). Exécutez `npx prisma generate` puis redémarrez `npm run dev`.",
+    );
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.prisma = client;
+    globalForPrisma.prismaDatasourceUrl = datasourceUrl;
+    globalForPrisma.prismaSchemaFingerprint = schemaFingerprint;
+  }
+
+  return client;
 }
 
-export const prisma = globalForPrisma.prisma ?? creerClientPrisma();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
-  globalForPrisma.prismaDatasourceUrl = datasourceUrl;
-}
+export const prisma = initialiserPrisma();

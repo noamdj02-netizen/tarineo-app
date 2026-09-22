@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Barlow, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ChunkLoadRecovery } from "./_components/ChunkLoadRecovery";
 
 const barlow = Barlow({
   variable: "--font-barlow",
@@ -41,6 +42,7 @@ export default function RootLayout({
       className={cn("h-full antialiased", barlow.variable, inter.variable, manrope.variable, "font-sans")}
     >
       <body className="min-h-full flex flex-col font-sans antialiased">
+        <ChunkLoadRecovery />
         {children}
       </body>
     </html>

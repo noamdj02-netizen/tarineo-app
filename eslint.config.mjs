@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Projet vidéo Remotion (dépendances et règles React séparées)
+    "remotion/**",
+    // Audits SEO locaux, non déployés
+    "www.tarineo.com-audit/**",
   ]),
 ]);
 

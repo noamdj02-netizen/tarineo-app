@@ -4,6 +4,7 @@ import { z } from "zod";
 import { fileTypeFromBuffer } from "file-type";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireUtilisateur } from "@/lib/session";
 import { calculerResumeAnalyse, completerOnboardingFlow } from "@/lib/onboarding";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { redirect } from "next/navigation";
@@ -32,11 +33,10 @@ async function televerserLogoDepuisUrl(userId: string, url: string): Promise<str
 }
 
 export async function choisirImportMaintenant() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
+  const { user } = await requireUtilisateur();
 
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: user.id },
     data: { onboardingImportDeferred: false },
   });
 
@@ -44,11 +44,10 @@ export async function choisirImportMaintenant() {
 }
 
 export async function choisirImportPlusTard() {
-  const session = await auth();
-  if (!session?.user?.id) redirect("/connexion");
+  const { user } = await requireUtilisateur();
 
   await prisma.user.update({
-    where: { id: session.user.id },
+    where: { id: user.id },
     data: {
       onboardingImportDeferred: true,
       // Pas encore "terminé" : on garde la bannière de reprise jusqu'au 1er import

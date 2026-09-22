@@ -6,31 +6,19 @@ import { landingSpringSoft } from "./motion/landingMotionConfig";
 
 const STATS = [
   {
-    icon: (
-      <div className="flex items-center">
-        {["/landing/avatar-1.png", "/landing/avatar-2.png", "/landing/avatar-3.png"].map((src, i) => (
-          <div
-            key={src}
-            className="relative -ml-2 h-10 w-10 overflow-hidden rounded-full border-[1.5px] border-white first:ml-0"
-            style={{ zIndex: 3 - i }}
-          >
-            <Image src={src} alt="" fill className="object-cover" sizes="40px" />
-          </div>
-        ))}
-      </div>
-    ),
-    valeur: "120K+",
-    desc: "analyses de devis réalisées",
+    icon: <Image src="/landing/shield.svg" alt="" width={40} height={40} className="h-10 w-10" />,
+    valeur: "< 10 s",
+    desc: "pour analyser un devis fournisseur",
   },
   {
     icon: <Image src="/landing/star.svg" alt="" width={40} height={40} className="h-10 w-10" />,
-    valeur: "4.9",
-    desc: "note moyenne des artisans",
+    valeur: "30+",
+    desc: "enseignes reconnues (Cedeo, Point P, Rexel…)",
   },
   {
     icon: <Image src="/landing/location.svg" alt="" width={40} height={40} className="h-10 w-10" />,
-    valeur: "89+",
-    desc: "distributeurs compatibles",
+    valeur: "100 %",
+    desc: "basé sur votre historique personnel — jamais un comparateur public",
   },
 ];
 

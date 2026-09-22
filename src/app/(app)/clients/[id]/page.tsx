@@ -5,7 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { agregerClientsUtilisateur } from "@/lib/clients";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { BtnPrimary } from "@/components/tarineo/Actions";
-import { DataTable, RowActions, TableCell, TableRow } from "@/components/tarineo/DataTable";
+import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
+import { StatusBadge } from "@/components/tarineo/StatusBadge";
+import { deduireStatutDevis } from "@/lib/devisClients";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 2 }).format(valeur);
@@ -88,12 +90,12 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
         <PageCard className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Devis</p>
-            <p className="mt-1 text-2xl font-semibold text-foreground">{client.devis}</p>
+            <p className="mt-1 text-xl font-semibold text-foreground">{client.devis}</p>
             <p className="text-sm text-muted-foreground">{formaterEuros(client.totalDevisHt)} HT</p>
           </div>
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Factures</p>
-            <p className="mt-1 text-2xl font-semibold text-foreground">{client.factures}</p>
+            <p className="mt-1 text-xl font-semibold text-foreground">{client.factures}</p>
             <p className="text-sm text-muted-foreground">{formaterEuros(client.totalFactureHt)} HT</p>
           </div>
         </PageCard>
@@ -102,7 +104,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <div className="flex flex-col gap-6">
         <PageCard>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-foreground">Devis</h2>
+            <h2 className="text-base font-semibold text-foreground">Devis</h2>
             <Link href="/devis-clients" className="text-sm font-medium text-primary hover:underline">
               Voir tout
             </Link>
@@ -110,7 +112,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           {devis.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucun devis pour ce client.</p>
           ) : (
-            <DataTable columns={["N° de devis", "Montant HT", "Statut", "Date", ""]}>
+            <DataTable columns={["N° de devis", "Montant HT", "Statut", "Date"]}>
               {devis.map((d) => (
                 <TableRow key={d.id}>
                   <TableCell>
@@ -119,11 +121,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                     </Link>
                   </TableCell>
                   <TableCell>{formaterEuros(Number(d.totalHt))}</TableCell>
-                  <TableCell>{d.invoice ? "Facturé" : "Ouvert"}</TableCell>
-                  <TableCell className="text-muted-foreground">{formaterDate(d.dateEmission)}</TableCell>
                   <TableCell>
-                    <RowActions href={`/devis-clients/${d.id}`} label="Ouvrir" />
+                    <StatusBadge statut={deduireStatutDevis(d)} />
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{formaterDate(d.dateEmission)}</TableCell>
                 </TableRow>
               ))}
             </DataTable>
@@ -132,7 +133,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
         <PageCard>
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-foreground">Factures</h2>
+            <h2 className="text-base font-semibold text-foreground">Factures</h2>
             <Link href="/factures-clients" className="text-sm font-medium text-primary hover:underline">
               Voir tout
             </Link>
@@ -140,7 +141,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           {factures.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucune facture pour ce client.</p>
           ) : (
-            <DataTable columns={["N° de facture", "Montant HT", "Échéance", ""]}>
+            <DataTable columns={["N° de facture", "Montant HT", "Échéance"]}>
               {factures.map((f) => (
                 <TableRow key={f.id}>
                   <TableCell>
@@ -150,9 +151,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                   </TableCell>
                   <TableCell>{formaterEuros(Number(f.totalHt))}</TableCell>
                   <TableCell className="text-muted-foreground">{formaterDate(f.dateEcheance)}</TableCell>
-                  <TableCell>
-                    <RowActions href={`/factures-clients/${f.id}`} label="Ouvrir" />
-                  </TableCell>
                 </TableRow>
               ))}
             </DataTable>

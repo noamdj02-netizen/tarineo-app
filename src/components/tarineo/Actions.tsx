@@ -11,7 +11,10 @@ type BtnProps = {
 };
 
 function base(className?: string) {
-  return cn("inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium transition-colors", className);
+  return cn(
+    "inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium transition-[color,background-color,transform,box-shadow] duration-150 ease-out active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100",
+    className,
+  );
 }
 
 export function BtnPrimary({ href, children, className, type = "button", onClick }: BtnProps) {

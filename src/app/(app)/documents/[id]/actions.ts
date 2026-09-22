@@ -7,6 +7,8 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { normaliserReference, normaliserDistributeur } from "@/lib/normalisation";
 import { comparerLignesAuHistorique, creerAlertesHausse } from "@/lib/comparaisonPrix";
+import { dateMinHistoriquePlan } from "@/lib/planGating";
+import { verifierRateLimitAnalyse } from "@/lib/rateLimitIA";
 import { redirect } from "next/navigation";
 import { analyserDocument } from "@/lib/extraction";
 import { isAnthropicConfigured } from "@/lib/anthropic";
@@ -105,11 +107,21 @@ export async function validerDocument(documentId: string, donnees: unknown): Pro
     // Comparé à l'historique AVANT d'y insérer les prix de ce document, sinon
     // chaque ligne se comparerait à elle-même (le nettoyage ci-dessus a déjà
     // retiré les anciennes entrées de ce document).
+    const utilisateur = await tx.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, subscriptionStatus: true },
+    });
+    const dateMinHistorique = dateMinHistoriquePlan(
+      utilisateur?.plan ?? null,
+      utilisateur?.subscriptionStatus ?? null,
+      date,
+    );
     const comparaisons = await comparerLignesAuHistorique(tx, {
       userId,
       distributor,
       documentId,
       documentDate: date,
+      dateMinHistorique,
       lignes: lignesAvecRef.map((l) => ({
         referenceNorm: l.referenceNorm,
         unitPriceHt: l.unitPriceHt,
@@ -145,8 +157,14 @@ export async function validerDocument(documentId: string, donnees: unknown): Pro
     });
   });
 
+  const { synchroniserAlertesBfa } = await import("@/lib/alertesBfa");
+  await synchroniserAlertesBfa(userId).catch((erreur) => {
+    console.error("Synchronisation alertes BFA :", erreur);
+  });
+
   revalidatePath(`/documents/${documentId}`);
   revalidatePath("/documents");
+  revalidatePath("/accueil");
 
   return { succes: true };
 }
@@ -171,6 +189,10 @@ export async function relancerAnalyseDocument(documentId: string): Promise<Resul
   });
   if (!document) {
     return { succes: false, erreur: "introuvable" };
+  }
+
+  if (!verifierRateLimitAnalyse(session.user.id)) {
+    return { succes: false, erreur: "erreur" };
   }
 
   await prisma.$transaction([

@@ -43,6 +43,7 @@ export interface MeilleurPrixAilleurs {
   distributor: string;
   prixHt: number;
   date: Date;
+  documentId: string;
 }
 
 export interface ComparaisonLigne {
@@ -50,6 +51,7 @@ export interface ComparaisonLigne {
   prixActuel: number;
   dernierPrix: number | null;
   dernierPrixDate: Date | null;
+  dernierAchatDocumentId: string | null;
   moyenne12Mois: number | null;
   ecartEuros: number | null;
   ecartPourcent: number | null;
@@ -79,10 +81,12 @@ export async function comparerLignesAuHistorique(
     distributor: string;
     documentId: string;
     documentDate: Date;
+    /** Limite la comparaison aux achats après cette date (plan Starter = 12 mois). */
+    dateMinHistorique?: Date | null;
     lignes: { referenceNorm: string; unitPriceHt: number; manufacturerRefNorm?: string | null }[];
   }
 ): Promise<ComparaisonLigne[]> {
-  const { userId, distributor, documentId, documentDate, lignes } = params;
+  const { userId, distributor, documentId, documentDate, dateMinHistorique, lignes } = params;
   const referencesNorm = [...new Set(lignes.map((l) => l.referenceNorm))];
   const manufacturerRefsNorm = [
     ...new Set(lignes.map((l) => l.manufacturerRefNorm).filter((v): v is string => !!v)),
@@ -101,7 +105,10 @@ export async function comparerLignesAuHistorique(
     where: {
       userId,
       documentId: { not: documentId },
-      documentDate: { lte: documentDate },
+      documentDate: {
+        lte: documentDate,
+        ...(dateMinHistorique ? { gte: dateMinHistorique } : {}),
+      },
       OR: [
         { referenceNorm: { in: referencesNorm } },
         ...(manufacturerRefsNorm.length > 0
@@ -149,7 +156,12 @@ export async function comparerLignesAuHistorique(
       for (const achat of dernierParDistributeur.values()) {
         const prix = Number(achat.unitPriceHt);
         if (prix < ligne.unitPriceHt && (meilleurPrixAilleurs === null || prix < meilleurPrixAilleurs.prixHt)) {
-          meilleurPrixAilleurs = { distributor: achat.distributor, prixHt: prix, date: achat.documentDate };
+          meilleurPrixAilleurs = {
+            distributor: achat.distributor,
+            prixHt: prix,
+            date: achat.documentDate,
+            documentId: achat.documentId,
+          };
         }
       }
     }
@@ -159,6 +171,7 @@ export async function comparerLignesAuHistorique(
       prixActuel: ligne.unitPriceHt,
       dernierPrix,
       dernierPrixDate: dernier?.documentDate ?? null,
+      dernierAchatDocumentId: dernier?.documentId ?? null,
       moyenne12Mois,
       ecartEuros,
       ecartPourcent,

@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { genererNumeroDevis, calculerTotauxDevis, genererEtStockerPdfDevis } from "@/lib/devisClients";
 import { genererLignesDevisDepuisPrompt } from "@/lib/genererDevisIA";
 import { quotaDevisIA, debutMoisUTC } from "@/lib/quota";
+import { verifierRateLimitDevisIA } from "@/lib/rateLimitIA";
 import { suggererPrixAchat, type SuggestionPrix } from "@/lib/suggestionPrix";
 
 const ligneSchema = z.object({
@@ -141,6 +142,13 @@ export async function genererDepuisPrompt(texte: string): Promise<ResultatGenera
     return {
       succes: false,
       erreur: `Quota de génération IA atteint pour ce mois (${quotaMensuel}). Vous pouvez toujours créer un devis manuellement.`,
+    };
+  }
+
+  if (!verifierRateLimitDevisIA(userId)) {
+    return {
+      succes: false,
+      erreur: "Trop de générations IA en peu de temps. Réessayez dans une heure.",
     };
   }
 

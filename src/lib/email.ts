@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 import {
   renduEmailActivation,
+  renduEmailAlerteHaussePrix,
+  renduEmailEssaiExpire,
+  renduEmailInvitationEquipe,
+  renduEmailNouveauMembreEquipe,
   renduEmailReinitialisationMotDePasse,
   renduEmailResiliationConfirmee,
 } from "@/lib/emails/templates";
@@ -153,6 +157,104 @@ export async function envoyerEmailContactEntreprise(donnee: DemandeContactEntrep
     subject: `Demande palier Entreprise — ${donnee.nom}`,
     html: renduHtmlContactEntrepriseInterne(donnee),
     text: `Nouvelle demande Entreprise depuis la landing page.\n\nNom : ${donnee.nom}\nEmail : ${donnee.email}\nTaille d'équipe / volume estimé : ${donnee.volume}${donnee.message ? `\nMessage : ${donnee.message}` : ""}`,
+  });
+}
+
+export async function envoyerEmailPaiementEchoue(
+  to: string,
+  options: { prenom: string; urlPortail: string; origine?: string },
+): Promise<void> {
+  const origine = options.origine ?? origineEmail();
+  const html = `
+    <div style="font-family:Inter,Arial,sans-serif;max-width:544px;margin:0 auto;padding:32px;">
+      <h1 style="font-size:20px;color:#14171e;">Bonjour ${echapperHtml(options.prenom)},</h1>
+      <p style="color:#43454b;line-height:1.5;">Le dernier prélèvement de votre abonnement Tarineo a échoué. Mettez à jour votre carte pour conserver l'accès à vos analyses.</p>
+      <p><a href="${echapperHtml(options.urlPortail)}" style="color:#EC5821;font-weight:600;">Mettre à jour mon moyen de paiement</a></p>
+    </div>`;
+  await envoyerHtml({
+    to,
+    subject: "Action requise — paiement Tarineo en échec",
+    html,
+    text: `Bonjour ${options.prenom}, mettez à jour votre carte : ${options.urlPortail}`,
+  });
+}
+
+export async function envoyerEmailEssaiBientotTermine(
+  to: string,
+  options: { prenom: string; joursRestants: number; urlForfaits: string; origine?: string },
+): Promise<void> {
+  const origine = options.origine ?? origineEmail();
+  const html = renduEmailEssaiExpire({
+    joursRestants: options.joursRestants,
+    urlForfaits: options.urlForfaits,
+    origine,
+  });
+  await envoyerHtml({
+    to,
+    subject: `Votre essai Tarineo se termine dans ${options.joursRestants} jour${options.joursRestants > 1 ? "s" : ""}`,
+    html,
+    text: `Bonjour ${options.prenom}, votre essai se termine dans ${options.joursRestants} jours. Choisissez un forfait : ${options.urlForfaits}`,
+  });
+}
+
+export async function envoyerEmailResumeHausses(
+  to: string,
+  options: { prenom: string; nombreHausses: number; urlDocuments: string; origine?: string },
+): Promise<void> {
+  const origine = options.origine ?? origineEmail();
+  const html = renduEmailAlerteHaussePrix({
+    prenom: options.prenom,
+    nomFournisseur: "vos fournisseurs",
+    referenceProduit: `${options.nombreHausses} alerte${options.nombreHausses > 1 ? "s" : ""}`,
+    ancienPrix: "—",
+    nouveauPrix: "—",
+    pourcentageHausse: "—",
+    urlDetail: options.urlDocuments,
+    origine,
+  });
+  await envoyerHtml({
+    to,
+    subject: `${options.nombreHausses} hausse${options.nombreHausses > 1 ? "s" : ""} de prix à vérifier`,
+    html,
+    text: `Bonjour ${options.prenom}, vous avez ${options.nombreHausses} hausse(s) à consulter : ${options.urlDocuments}`,
+  });
+}
+
+export async function envoyerEmailInvitationEquipe(
+  to: string,
+  options: { nomInvitant: string; nomEntreprise: string; urlInvitation: string; origine?: string },
+): Promise<void> {
+  const origine = options.origine ?? origineEmail();
+  const html = renduEmailInvitationEquipe({
+    nomInvitant: options.nomInvitant,
+    nomEntreprise: options.nomEntreprise,
+    urlInvitation: options.urlInvitation,
+    origine,
+  });
+  await envoyerHtml({
+    to,
+    subject: `Invitation à rejoindre ${options.nomEntreprise} sur Tarineo`,
+    html,
+    text: `${options.nomInvitant} vous invite à rejoindre ${options.nomEntreprise} sur Tarineo : ${options.urlInvitation}`,
+  });
+}
+
+export async function envoyerEmailNouveauMembreEquipe(
+  to: string,
+  options: { nomMembre: string; nomEntreprise: string; urlEquipe: string; origine?: string },
+): Promise<void> {
+  const origine = options.origine ?? origineEmail();
+  const html = renduEmailNouveauMembreEquipe({
+    nomMembre: options.nomMembre,
+    nomEntreprise: options.nomEntreprise,
+    urlEquipe: options.urlEquipe,
+    origine,
+  });
+  await envoyerHtml({
+    to,
+    subject: `${options.nomMembre} a rejoint votre équipe Tarineo`,
+    html,
+    text: `${options.nomMembre} a rejoint l'espace ${options.nomEntreprise} : ${options.urlEquipe}`,
   });
 }
 

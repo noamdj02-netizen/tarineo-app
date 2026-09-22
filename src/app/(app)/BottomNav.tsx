@@ -1,33 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   IconDocument,
   IconFournisseurs,
   IconHome,
-  IconMore,
+  IconInvoice,
   IconScanner,
 } from "@/components/tarineo/NavIcons";
+import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
 import { cn } from "@/lib/utils";
 
 const ONGLETS = [
   {
     href: "/accueil",
     label: "Accueil",
+    estActif: (pathname: string) => pathname === "/accueil",
     icone: IconHome,
   },
   {
     href: "/documents",
     label: "Documents",
-    estActif: (pathname: string) => pathname.startsWith("/documents") && !pathname.includes("scanner"),
+    estActif: (pathname: string, scannerActif: boolean) =>
+      (pathname === "/documents" || pathname.startsWith("/documents/")) && !scannerActif,
     icone: IconDocument,
   },
   {
     href: "/documents?scanner=1",
-    label: "Scanner",
-    estActif: () => false,
+    label: "Importer",
     prominent: true,
+    estActif: (_pathname: string, scannerActif: boolean) => scannerActif,
     icone: IconScanner,
   },
   {
@@ -37,45 +40,46 @@ const ONGLETS = [
     icone: IconFournisseurs,
   },
   {
-    href: "/parametres",
-    label: "Plus",
+    href: "/devis-clients",
+    label: "Devis",
     estActif: (pathname: string) =>
-      pathname.startsWith("/parametres") ||
-      pathname.startsWith("/compte") ||
       pathname.startsWith("/devis-clients") ||
-      pathname.startsWith("/entreprise"),
-    icone: IconMore,
+      pathname.startsWith("/factures-clients") ||
+      pathname.startsWith("/clients") ||
+      pathname.startsWith("/facturation-clients"),
+    icone: IconInvoice,
   },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const scannerActif = pathname.startsWith("/documents") && searchParams.get("scanner") === "1";
+
+  if (pathname.startsWith("/onboarding")) return null;
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_24px_rgba(0,0,0,0.06)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_32px_rgba(0,0,0,0.06)] backdrop-blur-md lg:hidden"
       aria-label="Navigation principale"
     >
       <div className="mx-auto flex max-w-5xl items-end justify-around px-1">
         {ONGLETS.map((onglet) => {
-          const actif = onglet.estActif
-            ? onglet.estActif(pathname)
-            : pathname === onglet.href || pathname.startsWith(`${onglet.href}/`);
+          const actif = onglet.estActif(pathname, scannerActif);
           const Icone = onglet.icone;
 
           if (onglet.prominent) {
             return (
-              <Link
-                key={onglet.href}
-                href={onglet.href}
-                prefetch={false}
-                className="-mt-5 flex flex-1 flex-col items-center gap-1"
-              >
-                <span className="flex size-14 items-center justify-center rounded-full bg-primary text-white shadow-lg shadow-primary/30">
-                  <Icone className="size-[26px]" />
-                </span>
+              <div key={onglet.href} className="-mt-5 flex flex-1 flex-col items-center gap-1">
+                <BoutonImporterNav
+                  size="icon-lg"
+                  className={cn(
+                    "transition-transform duration-150 ease-out motion-reduce:active:scale-100",
+                    actif ? "shadow-primary/40 ring-2 ring-primary/20" : undefined,
+                  )}
+                />
                 <span className="text-[11px] font-semibold text-primary">{onglet.label}</span>
-              </Link>
+              </div>
             );
           }
 
@@ -85,13 +89,14 @@ export function BottomNav() {
               href={onglet.href}
               prefetch={false}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-xs font-medium transition-colors",
-                actif ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                "relative flex flex-1 flex-col items-center gap-1 py-2.5 text-sm font-medium transition-[color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100",
+                actif ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
               aria-current={actif ? "page" : undefined}
             >
-              <Icone className="size-6" />
-              {onglet.label}
+              <Icone className={cn("size-6 transition-transform duration-200", actif && "scale-110")} />
+              <span>{onglet.label}</span>
+              {actif && <span className="absolute top-1 size-1 rounded-full bg-primary" aria-hidden="true" />}
             </Link>
           );
         })}

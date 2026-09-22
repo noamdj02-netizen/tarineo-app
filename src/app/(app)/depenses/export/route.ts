@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { accesExportComptable, messageFonctionPlanRequise } from "@/lib/planGating";
+import { prisma } from "@/lib/prisma";
 import {
   recupererLignesExportComptable,
   genererCsv,
@@ -39,6 +41,14 @@ export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return new NextResponse("Non authentifié.", { status: 401 });
+  }
+
+  const utilisateur = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { plan: true, subscriptionStatus: true },
+  });
+  if (!utilisateur || !accesExportComptable(utilisateur.plan, utilisateur.subscriptionStatus)) {
+    return new NextResponse(messageFonctionPlanRequise("export"), { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);

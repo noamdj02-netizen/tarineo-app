@@ -29,6 +29,14 @@ const STYLES_RESPONSIVE = `
     .email-mascot img { width: 160px !important; height: auto !important; }
     .email-footer { width: 100% !important; max-width: 100% !important; }
     .email-footer-text { padding-left: 8px !important; padding-right: 8px !important; }
+    .email-notes-hero-title { font-size: 36px !important; letter-spacing: -0.72px !important; }
+    .email-notes-feature-title { font-size: 28px !important; letter-spacing: -0.56px !important; }
+    .email-notes-card { padding: 48px 20px 40px !important; }
+    .email-notes-card-sm { padding: 48px 20px !important; }
+    .email-notes-list-icon-cell { display: block !important; width: 100% !important; }
+    .email-notes-list-text-cell { display: block !important; width: 100% !important; padding-left: 0 !important; padding-top: 24px !important; }
+    .email-notes-feature-img { height: auto !important; }
+    .email-notes-hero-phone { max-width: 220px !important; }
   }
 `;
 
@@ -36,15 +44,50 @@ function couleurBouton(variante: VarianteBouton): string {
   return variante === "orange" ? COULEUR_ORANGE : COULEUR_DARK;
 }
 
-export function bouton(href: string, label: string, variante: VarianteBouton = "orange"): string {
+export function bouton(
+  href: string,
+  label: string,
+  variante: VarianteBouton = "orange",
+  alignement: "center" | "left" = "center",
+): string {
   const bg = couleurBouton(variante);
+  const marge = alignement === "center" ? "margin:0 auto;max-width:320px;" : "margin:0;";
+  const alignTd = alignement === "center" ? "center" : "left";
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-btn-table" width="100%" style="margin:0 auto;max-width:320px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-btn-table" width="${alignement === "center" ? "100%" : "auto"}" style="${marge}">
       <tr>
-        <td align="center" style="border-radius:12px;background:${bg};">
-          <a href="${href}" target="_blank" class="email-btn-link" style="display:inline-block;padding:14px 28px;font-family:${POLICE};font-size:16px;font-weight:500;line-height:1.5;color:#ffffff;text-decoration:none;border-radius:12px;letter-spacing:-0.048px;">
+        <td align="${alignTd}" style="border-radius:12px;background:${bg};">
+          <a href="${href}" target="_blank" class="email-btn-link" style="display:inline-block;padding:12px 24px;font-family:${POLICE};font-size:16px;font-weight:500;line-height:1.5;color:#ffffff;text-decoration:none;border-radius:12px;letter-spacing:-0.048px;">
             ${echapperHtml(label)}
           </a>
+        </td>
+      </tr>
+    </table>`;
+}
+
+/** En-tête centré — email Notes de version (Figma 2032:844). */
+function enTeteCentre(origine?: string): string {
+  const logo = urlAssetEmail(ASSETS_EMAIL.logo, origine);
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-header-centre" style="margin-bottom:32px;">
+      <tr>
+        <td align="center" style="padding-bottom:24px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td valign="middle" style="padding-right:8px;">
+                <img src="${logo}" width="27" height="28" alt="Tarineo" style="display:block;border:0;" />
+              </td>
+              <td valign="middle" style="font-family:${POLICE};font-size:17.5px;font-weight:400;color:${COULEUR_DARK};letter-spacing:-0.525px;">
+                Tarineo
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td align="center" style="font-family:${POLICE};font-size:13px;font-weight:500;line-height:1.5;letter-spacing:-0.039px;">
+          <p style="margin:0;color:${COULEUR_TEXTE_MUTED};">Vos devis sous surveillance avec</p>
+          <p style="margin:4px 0 0;color:${COULEUR_TEXTE};">Tarineo</p>
         </td>
       </tr>
     </table>`;
@@ -129,17 +172,35 @@ function logoCentre(origine?: string): string {
     </table>`;
 }
 
-/** Mascotte 3D pouce levé — email activation (Figma 178:28332). */
-function mascotteActivation(origine?: string): string {
-  const src = urlAssetEmail(ASSETS_EMAIL.activationMascot, origine);
+export interface MascotteEmail {
+  chemin: string;
+  width: number;
+  height: number;
+}
+
+/** Illustration 3D en tête de carte — dimensions d'affichage Figma. */
+function mascotteEmail(
+  { chemin, width, height }: MascotteEmail,
+  origine?: string,
+  marginBottom = 20,
+): string {
+  const src = urlAssetEmail(chemin, origine);
   return `
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-mascot" style="margin:0 auto 20px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="email-mascot" style="margin:0 auto ${marginBottom}px;">
       <tr>
         <td align="center">
-          <img src="${src}" width="204" height="170" alt="" style="display:block;border:0;width:204px;height:auto;max-width:100%;" />
+          <img src="${src}" width="${width}" height="${height}" alt="" style="display:block;border:0;width:${width}px;height:auto;max-width:100%;" />
         </td>
       </tr>
     </table>`;
+}
+
+/** Mascotte 3D pouce levé — email activation (Figma 178:28332). */
+function mascotteActivation(origine?: string): string {
+  return mascotteEmail(
+    { chemin: ASSETS_EMAIL.activationMascot, width: 204, height: 170 },
+    origine,
+  );
 }
 
 function noteBas(lignes: string[]): string {
@@ -167,13 +228,14 @@ export interface OptionsCarte {
   paragraphes: string[];
   bouton?: { href: string; label: string; variante?: VarianteBouton };
   note?: string[];
+  mascotte?: MascotteEmail;
   origine?: string;
   urlDesinscription?: string;
 }
 
 /** Layout « password-reset » : carte centrée avec logo, titre, corps, bouton, note. */
 export function layoutCarte(options: OptionsCarte): string {
-  const { titre, paragraphes, bouton: btn, note, origine, urlDesinscription } = options;
+  const { titre, paragraphes, bouton: btn, note, mascotte, origine, urlDesinscription } = options;
 
   const corps = paragraphes
     .map(
@@ -186,8 +248,12 @@ export function layoutCarte(options: OptionsCarte): string {
 
   const noteHtml = note?.length ? `<div style="margin-top:40px;">${noteBas(note)}</div>` : "";
 
+  const illustrationHtml = mascotte
+    ? mascotteEmail(mascotte, origine, 40)
+    : logoCentre(origine);
+
   const contenu = `
-    ${logoCentre(origine)}
+    ${illustrationHtml}
     <h1 class="email-title" style="margin:0 0 24px;font-family:${POLICE};font-size:28px;font-weight:600;line-height:normal;color:${COULEUR_DARK};text-align:center;letter-spacing:-0.084px;">${echapperHtml(titre)}</h1>
     <div style="margin-bottom:0;">${corps}</div>
     ${boutonHtml}
@@ -198,7 +264,7 @@ export function layoutCarte(options: OptionsCarte): string {
     ${enTete(origine)}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-section" style="margin-bottom:56px;">
       <tr>
-        <td class="email-card" style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:56px 48px;">
+        <td class="email-card" style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:72px 64px;">
           ${contenu}
         </td>
       </tr>
@@ -222,6 +288,7 @@ export function layoutActivation(options: OptionsActivation): string {
     paragraphes,
     bouton: btn,
     note,
+    mascotte,
     origine,
     urlDesinscription,
     corpsCentre = true,
@@ -242,8 +309,11 @@ export function layoutActivation(options: OptionsActivation): string {
 
   const noteHtml = note?.length ? `<div style="margin-top:40px;">${noteBasActivation(note)}</div>` : "";
 
-  const illustrationHtml =
-    illustration === "mascotte" ? mascotteActivation(origine) : logoCentre(origine);
+  const illustrationHtml = mascotte
+    ? mascotteEmail(mascotte, origine, 24)
+    : illustration === "mascotte"
+      ? mascotteActivation(origine)
+      : logoCentre(origine);
 
   const contenu = `
     ${illustrationHtml}
@@ -257,7 +327,7 @@ export function layoutActivation(options: OptionsActivation): string {
     ${enTete(origine)}
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-section" style="margin-bottom:56px;">
       <tr>
-        <td class="email-card" style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:56px 48px;">
+        <td class="email-card" style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:72px 64px;">
           ${contenu}
         </td>
       </tr>
@@ -322,6 +392,29 @@ function imageBloc(src: string, hauteur: number, borderRadius = 12): string {
     </table>`;
 }
 
+function imageBlocNotes(src: string, hauteur = 340): string {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td>
+          <img src="${src}" width="544" alt="" class="email-notes-feature-img" style="display:block;width:100%;max-width:100%;height:${hauteur}px;object-fit:cover;border-radius:12px;border:0;" />
+        </td>
+      </tr>
+    </table>`;
+}
+
+function iconeNotesBloc(src: string, origine?: string): string {
+  const url = urlAssetEmail(src, origine);
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td align="center" valign="middle" width="72" height="72" style="width:72px;height:72px;border-radius:16px;background:${COULEUR_ORANGE};">
+          <img src="${url}" width="40" height="40" alt="" style="display:block;border:0;margin:0 auto;" />
+        </td>
+      </tr>
+    </table>`;
+}
+
 function titreSection(texte: string, taille = 40): string {
   return `<h2 style="margin:0 0 32px;font-family:${POLICE};font-size:${taille}px;font-weight:600;line-height:1.1;color:${COULEUR_DARK};text-align:center;letter-spacing:${taille >= 40 ? "-0.8px" : "-0.096px"};">${echapperHtml(texte)}</h2>`;
 }
@@ -330,7 +423,7 @@ function puceOrange(): string {
   return `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${COULEUR_ORANGE};margin-right:12px;vertical-align:middle;"></span>`;
 }
 
-/** Newsletter « Notes de version » (feature-announcement). */
+/** Newsletter « Notes de version » — Figma Tarineo 217:3811 / 178:27456. */
 export function layoutNotesDeVersion(params: {
   urlEssayer: string;
   urlTableauDeBord: string;
@@ -348,36 +441,55 @@ export function layoutNotesDeVersion(params: {
     btnVariante: VarianteBouton,
   ) => `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:64px;">
-      <tr><td>${imageBloc(urlAssetEmail(image, o), 340)}</td></tr>
+      <tr><td style="padding-bottom:32px;">${imageBlocNotes(urlAssetEmail(image, o))}</td></tr>
       <tr><td>
-        <h3 style="margin:0 0 32px;font-family:${POLICE};font-size:40px;font-weight:600;line-height:1.1;color:${COULEUR_DARK};letter-spacing:-0.8px;">${echapperHtml(titre)}</h3>
-        ${paragraphes.map((p) => `<p style="margin:0 0 16px;font-family:${POLICE};font-size:16px;line-height:1.5;color:${COULEUR_TEXTE};letter-spacing:-0.048px;">${p}</p>`).join("")}
-        <div style="margin-top:32px;">${bouton(btnHref, "Essayer maintenant", btnVariante)}</div>
+        <h3 class="email-notes-feature-title" style="margin:0 0 32px;font-family:${POLICE};font-size:40px;font-weight:600;line-height:1.1;color:${COULEUR_DARK};text-align:left;letter-spacing:-0.8px;">${echapperHtml(titre)}</h3>
+        ${paragraphes
+          .map(
+            (p, i) =>
+              `<p style="margin:0 0 ${i < paragraphes.length - 1 ? "16px" : "0"};font-family:${POLICE};font-size:16px;font-weight:500;line-height:1.5;color:${COULEUR_TEXTE};text-align:left;letter-spacing:-0.048px;">${p}</p>`,
+          )
+          .join("")}
+        <div style="margin-top:32px;">${bouton(btnHref, "Essayer maintenant", btnVariante, "left")}</div>
       </td></tr>
     </table>`;
 
-  const listeItem = (titre: string, texte: string, lien?: string) => `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:40px;">
+  const listeItemHorizontal = (icone: string, titre: string, texte: string, lien?: string) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-notes-list-row" style="margin-bottom:62px;">
       <tr>
-        <td width="72" valign="top">
-          <div style="width:72px;height:72px;border-radius:16px;background:${COULEUR_ORANGE};"></div>
+        <td valign="top" width="72" class="email-notes-list-icon-cell" style="padding-right:40px;">
+          ${iconeNotesBloc(icone, o)}
         </td>
-        <td valign="top" style="padding-left:40px;">
+        <td valign="top" class="email-notes-list-text-cell" style="padding-left:0;">
           <p style="margin:0 0 8px;font-family:${POLICE};font-size:20px;font-weight:600;line-height:1.5;color:${COULEUR_DARK};letter-spacing:-0.06px;">${echapperHtml(titre)}</p>
-          <p style="margin:0 0 8px;font-family:${POLICE};font-size:16px;line-height:1.5;color:${COULEUR_TEXTE};letter-spacing:-0.048px;">${texte}</p>
-          ${lien ? `<p style="margin:0;font-family:${POLICE};font-size:16px;line-height:1.5;color:${COULEUR_TEXTE};">${echapperHtml(lien)}</p>` : ""}
+          <p style="margin:0 0 8px;font-family:${POLICE};font-size:16px;font-weight:500;line-height:1.5;color:${COULEUR_TEXTE};letter-spacing:-0.048px;">${texte}</p>
+          ${lien ? `<p style="margin:0;font-family:${POLICE};font-size:16px;font-weight:500;line-height:1.5;color:${COULEUR_TEXTE};letter-spacing:-0.048px;">${echapperHtml(lien)}</p>` : ""}
         </td>
       </tr>
     </table>`;
 
   const corps = `
     ${enTete(o)}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-section" style="margin-bottom:20px;">
       <tr>
-        <td style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:72px 24px 64px;">
-          <p style="margin:0 0 24px;font-family:${POLICE};font-size:13px;font-weight:500;color:${COULEUR_TEXTE_MUTED};text-align:center;letter-spacing:-0.039px;">Nouveau chez Tarineo</p>
-          ${titreSection("Notes de version")}
-          <p style="margin:0 0 64px;font-family:${POLICE};font-size:16px;line-height:1.5;color:${COULEUR_TEXTE};text-align:center;letter-spacing:-0.048px;">Voici ce qui arrive ce mois-ci, ainsi que les autres mises à jour Tarineo.</p>
+        <td class="email-notes-card" style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:72px 24px 64px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:64px;">
+            <tr>
+              <td align="center" style="max-width:480px;">
+                <p style="margin:0 0 24px;font-family:${POLICE};font-size:13px;font-weight:500;color:${COULEUR_TEXTE_MUTED};text-align:center;letter-spacing:-0.039px;">Nouveau chez Tarineo</p>
+                <h1 class="email-notes-hero-title" style="margin:0 0 24px;font-family:${POLICE};font-size:60px;font-weight:600;line-height:1.1;color:${COULEUR_DARK};text-align:center;letter-spacing:-1.2px;">Notes de version</h1>
+                <p style="margin:0;font-family:${POLICE};font-size:16px;font-weight:500;line-height:1.5;color:${COULEUR_TEXTE};text-align:center;letter-spacing:-0.048px;">Voici ce qui arrive ce mois-ci, ainsi que les autres mises à jour Tarineo.</p>
+              </td>
+            </tr>
+          </table>
+
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:64px;">
+            <tr>
+              <td align="center">
+                <img src="${urlAssetEmail(ASSETS_EMAIL.notesHeroPhone, o)}" width="284" alt="" class="email-notes-hero-phone" style="display:block;width:100%;max-width:284px;height:auto;border:0;" />
+              </td>
+            </tr>
+          </table>
 
           ${sectionFeature(
             ASSETS_EMAIL.featureComparator,
@@ -404,16 +516,18 @@ export function layoutNotesDeVersion(params: {
       </tr>
     </table>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-section" style="margin-bottom:20px;">
       <tr>
-        <td style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:72px 32px;">
-          ${titreSection("De nouvelles façons de travailler avec Tarineo", 40)}
-          ${listeItem(
+        <td class="email-notes-card-sm" style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:72px 32px;">
+          <h2 class="email-notes-feature-title" style="margin:0 0 62px;font-family:${POLICE};font-size:40px;font-weight:600;line-height:1.1;color:${COULEUR_DARK};text-align:left;letter-spacing:-0.8px;">De nouvelles façons de travailler avec Tarineo</h2>
+          ${listeItemHorizontal(
+            ASSETS_EMAIL.notesIconAutomation,
             "Des automatisations qui font gagner du temps",
             "Centralisez vos devis fournisseurs au même endroit, supprimez les ressaisies manuelles et donnez à toute l'équipe la même source de vérité sur les prix d'achat.",
             "Lire la suite",
           )}
-          ${listeItem(
+          ${listeItemHorizontal(
+            ASSETS_EMAIL.notesIconChantier,
             "Une vue plus claire de vos besoins chantier",
             "Suivez les commandes en cours et à venir par chantier, et anticipez les hausses de prix avant qu'elles n'impactent votre marge.",
             "Lire la suite",
@@ -422,9 +536,9 @@ export function layoutNotesDeVersion(params: {
       </tr>
     </table>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-section" style="margin-bottom:20px;">
       <tr>
-        <td style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:24px 24px 64px;">
+        <td class="email-notes-card" style="background:${COULEUR_FOND_CARTE};border-radius:16px;padding:24px 24px 64px;">
           ${sectionFeature(
             ASSETS_EMAIL.featureMobile,
             "L'appli mobile Tarineo débarque",
@@ -439,7 +553,7 @@ export function layoutNotesDeVersion(params: {
       </tr>
     </table>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:64px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="email-section" style="margin-bottom:32px;">
       <tr>
         <td align="center" style="padding:72px 0;">
           <img src="${urlAssetEmail(ASSETS_EMAIL.featureCtaIcon, o)}" width="56" height="56" alt="" style="display:block;margin:0 auto 32px;border-radius:16px;border:0;" />

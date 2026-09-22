@@ -11,17 +11,25 @@ import { ApercuDocument } from "./ApercuDocument";
 import { ActionsDocument } from "../ActionsDocument";
 import { isAnthropicConfigured } from "@/lib/anthropic";
 import { comparerLignesAuHistorique, type ComparaisonLigne } from "@/lib/comparaisonPrix";
+import { dateMinHistoriquePlan } from "@/lib/planGating";
 import { SEUIL_CONFIANCE } from "@/lib/extraction";
-import { GraphiqueHistoriquePrix, type PointHistoriquePrix } from "./GraphiqueHistoriquePrix";
+import { type PointHistoriquePrix } from "./GraphiqueHistoriquePrix";
+import { BandeauAnalyseIA } from "./BandeauAnalyseIA";
+import { AnalyseDocumentProvider } from "./AnalyseDocumentContext";
+import { ListeLignesAnalyse } from "./ListeLignesAnalyse";
+import {
+  confianceLigneExtraction,
+  construireResumeAnalyse,
+  parserLineReviews,
+  verifierTotauxDocument,
+} from "@/lib/analyseDocument";
+import { proposerRapprochementsProduit } from "@/lib/rapprochementProduit";
 import type { Prisma } from "@prisma/client";
 
 const formaterMontant = (valeur: Prisma.Decimal | number | string | null) =>
   valeur === null
     ? "—"
     : new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(valeur));
-
-const formaterEuros = (valeur: number) =>
-  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(valeur);
 
 export default async function DocumentDetailPage({
   params,
@@ -34,10 +42,16 @@ export default async function DocumentDetailPage({
     redirect("/connexion");
   }
 
-  const document = await prisma.document.findFirst({
-    where: { id, userId: session.user.id },
-    include: { lineItems: true },
-  });
+  const [document, utilisateur] = await Promise.all([
+    prisma.document.findFirst({
+      where: { id, userId: session.user.id },
+      include: { lineItems: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { plan: true, subscriptionStatus: true },
+    }),
+  ]);
 
   if (!document) {
     notFound();
@@ -48,6 +62,12 @@ export default async function DocumentDetailPage({
     | null;
   const totalManquant = document.totalHt === null || Number(document.totalHt) === 0;
 
+  const dateMinHistorique = dateMinHistoriquePlan(
+    utilisateur?.plan ?? null,
+    utilisateur?.subscriptionStatus ?? null,
+    document.documentDate ?? new Date(),
+  );
+
   let comparaisons: ComparaisonLigne[] = [];
   if (document.status === "VALIDATED" && document.distributor && document.documentDate) {
     comparaisons = await comparerLignesAuHistorique(prisma, {
@@ -55,6 +75,7 @@ export default async function DocumentDetailPage({
       distributor: document.distributor,
       documentId: document.id,
       documentDate: document.documentDate,
+      dateMinHistorique,
       lignes: document.lineItems.map((l) => ({
         referenceNorm: l.referenceNorm,
         unitPriceHt: Number(l.unitPriceHt),
@@ -70,9 +91,13 @@ export default async function DocumentDetailPage({
   // distributeur pour le calcul de l'alerte de hausse.
   const referencesNorm = [...new Set(document.lineItems.map((l) => l.referenceNorm))];
   const historiqueComplet =
-    comparaisons.length > 0 && referencesNorm.length > 0
+    document.status === "VALIDATED" && referencesNorm.length > 0
       ? await prisma.priceHistory.findMany({
-          where: { userId: session.user.id, referenceNorm: { in: referencesNorm } },
+          where: {
+            userId: session.user.id,
+            referenceNorm: { in: referencesNorm },
+            ...(dateMinHistorique ? { documentDate: { gte: dateMinHistorique } } : {}),
+          },
           orderBy: { documentDate: "asc" },
         })
       : [];
@@ -92,9 +117,80 @@ export default async function DocumentDetailPage({
     if (!c || c.ecartEuros === null) return somme;
     return somme + c.ecartEuros * Number(ligne.quantity);
   }, 0);
-  const aUneAlerte = comparaisons.some((c) => c.alerte);
+  const repartitionLignes = comparaisons.reduce(
+    (acc, c) => {
+      if (c.alerte) acc.alertes += 1;
+      else if (c.dernierPrix === null) acc.nouvelles += 1;
+      else if (c.ecartEuros !== null && c.ecartEuros < 0) acc.baisses += 1;
+      else acc.stables += 1;
+      return acc;
+    },
+    { alertes: 0, baisses: 0, stables: 0, nouvelles: 0 },
+  );
+  const avecHistorique = comparaisons.filter((c) => c.dernierPrix !== null).length;
+  const refsFabricant = document.lineItems.filter((l) => l.manufacturerRefNorm).length;
+  const champsExtraits = [
+    { label: "Distributeur", ok: Boolean(document.distributor) },
+    { label: "Date document", ok: Boolean(document.documentDate) },
+    { label: "Numéro", ok: Boolean(extraction?.numero) },
+    { label: "Total HT", ok: document.totalHt !== null && Number(document.totalHt) > 0 },
+    { label: "Total TTC", ok: document.totalTtc !== null && Number(document.totalTtc) > 0 },
+    { label: `${document.lineItems.length} ligne${document.lineItems.length > 1 ? "s" : ""} produit`, ok: document.lineItems.length > 0 },
+    { label: `${refsFabricant} réf. fabricant`, ok: refsFabricant > 0 },
+  ];
+  const afficherAnalyse = document.status === "VALIDATED" && document.lineItems.length > 0;
+  const lineReviews = parserLineReviews(document.lineReviews);
+  const economiesCount = comparaisons.filter((c) => c.meilleurPrixAilleurs).length;
+  const totalLignesHt = document.lineItems.reduce((somme, ligne) => somme + Number(ligne.totalHt), 0);
+  const verificationTotaux = verifierTotauxDocument(
+    totalLignesHt,
+    document.totalHt !== null ? Number(document.totalHt) : null,
+  );
+  const resumePhrase = construireResumeAnalyse({
+    repartition: repartitionLignes,
+    impactTotal,
+    economies: economiesCount,
+    avecHistorique,
+    nombreLignes: document.lineItems.length,
+  });
+  const propositionsParLigne = new Map<string, Awaited<ReturnType<typeof proposerRapprochementsProduit>>>();
+  for (const ligne of document.lineItems) {
+    if (!ligne.manufacturerRefNorm && document.status === "VALIDATED") {
+      const propositions = await proposerRapprochementsProduit(session.user.id, {
+        designation: ligne.designation,
+        reference: ligne.reference,
+        manufacturerRefNorm: ligne.manufacturerRefNorm,
+      });
+      if (propositions.length > 0) {
+        propositionsParLigne.set(ligne.id, propositions);
+      }
+    }
+  }
 
-  return (
+  const lignesAnalyse = document.lineItems.map((ligne) => ({
+    id: ligne.id,
+    designation: ligne.designation,
+    reference: ligne.reference,
+    manufacturerRef: ligne.manufacturerRef,
+    quantity: Number(ligne.quantity),
+    unitPriceHt: Number(ligne.unitPriceHt),
+    totalHt: Number(ligne.totalHt),
+    comparaison: comparaisonParLigne.get(ligne.id),
+    historique: historiqueParReference.get(ligne.referenceNorm) ?? [],
+    confiancePct: confianceLigneExtraction(
+      {
+        reference: ligne.reference,
+        designation: ligne.designation,
+        manufacturerRef: ligne.manufacturerRef,
+        quantity: Number(ligne.quantity),
+        unitPriceHt: Number(ligne.unitPriceHt),
+      },
+      extraction?.confiance,
+    ),
+    propositionsRapprochement: propositionsParLigne.get(ligne.id) ?? [],
+  }));
+
+  const contenu = (
     <div className="app-page-wide flex flex-col gap-5">
       <Link href="/documents" className="text-sm text-muted-foreground hover:text-foreground">
         ← Retour à mes documents
@@ -155,14 +251,20 @@ export default async function DocumentDetailPage({
         </p>
       )}
 
-      {aUneAlerte && (
-        <p className="mt-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-600">
-          ▲ Au moins une ligne a augmenté de plus de 3 % par rapport à vos derniers achats chez{" "}
-          {document.distributor}
-          {impactTotal !== 0
-            ? ` — impact estimé de ${formaterEuros(impactTotal)} sur ce document.`
-            : "."}
-        </p>
+      {afficherAnalyse && (
+        <BandeauAnalyseIA
+          confiance={extraction?.confiance ?? null}
+          nombreLignes={document.lineItems.length}
+          avecHistorique={avecHistorique}
+          refsFabricant={refsFabricant}
+          repartition={repartitionLignes}
+          impactTotal={impactTotal}
+          distributeur={document.distributor}
+          champsExtraits={champsExtraits}
+          resumePhrase={resumePhrase}
+          verificationTotaux={verificationTotaux}
+          economiesCount={economiesCount}
+        />
       )}
 
       <div className="mt-8 grid gap-8 md:grid-cols-2">
@@ -223,94 +325,20 @@ export default async function DocumentDetailPage({
                 </div>
               </dl>
 
-              <h2 className="mt-6 text-sm font-medium text-muted-foreground">Lignes produits</h2>
-              <div className="mt-2 space-y-3">
-                {document.lineItems.length === 0 ? (
-                  <p className="rounded-2xl border border-[var(--border)] bg-white shadow-[var(--app-card-shadow)] p-6 text-center text-sm text-muted-foreground">
+              <h2 className="mt-6 text-sm font-medium text-muted-foreground">
+                Lignes analysées ({document.lineItems.length})
+              </h2>
+              <div className="mt-2">
+                {afficherAnalyse ? (
+                  <ListeLignesAnalyse
+                    lignes={lignesAnalyse}
+                    distributeur={document.distributor}
+                    afficherComparaison={comparaisons.length > 0}
+                  />
+                ) : (
+                  <p className="rounded-2xl border border-[var(--border)] bg-white p-6 text-center text-sm text-muted-foreground">
                     Aucune ligne extraite.
                   </p>
-                ) : (
-                  document.lineItems.map((ligne) => {
-                    const c = comparaisonParLigne.get(ligne.id);
-                    const enBaisse = c?.ecartEuros !== null && c?.ecartEuros !== undefined && c.ecartEuros < 0;
-                    return (
-                      <div
-                        key={ligne.id}
-                        className={`app-card-sm p-5 ${c?.alerte ? "border-red-200 bg-red-50/50" : ""}`}
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-                          <div className="min-w-0">
-                            <p className="break-words font-semibold text-foreground">{ligne.designation}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Réf. {ligne.reference} · Qté {Number(ligne.quantity)} ×{" "}
-                              {formaterMontant(ligne.unitPriceHt)}
-                            </p>
-                          </div>
-                          <p className="shrink-0 text-lg font-bold text-[var(--foreground)]">{formaterMontant(ligne.totalHt)}</p>
-                        </div>
-
-                        {comparaisons.length > 0 &&
-                          (c && c.dernierPrix !== null ? (
-                            <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-t border-border/60 pt-3 text-xs">
-                              <span className="text-muted-foreground">
-                                Prix habituel :{" "}
-                                <span
-                                  className={`font-semibold ${
-                                    c.alerte ? "text-red-400" : enBaisse ? "text-green-400" : "text-foreground"
-                                  }`}
-                                >
-                                  {c.alerte ? "▲ " : enBaisse ? "▼ " : ""}
-                                  {formaterEuros(c.dernierPrix)}
-                                </span>
-                                {c.ecartPourcent !== null && (
-                                  <span className="ml-1 text-muted-foreground">
-                                    ({c.ecartPourcent > 0 ? "+" : ""}
-                                    {c.ecartPourcent.toFixed(1)}%)
-                                  </span>
-                                )}
-                              </span>
-                              {c.moyenne12Mois !== null && (
-                                <span className="text-muted-foreground">Moy. 12 mois : {formaterEuros(c.moyenne12Mois)}</span>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="mt-4 border-t border-border/60 pt-3 text-xs text-muted-foreground">
-                              Nouveau produit chez ce distributeur — pas encore d&apos;historique de prix.
-                            </p>
-                          ))}
-
-                        {c?.alerte && (
-                          <div className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2.5 text-xs">
-                            <p className="flex items-start gap-2 font-medium text-red-300">
-                              <span className="leading-none">⚠️</span>
-                              <span>
-                                Hausse détectée
-                                {c.ecartPourcent !== null ? ` de ${c.ecartPourcent.toFixed(1)}%` : ""} par rapport à
-                                votre dernier achat chez {document.distributor}.
-                              </span>
-                            </p>
-                            {!c.referenceFabricantDetectee ? (
-                              <p className="mt-1 pl-6 text-red-300/70">
-                                Comparaison inter-enseignes indisponible (référence fabricant non identifiée).
-                              </p>
-                            ) : c.meilleurPrixAilleurs ? (
-                              <p className="mt-1 pl-6 font-medium text-emerald-400">
-                                💡 Moins cher chez {c.meilleurPrixAilleurs.distributor} :{" "}
-                                {formaterEuros(c.meilleurPrixAilleurs.prixHt)} (le{" "}
-                                {c.meilleurPrixAilleurs.date.toLocaleDateString("fr-FR")}).
-                              </p>
-                            ) : (
-                              <p className="mt-1 pl-6 text-red-300/70">
-                                Aucun prix plus bas trouvé ailleurs dans votre historique.
-                              </p>
-                            )}
-                          </div>
-                        )}
-
-                        <GraphiqueHistoriquePrix points={historiqueParReference.get(ligne.referenceNorm) ?? []} />
-                      </div>
-                    );
-                  })
                 )}
               </div>
             </>
@@ -318,5 +346,15 @@ export default async function DocumentDetailPage({
         </div>
       </div>
     </div>
+  );
+
+  if (!afficherAnalyse) {
+    return contenu;
+  }
+
+  return (
+    <AnalyseDocumentProvider documentId={document.id} lineReviewsInitial={lineReviews}>
+      {contenu}
+    </AnalyseDocumentProvider>
   );
 }

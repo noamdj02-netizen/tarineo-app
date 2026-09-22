@@ -9,8 +9,15 @@ import { logoFournisseur } from "@/lib/logosFournisseurs";
 import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { GraphiqueEconomiesSemaine, GraphiqueDepensesMensuelles } from "./AccueilCharts";
+import { GraphiqueDepensesMensuelles } from "./AccueilCharts";
+import { GraphiqueEconomiesSemaineMotion } from "./GraphiqueEconomiesSemaineMotion";
+import { AppMotionCard } from "@/components/tarineo/motion/AppMotionCard";
+import { AppStagger, AppStaggerItem } from "@/components/tarineo/motion/AppStagger";
 import { ImportDocument } from "../documents/ImportDocument";
+import { CarteResume } from "@/components/tarineo/CarteResume";
+import { DashboardCartesZero } from "@/components/tarineo/DashboardCartesZero";
+import { QuotaStrip } from "@/components/tarineo/QuotaStrip";
+import type { EtatQuota } from "@/lib/quota";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
@@ -95,47 +102,88 @@ export type DocumentRecent = {
   hausseNegative: boolean;
 };
 
-export function DashboardHeroImport({ compteVide }: { compteVide: boolean }) {
-  if (!compteVide) return null;
+export function DashboardHeroImport({
+  compteVide,
+  enAttenteDeDonnees = false,
+  etatQuota,
+  documentsEnCours = 0,
+}: {
+  compteVide: boolean;
+  enAttenteDeDonnees?: boolean;
+  etatQuota?: EtatQuota | null;
+  documentsEnCours?: number;
+}) {
+  if (!compteVide && !enAttenteDeDonnees) return null;
+
+  const titre = enAttenteDeDonnees ? "Indicateurs en cours de calcul" : "Démarrez votre historique";
+  const sousTitre = enAttenteDeDonnees
+    ? "Validez des factures ou bons de commande pour alimenter le tableau de bord."
+    : "Importez vos premiers documents — Tarinéo construit fournisseurs et alertes automatiquement.";
+
   return (
-    <section className="w-full min-w-0 rounded-[24px] bg-gradient-to-br from-[#FFF0E8] via-card to-[#F3F7FA] p-6 sm:p-8">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium uppercase tracking-wider text-primary">Votre espace est prêt</p>
-          <h2 className="mt-2 max-w-xl text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
-            Vous n&apos;avez encore aucun document
-          </h2>
-          <p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
-            Commencez avec une facture ou un devis. Tarinéo s&apos;occupe du reste — fournisseurs, produits,
-            historique de prix. Aucune donnée inventée.
-          </p>
-          <div className="mt-6">
-            <ImportDocument label="Importer un document" className="h-auto rounded-full px-6 py-3" />
-          </div>
+    <section className="w-full min-w-0 rounded-[20px] border border-border bg-card p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">{titre}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{sousTitre}</p>
         </div>
-        <MascotteDashboard variant="bulleProjets" className="mx-auto sm:mx-0 sm:shrink-0" priority />
+        {etatQuota && <QuotaStrip etat={etatQuota} />}
+      </div>
+
+      <div className="mt-4">
+        <DashboardCartesZero
+          documents={enAttenteDeDonnees ? documentsEnCours : 0}
+          documentsHint={enAttenteDeDonnees && documentsEnCours > 0 ? "En analyse" : undefined}
+        />
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <ImportDocument label="Importer un document" className="h-auto rounded-full px-5 py-2.5 text-sm" />
+        {enAttenteDeDonnees && (
+          <Button
+            variant="outline"
+            render={<Link prefetch={false} href="/documents" />}
+            className="h-auto rounded-full px-5 py-2.5 text-sm"
+          >
+            Voir mes documents
+          </Button>
+        )}
       </div>
     </section>
   );
 }
 
-export function DashboardBanniereReprise() {
+export function DashboardBanniereReprise({ etatQuota }: { etatQuota?: EtatQuota | null }) {
   return (
-    <section className="w-full min-w-0 rounded-[24px] border border-primary/20 bg-[#FFF0E8] p-5 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold text-foreground">
-            Votre espace est prêt. Importez vos premiers documents pour commencer.
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Vous aviez choisi de le faire plus tard — c&apos;est le bon moment, depuis ce téléphone ou votre
-            ordinateur.
-          </p>
-          <div className="mt-4">
-            <ImportDocument label="Importer mes documents" className="rounded-full" />
-          </div>
+    <section className="w-full min-w-0 rounded-[20px] border border-primary/25 bg-[#FFF8F5] p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-foreground">Import en attente</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Vous aviez reporté — il suffit d&apos;un import pour démarrer.</p>
         </div>
-        <MascotteDashboard variant="salut" className="mx-auto sm:mx-0" />
+        {etatQuota && <QuotaStrip etat={etatQuota} />}
+      </div>
+      <div className="mt-4">
+        <DashboardCartesZero />
+      </div>
+      <div className="mt-4">
+        <ImportDocument label="Importer mes documents" className="h-auto rounded-full px-5 py-2.5 text-sm" />
+      </div>
+    </section>
+  );
+}
+
+export function DashboardAnalyseEnCours({ documentsEnCours }: { documentsEnCours: number }) {
+  if (documentsEnCours <= 0) return null;
+
+  return (
+    <section className="w-full min-w-0 rounded-[20px] border border-[#FFE4D6] bg-[#FFF8F5] p-4 sm:p-5">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <CarteResume label="En analyse" valeur={String(documentsEnCours)} hint="Extraction IA en cours" />
+          <p className="text-sm text-muted-foreground">Le tableau de bord se met à jour à la fin du traitement.</p>
+        </div>
+        <MascotteAnalyse size="sm" className="shrink-0" />
       </div>
     </section>
   );
@@ -156,10 +204,9 @@ export function DashboardAFaire({
     <section className="w-full min-w-0 rounded-[24px] border border-[#E8EAED] bg-card p-5 sm:p-6">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-8">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-semibold text-foreground">À vérifier</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Ce qui mérite votre attention aujourd&apos;hui.</p>
+          <h2 className="text-base font-semibold text-foreground">À vérifier</h2>
 
-          <ul className="mt-4 flex flex-col gap-3">
+          <ul className="mt-3 flex flex-col gap-2">
             {aVerifier > 0 && (
               <li className="flex items-center gap-3 rounded-2xl bg-secondary px-4 py-3.5 sm:gap-4">
                 <span
@@ -169,10 +216,7 @@ export function DashboardAFaire({
                   {aVerifier}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-foreground">
-                    Document{aVerifier > 1 ? "s" : ""} à vérifier
-                  </p>
-                  <p className="text-xs text-muted-foreground">Confiance faible — Tarinéo n&apos;a rien inventé.</p>
+                  <p className="font-medium text-foreground">À vérifier</p>
                 </div>
                 <Button size="sm" render={<Link href="/documents" />} className="shrink-0 rounded-full">
                   Vérifier
@@ -188,10 +232,7 @@ export function DashboardAFaire({
                   {hausses}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-foreground">
-                    Hausse{hausses > 1 ? "s" : ""} de prix détectée{hausses > 1 ? "s" : ""}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Basées sur votre historique d&apos;achats.</p>
+                  <p className="font-medium text-foreground">Hausses détectées</p>
                 </div>
                 <Button
                   size="sm"
@@ -241,11 +282,13 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
+        <AppStagger className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-6">
           {fournisseurs.map((f) => {
             const score = scoreObjectif(f);
             return (
-              <Card key={f.distributorNorm} className="h-full rounded-[24px] ring-0">
+              <AppStaggerItem key={f.distributorNorm}>
+              <AppMotionCard>
+              <Card className="h-full rounded-[24px] ring-0">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <LogoFournisseur nom={f.distributor} norm={f.distributorNorm} logoUrl={f.logoUrl} />
@@ -274,9 +317,11 @@ export function DashboardSupplierRow({ fournisseurs }: { fournisseurs: Fournisse
                   </Button>
                 </CardFooter>
               </Card>
+              </AppMotionCard>
+              </AppStaggerItem>
             );
           })}
-        </div>
+        </AppStagger>
       )}
     </section>
   );
@@ -397,7 +442,7 @@ export function DashboardWeeklySavings({
               )}
             </div>
             <div className="overflow-x-auto">
-              <GraphiqueEconomiesSemaine donnees={donneesSemaine} />
+              <GraphiqueEconomiesSemaineMotion donnees={donneesSemaine} />
             </div>
           </>
         )}

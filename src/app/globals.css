@@ -250,6 +250,32 @@ html {
   box-shadow: var(--app-card-shadow);
 }
 
+/* Micro-interactions globales — app SaaS */
+@media (prefers-reduced-motion: no-preference) {
+  .app-theme [data-slot="button"]:not(:disabled):active,
+  .app-theme .app-btn-primary:active,
+  .app-theme .app-btn-ghost:active,
+  .app-theme a.rounded-full:active,
+  .app-theme button.rounded-full:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .app-theme [data-slot="card"] {
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    }
+    .app-theme [data-slot="card"]:hover {
+      transform: scale(1.005);
+    }
+    .app-theme .app-list-link {
+      transition: background-color 0.15s ease, transform 0.15s ease-out;
+    }
+    .app-theme .app-list-link:hover {
+      transform: translateX(2px);
+    }
+  }
+}
+
 .app-card-sm {
   border-radius: 16px;
   border: none;
@@ -291,8 +317,8 @@ html {
   border-radius: 12px;
   border: 1px solid var(--border);
   background: #ffffff;
-  padding: 0.625rem 0.75rem;
-  font-size: 0.875rem;
+  padding: 0.75rem 0.875rem;
+  font-size: 1rem;
   color: var(--foreground);
   outline: none;
 }
@@ -324,7 +350,7 @@ html {
   font-size: 0.875rem;
   font-weight: 600;
   color: #ffffff;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease-out;
 }
 .app-btn-primary:hover {
   opacity: 0.9;
@@ -347,7 +373,7 @@ html {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--foreground);
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, transform 0.15s ease-out;
 }
 .app-btn-secondary:hover {
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
@@ -450,6 +476,37 @@ html {
   animation-delay: calc(var(--index, 0) * 60ms);
 }
 
+/* Recherche fournisseur IA : icônes qui orbitent autour du logo pendant l'attente. */
+@keyframes fournisseur-icone-flotte {
+  0%,
+  100% {
+    transform: rotate(0deg) translateX(18px) rotate(0deg);
+    opacity: 0.45;
+  }
+  50% {
+    transform: rotate(180deg) translateX(22px) rotate(-180deg);
+    opacity: 1;
+  }
+}
+.fournisseur-icone-flotte {
+  animation: fournisseur-icone-flotte 2.2s ease-in-out infinite;
+  animation-delay: var(--delay, 0ms);
+}
+
+@keyframes fournisseur-resultat-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.fournisseur-resultat-in {
+  animation: fournisseur-resultat-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -460,7 +517,9 @@ html {
   .devis-etape,
   .devis-ia-respire,
   .devis-ia-balayage,
-  .devis-ligne-in {
+  .devis-ligne-in,
+  .fournisseur-icone-flotte,
+  .fournisseur-resultat-in {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

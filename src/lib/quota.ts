@@ -92,7 +92,8 @@ export const QUOTAS_DEVIS_IA_PLAN: Record<string, number> = {
 export const QUOTA_DEVIS_IA_ESSAI = 10;
 
 export function quotaDevisIA(plan: string | null, subscriptionStatus: string | null): number {
-  const paye = subscriptionStatus === "active";
+  if (subscriptionStatus === "past_due" || subscriptionStatus === "unpaid") return 0;
+  const paye = subscriptionStatus === "active" || subscriptionStatus === "trialing";
   return paye ? (QUOTAS_DEVIS_IA_PLAN[plan ?? ""] ?? QUOTA_DEVIS_IA_ESSAI) : QUOTA_DEVIS_IA_ESSAI;
 }
 
@@ -116,10 +117,12 @@ export function calculerEtatQuota(params: {
   maintenant?: Date;
 }): EtatQuota {
   const maintenant = params.maintenant ?? new Date();
-  const paye = params.subscriptionStatus === "active";
+  const paye = params.subscriptionStatus === "active" || params.subscriptionStatus === "trialing";
+  const paiementEnRetard =
+    params.subscriptionStatus === "past_due" || params.subscriptionStatus === "unpaid";
 
   const finEssai = ajouterMois(params.createdAtUtilisateur, DUREE_ESSAI_MOIS);
-  if (!paye && maintenant >= finEssai) {
+  if (paiementEnRetard || (!paye && maintenant >= finEssai)) {
     return { phase: "bloque_paiement_requis", finEssai };
   }
 
@@ -153,4 +156,27 @@ export function calculerEtatQuota(params: {
     documentsRestantsCeMois: Math.max(0, quotaMensuel - documentsCeMoisHorsHistorique),
     quotaAtteint: documentsCeMoisHorsHistorique >= quotaMensuel,
   };
+}
+
+/** Charge l'état quota document d'un utilisateur (import initial ou mensuel). */
+export async function chargerEtatQuotaUtilisateur(userId: string, maintenant = new Date()): Promise<EtatQuota> {
+  const { prisma } = await import("@/lib/prisma");
+  const debutMois = debutMoisUTC(maintenant);
+  const [utilisateur, documentsAvantCeMois, documentsCeMois] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { createdAt: true, plan: true, subscriptionStatus: true },
+    }),
+    prisma.document.count({ where: { userId, createdAt: { lt: debutMois } } }),
+    prisma.document.count({ where: { userId, createdAt: { gte: debutMois } } }),
+  ]);
+
+  return calculerEtatQuota({
+    createdAtUtilisateur: utilisateur?.createdAt ?? maintenant,
+    plan: utilisateur?.plan ?? null,
+    subscriptionStatus: utilisateur?.subscriptionStatus ?? null,
+    documentsAvantCeMois,
+    documentsCeMois,
+    maintenant,
+  });
 }

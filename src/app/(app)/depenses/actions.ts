@@ -47,6 +47,11 @@ export async function definirObjectif(donnees: unknown): Promise<ResultatObjecti
     update: { distributor, targetHt, periodStartMonth, periodStartDay },
   });
 
+  const { synchroniserAlertesBfa } = await import("@/lib/alertesBfa");
+  await synchroniserAlertesBfa(userId).catch((erreur) => {
+    console.error("Synchronisation alertes BFA :", erreur);
+  });
+
   revalidatePath("/accueil");
 
   return { succes: true };

@@ -11,9 +11,13 @@ import {
   resoudreLogoFournisseur,
 } from "@/lib/logosFournisseursPersistants";
 import { normaliserDistributeur } from "@/lib/normalisation";
+import { limiteDistributeurs, messageFonctionPlanRequise } from "@/lib/planGating";
 import { BIBLIOTHEQUE_FOURNISSEURS, enseigneParNorm } from "@/lib/bibliothequeFournisseurs";
+import { logoDev } from "@/lib/fournisseursConnus";
+import { listerEnseignesPersonnalisees } from "@/lib/rechercherFournisseur";
+import { BibliothequeOnglets } from "./RechercheFournisseurIA";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
-import { BtnPrimary } from "@/components/tarineo/Actions";
+import { BtnPrimary, BtnGhost } from "@/components/tarineo/Actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -62,7 +66,7 @@ export default async function FournisseursPage() {
   if (!session?.user?.id) redirect("/connexion");
   const userId = session.user.id;
 
-  const [depenses, documents, alertes] = await Promise.all([
+  const [depenses, documents, alertes, utilisateur, enseignesPerso] = await Promise.all([
     calculerDepensesParDistributeur(userId),
     prisma.document.findMany({
       where: { userId, distributorNorm: { not: null } },
@@ -79,6 +83,11 @@ export default async function FournisseursPage() {
       orderBy: { createdAt: "desc" },
       take: 200,
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { plan: true, subscriptionStatus: true },
+    }),
+    listerEnseignesPersonnalisees(userId),
   ]);
 
   const metaParNorm = new Map<string, { distributor: string; count: number; dernier: Date | null }>();
@@ -136,7 +145,10 @@ export default async function FournisseursPage() {
     });
   }
 
-  const suivis = [...suivisMap.values()].sort((a, b) => b.depenses - a.depenses || b.nbDocs - a.nbDocs);
+  const suivisTous = [...suivisMap.values()].sort((a, b) => b.depenses - a.depenses || b.nbDocs - a.nbDocs);
+  const limitePlan = limiteDistributeurs(utilisateur?.plan ?? null, utilisateur?.subscriptionStatus ?? null);
+  const suivis = limitePlan ? suivisTous.slice(0, limitePlan) : suivisTous;
+  const fournisseursMasques = limitePlan ? Math.max(0, suivisTous.length - limitePlan) : 0;
 
   const logosImportes = await chargerLogosFournisseursUtilisateur(
     userId,
@@ -144,21 +156,44 @@ export default async function FournisseursPage() {
   );
 
   const normsSuivis = new Set(suivis.map((s) => normCle(s.distributorNorm)));
+  const slugsPerso = new Set(enseignesPerso.map((e) => e.slug));
   const bibliotheque = BIBLIOTHEQUE_FOURNISSEURS.filter((e) => {
     const hint = normCle(e.normHint);
+    if (slugsPerso.has(e.id)) return false;
     return ![...normsSuivis].some((n) => n.includes(hint) || hint.includes(n));
   });
+
+  const enseignesAjoutees = enseignesPerso.map((e) => ({
+    slug: e.slug,
+    nom: e.nom,
+    metiers: e.metiers,
+    logoUrl: e.domaineLogo ? logoDev(e.domaineLogo) : null,
+  }));
 
   return (
     <div>
       <PageHeader
         title="Fournisseurs"
         subtitle="Vos enseignes déjà suivies, puis une bibliothèque pour démarrer un import."
-        actions={<BtnPrimary href="/documents">Importer un devis</BtnPrimary>}
+        actions={
+          <>
+            <BtnGhost href="/veille">Veille prix</BtnGhost>
+            <BtnPrimary href="/documents">Importer un devis</BtnPrimary>
+          </>
+        }
       />
 
-      <section className="mb-8">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Mes fournisseurs</h2>
+      <section className="mb-6">
+        <h2 className="mb-3 text-base font-semibold text-foreground">Mes fournisseurs</h2>
+        {fournisseursMasques > 0 && (
+          <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {messageFonctionPlanRequise("distributeurs")} ({fournisseursMasques} fournisseur
+            {fournisseursMasques > 1 ? "s" : ""} masqué{fournisseursMasques > 1 ? "s" : ""}).
+            <Link href="/parametres?onglet=abonnement" className="ml-1 font-semibold underline">
+              Passer à Pro
+            </Link>
+          </p>
+        )}
         {suivis.length === 0 ? (
           <PageCard>
             <Empty className="py-8">
@@ -178,12 +213,12 @@ export default async function FournisseursPage() {
             </Empty>
           </PageCard>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {suivis.map((f) => (
               <Link
                 key={f.distributorNorm}
                 href={`/fournisseurs/${encodeURIComponent(f.distributorNorm)}`}
-                className="flex flex-col gap-4 rounded-[24px] bg-card p-5 transition-colors hover:bg-secondary/60"
+                className="flex flex-col gap-3 rounded-[20px] bg-card p-4 transition-colors hover:bg-secondary/60"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
@@ -209,12 +244,9 @@ export default async function FournisseursPage() {
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-end justify-between border-t border-border/60 pt-3">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Dépenses période</p>
-                    <p className="text-lg font-medium">{formaterEuros(f.depenses)}</p>
-                  </div>
-                  <span className="text-sm text-primary">Voir →</span>
+                <div className="border-t border-border/60 pt-3">
+                  <p className="text-xs text-muted-foreground">Dépenses période</p>
+                  <p className="text-base font-medium">{formaterEuros(f.depenses)}</p>
                 </div>
               </Link>
             ))}
@@ -222,35 +254,27 @@ export default async function FournisseursPage() {
         )}
       </section>
 
-      <section>
-        <h2 className="mb-2 text-lg font-semibold text-foreground">Bibliothèque d&apos;enseignes</h2>
-        <p className="mb-4 max-w-2xl text-sm text-muted-foreground">
-          Pas un catalogue de prix publics : choisissez une enseigne pour importer un de ses devis et le comparer à{" "}
-          <strong className="font-medium text-foreground">votre</strong> historique.
-        </p>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {bibliotheque.map((e) => (
-            <div key={e.id} className="flex flex-col gap-3 rounded-[20px] border border-border/70 bg-card p-4">
-              <div className="flex items-center gap-3">
-                <Logo nom={e.nom} norm={e.normHint} size={36} />
-                <div>
+      <BibliothequeOnglets
+        enseignesAjoutees={enseignesAjoutees}
+        catalogue={
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {bibliotheque.map((e) => (
+              <Link
+                key={e.id}
+                href={`/fournisseurs/${e.id}`}
+                className="flex items-center gap-3 rounded-[20px] border border-dashed border-border/80 bg-card p-4 transition-colors hover:border-primary/40 hover:bg-[#FFF8F5]"
+              >
+                <Logo nom={e.nom} norm={e.normHint} size={40} />
+                <div className="min-w-0 flex-1">
                   <p className="font-medium text-foreground">{e.nom}</p>
                   <p className="text-xs text-muted-foreground">{e.metiers}</p>
+                  <p className="mt-1 text-xs font-medium text-primary">Importer un devis →</p>
                 </div>
-              </div>
-              <p className="flex-1 text-xs leading-relaxed text-muted-foreground">{e.description}</p>
-              <Button
-                size="sm"
-                variant="outline"
-                render={<Link href={`/fournisseurs/${e.id}`} />}
-                className="w-full rounded-full"
-              >
-                Voir la fiche {e.nom}
-              </Button>
-            </div>
-          ))}
-        </div>
-      </section>
+              </Link>
+            ))}
+          </div>
+        }
+      />
     </div>
   );
 }

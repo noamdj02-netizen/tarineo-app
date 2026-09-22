@@ -7,10 +7,22 @@ import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { genererPdfDevis, type EntrepriseInfoPdf } from "@/lib/devisPdf";
 import { quotaDevisIA, debutMoisUTC } from "@/lib/quota";
+import { accesDevisClientPdf } from "@/lib/planGating";
 
 // Partagé entre la création (devis-clients/nouveau/page.tsx) et la modification
 // (devis-clients/[id]/modifier/page.tsx) d'un devis.
 export const CONDITIONS_PAIEMENT_PAR_DEFAUT = "Acompte de 30% à la commande, solde à réception des travaux.";
+
+export const DUREE_VALIDITE_PAR_DEFAUT = 30;
+
+export const PRESETS_VALIDITE_JOURS = [15, 30, 60, 90] as const;
+
+export const PRESETS_CONDITIONS_PAIEMENT: { label: string; valeur: string }[] = [
+  { label: "30 % acompte", valeur: CONDITIONS_PAIEMENT_PAR_DEFAUT },
+  { label: "50 % acompte", valeur: "Acompte de 50% à la commande, solde à réception des travaux." },
+  { label: "À réception", valeur: "Paiement intégral à réception des travaux." },
+  { label: "30 jours", valeur: "Paiement à 30 jours date de facture." },
+];
 
 const EXTENSION_VERS_MIME: Record<string, string> = {
   png: "image/png",
@@ -109,7 +121,15 @@ export async function genererEtStockerPdfDevis(
   userId: string,
   quote: ClientQuote,
   lignes: ClientQuoteLine[]
-): Promise<{ succes: boolean }> {
+): Promise<{ succes: boolean; erreurPlan?: boolean }> {
+  const utilisateur = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { plan: true, subscriptionStatus: true },
+  });
+  if (!utilisateur || !accesDevisClientPdf(utilisateur.plan, utilisateur.subscriptionStatus)) {
+    return { succes: false, erreurPlan: true };
+  }
+
   const entreprise = await construireInfoEntreprisePourPdf(userId);
   if (!entreprise) return { succes: false };
 
@@ -191,6 +211,33 @@ export function deduireStatutDevis(
   finValidite.setUTCDate(finValidite.getUTCDate() + quote.dureeValiditeJours);
   if (finValidite < maintenant) return "expire";
   return "envoye";
+}
+
+export function filtrerDevis(devis: DevisClientListe[], q: string): DevisClientListe[] {
+  const terme = q.trim().toLowerCase();
+  if (!terme) return devis;
+  return devis.filter((d) => d.numero.toLowerCase().includes(terme) || d.clientNom.toLowerCase().includes(terme));
+}
+
+export function calculerStatsDevis(devis: DevisClientListe[]) {
+  let totalHt = 0;
+  let acceptes = 0;
+  let enCours = 0;
+  let expires = 0;
+  for (const d of devis) {
+    totalHt += d.montantHt;
+    if (d.statut === "accepte") acceptes++;
+    else if (d.statut === "expire") expires++;
+    else enCours++;
+  }
+  const tauxTransformation = devis.length > 0 ? Math.round((acceptes / devis.length) * 100) : 0;
+  return { total: devis.length, totalHt, acceptes, enCours, expires, tauxTransformation };
+}
+
+export function dateFinValiditeDevis(dateEmission: Date, dureeValiditeJours: number): Date {
+  const fin = new Date(dateEmission);
+  fin.setUTCDate(fin.getUTCDate() + dureeValiditeJours);
+  return fin;
 }
 
 export async function listerDevisUtilisateur(userId: string): Promise<DevisClientListe[]> {

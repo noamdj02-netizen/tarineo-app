@@ -53,6 +53,17 @@ export function IconInvoice({ className }: { className?: string }) {
   );
 }
 
+/** Analyses — courbe de tendance */
+export function IconAnalyses({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <path d="M4 19V5" />
+      <path d="M4 19h16" />
+      <path d="M8 15l3-4 3 2.5 4-6" />
+    </svg>
+  );
+}
+
 /** Paramètres — roue crantée */
 export function IconSettings({ className }: { className?: string }) {
   return (

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { FileTextIcon } from "lucide-react";
-import { getSession } from "@/lib/session";
+import { getSession, idDonneesUtilisateur } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { BadgeConfiance, BadgeDoublon, BadgeStatutDocument } from "@/components/tarineo/BadgeStatutDocument";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
@@ -19,8 +19,12 @@ import {
   TITRES_PAGE_DOCUMENTS,
   TYPES_FILTRABLES,
 } from "@/lib/documentLabels";
+import { chargerStatsDocuments } from "@/lib/statsDocuments";
+import { QuotaStrip } from "@/components/tarineo/QuotaStrip";
+import { EnBrefDocuments } from "@/components/tarineo/EnBrefDocuments";
+import { AidePageTooltip } from "@/components/tarineo/AidePageTooltip";
 import { NavTypeMobile } from "./NavTypeMobile";
-import { normaliserReference } from "@/lib/normalisation";
+import { filtreRechercheDocument } from "@/lib/rechercheDocuments";
 import { historiqueEstSuffisant } from "@/lib/historique";
 import { calculerEtatQuota, debutMoisUTC, documentsRestantsEnvoi, MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
 import { parserPayloadsAlertesHausse, type PayloadAlerteHausse } from "@/lib/comparaisonPrix";
@@ -30,9 +34,11 @@ interface Recherche {
   mois?: string;
   distributeur?: string;
   reference?: string;
+  q?: string;
   upgrade?: string;
   plan?: string;
   hausse?: string;
+  verifier?: string;
   type?: string;
   enseigne?: string;
   onboarding?: string;
@@ -70,17 +76,19 @@ export async function DocumentsPage({
   if (!session?.user?.id) {
     redirect("/connexion");
   }
-  const userId = session.user.id;
+  const userId = await idDonneesUtilisateur(session.user.id);
   const maintenant = new Date();
 
-  const { mois, distributeur, reference, upgrade, plan, hausse, type, enseigne, onboarding, scanner } =
+  const { mois, distributeur, reference, q, upgrade, plan, hausse, verifier, type, enseigne, onboarding, scanner } =
     await searchParams;
+  const termeRecherche = (q ?? reference)?.trim() || undefined;
 
   if (!typeFixe && estTypeValide(type)) {
     redirect(ROUTES_DOCUMENTS_PAR_TYPE[type]);
   }
 
   const filtreHausse = hausse === "1";
+  const filtreVerifier = verifier === "1";
   const typeValide = typeFixe ?? (estTypeValide(type) ? type : undefined);
   const clePage = typeValide ?? "tous";
   const debutMois = debutMoisUTC(maintenant);
@@ -126,8 +134,8 @@ export async function DocumentsPage({
     };
     where.documentDate = bornesMois;
   }
-  if (reference?.trim()) {
-    where.lineItems = { some: { referenceNorm: { contains: normaliserReference(reference) } } };
+  if (termeRecherche) {
+    Object.assign(where, filtreRechercheDocument(termeRecherche));
   }
 
   // Compteurs affichés dans les options du filtre Type ("Devis (3)") : respectent le
@@ -147,6 +155,9 @@ export async function DocumentsPage({
 
   if (typeValide) {
     where.type = typeValide;
+  }
+  if (filtreVerifier) {
+    where.status = "NEEDS_REVIEW";
   }
 
   // Filtre "hausse détectée" : s'appuie sur les alertes PRICE_INCREASE déjà générées
@@ -174,7 +185,9 @@ export async function DocumentsPage({
     where.id = { in: [...alertesParDocument.keys()] };
   }
 
-  const desFiltresActifs = Boolean(distributeur || mois || reference?.trim() || filtreHausse || typeValide);
+  const desFiltresActifs = Boolean(
+    distributeur || mois || termeRecherche || filtreHausse || filtreVerifier || typeValide,
+  );
 
   const documents = await prisma.document.findMany({
     where,
@@ -207,49 +220,11 @@ export async function DocumentsPage({
           : { cas: "generique" }
       : null;
 
-  // Mini-stats "En bref" : volontairement portées sur le type actif seul (ignore
-  // Distributeur/Mois/Référence/Hausse, contrairement à `documents` ci-dessus) — une vue
-  // d'ensemble du type qui reste utile même quand la liste au-dessus est filtrée à vide
-  // (ex. Cas C avec un distributeur qui n'a rien pour ce type). Masquée uniquement quand
-  // ce total est à 0 (Cas A), le seul cas où elle n'aurait rien à montrer.
-  const whereStats: Prisma.DocumentWhereInput = typeValide ? { userId, type: typeValide } : { userId };
-  const statsTotal = await prisma.document.count({ where: whereStats });
-  let statsSommeHt = 0;
-  let statsParDistributeurBruts: { distributorNorm: string | null; _count: { _all: number } }[] = [];
-  let statsHausses = 0;
-  if (statsTotal > 0) {
-    const [montant, parDistributeur, statsDocumentsIds] = await Promise.all([
-      prisma.document.aggregate({ where: whereStats, _sum: { totalHt: true } }),
-      prisma.document.groupBy({
-        by: ["distributorNorm"],
-        where: { ...whereStats, distributorNorm: { not: null } },
-        _count: { _all: true },
-      }),
-      prisma.document.findMany({ where: whereStats, select: { id: true } }),
-    ]);
-    statsSommeHt = Number(montant._sum.totalHt ?? 0);
-    statsParDistributeurBruts = parDistributeur;
-    const idsDocumentsType = new Set(statsDocumentsIds.map((d) => d.id));
-    const alertesHausse12Mois = await prisma.alert.findMany({
-      where: {
-        userId,
-        type: "PRICE_INCREASE",
-        createdAt: { gte: new Date(Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth() - 11, 1)) },
-      },
-      select: { payload: true },
-    });
-    statsHausses = parserPayloadsAlertesHausse(alertesHausse12Mois).filter((p) =>
-      idsDocumentsType.has(p.documentId)
-    ).length;
-  }
-  const statsParDistributeur = statsParDistributeurBruts
-    .map((d) => ({
-      norm: d.distributorNorm as string,
-      label: distributeursOptions.get(d.distributorNorm as string) ?? (d.distributorNorm as string),
-      count: d._count._all,
-    }))
-    .sort((a, b) => b.count - a.count);
-  const maxStatsParDistributeur = Math.max(...statsParDistributeur.map((d) => d.count), 1);
+  const statsDocuments = await chargerStatsDocuments(userId, {
+    type: typeValide,
+    distributeursOptions,
+    maintenant,
+  });
 
   const etatQuota = utilisateur
     ? calculerEtatQuota({
@@ -268,179 +243,98 @@ export async function DocumentsPage({
       ? Math.min(MAX_FICHIERS_PAR_LOT, Math.max(0, documentsRestantsEnvoi(etatQuota)))
       : MAX_FICHIERS_PAR_LOT;
 
+  const afficherVideSimplifie = documentsTotal === 0 && !desFiltresActifs && !typeFixe;
+  const enseigneCible = enseigne?.trim();
+
   return (
     <div className="app-page flex flex-col gap-6">
-      <section className="rounded-[24px] bg-white p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-medium text-[var(--foreground)]">{TITRES_PAGE_DOCUMENTS[clePage]}</h1>
-          <p className="mt-2 max-w-xl text-sm text-foreground/80">{SOUS_TITRES_PAGE_DOCUMENTS[clePage]}</p>
-          {typeValide && (
-            <p className="mt-3 max-w-xl rounded-2xl bg-[#FFF0E8] px-4 py-3 text-sm text-[#172935]">
-              {AIDE_PAGE_DOCUMENTS[typeValide]}
-            </p>
+      <section className="rounded-[20px] bg-white p-4 sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-[22px] font-semibold leading-tight tracking-tight text-[#172935] sm:text-[26px]">
+                {TITRES_PAGE_DOCUMENTS[clePage]}
+              </h1>
+              {typeValide && <AidePageTooltip texte={AIDE_PAGE_DOCUMENTS[typeValide]} />}
+            </div>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">{SOUS_TITRES_PAGE_DOCUMENTS[clePage]}</p>
+            {(enseigneCible || (!historiqueSuffisant && documentsTotal > 0)) && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {enseigneCible && (
+                  <span className="rounded-full bg-[#FFF0E8] px-3 py-1 text-xs font-medium text-primary">
+                    Enseigne · {enseigneCible}
+                  </span>
+                )}
+                {!historiqueSuffisant && documentsTotal > 0 && (
+                  <span
+                    className="rounded-full bg-secondary px-3 py-1 text-xs text-muted-foreground"
+                    title="Au moins 2 achats chez la même enseigne sont nécessaires pour comparer les prix."
+                  >
+                    Alertes · historique en cours
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+          {!bloquePaiementRequis && (
+            <div className="flex flex-col items-stretch gap-2 sm:items-end">
+              {etatQuota && <QuotaStrip etat={etatQuota} className="w-full sm:w-auto" />}
+              <ImportDocument
+                quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
+                maxFichiers={maxFichiersImport}
+                autoOpen={onboarding === "1" || scanner === "1"}
+                preferCamera={scanner === "1"}
+              />
+            </div>
           )}
         </div>
-        {!bloquePaiementRequis && (
-          <ImportDocument
-            quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
-            maxFichiers={maxFichiersImport}
-            autoOpen={onboarding === "1" || scanner === "1"}
-            preferCamera={scanner === "1"}
-          />
-        )}
-      </div>
-
-      {documentsTotal === 0 && !bloquePaiementRequis && etatQuota?.phase === "historique" && (
-        <div className="mt-6 app-banner text-sm">
-          <p className="font-semibold text-[var(--foreground)]">
-            Bienvenue sur Tarineo — importez votre historique pour activer les alertes de hausse de prix.
-          </p>
-          <p className="mt-1 text-muted-foreground">
-            La plupart des distributeurs (Cedeo, Point P, Tereva...) permettent de retélécharger vos documents
-            passés depuis votre espace client.
-          </p>
-          <p className="mt-3 font-medium text-foreground">
-            Import initial : {etatQuota.documentsTotal}/{etatQuota.limiteHistorique} documents
-          </p>
-        </div>
-      )}
-
-      {enseigne?.trim() && (
-        <div className="mt-6 app-banner text-sm">
-          <p className="font-semibold text-[var(--foreground)]">
-            Importez un devis ou une facture {enseigne.trim()}
-          </p>
-          <p className="mt-1 text-muted-foreground">
-            Une fois validé, cette enseigne apparaîtra dans Fournisseurs et Tarineo comparera les prix à votre
-            historique personnel.
-          </p>
-        </div>
-      )}
-
-      {onboarding === "1" && (
-        <div className="mt-6 app-banner text-sm">
-          <p className="font-semibold text-[var(--foreground)]">Importez vos premiers documents</p>
-          <p className="mt-1 text-muted-foreground">
-            PDF, photos ou plusieurs fichiers à la fois. Tarinéo lit, extrait et construit votre espace — sans
-            inventer de données.
-          </p>
-        </div>
-      )}
-
-      {etatQuota?.phase === "historique" && documentsTotal > 0 && (
-        <div className="mt-6 flex gap-3 app-banner text-sm">
-          <span className="mt-0.5 shrink-0 text-accent" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width={20}
-              height={20}
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5.5M12 8v.01" />
-            </svg>
-          </span>
-          <div>
-            <p className="font-medium text-foreground">
-              Import initial : {etatQuota.documentsTotal}/{etatQuota.limiteHistorique} documents
-            </p>
-            <p className="mt-1 text-muted-foreground">
-              Ce quota d&apos;import de votre historique est indépendant de votre quota mensuel — utilisez-le pour
-              importer vos anciens devis et factures sans entamer votre forfait.
-              {!historiqueSuffisant &&
-                " Tarineo a besoin d'au moins deux documents d'un même distributeur pour détecter une hausse de prix : les alertes s'activeront automatiquement dès que suffisamment d'achats seront enregistrés pour une même enseigne."}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint && (
-        <div className="mt-6 flex gap-3 app-banner text-sm">
-          <span className="mt-0.5 shrink-0 text-accent" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width={20}
-              height={20}
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5.5M12 8v.01" />
-            </svg>
-          </span>
-          <div>
-            <p className="font-medium text-foreground">
-              Quota mensuel atteint ({etatQuota.quotaMensuel} documents/mois)
-            </p>
-            <p className="mt-1 text-muted-foreground">
-              {etatQuota.surPlanReel
-                ? "Vous pourrez de nouveau envoyer des documents le mois prochain."
-                : "Ce plafond s'applique pendant l'essai gratuit, quel que soit le plan visé. Il passera au quota de votre formule (jusqu'à 1 000 documents/mois) dès votre premier moyen de paiement enregistré."}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {etatQuota?.phase === "mensuel" && !etatQuota.quotaAtteint && (
-        <p className="mt-4 text-xs text-muted-foreground">
-          {etatQuota.documentsCeMoisHorsHistorique}/{etatQuota.quotaMensuel} documents envoyés ce mois-ci
-          {!etatQuota.surPlanReel ? " (palier d'essai)" : ""}.
-        </p>
-      )}
-
-      {/* Pendant la phase "historique" (import initial), ce message est déjà intégré au
-          bandeau "Import initial : X/100 documents" ci-dessus plutôt que dupliqué dans un
-          second encart identique visuellement — voir etatQuota?.phase === "historique". */}
-      {!historiqueSuffisant && documentsTotal > 0 && !bloquePaiementRequis && etatQuota?.phase !== "historique" && (
-        <div className="mt-6 flex gap-3 app-banner text-sm">
-          <span className="mt-0.5 shrink-0 text-accent" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.75}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              width={20}
-              height={20}
-              className="h-5 w-5"
-            >
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v5.5M12 8v.01" />
-            </svg>
-          </span>
-          <div>
-            <p className="font-medium text-foreground">Historique encore insuffisant pour détecter une hausse</p>
-            <p className="mt-1 text-muted-foreground">
-              Tarineo a besoin d&apos;au moins deux documents d&apos;un même distributeur pour comparer un prix
-              et repérer une hausse — sans historique, il n&apos;y a rien à comparer. Continuez à envoyer vos
-              devis et factures au fil du temps : les alertes s&apos;activeront automatiquement dès que
-              suffisamment d&apos;achats seront enregistrés pour une même enseigne.
-            </p>
-          </div>
-        </div>
-      )}
       </section>
 
-      <section id="documents-envoyes" className="scroll-mt-6 rounded-[24px] bg-white p-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-medium text-[var(--foreground)]">Documents envoyés</h2>
+      <section id="documents-envoyes" className="scroll-mt-6 rounded-[20px] bg-white p-4 sm:p-5">
+        {afficherVideSimplifie ? (
+          <Empty className="py-12">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <FileTextIcon />
+              </EmptyMedia>
+              <EmptyTitle>Photographiez votre premier document</EmptyTitle>
+              <EmptyDescription>
+                Devis, facture ou bon de commande — Tarinéo lit le document et construit votre historique de prix
+                automatiquement.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <ImportDocument
+                quotaAtteint={etatQuota?.phase === "mensuel" && etatQuota.quotaAtteint}
+                maxFichiers={maxFichiersImport}
+                label="Photographier mon document"
+                className="h-auto rounded-full px-8 py-4 text-base"
+              />
+            </EmptyContent>
+          </Empty>
+        ) : (
+        <>
+        <EnBrefDocuments
+          stats={statsDocuments}
+          type={typeValide}
+          titreSuffixe={typeValide ? LABELS_TYPE_PLURIEL[typeValide] : undefined}
+          cheminBase={typeValide ? ROUTES_DOCUMENTS_PAR_TYPE[typeValide] : "/documents"}
+        />
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-sm font-medium text-[var(--foreground)]">Documents envoyés</h2>
+            {termeRecherche && (
+              <p className="mt-1 truncate text-sm text-muted-foreground">
+                Résultats pour « <span className="font-medium text-foreground">{termeRecherche}</span> »
+                {documents.length > 0 &&
+                  ` · ${documents.length} document${documents.length > 1 ? "s" : ""}`}
+              </p>
+            )}
+          </div>
           {desFiltresActifs && (
-            <Link href="/documents" className="text-xs text-muted-foreground hover:text-accent">
-              Réinitialiser les filtres
+            <Link href="/documents" className="shrink-0 text-xs text-muted-foreground hover:text-accent">
+              Réinitialiser
             </Link>
           )}
         </div>
@@ -461,7 +355,7 @@ export async function DocumentsPage({
             est ajouté un jour). */}
         <form
           method="get"
-          key={`${mois ?? ""}|${distributeur ?? ""}|${typeValide ?? ""}|${reference ?? ""}|${filtreHausse ? "1" : "0"}`}
+          key={`${mois ?? ""}|${distributeur ?? ""}|${typeValide ?? ""}|${termeRecherche ?? ""}|${filtreHausse ? "1" : "0"}|${filtreVerifier ? "1" : "0"}`}
           className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1fr_auto]"
         >
           <div>
@@ -516,14 +410,14 @@ export async function DocumentsPage({
           )}
           <div>
             <label htmlFor="reference" className="block text-xs text-muted-foreground mb-1">
-              Référence
+              Recherche
             </label>
             <input
               id="reference"
-              name="reference"
-              type="text"
-              placeholder="Ex : 7381813"
-              defaultValue={reference ?? ""}
+              name="q"
+              type="search"
+              placeholder="Réf., fournisseur, désignation…"
+              defaultValue={termeRecherche ?? ""}
               className="w-full app-input"
             />
           </div>
@@ -577,9 +471,11 @@ export async function DocumentsPage({
               <EmptyHeader>
                 <EmptyTitle>{desFiltresActifs ? "Aucun résultat" : "Aucun document"}</EmptyTitle>
                 <EmptyDescription>
-                  {desFiltresActifs
-                    ? "Aucun document ne correspond à ces filtres."
-                    : "Aucun document envoyé pour le moment."}
+                  {termeRecherche
+                    ? `Aucun document trouvé pour « ${termeRecherche} ». Essayez une référence, un fournisseur ou un mot de la désignation.`
+                    : desFiltresActifs
+                      ? "Aucun document ne correspond à ces filtres."
+                      : "Aucun document envoyé pour le moment."}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -649,65 +545,9 @@ export async function DocumentsPage({
             })}
           </ul>
         )}
+        </>
+        )}
       </section>
-
-      {statsTotal > 0 && (
-        <section className="mt-10">
-          <p className="text-sm font-medium text-muted-foreground">
-            En bref{typeValide ? ` — ${LABELS_TYPE_PLURIEL[typeValide]}` : ""}
-          </p>
-          <div className="mt-3 app-card p-5 sm:p-6">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <p className="text-xs text-muted-foreground">Documents</p>
-                <p className="mt-1 text-xl font-semibold text-foreground">{statsTotal}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Montant total HT</p>
-                <p className="mt-1 text-xl font-semibold text-foreground">
-                  {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
-                    statsSommeHt
-                  )}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Hausses détectées</p>
-                <p className={`mt-1 text-xl font-semibold ${statsHausses > 0 ? "text-red-400" : "text-foreground"}`}>
-                  {statsHausses}
-                </p>
-              </div>
-            </div>
-
-            {statsParDistributeur.length > 0 && (
-              <div className="mt-5 space-y-2.5 border-t border-border pt-4">
-                <p className="text-xs text-muted-foreground">Répartition par distributeur</p>
-                {statsParDistributeur.map((d) => (
-                  <Link
-                    key={d.norm}
-                    href={`/documents?${typeValide ? `type=${typeValide}&` : ""}distributeur=${encodeURIComponent(d.norm)}#documents-envoyes`}
-                    className="group block"
-                  >
-                    <div className="flex items-baseline justify-between text-xs">
-                      <span className="text-foreground group-hover:text-accent group-hover:underline">
-                        {d.label}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {d.count} document{d.count > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-border">
-                      <div
-                        className="h-full rounded-full bg-accent"
-                        style={{ width: `${(d.count / maxStatsParDistributeur) * 100}%` }}
-                      />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
 
       {bloquePaiementRequis && (
         <div className="mt-8">

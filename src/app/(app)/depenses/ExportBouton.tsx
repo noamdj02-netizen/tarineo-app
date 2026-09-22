@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { BadgePlanPro, LienPasserPro } from "@/components/tarineo/BadgePlanPro";
+import { messageFonctionPlanRequise } from "@/lib/planGating";
 
 type TypeDocumentExport = "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT";
 
@@ -33,13 +35,14 @@ const optionClasse = (selectionne: boolean) =>
 
 interface Props {
   distributeurs: { norm: string; label: string }[];
+  accesExport?: boolean;
 }
 
 // Export comptable de /depenses : factures, bons de commande et bons d'enlèvement
 // validés sur la période et les filtres choisis, en CSV ou Excel. Formulaire GET natif
 // vers la route /depenses/export — le navigateur gère le téléchargement directement,
 // pas besoin de fetch/blob côté client.
-export function ExportBouton({ distributeurs }: Props) {
+export function ExportBouton({ distributeurs, accesExport = true }: Props) {
   const [ouvert, setOuvert] = useState(false);
   const [format, setFormat] = useState<"csv" | "xlsx">("csv");
   const [periodeType, setPeriodeType] = useState<"mensuelle" | "annuelle" | "personnalisee">("mensuelle");
@@ -100,12 +103,22 @@ export function ExportBouton({ distributeurs }: Props) {
         type="button"
         onClick={() => setOuvert((o) => !o)}
         aria-expanded={ouvert}
-        className="app-btn-secondary"
+        className="app-btn-secondary inline-flex items-center gap-2"
       >
         Exporter
+        {!accesExport && <BadgePlanPro />}
       </button>
 
-      {ouvert && (
+      {!accesExport && ouvert && (
+        <div className="absolute right-0 top-full z-20 mt-2 w-72 app-card p-4 shadow-[var(--app-card-shadow)]">
+          <p className="text-sm text-foreground">{messageFonctionPlanRequise("export")}</p>
+          <p className="mt-3">
+            <LienPasserPro />
+          </p>
+        </div>
+      )}
+
+      {accesExport && ouvert && (
         <form
           method="GET"
           action="/depenses/export"

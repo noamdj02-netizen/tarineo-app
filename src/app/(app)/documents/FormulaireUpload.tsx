@@ -63,6 +63,7 @@ export function FormulaireUpload({
   modeOnboarding = false,
   redirigerVersResume = false,
   autoOuvrirCamera = false,
+  autoEnvoiApresCapture = false,
   variantPc = false,
   variantCompact = false,
   maxFichiers,
@@ -80,6 +81,8 @@ export function FormulaireUpload({
   redirigerVersResume?: boolean;
   /** Ouvre directement le sélecteur photo (bouton Scanner mobile). */
   autoOuvrirCamera?: boolean;
+  /** Enchaîne l'envoi dès qu'une photo est capturée (parcours mobile rapide). */
+  autoEnvoiApresCapture?: boolean;
   /** PC : explorateur de fichiers en premier, zone large pour glisser-déposer. */
   variantPc?: boolean;
   /** Panneau latéral : pas de choix de type (l'IA reclasse après analyse). */
@@ -90,6 +93,7 @@ export function FormulaireUpload({
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
   const inputFichierRef = useRef<HTMLInputElement>(null);
+  const autoEnvoiDeclencheRef = useRef(false);
   const [type, setType] = useState<"DEVIS" | "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT">(typeInitial ?? "DEVIS");
   const typeEnvoi = variantCompact ? "DEVIS" : type;
   const [fichiers, setFichiers] = useState<FichierEnvoi[]>([]);
@@ -298,6 +302,16 @@ export function FormulaireUpload({
 
     router.refresh();
   }
+
+  useEffect(() => {
+    if (!autoEnvoiApresCapture || autoEnvoiDeclencheRef.current || enCours || quotaAtteint) return;
+    const enAttente = fichiers.filter((f) => f.statut === "en_attente");
+    if (enAttente.length !== 1 || !enAttente[0].file.type.startsWith("image/")) return;
+    autoEnvoiDeclencheRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- envoi auto après capture photo
+    void lancerEnvoi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- déclenché une seule fois à l'ajout de la photo
+  }, [fichiers, autoEnvoiApresCapture, enCours, quotaAtteint]);
 
   const enAttenteCount = fichiers.filter((f) => f.statut === "en_attente").length;
 

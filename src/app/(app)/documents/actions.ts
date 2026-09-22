@@ -8,6 +8,7 @@ import { enregistrerDocument, calculerHashFichier, trouverDoublonParHash } from 
 import type { ResultatEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
 import { analyserDocument } from "@/lib/extraction";
 import { calculerEtatQuota, debutMoisUTC } from "@/lib/quota";
+import { verifierRateLimit } from "@/lib/rateLimit";
 
 const schema = z.object({
   type: z.enum(["DEVIS", "FACTURE", "BON_COMMANDE", "BON_ENLEVEMENT"]),
@@ -32,6 +33,10 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
   const session = await auth();
   if (!session?.user?.id) {
     return { succes: false, erreur: "session_invalide" };
+  }
+
+  if (!verifierRateLimit(`upload:${session.user.id}`, 40, 60 * 60 * 1000)) {
+    return { succes: false, erreur: "fichier_invalide" };
   }
 
   const parsed = schema.safeParse({

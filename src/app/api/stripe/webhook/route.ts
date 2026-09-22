@@ -1,7 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { Prisma } from "@prisma/client";
 import { stripe, PRIX_MENSUEL_PAR_PLAN, planDepuisPriceId } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import { envoyerEmailPaiementEchouePourClient } from "@/lib/emailsRelance";
+
+async function evenementDejaTraite(eventId: string): Promise<boolean> {
+  const existant = await prisma.stripeWebhookEvent.findUnique({
+    where: { eventId },
+    select: { eventId: true },
+  });
+  return existant !== null;
+}
+
+async function marquerEvenementTraite(eventId: string, eventType: string): Promise<void> {
+  try {
+    await prisma.stripeWebhookEvent.create({
+      data: { eventId, eventType },
+    });
+  } catch (erreur) {
+    if (erreur instanceof Prisma.PrismaClientKnownRequestError && erreur.code === "P2002") {
+      return;
+    }
+    throw erreur;
+  }
+}
 
 function statutDepuisAbonnement(status: Stripe.Subscription.Status): string {
   // Aligné sur les valeurs documentées dans prisma/schema.prisma (User.subscriptionStatus).
@@ -47,6 +70,10 @@ export async function POST(request: NextRequest) {
   } catch (erreur) {
     console.error("Signature webhook Stripe invalide :", erreur);
     return NextResponse.json({ erreur: "Signature invalide." }, { status: 400 });
+  }
+
+  if (await evenementDejaTraite(event.id)) {
+    return NextResponse.json({ received: true, duplicate: true });
   }
 
   try {
@@ -134,12 +161,54 @@ export async function POST(request: NextRequest) {
           where: { stripeCustomerId: customerId },
           data: { subscriptionStatus: "past_due" },
         });
+        await envoyerEmailPaiementEchouePourClient(customerId).catch((erreur) => {
+          console.error("Email paiement échoué non envoyé :", erreur);
+        });
+        break;
+      }
+
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        if (session.mode !== "subscription") break;
+        const userId = session.metadata?.userId;
+        const plan = session.metadata?.plan;
+        const customerId =
+          typeof session.customer === "string" ? session.customer : session.customer?.id;
+        const subscriptionId =
+          typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+
+        if (userId) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: {
+              subscriptionStatus: "active",
+              ...(plan ? { plan } : {}),
+              ...(customerId ? { stripeCustomerId: customerId } : {}),
+              ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
+            },
+          });
+        }
+        break;
+      }
+
+      case "invoice.paid": {
+        const invoice = event.data.object;
+        const customerId =
+          typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+        if (!customerId) break;
+
+        await prisma.user.updateMany({
+          where: { stripeCustomerId: customerId, subscriptionStatus: "past_due" },
+          data: { subscriptionStatus: "active" },
+        });
         break;
       }
 
       default:
         break;
     }
+
+    await marquerEvenementTraite(event.id, event.type);
   } catch (erreur) {
     console.error(`Erreur traitement webhook Stripe (${event.type}, ${event.id}) :`, erreur);
     return NextResponse.json({ erreur: "Traitement échoué." }, { status: 500 });

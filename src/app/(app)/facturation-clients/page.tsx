@@ -15,7 +15,7 @@ export default function FacturationClientsPage() {
         actions={<BtnPrimary href="/factures-clients">Voir mes factures clients</BtnPrimary>}
       />
       <PageCard>
-        <h2 className="text-lg font-semibold text-foreground">Bientôt disponible</h2>
+        <h2 className="text-base font-semibold text-foreground">Bientôt disponible</h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           La transmission électronique (réforme 2026) arrivera dans une prochaine version. Pour l&apos;instant, créez
           vos devis clients, transformez-les en facture PDF, et protégez votre marge en important vos devis

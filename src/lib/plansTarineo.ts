@@ -15,9 +15,10 @@ export const PLANS_TARINEO: PlanTarineo[] = [
     desc: "Pour débuter et tester",
     features: [
       { label: "150 documents analysés / mois" },
-      { label: "Historique 12 mois" },
+      { label: "Historique de prix sur 12 mois" },
       { label: "3 distributeurs comparés" },
       { label: "Alertes hausse de prix" },
+      { label: "Sans PDF devis client ni export comptable" },
     ],
     misEnAvant: false,
   },

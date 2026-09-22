@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadIcon } from "lucide-react";
+import { estAppareilMobile } from "@/lib/mobile";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,8 +41,18 @@ export function ImportDocument({
   trigger,
 }: Props) {
   const router = useRouter();
-  const [open, setOpen] = useState(autoOpen);
+  const [open, setOpen] = useState(false);
   const urlNettoyee = useRef(false);
+
+  // Laisse la transition de page « import » se terminer avant d'ouvrir la modale.
+  useEffect(() => {
+    if (!autoOpen) return;
+    const delai = estAppareilMobile() ? 200 : 320;
+    const timer = window.setTimeout(() => setOpen(true), delai);
+    return () => window.clearTimeout(timer);
+  }, [autoOpen]);
+
+  const cameraActive = preferCamera || estAppareilMobile();
 
   // Évite que ?scanner=1 ou ?onboarding=1 rouvre la modale à chaque navigation.
   useEffect(() => {
@@ -88,8 +99,9 @@ export function ImportDocument({
           quotaAtteint={quotaAtteint}
           maxFichiers={maxFichiers}
           variantCompact
-          variantPc={!preferCamera}
-          autoOuvrirCamera={preferCamera && open}
+          variantPc={!cameraActive}
+          autoOuvrirCamera={cameraActive && open}
+          autoEnvoiApresCapture={cameraActive}
           onImportReussi={() => apresImport()}
         />
       </DialogContent>

@@ -14,15 +14,13 @@ import {
 import { LABELS_TYPE } from "@/lib/documentLabels";
 import { BadgeStatutDocument } from "@/components/tarineo/BadgeStatutDocument";
 import { enseigneParId, enseigneParNorm } from "@/lib/bibliothequeFournisseurs";
+import { logoDev } from "@/lib/fournisseursConnus";
+import { enseignePersonnaliseeParSlug } from "@/lib/rechercherFournisseur";
 import { ficheParBibliothequeId } from "@/lib/fichesFournisseurs";
-import { promosPersonnaliseesPourArtisan, resolveBibliothequeId } from "@/lib/promosFournisseur";
-import { OpportunitesFournisseur } from "../OpportunitesFournisseur";
-import { PromosFournisseurSection } from "../PromosFournisseurSection";
-import { construireOpportunitesFournisseur } from "@/lib/opportunitesFournisseur";
+import { FicheEnseigneDecouverte } from "../FicheEnseigneDecouverte";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { BtnGhost } from "@/components/tarineo/Actions";
 import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { ObjectifDistributeur } from "../../depenses/ObjectifDistributeur";
 import { ImportDocument } from "../../documents/ImportDocument";
 import { cn } from "@/lib/utils";
@@ -51,9 +49,9 @@ const STYLES_VERDICT: Record<TonVerdictFournisseur, string> = {
 };
 
 const LABELS_VERDICT: Record<TonVerdictFournisseur, string> = {
-  favorable: "Ça vaut le coup",
+  favorable: "Prix stables",
   attention: "À surveiller",
-  neutre: "Historique correct",
+  neutre: "Suivi en cours",
   decouvrir: "À découvrir",
 };
 
@@ -75,6 +73,7 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
   const userId = session.user.id;
 
   const enseigneLib = enseigneParId(id);
+  const enseignePerso = enseigneLib ? null : await enseignePersonnaliseeParSlug(userId, id);
   const tousDocs = await prisma.document.findMany({
     where: { userId, distributorNorm: { not: null } },
     orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
@@ -98,7 +97,7 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
     .replace(/[^A-Z0-9 ]/g, "")
     .replace(/\s+/g, " ")
     .trim();
-  const hintCle = enseigneLib?.normHint ?? "";
+  const hintCle = enseigneLib?.normHint ?? enseignePerso?.distributorNorm ?? "";
 
   const documents = tousDocs
     .filter((d) => correspondEnseigne(d.distributorNorm, id, idCle, hintCle))
@@ -111,12 +110,38 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
       ? depensesToutes.find((d) => d.distributorNorm.toLowerCase().includes(enseigneLib.normHint.toLowerCase()))
       : undefined);
 
-  const nom = documents[0]?.distributor ?? depense?.distributor ?? enseigneLib?.nom ?? id;
-  const norm = documents[0]?.distributorNorm ?? depense?.distributorNorm ?? enseigneLib?.normHint ?? id;
+  const nom =
+    documents[0]?.distributor ?? depense?.distributor ?? enseigneLib?.nom ?? enseignePerso?.nom ?? id;
+  const norm =
+    documents[0]?.distributorNorm ??
+    depense?.distributorNorm ??
+    enseigneLib?.normHint ??
+    enseignePerso?.distributorNorm ??
+    id;
   const meta = enseigneParNorm(norm) ?? enseigneLib;
 
-  if (!documents.length && !depense && !enseigneLib) {
+  if (!documents.length && !depense && !enseigneLib && !enseignePerso) {
     notFound();
+  }
+
+  const fiche = ficheParBibliothequeId(enseigneLib?.id ?? id, nom);
+  const logosImportes = await chargerLogosFournisseursUtilisateur(userId, [norm]);
+  const logoPerso = enseignePerso?.domaineLogo ? logoDev(enseignePerso.domaineLogo) : null;
+  const logo =
+    resoudreLogoFournisseur(nom, norm, logosImportes) ?? logoPerso ?? logoFournisseur(norm || nom);
+  const urlImport = `/documents?enseigne=${encodeURIComponent(nom)}`;
+  const sansHistorique = documents.length === 0 && (depense?.depenses ?? 0) === 0;
+
+  if (sansHistorique) {
+    return (
+      <FicheEnseigneDecouverte
+        nom={nom}
+        metiers={meta?.metiers ?? enseignePerso?.metiers ?? undefined}
+        logo={logo}
+        urlImport={urlImport}
+        siteWeb={enseignePerso?.domaineLogo ? `https://${enseignePerso.domaineLogo}` : fiche.siteWeb}
+      />
+    );
   }
 
   const alertes = await prisma.alert.findMany({
@@ -130,10 +155,6 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
     return d.includes(ref) || (enseigneLib && d.includes(enseigneLib.normHint.toLowerCase()));
   });
 
-  const fiche = ficheParBibliothequeId(enseigneLib?.id ?? id, nom);
-  const logosImportes = await chargerLogosFournisseursUtilisateur(userId, [norm]);
-  const logo = resoudreLogoFournisseur(nom, norm, logosImportes) ?? logoFournisseur(norm || nom);
-  const totalHt = documents.reduce((s, d) => s + Number(d.totalHt ?? 0), 0);
   const totalDepensesTous = depensesToutes.reduce((s, d) => s + d.depenses, 0);
   const rangDepenses =
     depense && depensesToutes.length > 0
@@ -147,29 +168,7 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
     rangDepenses: rangDepenses && rangDepenses > 0 ? rangDepenses : null,
     totalDepensesTous,
   });
-
-  const urlImport = `/documents?enseigne=${encodeURIComponent(nom)}`;
-  const bibliothequeId = resolveBibliothequeId(id, norm);
-  let promosData = {
-    promos: [] as Awaited<ReturnType<typeof promosPersonnaliseesPourArtisan>>["promos"],
-    derniereMiseAJour: null as Date | null,
-    fluxActif: false,
-  };
-  if (bibliothequeId) {
-    try {
-      promosData = await promosPersonnaliseesPourArtisan(userId, bibliothequeId, norm);
-    } catch {
-      promosData = { promos: [], derniereMiseAJour: null, fluxActif: true };
-    }
-  }
-
-  const opportunites = construireOpportunitesFournisseur({
-    nomEnseigne: nom,
-    fiche,
-    depense: depense ?? null,
-    hausses,
-    nbDocuments: documents.length,
-  });
+  const conseilsAffichés = verdict.conseils.slice(0, 2);
 
   return (
     <div>
@@ -186,35 +185,45 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
             )}
             <span className="flex flex-col gap-1">
               <span>{nom}</span>
-              {meta && <span className="text-sm font-normal text-muted-foreground">{meta.metiers}</span>}
+              {(meta?.metiers ?? enseignePerso?.metiers) && (
+                <span className="text-sm font-normal text-muted-foreground">
+                  {meta?.metiers ?? enseignePerso?.metiers}
+                </span>
+              )}
             </span>
           </span>
         }
         actions={
           <>
-            <BtnGhost href={`/documents?distributeur=${encodeURIComponent(norm)}`}>Historique complet</BtnGhost>
-            <ImportDocument label={`Importer chez ${nom}`} />
+            <BtnGhost href={`/documents?distributeur=${encodeURIComponent(norm)}`}>Tous les documents</BtnGhost>
+            <ImportDocument label="Importer" />
           </>
         }
       />
 
       <div className={cn("mb-5 rounded-[24px] border p-5 sm:p-6", STYLES_VERDICT[verdict.ton])}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wide text-primary">{LABELS_VERDICT[verdict.ton]}</p>
-            <h2 className="mt-1 text-lg font-semibold">{verdict.titre}</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{verdict.resume}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-primary">{LABELS_VERDICT[verdict.ton]}</p>
+        <h2 className="mt-1 text-lg font-semibold">{verdict.titre}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{verdict.resume}</p>
+        <div className="mt-4 flex flex-wrap gap-4 border-t border-black/5 pt-4 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground">Documents</p>
+            <p className="font-semibold">{documents.length}</p>
           </div>
-          <Link
-            href={urlImport}
-            className="inline-flex h-10 shrink-0 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white hover:bg-[#d44d1a]"
-          >
-            Importer un devis
-          </Link>
+          <div>
+            <p className="text-xs text-muted-foreground">Achats période</p>
+            <p className="font-semibold">{formaterEuros(depense?.depenses ?? 0)}</p>
+          </div>
+          {hausses.length > 0 && (
+            <div>
+              <p className="text-xs text-muted-foreground">Hausses détectées</p>
+              <p className="font-semibold text-primary">{hausses.length}</p>
+            </div>
+          )}
         </div>
-        {verdict.conseils.length > 0 && (
-          <ul className="mt-4 space-y-2 border-t border-black/5 pt-4 text-sm text-foreground">
-            {verdict.conseils.map((conseil) => (
+        {conseilsAffichés.length > 0 && (
+          <ul className="mt-4 space-y-1.5 text-sm text-foreground">
+            {conseilsAffichés.map((conseil) => (
               <li key={conseil} className="flex gap-2">
                 <span className="text-primary" aria-hidden>•</span>
                 <span>{conseil}</span>
@@ -222,163 +231,82 @@ export default async function FournisseurDetailPage({ params }: { params: Promis
             ))}
           </ul>
         )}
-        <p className="mt-4 text-xs text-muted-foreground">
-          Analyse basée uniquement sur <strong className="font-medium text-foreground">votre</strong> historique Tarinéo — pas
-          un comparateur public.
-        </p>
       </div>
 
-      {bibliothequeId && (
+      {depense && (
         <PageCard className="mb-5">
-          <h2 className="text-base font-semibold">Promos &amp; opportunités</h2>
+          <h2 className="text-base font-semibold">Objectif BFA</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Calculées sur <strong className="font-medium text-foreground">votre</strong> historique et les conditions
-            habituelles de l&apos;enseigne — pas un catalogue public de prix.
+            Suivez votre volume annuel pour ne pas rater une remise négociée avec votre commercial.
           </p>
-          <div className="mt-4 space-y-4">
-            <OpportunitesFournisseur items={opportunites} />
-            <PromosFournisseurSection
-              bibliothequeId={bibliothequeId}
-              nomEnseigne={nom}
-              promosInitiales={promosData.promos}
-              derniereMiseAJour={promosData.derniereMiseAJour?.toISOString() ?? null}
-              fluxActif={promosData.fluxActif}
-            />
-          </div>
-        </PageCard>
-      )}
-
-      <div className="mb-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
-        <PageCard>
-          <h2 className="text-base font-semibold">Objectif BFA / volume annuel</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{fiche.bfa}</p>
           <div className="mt-4">
             <ObjectifDistributeur
               distributor={nom}
               distributorNorm={norm}
-              depenses={depense?.depenses ?? 0}
-              objectif={depense?.objectif ?? null}
-              periodStartMonth={depense?.periodStartMonth ?? 1}
-              periodStartDay={depense?.periodStartDay ?? 1}
-              pourcentageAtteinte={depense?.pourcentageAtteinte ?? null}
-              encoursRestant={depense?.encoursRestant ?? null}
-              periodeLabel={periodeLabel(depense?.periodStartMonth ?? 1, depense?.periodStartDay ?? 1)}
+              depenses={depense.depenses}
+              objectif={depense.objectif}
+              periodStartMonth={depense.periodStartMonth}
+              periodStartDay={depense.periodStartDay}
+              pourcentageAtteinte={depense.pourcentageAtteinte}
+              encoursRestant={depense.encoursRestant}
+              periodeLabel={periodeLabel(depense.periodStartMonth, depense.periodStartDay)}
             />
           </div>
-        </PageCard>
-
-        <PageCard>
-          <h2 className="text-base font-semibold">Avantages & livraison</h2>
-          <p className="mt-1 text-xs text-muted-foreground">Informations générales — vérifiez les offres en cours avec votre agence.</p>
-          <ul className="mt-4 space-y-2 text-sm text-foreground">
-            {fiche.avantages.map((a) => (
-              <li key={a} className="flex gap-2">
-                <span className="text-primary" aria-hidden>✓</span>
-                <span>{a}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Livraison :</span> {fiche.livraison}
-          </p>
-          {fiche.siteWeb.startsWith("http") && (
-            <a
-              href={fiche.siteWeb}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-            >
-              Site de l&apos;enseigne →
-            </a>
-          )}
-        </PageCard>
-      </div>
-
-      <div className="mb-5 grid gap-4 sm:grid-cols-3">
-        <PageCard>
-          <p className="text-xs text-muted-foreground">Documents importés</p>
-          <p className="mt-1 text-2xl font-semibold">{documents.length}</p>
-        </PageCard>
-        <PageCard>
-          <p className="text-xs text-muted-foreground">Volume HT (docs listés)</p>
-          <p className="mt-1 text-2xl font-semibold">{formaterEuros(totalHt)}</p>
-        </PageCard>
-        <PageCard>
-          <p className="text-xs text-muted-foreground">Achats période BFA</p>
-          <p className="mt-1 text-2xl font-semibold">{formaterEuros(depense?.depenses ?? 0)}</p>
-          {hausses.length > 0 && (
-            <p className="mt-1 text-sm text-primary">
-              {hausses.length} hausse{hausses.length > 1 ? "s" : ""} détectée{hausses.length > 1 ? "s" : ""}
-            </p>
-          )}
-        </PageCard>
-      </div>
-
-      {meta?.description && (
-        <PageCard className="mb-5">
-          <p className="text-sm leading-relaxed text-muted-foreground">{meta.description}</p>
         </PageCard>
       )}
 
       <PageCard className="mb-5">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-base font-semibold">Documents reçus</h2>
+          <h2 className="text-base font-semibold">Vos documents {nom}</h2>
           <Link href={urlImport} className="text-sm text-primary hover:underline">
             Importer →
           </Link>
         </div>
-        {documents.length === 0 ? (
-          <Empty className="py-8">
-            <EmptyHeader>
-              <EmptyTitle>Aucun document pour {nom}</EmptyTitle>
-              <EmptyDescription>
-                Importez un devis ou une facture de cette enseigne pour démarrer le suivi personnalisé.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : (
-          <DataTable columns={["Date", "Type", "Statut", "Montant HT", ""]}>
-            {documents.map((doc) => (
-              <TableRow key={doc.id}>
-                <TableCell>{formaterDate(doc.documentDate ?? doc.createdAt)}</TableCell>
-                <TableCell>{LABELS_TYPE[doc.type] ?? doc.type}</TableCell>
-                <TableCell>
-                  <BadgeStatutDocument statut={doc.status} />
-                </TableCell>
-                <TableCell>{doc.totalHt != null ? formaterEuros(Number(doc.totalHt)) : "—"}</TableCell>
-                <TableCell>
-                  <Link href={`/documents/${doc.id}`} className="text-sm text-primary hover:underline">
-                    Ouvrir
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))}
-          </DataTable>
+        <DataTable columns={["Date", "Type", "Statut", "Montant HT", ""]}>
+          {documents.slice(0, 15).map((doc) => (
+            <TableRow key={doc.id}>
+              <TableCell>{formaterDate(doc.documentDate ?? doc.createdAt)}</TableCell>
+              <TableCell>{LABELS_TYPE[doc.type] ?? doc.type}</TableCell>
+              <TableCell>
+                <BadgeStatutDocument statut={doc.status} />
+              </TableCell>
+              <TableCell>{doc.totalHt != null ? formaterEuros(Number(doc.totalHt)) : "—"}</TableCell>
+              <TableCell>
+                <Link href={`/documents/${doc.id}`} className="text-sm text-primary hover:underline">
+                  Ouvrir
+                </Link>
+              </TableCell>
+            </TableRow>
+          ))}
+        </DataTable>
+        {documents.length > 15 && (
+          <p className="mt-3 text-center text-sm text-muted-foreground">
+            <Link href={`/documents?distributeur=${encodeURIComponent(norm)}`} className="text-primary hover:underline">
+              Voir les {documents.length} documents →
+            </Link>
+          </p>
         )}
       </PageCard>
 
-      <PageCard>
-        <h2 className="mb-4 text-base font-semibold">Dernières hausses détectées</h2>
-        {hausses.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Aucune hausse &gt; 3 % pour cette enseigne dans votre historique. Continuez à importer pour affiner la
-            comparaison.
-          </p>
-        ) : (
-          <DataTable columns={["Référence", "Désignation", "Écart", "Prix actuel"]}>
-            {hausses.slice(0, 10).map((h) => (
+      {hausses.length > 0 && (
+        <PageCard>
+          <h2 className="mb-4 text-base font-semibold">Hausses récentes</h2>
+          <DataTable columns={["Référence", "Écart", "Prix actuel"]}>
+            {hausses.slice(0, 8).map((h) => (
               <TableRow key={`${h.documentId}-${h.reference}`}>
-                <TableCell className="font-medium">{h.reference}</TableCell>
-                <TableCell className="max-w-[240px] truncate">{h.designation}</TableCell>
+                <TableCell className="max-w-[200px]">
+                  <p className="truncate font-medium">{h.reference}</p>
+                  <p className="truncate text-xs text-muted-foreground">{h.designation}</p>
+                </TableCell>
                 <TableCell className="text-primary">
-                  {h.ecartPourcent != null ? `${h.ecartPourcent > 0 ? "+" : ""}${h.ecartPourcent.toFixed(0)} %` : "—"}
+                  {h.ecartPourcent != null ? `+${h.ecartPourcent.toFixed(0)} %` : "—"}
                 </TableCell>
                 <TableCell>{formaterEuros(h.prixActuel)}</TableCell>
               </TableRow>
             ))}
           </DataTable>
-        )}
-      </PageCard>
+        </PageCard>
+      )}
     </div>
   );
 }

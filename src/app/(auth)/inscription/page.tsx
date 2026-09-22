@@ -92,8 +92,15 @@ function InscriptionFormPanel({
         <label className="flex items-start gap-2 text-xs leading-relaxed text-[#53616A]">
           <input type="checkbox" name="consent" required className="mt-0.5 accent-[#EC5821]" />
           <span>
-            J&apos;accepte les Conditions Générales d&apos;Utilisation et la Politique de Confidentialité de
-            Tarineo.
+            J&apos;accepte les{" "}
+            <Link href="/legal/cgu" className="font-semibold text-[#EC5821] hover:opacity-90" target="_blank">
+              Conditions Générales d&apos;Utilisation
+            </Link>{" "}
+            et la{" "}
+            <Link href="/legal/confidentialite" className="font-semibold text-[#EC5821] hover:opacity-90" target="_blank">
+              Politique de Confidentialité
+            </Link>{" "}
+            de Tarineo.
           </span>
         </label>
         {erreur && <p className="text-sm text-red-600">{MESSAGES_ERREUR[erreur] ?? MESSAGES_ERREUR["1"]}</p>}

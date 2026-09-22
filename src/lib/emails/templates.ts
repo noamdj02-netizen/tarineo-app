@@ -1,4 +1,5 @@
 import { echapperHtml } from "./escape";
+import { ASSETS_EMAIL } from "./assets";
 import {
   layoutActivation,
   layoutBienvenue,
@@ -29,7 +30,7 @@ export function renduEmailActivation(params: { urlConfirmation: string } & Optio
   });
 }
 
-// ─── 2. Notes de version (178:27456) ──────────────────────────────────────
+// ─── 2. Notes de version (Figma Tarineo 217:3811) ─────────────────────────
 
 export function renduEmailNotesDeVersion(
   params: { urlEssayer: string; urlTableauDeBord: string } & OptionsBase,
@@ -204,6 +205,7 @@ export function renduEmailInvitationEquipe(
   } & OptionsBase,
 ): string {
   return layoutActivation({
+    mascotte: { chemin: ASSETS_EMAIL.invitationEquipeMascot, width: 210, height: 175 },
     titre: "Vous êtes invité(e) sur Tarineo",
     paragraphes: [
       `${echapperHtml(params.nomInvitant)} vous invite à rejoindre l'espace Tarineo de ${echapperHtml(params.nomEntreprise)} pour suivre ensemble les prix de vos fournisseurs BTP.`,
@@ -224,6 +226,7 @@ export function renduEmailEssaiExpire(
   params: { joursRestants: number; urlForfaits: string } & OptionsBase,
 ): string {
   return layoutActivation({
+    mascotte: { chemin: ASSETS_EMAIL.essaiExpireMascot, width: 210, height: 221 },
     titre: "Votre essai gratuit se termine bientôt",
     paragraphes: [
       `Il vous reste ${params.joursRestants} jours d'essai Tarineo. Passez à un forfait payant pour continuer à recevoir vos alertes de hausse de prix sans interruption.`,
@@ -250,6 +253,7 @@ export function renduEmailFactureDisponible(
 ): string {
   const p = echapperHtml(params.prenom);
   return layoutCarte({
+    mascotte: { chemin: ASSETS_EMAIL.factureMascot, width: 141, height: 159 },
     titre: "Votre facture est disponible",
     paragraphes: [
       `Bonjour ${p},`,

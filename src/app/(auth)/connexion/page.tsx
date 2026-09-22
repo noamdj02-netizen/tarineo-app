@@ -11,13 +11,38 @@ import { seConnecter, seConnecterAvecGoogle } from "./actions";
 const AUTH_PANEL_CLASS =
   "flex w-full flex-col gap-3.5 rounded-[24px] border border-[#E6E9EB] bg-white p-5 shadow-[0_8px_30px_rgba(23,41,53,0.06)] md:p-6 lg:p-7";
 
+function messageErreurAuth(params: { erreur?: "1" | "google" | "session"; errorAuth?: string }): string | null {
+  if (params.erreur === "session") {
+    return "Votre session n'est plus valide. Reconnectez-vous pour continuer.";
+  }
+  if (params.erreur === "google") {
+    return "Ce compte a été créé avec Google. Utilisez le bouton « Continuer avec Google » ci-dessous.";
+  }
+  if (params.erreur === "1") {
+    return "Email ou mot de passe incorrect.";
+  }
+  if (params.errorAuth === "OAuthAccountNotLinked") {
+    return "Ce compte existe déjà avec un autre mode de connexion. Essayez email + mot de passe, ou le bouton Google avec la même adresse.";
+  }
+  if (params.errorAuth === "AccessDenied") {
+    return "Connexion refusée. Réessayez ou contactez le support.";
+  }
+  if (params.errorAuth) {
+    return "La connexion a échoué. Réessayez.";
+  }
+  return null;
+}
+
 function ConnexionFormPanel({
   erreur,
+  errorAuth,
   showSocial = true,
 }: {
-  erreur?: string;
+  erreur?: "1" | "google" | "session";
+  errorAuth?: string;
   showSocial?: boolean;
 }) {
+  const message = messageErreurAuth({ erreur, errorAuth });
   return (
     <div className={AUTH_PANEL_CLASS}>
       <form action={seConnecter} className="flex w-full flex-col gap-3.5">
@@ -43,7 +68,19 @@ function ConnexionFormPanel({
         >
           Mot de passe oublié ?
         </Link>
-        {erreur && <p className="text-sm text-red-600">Email ou mot de passe incorrect.</p>}
+        {message && (
+          <p className="text-sm text-red-600">
+            {message}
+            {erreur === "1" && (
+              <>
+                {" "}
+                <Link href="/mot-de-passe-oublie" className="font-semibold underline">
+                  Mot de passe oublié ?
+                </Link>
+              </>
+            )}
+          </p>
+        )}
         <button
           type="submit"
           className="flex h-14 items-center justify-center rounded-full bg-[#EC5821] text-[16px] font-extrabold text-white transition hover:bg-[#d44d1a] md:h-[54px]"
@@ -59,9 +96,11 @@ function ConnexionFormPanel({
 export default async function ConnexionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erreur?: string }>;
+  searchParams: Promise<{ erreur?: string; error?: string }>;
 }) {
-  const { erreur } = await searchParams;
+  const { erreur: erreurBrute, error: errorAuth } = await searchParams;
+  const erreur =
+    erreurBrute === "google" || erreurBrute === "1" || erreurBrute === "session" ? erreurBrute : undefined;
 
   const intro = (
     <div className="flex flex-col gap-2 text-[#172935]">
@@ -88,14 +127,14 @@ export default async function ConnexionPage({
           <AuthBrand variant="light" />
           {intro}
         </div>
-        <ConnexionFormPanel erreur={erreur} />
+        <ConnexionFormPanel erreur={erreur} errorAuth={errorAuth} />
         {footer}
       </MobileAuthShell>
 
       <div className="hidden min-h-dvh md:flex">
         <AuthDesktopFormShell footer={footer}>
           {intro}
-          <ConnexionFormPanel erreur={erreur} />
+          <ConnexionFormPanel erreur={erreur} errorAuth={errorAuth} />
         </AuthDesktopFormShell>
         <AuthVisualPanel variant="connexion" />
       </div>

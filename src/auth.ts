@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -12,9 +12,18 @@ const schemaIdentifiants = z.object({
   password: z.string().min(1),
 });
 
+/** Compte créé via Google sans mot de passe local — message dédié sur /connexion. */
+class ConnexionGoogleUniquement extends CredentialsSignin {
+  code = "google_only";
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   adapter: PrismaAdapter(prisma),
+  pages: {
+    signIn: "/connexion",
+    error: "/connexion",
+  },
   // Le flux Credentials d'Auth.js encode toujours la session en JWT, quelle que
   // soit la stratégie configurée (vérifié dans @auth/core/lib/actions/callback :
   // adapter.createSession n'est jamais appelé pour ce provider). Avec strategy:
@@ -33,8 +42,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
-        const utilisateur = await prisma.user.findUnique({ where: { email } });
-        if (!utilisateur?.passwordHash) return null;
+        const utilisateur = await prisma.user.findUnique({
+          where: { email },
+          include: { accounts: { where: { provider: "google" }, take: 1 } },
+        });
+        if (!utilisateur) return null;
+
+        if (!utilisateur.passwordHash) {
+          if (utilisateur.accounts.length > 0) {
+            throw new ConnexionGoogleUniquement();
+          }
+          return null;
+        }
 
         const motDePasseValide = await verifierMotDePasse(password, utilisateur.passwordHash);
         if (!motDePasseValide) return null;
@@ -55,8 +74,44 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async signIn({ user, account }) {
       if (account?.provider !== "google" || !user.email) return true;
 
-      const existant = await prisma.user.findUnique({ where: { email: user.email } });
-      if (existant) return true;
+      const email = user.email.toLowerCase();
+      const existant = await prisma.user.findUnique({
+        where: { email },
+        include: { accounts: { where: { provider: "google" } } },
+      });
+
+      if (existant) {
+        // Compte email/mot de passe existant : on lie Google pour éviter la page
+        // Auth.js par défaut (« sign in with the same account you used originally »).
+        if (existant.accounts.length === 0 && account.providerAccountId) {
+          await prisma.account.upsert({
+            where: {
+              provider_providerAccountId: {
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+              },
+            },
+            create: {
+              userId: existant.id,
+              type: account.type,
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_at: account.expires_at,
+              token_type: account.token_type,
+              scope: account.scope,
+              id_token: account.id_token,
+            },
+            update: {
+              access_token: account.access_token,
+              refresh_token: account.refresh_token,
+              expires_at: account.expires_at,
+            },
+          });
+        }
+        return true;
+      }
 
       const total = await prisma.user.count();
       if (total >= ACCES_ANTICIPE_LIMITE_TOTAL) {
@@ -70,6 +125,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.email = user.email;
         token.name = user.name;
       }
+
+      // Cookie JWT encore valide après reset DB ou suppression de compte :
+      // on invalide le token plutôt que de laisser des updates Prisma en P2025.
+      if (token.sub) {
+        const existant = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: { id: true, email: true, name: true, workspaceOwnerId: true },
+        });
+        if (!existant) {
+          delete token.sub;
+          return token;
+        }
+        token.email = existant.email;
+        token.name = existant.name;
+        token.workspaceOwnerId = existant.workspaceOwnerId;
+        token.donneesUserId = existant.workspaceOwnerId ?? existant.id;
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -77,6 +150,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.sub;
         if (token.email) session.user.email = token.email;
         if (token.name) session.user.name = token.name;
+        session.user.workspaceOwnerId =
+          typeof token.workspaceOwnerId === "string" ? token.workspaceOwnerId : null;
+        session.user.donneesUserId =
+          typeof token.donneesUserId === "string" ? token.donneesUserId : token.sub;
       }
       return session;
     },
