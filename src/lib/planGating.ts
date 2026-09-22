@@ -22,8 +22,9 @@ export function accesExportComptable(plan: string | null, subscriptionStatus: st
   return planEffectif(plan) !== "starter";
 }
 
-/** PDF devis client avec logo/SIRET — réservé Pro et Équipe une fois abonné. */
+/** PDF devis client avec logo/SIRET — réservé Pro et Équipe une fois abonné (essai Stripe inclus). */
 export function accesDevisClientPdf(plan: string | null, subscriptionStatus: string | null): boolean {
+  if (subscriptionStatus === "trialing") return true;
   if (!abonnementActif(subscriptionStatus)) return true;
   return planEffectif(plan) !== "starter";
 }

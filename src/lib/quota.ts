@@ -120,14 +120,15 @@ export function calculerEtatQuota(params: {
   const paye = params.subscriptionStatus === "active" || params.subscriptionStatus === "trialing";
   const paiementEnRetard =
     params.subscriptionStatus === "past_due" || params.subscriptionStatus === "unpaid";
+  const planPourQuotas = params.plan ?? "starter";
 
   const finEssai = ajouterMois(params.createdAtUtilisateur, DUREE_ESSAI_MOIS);
   if (paiementEnRetard || (!paye && maintenant >= finEssai)) {
     return { phase: "bloque_paiement_requis", finEssai };
   }
 
-  const limiteHistorique = paye
-    ? (LIMITES_HISTORIQUE_PLAN[params.plan ?? ""] ?? LIMITE_HISTORIQUE_ESSAI)
+  const limiteHistorique = paye || params.plan
+    ? (LIMITES_HISTORIQUE_PLAN[planPourQuotas] ?? LIMITE_HISTORIQUE_ESSAI)
     : LIMITE_HISTORIQUE_ESSAI;
 
   const documentsTotal = params.documentsAvantCeMois + params.documentsCeMois;
@@ -146,7 +147,8 @@ export function calculerEtatQuota(params: {
   const historiqueRestantAvantCeMois = Math.max(0, limiteHistorique - params.documentsAvantCeMois);
   const documentsCeMoisHorsHistorique = Math.max(0, params.documentsCeMois - historiqueRestantAvantCeMois);
 
-  const quotaMensuel = paye ? (QUOTAS_PLAN[params.plan ?? ""] ?? QUOTA_MENSUEL_ESSAI) : QUOTA_MENSUEL_ESSAI;
+  const quotaMensuel =
+    paye || params.plan ? (QUOTAS_PLAN[planPourQuotas] ?? QUOTA_MENSUEL_ESSAI) : QUOTA_MENSUEL_ESSAI;
 
   return {
     phase: "mensuel",

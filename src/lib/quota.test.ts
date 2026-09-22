@@ -34,4 +34,16 @@ describe("calculerEtatQuota", () => {
     });
     expect(etat.phase).toBe("bloque_paiement_requis");
   });
+
+  it("applique le palier du plan choisi avant paiement", () => {
+    const etat = calculerEtatQuota({
+      ...base,
+      plan: "pro",
+      subscriptionStatus: null,
+    });
+    expect(etat.phase).toBe("historique");
+    if (etat.phase === "historique") {
+      expect(etat.limiteHistorique).toBe(200);
+    }
+  });
 });

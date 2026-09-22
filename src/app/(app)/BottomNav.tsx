@@ -50,7 +50,10 @@ const ONGLETS = [
       pathname.startsWith("/facturation-clients") ||
       pathname.startsWith("/analyses") ||
       pathname.startsWith("/parametres") ||
-      pathname.startsWith("/chantiers"),
+      pathname.startsWith("/chantiers") ||
+      pathname.startsWith("/coffre") ||
+      pathname.startsWith("/veille") ||
+      pathname === "/compte",
     icone: IconMore,
   },
 ];

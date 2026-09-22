@@ -8,9 +8,10 @@ const DUREE_INVITATION_JOURS = 7;
 const LIMITE_MEMBRES_EQUIPES = 5;
 
 export function accesEquipe(plan: string | null, subscriptionStatus: string | null): boolean {
-  if (!subscriptionStatus || subscriptionStatus === "trialing") return true;
-  if (!abonnementActif(subscriptionStatus)) return false;
-  return planEffectif(plan) === "equipe";
+  if (planEffectif(plan) !== "equipe") return false;
+  if (subscriptionStatus === "past_due" || subscriptionStatus === "unpaid") return false;
+  if (!subscriptionStatus) return true;
+  return abonnementActif(subscriptionStatus);
 }
 
 export async function obtenirOuCreerEquipe(ownerId: string, nom?: string): Promise<{ id: string }> {

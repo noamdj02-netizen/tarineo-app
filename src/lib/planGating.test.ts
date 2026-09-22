@@ -14,6 +14,9 @@ describe("planGating", () => {
 
   it("autorise le PDF devis en essai", () => {
     expect(accesDevisClientPdf("starter", null)).toBe(true);
+    expect(accesDevisClientPdf("starter", "trialing")).toBe(true);
+    expect(accesDevisClientPdf("starter", "active")).toBe(false);
+    expect(accesDevisClientPdf("pro", "active")).toBe(true);
   });
 
   it("limite les distributeurs au Starter", () => {

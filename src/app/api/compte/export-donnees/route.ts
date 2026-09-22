@@ -24,7 +24,13 @@ export async function GET(request: Request) {
     zip.file("donnees.json", JSON.stringify(donnees, null, 2));
     zip.file(
       "readme.txt",
-      "Export Tarineo (RGPD). Les fichiers PDF originaux restent dans votre espace tant que le compte est actif.",
+      [
+        "Export Tarineo (RGPD) — portabilité des données structurées.",
+        "",
+        "Ce ZIP contient vos métadonnées (documents, lignes, devis, factures) au format JSON.",
+        "Les fichiers PDF/photos originaux ne sont pas inclus : téléchargez-les depuis Mes documents",
+        "tant que votre compte est actif, ou demandez une copie à contact@tarineo.com avant suppression.",
+      ].join("\n"),
     );
     const buffer = await zip.generateAsync({ type: "nodebuffer" });
     return new NextResponse(new Uint8Array(buffer), {

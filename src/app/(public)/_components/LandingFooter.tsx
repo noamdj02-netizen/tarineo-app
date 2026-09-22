@@ -15,13 +15,6 @@ const LIENS_ENTREPRISE: Array<{ label: string; href?: string; modal?: LegalModal
   { href: "/legal/cgu", label: "Conditions d'utilisation" },
 ];
 
-const SOCIAL = [
-  { href: "#", icon: "/landing/social-facebook.svg", label: "Facebook" },
-  { href: "#", icon: "/landing/social-x.svg", label: "X" },
-  { href: "#", icon: "/landing/social-instagram.svg", label: "Instagram" },
-  { href: "#", icon: "/landing/social-youtube.svg", label: "YouTube" },
-];
-
 export function LandingFooter() {
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
 
@@ -157,18 +150,12 @@ export function LandingFooter() {
             <p className="landing-body text-[15px] text-[var(--landing-muted)]">
               Copyright © 2026 Tarineo. Tous droits réservés
             </p>
-            <div className="flex items-center gap-4">
-              {SOCIAL.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  aria-label={s.label}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white"
-                >
-                  <Image src={s.icon} alt="" width={24} height={24} className="h-6 w-6" />
-                </a>
-              ))}
-            </div>
+            <a
+              href="mailto:contact@tarineo.com"
+              className="landing-body text-[15px] text-[var(--landing-muted)] transition-colors hover:text-[var(--landing-text)]"
+            >
+              contact@tarineo.com
+            </a>
           </div>
         </div>
       </div>
