@@ -8,6 +8,9 @@ import { getSession } from "@/lib/session";
 import { chargerNotifications } from "@/lib/notifications";
 import { chargerBadgesNav } from "@/lib/navBadges";
 import { estRouteLegale } from "@/lib/legalRoutes";
+import { chargerEtatOnboarding } from "@/lib/onboarding";
+import { doitForcerOnboarding, estRouteConfirmationEmail } from "@/lib/routeApresAuth";
+import { utilisateurDoitConfirmerEmail } from "@/lib/confirmationEmail";
 import { AppNavigationProvider } from "@/components/tarineo/motion/AppNavigationContext";
 import { AppShell } from "./AppShell";
 import { AppThemeScope } from "./AppThemeScope";
@@ -41,6 +44,24 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/connexion");
   }
 
+  if (session?.user?.id) {
+    try {
+      const doitConfirmer = await utilisateurDoitConfirmerEmail(session.user.id);
+      if (doitConfirmer && !estRouteConfirmationEmail(pathname)) {
+        redirect("/confirmer-email");
+      }
+
+      if (!doitConfirmer && doitForcerOnboarding(pathname)) {
+        const etatOnboarding = await chargerEtatOnboarding(session.user.id);
+        if (etatOnboarding.doitVoirChoixImport) {
+          redirect("/onboarding");
+        }
+      }
+    } catch (e) {
+      console.error("Garde accès app (layout) :", e);
+    }
+  }
+
   const classesTheme = `${geist.variable} ${manrope.variable} ${inter.variable} app-theme flex min-h-full flex-1 flex-col`;
 
   if (pageLegale && !session?.user?.id) {
@@ -70,15 +91,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   let notifications: Awaited<ReturnType<typeof chargerNotifications>> = [];
   let badgesNav: Awaited<ReturnType<typeof chargerBadgesNav>> = { aVerifier: 0, hausses: 0 };
   let avatarUrl: string | null = null;
+  let companyName: string | null = null;
   try {
-    const [notifs, badges, utilisateur] = await Promise.all([
+    const [notifs, badges, utilisateur, profil] = await Promise.all([
       chargerNotifications(donneesUserId),
       chargerBadgesNav(donneesUserId),
       prisma.user.findUnique({ where: { id: session!.user.id }, select: { image: true } }),
+      prisma.companyProfile.findUnique({
+        where: { userId: session!.user.id },
+        select: { raisonSociale: true },
+      }),
     ]);
     notifications = notifs;
     badgesNav = badges;
     avatarUrl = await resoudreUrlAvatar(utilisateur?.image);
+    companyName = profil?.raisonSociale ?? null;
   } catch (e) {
     console.error("Échec du chargement de la navigation :", e);
   }
@@ -91,6 +118,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             email={email}
             prenom={prenom}
             avatarUrl={avatarUrl}
+            companyName={companyName}
             dateLabel={dateLabel}
             notifications={notifications}
             badgesNav={badgesNav}

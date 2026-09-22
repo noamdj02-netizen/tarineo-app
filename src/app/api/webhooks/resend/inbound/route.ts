@@ -23,7 +23,11 @@ const corpsSchema = z.object({
 
 export async function POST(request: Request) {
   const secret = process.env.RESEND_INBOUND_WEBHOOK_SECRET;
-  if (secret) {
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json({ erreur: "Webhook non configuré" }, { status: 503 });
+    }
+  } else {
     const auth = request.headers.get("authorization");
     if (auth !== `Bearer ${secret}`) {
       return NextResponse.json({ erreur: "Non autorisé" }, { status: 401 });

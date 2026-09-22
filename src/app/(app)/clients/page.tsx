@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { agregerClientsUtilisateur, filtrerClients, hrefClient } from "@/lib/clients";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { EmptyState } from "@/components/tarineo/EmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
 import { DataTable, RowActions, TableCell, TableRow } from "@/components/tarineo/DataTable";
@@ -56,15 +57,23 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   return (
     <div>
-      <PageHeader
-        title="Clients"
-        subtitle="Carnet alimenté par vos devis et factures — jamais inventé, toujours à jour."
-        actions={
-          <BtnPrimary href="/devis-clients/nouveau">
-            <IconPlus /> Nouveau devis
-          </BtnPrimary>
-        }
-      />
+      <MobilePageHeader title="Clients" subtitle="Carnet regroupé" />
+      <div className="mb-4 lg:hidden">
+        <BtnPrimary href="/devis-clients/nouveau" className="w-full justify-center rounded-full">
+          <IconPlus /> Nouveau devis
+        </BtnPrimary>
+      </div>
+      <div className="hidden lg:block">
+        <PageHeader
+          title="Clients"
+          subtitle="Carnet alimenté par vos devis et factures — jamais inventé, toujours à jour."
+          actions={
+            <BtnPrimary href="/devis-clients/nouveau">
+              <IconPlus /> Nouveau devis
+            </BtnPrimary>
+          }
+        />
+      </div>
 
       <GrilleStatsMotion className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <CarteResumeMotion label="Clients" valeur={String(tousLesClients.length)} />

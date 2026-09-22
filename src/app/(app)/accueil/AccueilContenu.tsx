@@ -25,6 +25,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { AccueilErreur } from "./AccueilErreur";
 import { accesExportComptable } from "@/lib/planGating";
 import { AppStagger, AppStaggerItem } from "@/components/tarineo/motion/AppStagger";
+import { AccueilMobile } from "./AccueilMobile";
 
 const MOIS_FR = [
   "janvier",
@@ -105,7 +106,30 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
   const enAttenteDeDonnees = tableauPeuRempli && !compteVide;
 
   return (
-    <AppStagger className="flex flex-col gap-8" stagger={0.06}>
+    <>
+      <AccueilMobile
+        economies={montantIdentifie}
+        fournisseurs={fournisseursTop}
+        documents={documentsRecentsUi}
+      />
+
+      <div className="mt-6 flex flex-col gap-4 lg:hidden">
+        {etatOnboarding.doitVoirBanniereReprise && <DashboardBanniereReprise etatQuota={etatQuota} />}
+        {(aVerifier > 0 || payloadsCount > 0) && (
+          <DashboardAFaire aVerifier={aVerifier} hausses={payloadsCount} moisCourantStr={moisCourantStr} />
+        )}
+        {!etatOnboarding.doitVoirBanniereReprise && (
+          <DashboardHeroImport
+            compteVide={compteVide}
+            enAttenteDeDonnees={enAttenteDeDonnees}
+            etatQuota={etatQuota}
+            documentsEnCours={documentsEnCours}
+          />
+        )}
+        {tableauPeuRempli && <DashboardAnalyseEnCours documentsEnCours={documentsEnCours} />}
+      </div>
+
+    <AppStagger className="hidden flex-col gap-8 lg:flex" stagger={0.06}>
       {etatOnboarding.doitVoirBanniereReprise && (
         <AppStaggerItem>
           <DashboardBanniereReprise etatQuota={etatQuota} />
@@ -295,5 +319,6 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
         </AppStaggerItem>
       )}
     </AppStagger>
+    </>
   );
 }

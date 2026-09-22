@@ -81,6 +81,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       if (existant) {
+        if (!existant.emailVerified) {
+          await prisma.user.update({
+            where: { id: existant.id },
+            data: { emailVerified: new Date() },
+          });
+        }
         // Compte email/mot de passe existant : on lie Google pour éviter la page
         // Auth.js par défaut (« sign in with the same account you used originally »).
         if (existant.accounts.length === 0 && account.providerAccountId) {

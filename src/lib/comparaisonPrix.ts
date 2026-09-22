@@ -196,6 +196,14 @@ export async function creerAlertesHausse(
 ): Promise<void> {
   const { userId, documentId, distributor, lignes, comparaisons } = params;
 
+  await client.alert.deleteMany({
+    where: {
+      userId,
+      type: "PRICE_INCREASE",
+      payload: { path: ["documentId"], equals: documentId },
+    },
+  });
+
   for (const comparaison of comparaisons) {
     if (!comparaison.alerte) continue;
     const ligne = lignes.find((l) => l.referenceNorm === comparaison.referenceNorm);

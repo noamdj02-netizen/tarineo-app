@@ -17,6 +17,7 @@ import { logoDev } from "@/lib/fournisseursConnus";
 import { listerEnseignesPersonnalisees } from "@/lib/rechercherFournisseur";
 import { BibliothequeOnglets } from "./RechercheFournisseurIA";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { BtnPrimary, BtnGhost } from "@/components/tarineo/Actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -172,16 +173,22 @@ export default async function FournisseursPage() {
 
   return (
     <div>
-      <PageHeader
+      <MobilePageHeader
         title="Fournisseurs"
-        subtitle="Vos enseignes déjà suivies, puis une bibliothèque pour démarrer un import."
-        actions={
-          <>
-            <BtnGhost href="/veille">Veille prix</BtnGhost>
-            <BtnPrimary href="/documents">Importer un devis</BtnPrimary>
-          </>
-        }
+        subtitle="Vos enseignes suivies et bibliothèque"
       />
+      <div className="hidden lg:block">
+        <PageHeader
+          title="Fournisseurs"
+          subtitle="Vos enseignes déjà suivies, puis une bibliothèque pour démarrer un import."
+          actions={
+            <>
+              <BtnGhost href="/veille">Veille prix</BtnGhost>
+              <BtnPrimary href="/documents">Importer un devis</BtnPrimary>
+            </>
+          }
+        />
+      </div>
 
       <section className="mb-6">
         <h2 className="mb-3 text-base font-semibold text-foreground">Mes fournisseurs</h2>

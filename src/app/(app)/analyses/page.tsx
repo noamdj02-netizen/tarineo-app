@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession, idDonneesUtilisateur } from "@/lib/session";
 import { chargerDonneesAnalyses, type PeriodeAnalyses } from "@/lib/analysesPage";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/tarineo/EmptyState";
@@ -51,15 +52,24 @@ export default async function AnalysesPage({
 
   return (
     <div>
-      <PageHeader
-        title="Analyses"
-        subtitle="Visualisez l'évolution des prix et vos économies."
-        actions={
-          <Suspense fallback={null}>
-            <FiltrePeriodeAnalyses periode={periode} />
-          </Suspense>
-        }
-      />
+      <MobilePageHeader title="Analyses" subtitle="Hausses & dépenses" />
+      <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
+        <p className="text-sm text-muted-foreground">Évolution des prix et économies</p>
+        <Suspense fallback={null}>
+          <FiltrePeriodeAnalyses periode={periode} />
+        </Suspense>
+      </div>
+      <div className="hidden lg:block">
+        <PageHeader
+          title="Analyses"
+          subtitle="Visualisez l'évolution des prix et vos économies."
+          actions={
+            <Suspense fallback={null}>
+              <FiltrePeriodeAnalyses periode={periode} />
+            </Suspense>
+          }
+        />
+      </div>
 
       <AppStagger className="flex flex-col gap-6">
         <AppStaggerItem>

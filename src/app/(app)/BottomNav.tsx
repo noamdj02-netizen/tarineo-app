@@ -6,7 +6,7 @@ import {
   IconDocument,
   IconFournisseurs,
   IconHome,
-  IconInvoice,
+  IconMore,
   IconScanner,
 } from "@/components/tarineo/NavIcons";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
@@ -28,7 +28,7 @@ const ONGLETS = [
   },
   {
     href: "/documents?scanner=1",
-    label: "Importer",
+    label: "Scanner",
     prominent: true,
     estActif: (_pathname: string, scannerActif: boolean) => scannerActif,
     icone: IconScanner,
@@ -40,14 +40,18 @@ const ONGLETS = [
     icone: IconFournisseurs,
   },
   {
-    href: "/devis-clients",
-    label: "Devis",
+    href: "/plus",
+    label: "Plus",
     estActif: (pathname: string) =>
+      pathname === "/plus" ||
       pathname.startsWith("/devis-clients") ||
       pathname.startsWith("/factures-clients") ||
       pathname.startsWith("/clients") ||
-      pathname.startsWith("/facturation-clients"),
-    icone: IconInvoice,
+      pathname.startsWith("/facturation-clients") ||
+      pathname.startsWith("/analyses") ||
+      pathname.startsWith("/parametres") ||
+      pathname.startsWith("/chantiers"),
+    icone: IconMore,
   },
 ];
 
@@ -60,25 +64,33 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_32px_rgba(0,0,0,0.06)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e5e5ea] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-0.5px_0_rgba(0,0,0,0.06)] lg:hidden"
       aria-label="Navigation principale"
     >
-      <div className="mx-auto flex max-w-5xl items-end justify-around px-1">
+      <div className="mx-auto flex max-w-5xl items-end justify-center px-1 pt-1">
         {ONGLETS.map((onglet) => {
           const actif = onglet.estActif(pathname, scannerActif);
           const Icone = onglet.icone;
 
           if (onglet.prominent) {
             return (
-              <div key={onglet.href} className="-mt-5 flex flex-1 flex-col items-center gap-1">
+              <div key={onglet.href} className="flex flex-1 flex-col items-center gap-0.5 pb-0.5">
                 <BoutonImporterNav
                   size="icon-lg"
+                  aria-label="Scanner un document"
                   className={cn(
-                    "transition-transform duration-150 ease-out motion-reduce:active:scale-100",
-                    actif ? "shadow-primary/40 ring-2 ring-primary/20" : undefined,
+                    "size-[52px] shadow-[0_6px_14px_rgba(237,89,33,0.35)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
+                    actif ? "ring-2 ring-primary/20" : undefined,
                   )}
                 />
-                <span className="text-[11px] font-semibold text-primary">{onglet.label}</span>
+                <span
+                  className={cn(
+                    "text-[10px] font-medium",
+                    actif ? "font-semibold text-primary" : "text-[#8e8e93]",
+                  )}
+                >
+                  {onglet.label}
+                </span>
               </div>
             );
           }
@@ -89,14 +101,13 @@ export function BottomNav() {
               href={onglet.href}
               prefetch={false}
               className={cn(
-                "relative flex flex-1 flex-col items-center gap-1 py-2.5 text-sm font-medium transition-[color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100",
-                actif ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                "flex flex-1 flex-col items-center gap-[3px] px-0.5 pb-0.5 pt-1.5 transition-[color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100",
+                actif ? "text-primary" : "text-[#8e8e93] hover:text-foreground",
               )}
               aria-current={actif ? "page" : undefined}
             >
-              <Icone className={cn("size-6 transition-transform duration-200", actif && "scale-110")} />
-              <span>{onglet.label}</span>
-              {actif && <span className="absolute top-1 size-1 rounded-full bg-primary" aria-hidden="true" />}
+              <Icone className="size-6" />
+              <span className={cn("text-[10px]", actif ? "font-semibold" : "font-medium")}>{onglet.label}</span>
             </Link>
           );
         })}

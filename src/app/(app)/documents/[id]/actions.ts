@@ -15,7 +15,7 @@ import { isAnthropicConfigured } from "@/lib/anthropic";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { envoyerEmailDocument } from "@/lib/email";
 import { redigerEmailDocument, type IntentionEmailDocument } from "@/lib/redigerEmailDocument";
-import { LABELS_TYPE } from "@/lib/documentLabels";
+import { LABELS_TYPE, TYPES_ACHAT_REEL } from "@/lib/documentLabels";
 
 const ligneSchema = z.object({
   reference: z.string().trim().min(1),
@@ -58,6 +58,7 @@ export async function validerDocument(documentId: string, donnees: unknown): Pro
   const { type, distributor, documentDate, totalHt, totalTtc, lignes } = parsed.data;
   const userId = session.user.id;
   const date = new Date(documentDate);
+  const estAchatReel = TYPES_ACHAT_REEL.includes(type);
 
   await prisma.$transaction(async (tx) => {
     await tx.lineItem.deleteMany({ where: { documentId } });
@@ -129,19 +130,21 @@ export async function validerDocument(documentId: string, donnees: unknown): Pro
       })),
     });
 
-    for (const ligne of lignesAvecRef) {
-      await tx.priceHistory.create({
-        data: {
-          userId,
-          referenceNorm: ligne.referenceNorm,
-          manufacturerRefNorm: ligne.manufacturerRefNorm,
-          distributor,
-          distributorNorm: normaliserDistributeur(distributor),
-          unitPriceHt: ligne.unitPriceHt,
-          documentDate: date,
-          documentId,
-        },
-      });
+    if (estAchatReel) {
+      for (const ligne of lignesAvecRef) {
+        await tx.priceHistory.create({
+          data: {
+            userId,
+            referenceNorm: ligne.referenceNorm,
+            manufacturerRefNorm: ligne.manufacturerRefNorm,
+            distributor,
+            distributorNorm: normaliserDistributeur(distributor),
+            unitPriceHt: ligne.unitPriceHt,
+            documentDate: date,
+            documentId,
+          },
+        });
+      }
     }
 
     await creerAlertesHausse(tx, {

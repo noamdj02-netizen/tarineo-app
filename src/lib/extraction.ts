@@ -7,6 +7,8 @@ import { comparerLignesAuHistorique, creerAlertesHausse } from "@/lib/comparaiso
 import { dateMinHistoriquePlan } from "@/lib/planGating";
 import { extraireEtEnregistrerLogoFournisseur } from "@/lib/logoFournisseurDocument";
 import { normaliserReference, normaliserDistributeur } from "@/lib/normalisation";
+import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
+import { verifierRateLimitAnalyse } from "@/lib/rateLimitIA";
 import type { DocumentType } from "@prisma/client";
 
 const MODELE = "claude-sonnet-5";
@@ -194,6 +196,14 @@ export async function analyserDocument(documentId: string, userId: string): Prom
   const document = await prisma.document.findFirst({ where: { id: documentId, userId } });
   if (!document) return false;
 
+  if (!verifierRateLimitAnalyse(userId)) {
+    await prisma.document.update({
+      where: { id: documentId },
+      data: { status: "ERROR" },
+    });
+    return false;
+  }
+
   try {
     if (!isAnthropicConfigured()) {
       throw new Error("ANTHROPIC_API_KEY manquante — renseignez-la dans le fichier .env puis relancez l'analyse.");
@@ -260,13 +270,15 @@ export async function analyserDocument(documentId: string, userId: string): Prom
       extraction.confiance >= SEUIL_CONFIANCE && !totalManquant && !possibleDoublon ? "VALIDATED" : "NEEDS_REVIEW";
 
     const distributorNorm = extraction.distributeur ? normaliserDistributeur(extraction.distributeur) : null;
+    const typeDocument = TYPE_EXTRAIT_VERS_ENUM[extraction.type] ?? document.type;
+    const estAchatReel = TYPES_ACHAT_REEL.includes(typeDocument);
 
     await prisma.document.update({
       where: { id: documentId },
       data: {
         // Le type détecté par l'IA à partir du contenu prime sur le choix initial de
         // l'artisan (simple pré-sélection avant analyse, faite sans avoir lu le document).
-        type: TYPE_EXTRAIT_VERS_ENUM[extraction.type] ?? document.type,
+        type: typeDocument,
         distributor: extraction.distributeur || null,
         distributorNorm,
         documentDate: extraction.date_document ? new Date(extraction.date_document) : null,
@@ -347,19 +359,21 @@ export async function analyserDocument(documentId: string, userId: string): Prom
         })),
       });
 
-      for (const ligne of lignesAvecRef) {
-        await prisma.priceHistory.create({
-          data: {
-            userId,
-            referenceNorm: ligne.referenceNorm,
-            manufacturerRefNorm: ligne.manufacturerRefNorm,
-            distributor: distributeur,
-            distributorNorm: normaliserDistributeur(distributeur),
-            unitPriceHt: ligne.prix_unitaire_ht,
-            documentDate,
-            documentId,
-          },
-        });
+      if (estAchatReel) {
+        for (const ligne of lignesAvecRef) {
+          await prisma.priceHistory.create({
+            data: {
+              userId,
+              referenceNorm: ligne.referenceNorm,
+              manufacturerRefNorm: ligne.manufacturerRefNorm,
+              distributor: distributeur,
+              distributorNorm: normaliserDistributeur(distributeur),
+              unitPriceHt: ligne.prix_unitaire_ht,
+              documentDate,
+              documentId,
+            },
+          });
+        }
       }
 
       await creerAlertesHausse(prisma, {
@@ -378,6 +392,7 @@ export async function analyserDocument(documentId: string, userId: string): Prom
     return true;
   } catch (erreur) {
     console.error("Échec de l'analyse Claude pour le document", documentId, ":", erreur);
+    await prisma.lineItem.deleteMany({ where: { documentId } });
     await prisma.document.update({
       where: { id: documentId },
       data: { status: "ERROR" },

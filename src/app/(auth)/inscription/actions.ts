@@ -8,6 +8,7 @@ import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { hasherMotDePasse, LONGUEUR_MIN_MOT_DE_PASSE } from "@/lib/password";
 import { calculerEtatAccesAnticipe, invaliderCacheAccesAnticipe } from "@/lib/accesAnticipe";
+import { envoyerEmailConfirmationInscription } from "@/lib/confirmationEmail";
 
 const schema = z
   .object({
@@ -60,6 +61,12 @@ export async function creerCompte(formData: FormData) {
       },
     });
     invaliderCacheAccesAnticipe();
+
+    try {
+      await envoyerEmailConfirmationInscription(email);
+    } catch (erreurEmail) {
+      console.error("Échec envoi email confirmation inscription :", erreurEmail);
+    }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       redirect("/inscription?erreur=existe");
@@ -68,7 +75,7 @@ export async function creerCompte(formData: FormData) {
   }
 
   try {
-    await signIn("credentials", { email, password, redirectTo: "/onboarding" });
+    await signIn("credentials", { email, password, redirectTo: "/confirmer-email" });
   } catch (error) {
     if (error instanceof AuthError) {
       redirect("/connexion");

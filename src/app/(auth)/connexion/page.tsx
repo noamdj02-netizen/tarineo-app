@@ -36,16 +36,24 @@ function messageErreurAuth(params: { erreur?: "1" | "google" | "session"; errorA
 function ConnexionFormPanel({
   erreur,
   errorAuth,
+  callbackUrl,
+  verifie,
   showSocial = true,
 }: {
   erreur?: "1" | "google" | "session";
   errorAuth?: string;
+  callbackUrl?: string;
+  verifie?: string;
   showSocial?: boolean;
 }) {
   const message = messageErreurAuth({ erreur, errorAuth });
+  const succes =
+    verifie === "1" ? "Votre adresse email est confirmée. Connectez-vous pour continuer." : null;
   return (
     <div className={AUTH_PANEL_CLASS}>
+      {succes && <p className="rounded-xl bg-green-50 px-4 py-3 text-sm text-green-800">{succes}</p>}
       <form action={seConnecter} className="flex w-full flex-col gap-3.5">
+        {callbackUrl ? <input type="hidden" name="callbackUrl" value={callbackUrl} /> : null}
         <AuthField
           id="email"
           name="email"
@@ -88,7 +96,7 @@ function ConnexionFormPanel({
           Se connecter
         </button>
       </form>
-      {showSocial && <AuthSocialButtons googleAction={seConnecterAvecGoogle} />}
+      {showSocial && <AuthSocialButtons googleAction={seConnecterAvecGoogle} callbackUrl={callbackUrl} />}
     </div>
   );
 }
@@ -96,11 +104,15 @@ function ConnexionFormPanel({
 export default async function ConnexionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erreur?: string; error?: string }>;
+  searchParams: Promise<{ erreur?: string; error?: string; callbackUrl?: string; verifie?: string }>;
 }) {
-  const { erreur: erreurBrute, error: errorAuth } = await searchParams;
+  const { erreur: erreurBrute, error: errorAuth, callbackUrl: callbackUrlBrut, verifie } = await searchParams;
   const erreur =
     erreurBrute === "google" || erreurBrute === "1" || erreurBrute === "session" ? erreurBrute : undefined;
+  const callbackUrl =
+    callbackUrlBrut && callbackUrlBrut.startsWith("/") && !callbackUrlBrut.startsWith("//")
+      ? callbackUrlBrut
+      : undefined;
 
   const intro = (
     <div className="flex flex-col gap-2 text-[#172935]">
@@ -127,14 +139,14 @@ export default async function ConnexionPage({
           <AuthBrand variant="light" />
           {intro}
         </div>
-        <ConnexionFormPanel erreur={erreur} errorAuth={errorAuth} />
+        <ConnexionFormPanel erreur={erreur} errorAuth={errorAuth} callbackUrl={callbackUrl} verifie={verifie} />
         {footer}
       </MobileAuthShell>
 
       <div className="hidden min-h-dvh md:flex">
         <AuthDesktopFormShell footer={footer}>
           {intro}
-          <ConnexionFormPanel erreur={erreur} errorAuth={errorAuth} />
+          <ConnexionFormPanel erreur={erreur} errorAuth={errorAuth} callbackUrl={callbackUrl} verifie={verifie} />
         </AuthDesktopFormShell>
         <AuthVisualPanel variant="connexion" />
       </div>

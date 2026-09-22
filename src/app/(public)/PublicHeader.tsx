@@ -22,7 +22,7 @@ export function PublicHeader() {
             <LandingNav variant={accueil ? "hero" : "light"} />
             {sessionUser ? (
               <Link
-                href="/documents"
+                href="/accueil"
                 className="landing-gradient-bg landing-display whitespace-nowrap rounded-full px-6 py-3.5 text-base font-medium text-white transition-opacity hover:opacity-90 sm:px-8"
               >
                 Mon espace

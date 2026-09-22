@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { BellIcon, ChevronDownIcon, LifeBuoyIcon, LogOutIcon, MenuIcon } from "lucide-react";
+import { BellIcon, ChevronDownIcon, LifeBuoyIcon, LogOutIcon } from "lucide-react";
 import { ROUTES_DOCUMENTS_PAR_TYPE } from "@/lib/documentLabels";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
@@ -29,12 +29,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import type { NotifUi } from "@/lib/notifications";
 import type { NavBadges } from "@/lib/navBadges";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
 import { AppPageEnter } from "@/components/tarineo/motion/AppPageEnter";
+import { MobileShellProvider } from "@/components/tarineo/mobile/MobileShellContext";
 import { RechercheGlobale } from "./RechercheGlobale";
 import { deconnexionAction } from "./deconnexionAction";
 
@@ -568,6 +568,7 @@ export function AppShell({
   email,
   prenom,
   avatarUrl = null,
+  companyName = null,
   dateLabel,
   notifications = [],
   badgesNav = { aVerifier: 0, hausses: 0 },
@@ -576,13 +577,13 @@ export function AppShell({
   email: string;
   prenom: string;
   avatarUrl?: string | null;
+  companyName?: string | null;
   dateLabel: string;
   notifications?: NotifUi[];
   badgesNav?: NavBadges;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [menuOuvert, setMenuOuvert] = useState(false);
   const modeOnboarding = pathname.startsWith("/onboarding");
 
   if (modeOnboarding) {
@@ -609,53 +610,13 @@ export function AppShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="mb-4 flex flex-col gap-2.5 rounded-[24px] border border-border/60 bg-card p-3 shadow-sm lg:hidden">
-            <div className="flex items-center justify-between gap-2">
-              <BrandLogo
-                href="/accueil"
-                wordmarkStyle="dashboard"
-                showWordmark={false}
-                iconClassName="h-7 w-8 max-h-7"
-                className="shrink-0"
-              />
-              <div className="flex items-center gap-1.5">
-                <BoutonImporterNav compact />
-                <Sheet open={menuOuvert} onOpenChange={setMenuOuvert}>
-                  <SheetTrigger
-                    aria-label="Ouvrir le menu"
-                    render={
-                      <Button
-                        variant="secondary"
-                        size="icon"
-                        className="size-10 rounded-full transition-transform duration-200 active:scale-95"
-                      />
-                    }
-                  >
-                    <MenuIcon />
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[min(100%,320px)] overflow-y-auto bg-card p-4">
-                    <SheetHeader className="px-0 pb-4">
-                      <SheetTitle>Bon retour, {prenom}</SheetTitle>
-                      <SheetDescription className="capitalize">{dateLabel}</SheetDescription>
-                    </SheetHeader>
-                    <ContenuSidebar
-                      prenom={prenom}
-                      dateLabel={dateLabel}
-                      badgesNav={badgesNav}
-                      onNavigate={() => setMenuOuvert(false)}
-                    />
-                  </SheetContent>
-                </Sheet>
-              </div>
-            </div>
-            <Suspense fallback={<Skeleton className="h-10 rounded-full" />}>
-              <RechercheGlobale compact />
-            </Suspense>
-          </div>
-
-          <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-0">
-            <AppPageEnter>{children}</AppPageEnter>
-          </main>
+          <MobileShellProvider
+            value={{ prenom, avatarUrl, companyName, notifications }}
+          >
+            <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-0">
+              <AppPageEnter>{children}</AppPageEnter>
+            </main>
+          </MobileShellProvider>
         </div>
       </div>
     </>

@@ -24,6 +24,7 @@ import { QuotaStrip } from "@/components/tarineo/QuotaStrip";
 import { EnBrefDocuments } from "@/components/tarineo/EnBrefDocuments";
 import { AidePageTooltip } from "@/components/tarineo/AidePageTooltip";
 import { NavTypeMobile } from "./NavTypeMobile";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { filtreRechercheDocument } from "@/lib/rechercheDocuments";
 import { historiqueEstSuffisant } from "@/lib/historique";
 import { calculerEtatQuota, debutMoisUTC, documentsRestantsEnvoi, MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
@@ -248,7 +249,11 @@ export async function DocumentsPage({
 
   return (
     <div className="app-page flex flex-col gap-6">
-      <section className="rounded-[20px] bg-white p-4 sm:p-5">
+      <MobilePageHeader
+        title={TITRES_PAGE_DOCUMENTS[clePage]}
+        subtitle={SOUS_TITRES_PAGE_DOCUMENTS[clePage]}
+      />
+      <section className="hidden rounded-[20px] bg-white p-4 sm:p-5 lg:block">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
@@ -290,7 +295,7 @@ export async function DocumentsPage({
         </div>
       </section>
 
-      <section id="documents-envoyes" className="scroll-mt-6 rounded-[20px] bg-white p-4 sm:p-5">
+      <section id="documents-envoyes" className="scroll-mt-6 rounded-[20px] bg-white p-4 sm:p-5 lg:shadow-none lg:ring-0">
         {afficherVideSimplifie ? (
           <Empty className="py-12">
             <EmptyHeader>
@@ -495,8 +500,11 @@ export async function DocumentsPage({
               const libelleDocument = `${LABELS_TYPE[document.type] ?? document.type}${document.distributor ? ` · ${document.distributor}` : ""}`;
 
               return (
-                <li key={document.id} className="app-list-link rounded-xl text-sm">
-                  <div className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
+                <li
+                  key={document.id}
+                  className="app-list-link rounded-[18px] border border-transparent text-sm shadow-[0_4px_12px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] lg:rounded-xl lg:shadow-none"
+                >
+                  <div className="flex flex-col gap-2 p-3.5 sm:flex-row sm:items-center sm:justify-between">
                     <Link href={`/documents/${document.id}`} className="min-w-0 flex-1">
                       <span className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                         <span>

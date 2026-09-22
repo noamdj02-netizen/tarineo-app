@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { FormulaireEntreprise } from "../entreprise/FormulaireEntreprise";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { PageTabs } from "@/components/tarineo/PageTabs";
 import { ParametresAbonnement } from "./ParametresAbonnement";
 import { ParametresIntegrations } from "./ParametresIntegrations";
@@ -76,7 +77,10 @@ export default async function ParametresPage({
 
   return (
     <div>
-      <PageHeader title="Paramètres" subtitle="Gérez vos informations et préférences." />
+      <MobilePageHeader title="Paramètres" subtitle="Entreprise, abonnement, équipe" />
+      <div className="hidden lg:block">
+        <PageHeader title="Paramètres" subtitle="Gérez vos informations et préférences." />
+      </div>
       <div className="mb-5">
         <PageTabs
           actif={onglet}

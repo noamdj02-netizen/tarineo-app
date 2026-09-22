@@ -3,9 +3,11 @@ import { logoDev } from "@/lib/fournisseursConnus";
 export function AuthSocialButtons({
   googleAction,
   variant = "light",
+  callbackUrl,
 }: {
-  googleAction: () => Promise<void>;
+  googleAction: (formData: FormData) => Promise<void>;
   variant?: "light" | "dark";
+  callbackUrl?: string;
 }) {
   const sep = variant === "light" ? "bg-[#E6E9EB]" : "bg-white/10";
   const sepText = variant === "light" ? "text-[#9CA3AF]" : "text-[#6b6560]";
@@ -22,6 +24,7 @@ export function AuthSocialButtons({
         <div className={`h-px flex-1 ${sep}`} />
       </div>
       <form action={googleAction}>
+        {callbackUrl ? <input type="hidden" name="callbackUrl" value={callbackUrl} /> : null}
         <button
           type="submit"
           className={`flex h-[50px] w-full items-center justify-center gap-2.5 rounded-full text-[15px] font-semibold transition ${btn}`}

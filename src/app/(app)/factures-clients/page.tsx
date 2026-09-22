@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { EmptyState } from "@/components/tarineo/EmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
@@ -48,11 +49,19 @@ export default async function FacturesClientsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Factures clients"
-        subtitle="Émises par transformation d'un devis — pas de création manuelle."
-        actions={<BtnPrimary href="/devis-clients">Voir les devis</BtnPrimary>}
-      />
+      <MobilePageHeader title="Factures clients" subtitle="Depuis vos devis acceptés" />
+      <div className="mb-4 lg:hidden">
+        <BtnPrimary href="/devis-clients" className="w-full justify-center rounded-full">
+          Voir les devis
+        </BtnPrimary>
+      </div>
+      <div className="hidden lg:block">
+        <PageHeader
+          title="Factures clients"
+          subtitle="Émises par transformation d'un devis — pas de création manuelle."
+          actions={<BtnPrimary href="/devis-clients">Voir les devis</BtnPrimary>}
+        />
+      </div>
 
       <GrilleStatsMotion className="mb-5 grid gap-3 sm:grid-cols-3">
         <CarteResumeMotion label="Factures" valeur={String(factures.length)} />

@@ -4,6 +4,7 @@ import { auth, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { estCleStockageAvatar, resoudreUrlAvatar } from "@/lib/avatarUtilisateur";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { BoutonSuppression } from "./BoutonSuppression";
 import { FormulaireMotDePasse } from "./FormulaireMotDePasse";
 import { GestionAbonnement } from "./GestionAbonnement";
@@ -78,7 +79,8 @@ export default async function ComptePage() {
 
   return (
     <div className="app-page flex flex-col gap-5">
-      <h1 className="app-display text-2xl font-semibold text-[var(--foreground)]">Mon compte</h1>
+      <MobilePageHeader title="Mon compte" subtitle="Profil et abonnement" />
+      <h1 className="app-display hidden text-2xl font-semibold text-[var(--foreground)] lg:block">Mon compte</h1>
 
       {dbIndisponible && (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
