@@ -165,9 +165,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return token;
       }
 
-      // Cookie JWT encore valide après reset DB / suppression :
-      // on revalide au plus toutes les 5 minutes (pas à chaque navigation).
-      const STALE_MS = 5 * 60_000;
+      // Cookie JWT encore valide après reset DB / suppression / révocation équipe :
+      // on revalide au plus toutes les 60 s (compromis perf vs isolation équipe).
+      const STALE_MS = 60_000;
       const checkedAt = typeof token.checkedAt === "number" ? token.checkedAt : 0;
       const estFrais = Date.now() - checkedAt < STALE_MS;
 
