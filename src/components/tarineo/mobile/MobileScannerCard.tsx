@@ -1,82 +1,78 @@
 "use client";
 
 import Link from "next/link";
-import {
-  CameraIcon,
-  ChevronRightIcon,
-  ClockIcon,
-  FileTextIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { CameraIcon, ChevronRightIcon, ClockIcon, FileTextIcon, SparklesIcon } from "lucide-react";
 import { ImportDocument } from "@/app/(app)/documents/ImportDocument";
+import { MascotteDashboard } from "@/components/tarineo/MascotteDashboard";
 import { Button } from "@/components/ui/button";
-import { IllustrationScanMobile } from "./IllustrationScanMobile";
+import { Card, CardAction, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-/** Carte hero mobile — composition maquette APRÈS. */
+/** Carte hero mobile — mascotte Dashboard + composition shadcn. */
 export function MobileScannerCard() {
   return (
-    <section className="relative overflow-hidden rounded-[28px] border border-[#eceef1] bg-white p-5 shadow-[0_8px_28px_rgba(15,28,40,0.07)]">
+    <Card className="relative gap-0 overflow-hidden rounded-[28px] border-0 bg-card py-0 shadow-[0_8px_28px_rgba(15,28,40,0.07)] ring-1 ring-foreground/8">
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-6 top-6 size-40 rounded-full bg-[radial-gradient(circle,rgba(236,88,33,0.18)_0%,rgba(236,88,33,0)_70%)]"
+        className="pointer-events-none absolute -right-4 top-2 size-36 rounded-full bg-[radial-gradient(circle,rgba(236,88,33,0.16)_0%,rgba(236,88,33,0)_70%)]"
       />
 
-      <div className="relative flex gap-3">
-        <div className="min-w-0 flex-1">
+      <CardHeader className="relative grid-cols-[1fr_auto] gap-2 px-5 pt-5 pb-0">
+        <div className="min-w-0">
           <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.07em] text-primary">
-            <SparklesIcon className="size-3.5 shrink-0" aria-hidden />
+            <SparklesIcon data-icon="inline-start" className="size-3.5 shrink-0" aria-hidden />
             Analysez vos devis en quelques secondes
           </p>
-          <h2 className="mt-2 text-[22px] font-bold leading-[1.15] tracking-[-0.45px] text-[#0f1c28]">
+          <CardTitle className="mt-2 font-sans text-[22px] font-bold leading-[1.15] tracking-[-0.45px] text-foreground">
             Scanner un document
-          </h2>
-          <p className="mt-2 max-w-[220px] text-[13px] leading-[1.45] text-[#6b7785]">
+          </CardTitle>
+          <CardDescription className="mt-2 max-w-[200px] text-[13px] leading-[1.45]">
             Photographiez un devis ou une facture fournisseur pour détecter automatiquement les
             évolutions de prix.
-          </p>
+          </CardDescription>
         </div>
+        <CardAction className="self-end justify-self-end">
+          <MascotteDashboard variant="loupe" width={108} height={114} priority className="-mb-1 -mr-1" />
+        </CardAction>
+      </CardHeader>
 
-        <div className="relative -mr-1 -mt-1 w-[108px] shrink-0 self-start min-[360px]:w-[124px]">
-          <IllustrationScanMobile className="w-full" />
-        </div>
-      </div>
-
-      <div className="relative mt-4 flex flex-col gap-2.5">
+      <CardFooter className="relative mt-4 flex flex-col gap-2.5 border-0 bg-transparent px-5 pb-5">
         <ImportDocument
           preferCamera
           trigger={
             <Button className="h-12 w-full justify-between rounded-full px-5 text-[15px] font-semibold shadow-[0_8px_20px_rgba(236,88,33,0.32)]">
               <span className="inline-flex items-center gap-2">
-                <CameraIcon className="size-4" aria-hidden />
+                <CameraIcon data-icon="inline-start" aria-hidden />
                 Scanner maintenant
               </span>
-              <ChevronRightIcon className="size-4 opacity-90" aria-hidden />
+              <ChevronRightIcon data-icon="inline-end" aria-hidden />
             </Button>
           }
         />
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid w-full grid-cols-2 gap-2">
           <ImportDocument
             preferCamera={false}
             trigger={
-              <button
-                type="button"
-                className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[#e8ebef] bg-[#fafbfc] px-3 text-[12px] font-semibold text-[#0f1c28] active:scale-[0.98] motion-reduce:active:scale-100"
+              <Button
+                variant="outline"
+                className="h-11 w-full rounded-full border-border bg-muted/40 px-3 text-[12px] font-semibold"
               >
-                <FileTextIcon className="size-3.5 text-[#8a96a3]" aria-hidden />
+                <FileTextIcon data-icon="inline-start" aria-hidden />
                 <span className="truncate">Importer un fichier</span>
-              </button>
+              </Button>
             }
           />
-          <Link
-            href="/documents"
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[#e8ebef] bg-[#fafbfc] px-3 text-[12px] font-semibold text-[#0f1c28] active:scale-[0.98] motion-reduce:active:scale-100"
+          <Button
+            variant="outline"
+            className="h-11 rounded-full border-border bg-muted/40 px-3 text-[12px] font-semibold"
+            render={<Link href="/documents" />}
+            nativeButton={false}
           >
-            <ClockIcon className="size-3.5 text-[#8a96a3]" aria-hidden />
+            <ClockIcon data-icon="inline-start" aria-hidden />
             Historique
-          </Link>
+          </Button>
         </div>
-      </div>
-    </section>
+      </CardFooter>
+    </Card>
   );
 }
