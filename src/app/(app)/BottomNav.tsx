@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import {
   IconCards,
   IconClock,
@@ -58,9 +59,15 @@ const ONGLETS = [
   },
 ];
 
+/** Hauteur de la barre (hors safe-area) — labels alignés ; le FAB flotte au-dessus. */
+const HAUTEUR_BARRE = 56;
+/** Espace réservé au label sous le FAB (aligné avec les autres onglets). */
+const HAUTEUR_LABEL = 18;
+
 export function BottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const reduce = useReducedMotion();
   const scannerActif = pathname.startsWith("/documents") && searchParams.get("scanner") === "1";
 
   if (pathname.startsWith("/onboarding")) return null;
@@ -70,26 +77,39 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e5e5ea] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-0.5px_0_rgba(0,0,0,0.06)] lg:hidden"
       aria-label="Navigation principale"
     >
-      <div className="mx-auto flex max-w-5xl items-end justify-center px-1 pt-1">
+      <LayoutGroup id="bottom-nav">
+      <div
+        className="relative mx-auto grid max-w-5xl grid-cols-5 items-end px-1"
+        style={{ height: HAUTEUR_BARRE }}
+      >
         {ONGLETS.map((onglet) => {
           const actif = onglet.estActif(pathname, scannerActif);
           const Icone = onglet.icone;
 
           if (onglet.prominent) {
             return (
-              <div key={onglet.href} className="flex flex-1 flex-col items-center gap-0.5 pb-0.5">
-                <BoutonImporterNav
-                  size="icon-lg"
-                  aria-label="Scanner un document"
-                  className={cn(
-                    "-mt-3 size-[56px] shadow-[0_8px_18px_rgba(237,89,33,0.38)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
-                    actif ? "ring-2 ring-primary/25" : undefined,
-                  )}
-                />
+              <div
+                key={onglet.href}
+                className="relative flex h-full flex-col items-center justify-end pb-1"
+              >
+                {/* FAB centré au-dessus de la ligne de labels — même baseline que Accueil/Devis/… */}
+                <div
+                  className="absolute left-1/2 z-10 -translate-x-1/2"
+                  style={{ bottom: HAUTEUR_LABEL }}
+                >
+                  <BoutonImporterNav
+                    size="icon-lg"
+                    aria-label="Scanner un document"
+                    className={cn(
+                      "size-[56px] shadow-[0_8px_18px_rgba(237,89,33,0.38)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
+                      actif ? "ring-2 ring-primary/25" : undefined,
+                    )}
+                  />
+                </div>
                 <span
                   className={cn(
-                    "text-[10px] font-medium",
-                    actif ? "font-semibold text-primary" : "text-[#8e8e93]",
+                    "relative z-0 text-[10px] leading-none",
+                    actif ? "font-semibold text-primary" : "font-medium text-[#8e8e93]",
                   )}
                 >
                   {onglet.label}
@@ -98,23 +118,49 @@ export function BottomNav() {
             );
           }
 
-          return (
+          const lien = (
             <Link
-              key={onglet.href}
               href={onglet.href}
               prefetch={false}
               className={cn(
-                "flex flex-1 flex-col items-center gap-[3px] px-0.5 pb-0.5 pt-1.5 transition-[color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100",
+                "flex h-full flex-col items-center justify-end gap-0.5 pb-1 transition-colors duration-150 ease-out",
                 actif ? "text-primary" : "text-[#8e8e93] hover:text-foreground",
               )}
               aria-current={actif ? "page" : undefined}
             >
-              <Icone className="size-6" />
-              <span className={cn("text-[10px]", actif ? "font-semibold" : "font-medium")}>{onglet.label}</span>
+              <span className="relative flex size-7 items-center justify-center">
+                <Icone className="size-6" />
+                {actif && !reduce && (
+                  <motion.span
+                    layoutId="bottom-nav-indicateur"
+                    className="absolute -bottom-0.5 h-0.5 w-3 rounded-full bg-primary"
+                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                  />
+                )}
+              </span>
+              <span className={cn("text-[10px] leading-none", actif ? "font-semibold" : "font-medium")}>
+                {onglet.label}
+              </span>
             </Link>
+          );
+
+          if (reduce) {
+            return <div key={onglet.href}>{lien}</div>;
+          }
+
+          return (
+            <motion.div
+              key={onglet.href}
+              className="h-full"
+              whileTap={{ scale: 0.94 }}
+              transition={{ type: "spring", stiffness: 500, damping: 28 }}
+            >
+              {lien}
+            </motion.div>
           );
         })}
       </div>
+      </LayoutGroup>
     </nav>
   );
 }

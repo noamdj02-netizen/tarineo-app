@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { AppStagger, AppStaggerItem } from "@/components/tarineo/motion/AppStagger";
 
 const formaterEuros = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -72,119 +73,131 @@ export function AccueilMobile({
   documents: DocumentRecent[];
 }) {
   return (
-    <div className="flex flex-col gap-5 pb-2 lg:hidden">
-      <MobileAccueilHeader />
+    <AppStagger className="flex flex-col gap-5 pb-2 lg:hidden" stagger={0.05} delayChildren={0.02}>
+      <AppStaggerItem>
+        <MobileAccueilHeader />
+      </AppStaggerItem>
 
-      <MobileScannerCard />
+      <AppStaggerItem>
+        <MobileScannerCard />
+      </AppStaggerItem>
 
-      <MobileASurveiller items={aSurveiller} />
+      <AppStaggerItem>
+        <MobileASurveiller items={aSurveiller} />
+      </AppStaggerItem>
 
-      <section className="flex flex-col gap-3">
-        <MobileSectionHeader
-          title="Devis récents"
-          href="/documents"
-          icon={<FileTextIcon className="size-4" aria-hidden />}
-        />
-        {documents.length === 0 ? (
-          <Card className="items-center rounded-[20px] border-0 py-8 text-center shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
-            <CardHeader className="items-center">
-              <MascotteDashboard variant="loupe" width={72} height={76} />
-              <CardTitle className="mt-2 text-[16px] font-semibold">Aucun devis pour le moment</CardTitle>
-              <CardDescription className="max-w-[260px]">
-                Scannez votre premier devis pour commencer.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ImportDocument preferCamera className="h-auto rounded-full px-5 py-2.5" label="Scanner un devis" />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="gap-0 overflow-hidden rounded-[20px] border-0 py-0 shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
-            {documents.slice(0, 5).map((doc, i) => (
-              <div key={doc.id}>
-                {i > 0 && <Separator />}
+      <AppStaggerItem>
+        <section className="flex flex-col gap-3">
+          <MobileSectionHeader
+            title="Devis récents"
+            href="/documents"
+            icon={<FileTextIcon className="size-4" aria-hidden />}
+          />
+          {documents.length === 0 ? (
+            <Card className="items-center rounded-[20px] border-0 py-8 text-center shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
+              <CardHeader className="items-center">
+                <MascotteDashboard variant="loupe" width={72} height={76} />
+                <CardTitle className="mt-2 text-[16px] font-semibold">Aucun devis pour le moment</CardTitle>
+                <CardDescription className="max-w-[260px]">
+                  Scannez votre premier devis pour commencer.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ImportDocument preferCamera className="h-auto rounded-full px-5 py-2.5" label="Scanner un devis" />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="gap-0 overflow-hidden rounded-[20px] border-0 py-0 shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
+              {documents.slice(0, 5).map((doc, i) => (
+                <div key={doc.id}>
+                  {i > 0 && <Separator />}
+                  <Link
+                    href={`/documents/${doc.id}`}
+                    className="flex items-center gap-3 px-3.5 py-3.5 active:bg-muted/50 motion-reduce:active:bg-transparent"
+                  >
+                    <MobileAvatarFournisseur
+                      nom={doc.distributor}
+                      norm={doc.distributorNorm}
+                      logoUrl={doc.logoUrl}
+                      size="sm"
+                      variant="square"
+                      className="!size-11 !rounded-[12px] !border-0 !shadow-sm"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[15px] font-semibold text-foreground">{doc.distributor}</p>
+                      <p className="text-[12px] text-muted-foreground">{formaterDate(doc)}</p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      {doc.totalHt !== null && (
+                        <p className="text-[15px] font-bold text-foreground">{formaterEuros(doc.totalHt)}</p>
+                      )}
+                      <BadgeVariation doc={doc} />
+                    </div>
+                  </Link>
+                </div>
+              ))}
+            </Card>
+          )}
+        </section>
+      </AppStaggerItem>
+
+      <AppStaggerItem>
+        <section className="flex flex-col gap-3">
+          <MobileSectionHeader
+            title="Fournisseurs suivis"
+            href="/fournisseurs"
+            icon={<HomeIcon className="size-4" aria-hidden />}
+          />
+          {fournisseurs.length === 0 ? (
+            <Card className="items-center rounded-[20px] border-0 py-7 text-center shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
+              <CardHeader className="items-center">
+                <CardTitle className="text-[15px] font-semibold">Aucun fournisseur suivi</CardTitle>
+                <CardDescription>Importez un document pour suivre vos enseignes.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="rounded-full px-5" render={<Link href="/fournisseurs" />} nativeButton={false}>
+                  Ajouter un fournisseur
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {fournisseurs.map((f) => (
                 <Link
-                  href={`/documents/${doc.id}`}
-                  className="flex items-center gap-3 px-3.5 py-3.5 active:bg-muted/50 motion-reduce:active:bg-transparent"
+                  key={f.distributorNorm}
+                  href={`/fournisseurs/${encodeURIComponent(f.distributorNorm)}`}
+                  className="flex w-[64px] shrink-0 flex-col items-center gap-2 active:scale-[0.97] motion-reduce:active:scale-100"
                 >
                   <MobileAvatarFournisseur
-                    nom={doc.distributor}
-                    norm={doc.distributorNorm}
-                    logoUrl={doc.logoUrl}
-                    size="sm"
+                    nom={f.distributor}
+                    norm={f.distributorNorm}
+                    logoUrl={f.logoUrl}
                     variant="square"
-                    className="!size-11 !rounded-[12px] !border-0 !shadow-sm"
+                    className="!size-[52px] !rounded-[14px] !border !border-border !shadow-none"
                   />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[15px] font-semibold text-foreground">{doc.distributor}</p>
-                    <p className="text-[12px] text-muted-foreground">{formaterDate(doc)}</p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    {doc.totalHt !== null && (
-                      <p className="text-[15px] font-bold text-foreground">{formaterEuros(doc.totalHt)}</p>
-                    )}
-                    <BadgeVariation doc={doc} />
-                  </div>
+                  <span className="max-w-full truncate text-center text-[11px] font-medium text-foreground">
+                    {f.distributor}
+                  </span>
                 </Link>
-              </div>
-            ))}
-          </Card>
-        )}
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <MobileSectionHeader
-          title="Fournisseurs suivis"
-          href="/fournisseurs"
-          icon={<HomeIcon className="size-4" aria-hidden />}
-        />
-        {fournisseurs.length === 0 ? (
-          <Card className="items-center rounded-[20px] border-0 py-7 text-center shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
-            <CardHeader className="items-center">
-              <CardTitle className="text-[15px] font-semibold">Aucun fournisseur suivi</CardTitle>
-              <CardDescription>Importez un document pour suivre vos enseignes.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="rounded-full px-5" render={<Link href="/fournisseurs" />} nativeButton={false}>
-                Ajouter un fournisseur
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {fournisseurs.map((f) => (
+              ))}
               <Link
-                key={f.distributorNorm}
-                href={`/fournisseurs/${encodeURIComponent(f.distributorNorm)}`}
-                className="flex w-[64px] shrink-0 flex-col items-center gap-2"
+                href="/fournisseurs"
+                className="flex w-[64px] shrink-0 flex-col items-center gap-2 active:scale-[0.97] motion-reduce:active:scale-100"
+                aria-label="Ajouter un fournisseur"
               >
-                <MobileAvatarFournisseur
-                  nom={f.distributor}
-                  norm={f.distributorNorm}
-                  logoUrl={f.logoUrl}
-                  variant="square"
-                  className="!size-[52px] !rounded-[14px] !border !border-border !shadow-none"
-                />
-                <span className="max-w-full truncate text-center text-[11px] font-medium text-foreground">
-                  {f.distributor}
+                <span className="flex size-[52px] items-center justify-center rounded-[14px] border border-dashed border-border bg-muted/40 text-muted-foreground">
+                  <PlusIcon className="size-5" aria-hidden />
                 </span>
+                <span className="text-[11px] font-medium text-muted-foreground">Ajouter</span>
               </Link>
-            ))}
-            <Link
-              href="/fournisseurs"
-              className="flex w-[64px] shrink-0 flex-col items-center gap-2"
-              aria-label="Ajouter un fournisseur"
-            >
-              <span className="flex size-[52px] items-center justify-center rounded-[14px] border border-dashed border-border bg-muted/40 text-muted-foreground">
-                <PlusIcon className="size-5" aria-hidden />
-              </span>
-              <span className="text-[11px] font-medium text-muted-foreground">Ajouter</span>
-            </Link>
-          </div>
-        )}
-      </section>
+            </div>
+          )}
+        </section>
+      </AppStaggerItem>
 
-      <MobileEconomiesRow montant={economies} evolutionPct={evolutionPct} />
-    </div>
+      <AppStaggerItem>
+        <MobileEconomiesRow montant={economies} evolutionPct={evolutionPct} />
+      </AppStaggerItem>
+    </AppStagger>
   );
 }

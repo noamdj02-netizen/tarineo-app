@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CameraIcon, ChevronRightIcon, ClockIcon, FileTextIcon, SparklesIcon } from "lucide-react";
+import { CameraIcon, ChevronRightIcon, ClockIcon, FileTextIcon } from "lucide-react";
 import { ImportDocument } from "@/app/(app)/documents/ImportDocument";
 import { MascotteDashboard } from "@/components/tarineo/MascotteDashboard";
 import { Button } from "@/components/ui/button";
@@ -18,11 +18,7 @@ export function MobileScannerCard() {
 
       <CardHeader className="relative grid-cols-[1fr_auto] gap-2 px-5 pt-5 pb-0">
         <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.07em] text-primary">
-            <SparklesIcon data-icon="inline-start" className="size-3.5 shrink-0" aria-hidden />
-            Analysez vos devis en quelques secondes
-          </p>
-          <CardTitle className="mt-2 font-sans text-[22px] font-bold leading-[1.15] tracking-[-0.45px] text-foreground">
+          <CardTitle className="font-sans text-[22px] font-bold leading-[1.15] tracking-[-0.45px] text-foreground">
             Scanner un document
           </CardTitle>
           <CardDescription className="mt-2 max-w-[200px] text-[13px] leading-[1.45]">
