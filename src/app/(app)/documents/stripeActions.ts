@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { type PlanStripe, PLANS_STRIPE } from "@/lib/plansStripe";
-import { stripe } from "@/lib/stripe";
+import { stripe, PRIX_MENSUEL_PAR_PLAN } from "@/lib/stripe";
 
 export type PlanValide = PlanStripe;
 
@@ -57,6 +57,67 @@ export async function creerSetupIntentPaiement(plan: string): Promise<ResultatSe
 // Le formulaire client interroge cette action après confirmation du SetupIntent
 // côté Stripe, en attendant que le webhook (asynchrone) ait mis à jour le compte —
 // évite de débloquer l'écran sur la seule foi de la confirmation client.
+export type ResultatChangementPlan =
+  | { succes: true }
+  | { succes: false; erreur: string; besoinPaiement?: boolean };
+
+/** Change de formule pour un abonné actif (prorata Stripe, sans quitter l'app). */
+export async function changerPlanAbonnement(plan: string): Promise<ResultatChangementPlan> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, erreur: "Vous devez être connecté." };
+  }
+  if (!PLANS_STRIPE.includes(plan as PlanValide)) {
+    return { succes: false, erreur: "Plan invalide." };
+  }
+
+  const priceId = PRIX_MENSUEL_PAR_PLAN[plan];
+  if (!priceId) {
+    return { succes: false, erreur: "Prix Stripe non configuré pour ce plan." };
+  }
+
+  const utilisateur = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { plan: true, stripeSubscriptionId: true },
+  });
+  if (!utilisateur) {
+    return { succes: false, erreur: "Compte introuvable." };
+  }
+  if (!utilisateur.stripeSubscriptionId) {
+    return { succes: false, erreur: "Aucun abonnement actif.", besoinPaiement: true };
+  }
+  if (utilisateur.plan === plan) {
+    return { succes: true };
+  }
+
+  try {
+    const abonnement = await stripe.subscriptions.retrieve(utilisateur.stripeSubscriptionId);
+    const itemId = abonnement.items.data[0]?.id;
+    if (!itemId) {
+      return { succes: false, erreur: "Abonnement Stripe invalide." };
+    }
+
+    await stripe.subscriptions.update(utilisateur.stripeSubscriptionId, {
+      items: [{ id: itemId, price: priceId }],
+      proration_behavior: "create_prorations",
+    });
+
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { plan },
+    });
+
+    return { succes: true };
+  } catch (erreur) {
+    console.error("changerPlanAbonnement:", erreur);
+    return {
+      succes: false,
+      erreur: "Impossible de changer de plan. Vérifiez votre moyen de paiement.",
+      besoinPaiement: true,
+    };
+  }
+}
+
 export async function verifierActivationCompte(): Promise<boolean> {
   const session = await auth();
   if (!session?.user?.id) return false;

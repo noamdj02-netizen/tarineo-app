@@ -4,6 +4,7 @@ import { FolderArchiveIcon } from "lucide-react";
 import { getSession, idDonneesUtilisateur } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { LABELS_TYPE } from "@/lib/documentLabels";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ImportDocument } from "../documents/ImportDocument";
@@ -50,11 +51,17 @@ export default async function CoffrePage() {
 
   return (
     <div>
-      <PageHeader
-        title="Mon coffre"
-        subtitle="Tous vos documents classés par mois — devis, factures et bons d'achat."
-        actions={<ImportDocument label="Ajouter un document" />}
-      />
+      <MobilePageHeader title="Mon coffre" subtitle="Archives par mois" backHref="/plus" />
+      <div className="mb-4 lg:hidden">
+        <ImportDocument label="Ajouter un document" className="w-full justify-center rounded-full" />
+      </div>
+      <div className="hidden lg:block">
+        <PageHeader
+          title="Mon coffre"
+          subtitle="Tous vos documents classés par mois — devis, factures et bons d'achat."
+          actions={<ImportDocument label="Ajouter un document" />}
+        />
+      </div>
 
       {documents.length === 0 ? (
         <PageCard>

@@ -94,6 +94,27 @@ export function IconScanner({ className }: { className?: string }) {
   );
 }
 
+/** Fournisseurs mobile (carte + envoi — Figma card-send) */
+export function IconCardSend({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <rect x="2.5" y="6" width="14" height="10" rx="2" />
+      <path d="M16.5 10.5 21 8v8l-4.5-2.5" />
+      <path d="M6.5 11h5M6.5 14h3" />
+    </svg>
+  );
+}
+
+/** Compte mobile */
+export function IconCompte({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20.5c0-3.5 3.1-5.5 7-5.5s7 2 7 5.5" />
+    </svg>
+  );
+}
+
 /** Menu « Plus » mobile */
 export function IconMore({ className }: { className?: string }) {
   return (

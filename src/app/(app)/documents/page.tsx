@@ -564,7 +564,12 @@ export async function DocumentsPage({
       )}
       {upgrade === "1" && !bloquePaiementRequis && (
         <div className="mt-8">
-          <EcranPaiementRequis bloque={false} planInitial={planStripeValide(plan) ?? "pro"} />
+          <EcranPaiementRequis
+            bloque={false}
+            planInitial={planStripeValide(plan) ?? "pro"}
+            autoDemarrer
+            masquerGrillePlans
+          />
         </div>
       )}
 

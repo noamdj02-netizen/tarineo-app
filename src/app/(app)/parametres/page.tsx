@@ -22,12 +22,14 @@ import { planStripeValide } from "@/lib/plansStripe";
 export default async function ParametresPage({
   searchParams,
 }: {
-  searchParams: Promise<{ onglet?: string; plan?: string }>;
+  searchParams: Promise<{ onglet?: string; plan?: string; paiement?: string; checkout?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
-  const { onglet = "profil", plan: planQuery } = await searchParams;
+  const { onglet = "profil", plan: planQuery, paiement, checkout } = await searchParams;
   const planSelectionne = planStripeValide(planQuery);
+  const paiementDemande = paiement === "1";
+  const checkoutReussi = checkout === "ok";
 
   let profil = null;
   let planActuel: string | null = null;
@@ -132,6 +134,11 @@ export default async function ParametresPage({
       )}
       {onglet === "abonnement" && (
         <PageCard>
+          {checkoutReussi && (
+            <p className="mb-6 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+              Paiement confirmé — votre abonnement est activé. Merci !
+            </p>
+          )}
           <BanniereLimitesPlan
             plan={planActuel}
             subscriptionStatus={subscriptionStatus}
@@ -143,9 +150,14 @@ export default async function ParametresPage({
             aCompteStripe={aCompteStripe}
             planSelectionne={planSelectionne}
           />
-          {planSelectionne && !abonnementActif && (
+          {planSelectionne && (paiementDemande || !abonnementActif) && (
             <div id="paiement-stripe" className="mt-8 scroll-mt-24">
-              <EcranPaiementRequis bloque={false} planInitial={planSelectionne} />
+              <EcranPaiementRequis
+                bloque={false}
+                planInitial={planSelectionne}
+                autoDemarrer={paiementDemande}
+                masquerGrillePlans={paiementDemande}
+              />
             </div>
           )}
         </PageCard>

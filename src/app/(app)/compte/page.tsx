@@ -80,6 +80,13 @@ export default async function ComptePage() {
   return (
     <div className="app-page flex flex-col gap-5">
       <MobilePageHeader title="Mon compte" subtitle="Profil et abonnement" />
+      <Link
+        href="/plus"
+        className="flex items-center justify-between rounded-2xl border border-[#eeedff] bg-white px-4 py-3.5 text-sm font-semibold text-[#171717] shadow-sm active:scale-[0.99] lg:hidden"
+      >
+        Menu complet
+        <span className="text-[#8a96a3]" aria-hidden>›</span>
+      </Link>
       <h1 className="app-display hidden text-2xl font-semibold text-[var(--foreground)] lg:block">Mon compte</h1>
 
       {dbIndisponible && (

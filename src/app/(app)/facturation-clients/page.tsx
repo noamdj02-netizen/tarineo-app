@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { BtnPrimary } from "@/components/tarineo/Actions";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 
 /**
  * La facturation électronique (Chorus Pro / PDP) n'est pas encore branchée.
@@ -9,11 +10,19 @@ import { BtnPrimary } from "@/components/tarineo/Actions";
 export default function FacturationClientsPage() {
   return (
     <div>
-      <PageHeader
-        title="Facturation électronique"
-        subtitle="Conformité et transmission automatisée — bientôt disponible."
-        actions={<BtnPrimary href="/factures-clients">Voir mes factures clients</BtnPrimary>}
-      />
+      <MobilePageHeader title="Facturation électronique" subtitle="Bientôt disponible" backHref="/plus" />
+      <div className="mb-4 lg:hidden">
+        <BtnPrimary href="/factures-clients" className="w-full justify-center rounded-full">
+          Voir mes factures clients
+        </BtnPrimary>
+      </div>
+      <div className="hidden lg:block">
+        <PageHeader
+          title="Facturation électronique"
+          subtitle="Conformité et transmission automatisée — bientôt disponible."
+          actions={<BtnPrimary href="/factures-clients">Voir mes factures clients</BtnPrimary>}
+        />
+      </div>
       <PageCard>
         <h2 className="text-base font-semibold text-foreground">Bientôt disponible</h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">

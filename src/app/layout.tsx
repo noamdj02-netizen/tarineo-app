@@ -25,6 +25,22 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Tarineo",
   description: "Protégez votre marge : comparez vos devis fournisseurs à votre historique d'achats.",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Tarineo",
+  },
+  icons: {
+    apple: "/landing/logo-icon.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#EC5821",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
 };
 
 // Coquille minimale : la distinction pages publiques (marketing, connexion) / pages

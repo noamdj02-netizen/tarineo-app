@@ -13,7 +13,7 @@ export function BadgePlanPro({ className }: { className?: string }) {
 export function LienPasserPro({ className }: { className?: string }) {
   return (
     <Link
-      href="/parametres?onglet=abonnement"
+      href="/parametres?onglet=abonnement&plan=pro&paiement=1#paiement-stripe"
       className={`text-sm font-medium text-primary hover:underline ${className ?? ""}`}
     >
       Passer à Pro

@@ -2,14 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import {
-  IconDocument,
-  IconFournisseurs,
-  IconHome,
-  IconMore,
-  IconScanner,
-} from "@/components/tarineo/NavIcons";
+import { History, Home, Scan, User } from "lucide-react";
+import { IconCardSend } from "@/components/tarineo/NavIcons";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
+import { MOBILE_GRADIENT_ACCENT, MOBILE_GRADIENT_HERO, MOBILE_NAV_SHADOW, MOBILE_TEXT_MUTED } from "@/components/tarineo/mobile/mobileTokens";
 import { cn } from "@/lib/utils";
 
 const ONGLETS = [
@@ -17,44 +13,43 @@ const ONGLETS = [
     href: "/accueil",
     label: "Accueil",
     estActif: (pathname: string) => pathname === "/accueil",
-    icone: IconHome,
+    icone: Home,
   },
   {
     href: "/documents",
     label: "Documents",
     estActif: (pathname: string, scannerActif: boolean) =>
       (pathname === "/documents" || pathname.startsWith("/documents/")) && !scannerActif,
-    icone: IconDocument,
+    icone: History,
   },
   {
     href: "/documents?scanner=1",
     label: "Scanner",
     prominent: true,
     estActif: (_pathname: string, scannerActif: boolean) => scannerActif,
-    icone: IconScanner,
+    icone: Scan,
   },
   {
     href: "/fournisseurs",
     label: "Fournisseurs",
     estActif: (pathname: string) => pathname.startsWith("/fournisseurs"),
-    icone: IconFournisseurs,
+    icone: IconCardSend,
   },
   {
-    href: "/plus",
-    label: "Plus",
+    href: "/compte",
+    label: "Compte",
     estActif: (pathname: string) =>
+      pathname === "/compte" ||
       pathname === "/plus" ||
+      pathname.startsWith("/parametres") ||
       pathname.startsWith("/devis-clients") ||
       pathname.startsWith("/factures-clients") ||
       pathname.startsWith("/clients") ||
-      pathname.startsWith("/facturation-clients") ||
-      pathname.startsWith("/analyses") ||
-      pathname.startsWith("/parametres") ||
-      pathname.startsWith("/chantiers") ||
       pathname.startsWith("/coffre") ||
       pathname.startsWith("/veille") ||
-      pathname === "/compte",
-    icone: IconMore,
+      pathname.startsWith("/analyses") ||
+      pathname.startsWith("/chantiers"),
+    icone: User,
   },
 ];
 
@@ -67,31 +62,26 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e5e5ea] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-0.5px_0_rgba(0,0,0,0.06)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 bg-white pb-[max(28px,env(safe-area-inset-bottom))] pt-4 lg:hidden"
+      style={{ boxShadow: MOBILE_NAV_SHADOW }}
       aria-label="Navigation principale"
     >
-      <div className="mx-auto flex max-w-5xl items-end justify-center px-1 pt-1">
+      <div className="mx-auto flex max-w-lg items-end justify-between px-6">
         {ONGLETS.map((onglet) => {
           const actif = onglet.estActif(pathname, scannerActif);
           const Icone = onglet.icone;
 
           if (onglet.prominent) {
             return (
-              <div key={onglet.href} className="flex flex-1 flex-col items-center gap-0.5 pb-0.5">
+              <div key={onglet.href} className="-mt-7 flex flex-1 flex-col items-center gap-2.5">
                 <BoutonImporterNav
                   size="icon-lg"
                   aria-label="Scanner un document"
-                  className={cn(
-                    "size-[52px] shadow-[0_6px_14px_rgba(237,89,33,0.35)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
-                    actif ? "ring-2 ring-primary/20" : undefined,
-                  )}
+                  icone={<Scan className="size-[30px] text-white" strokeWidth={2} />}
+                  className="size-[58px] !bg-transparent border-[3px] border-white text-white shadow-[0_8px_20px_rgba(230,59,11,0.4)] hover:!opacity-95"
+                  style={{ backgroundImage: MOBILE_GRADIENT_HERO }}
                 />
-                <span
-                  className={cn(
-                    "text-[10px] font-medium",
-                    actif ? "font-semibold text-primary" : "text-[#8e8e93]",
-                  )}
-                >
+                <span className="text-[11px] font-medium" style={{ color: MOBILE_TEXT_MUTED }}>
                   {onglet.label}
                 </span>
               </div>
@@ -103,14 +93,23 @@ export function BottomNav() {
               key={onglet.href}
               href={onglet.href}
               prefetch={false}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-[3px] px-0.5 pb-0.5 pt-1.5 transition-[color,transform] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100",
-                actif ? "text-primary" : "text-[#8e8e93] hover:text-foreground",
-              )}
+              className="flex flex-1 flex-col items-center gap-2.5 transition-transform duration-200 active:scale-95"
               aria-current={actif ? "page" : undefined}
             >
-              <Icone className="size-6" />
-              <span className={cn("text-[10px]", actif ? "font-semibold" : "font-medium")}>{onglet.label}</span>
+              <Icone
+                className={cn("size-[30px]", actif ? "text-[#ff6b16]" : "text-[#8e8e93]")}
+                strokeWidth={actif ? 2.25 : 1.75}
+                fill={actif && onglet.href === "/accueil" ? "currentColor" : "none"}
+              />
+              <span
+                className={cn(
+                  "text-[11px] leading-none",
+                  actif ? "bg-clip-text font-semibold text-transparent" : "font-medium text-[#8e8e93]",
+                )}
+                style={actif ? { backgroundImage: MOBILE_GRADIENT_ACCENT } : undefined}
+              >
+                {onglet.label}
+              </span>
             </Link>
           );
         })}

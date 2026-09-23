@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 import { FormulaireEntreprise } from "./FormulaireEntreprise";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 
 export default async function EntreprisePage() {
   const session = await auth();
@@ -20,10 +21,13 @@ export default async function EntreprisePage() {
 
   return (
     <div className="app-page flex flex-col gap-5">
-      <h1 className="app-display text-2xl font-semibold text-[var(--foreground)]">Mon entreprise</h1>
-      <p className="mt-2 text-muted-foreground">
-        Ces informations sont reprises sur chaque devis généré pour vos clients — à renseigner une seule fois.
-      </p>
+      <MobilePageHeader title="Mon entreprise" subtitle="Profil et mentions légales" backHref="/parametres" />
+      <div className="hidden lg:block">
+        <h1 className="app-display text-2xl font-semibold text-[var(--foreground)]">Mon entreprise</h1>
+        <p className="mt-2 text-muted-foreground">
+          Ces informations sont reprises sur chaque devis généré pour vos clients — à renseigner une seule fois.
+        </p>
+      </div>
 
       <FormulaireEntreprise
         profil={

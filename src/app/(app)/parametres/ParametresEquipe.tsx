@@ -46,7 +46,10 @@ export function ParametresEquipe({ accesEquipe, nomEquipe, membres, invitations 
         <p className="text-sm text-muted-foreground">
           Invitez des chefs de chantier à importer des documents dans votre espace. Réservé au plan Équipe.
         </p>
-        <Link href="/parametres?onglet=abonnement" className="inline-flex app-btn-primary text-sm">
+        <Link
+          href="/parametres?onglet=abonnement&plan=equipe&paiement=1#paiement-stripe"
+          className="inline-flex app-btn-primary text-sm"
+        >
           Passer au plan Équipe
         </Link>
       </div>

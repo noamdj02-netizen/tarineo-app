@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { PLANS_TARINEO } from "@/lib/plansTarineo";
+import type { PlanStripe } from "@/lib/plansStripe";
 import { Badge } from "@/components/ui/badge";
 import { BoutonPortailStripe } from "./BoutonPortailStripe";
-import { BoutonCheckoutPlan } from "./BoutonCheckoutPlan";
+import { BoutonPasserAuPlan } from "./BoutonPasserAuPlan";
 
 type Props = {
   planActuel: string | null;
@@ -65,19 +65,12 @@ export function ParametresAbonnement({ planActuel, abonnementActif, aCompteStrip
                   </li>
                 ))}
               </ul>
-              {!actif && !abonnementActif && (
-                <Link
-                  href={`/parametres?onglet=abonnement&plan=${plan.id}#paiement-stripe`}
-                  className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-medium text-white hover:opacity-95"
-                >
-                  Passer à {plan.nom}
-                </Link>
-              )}
-              {!actif && abonnementActif && aCompteStripe && (
-                <div className="mt-5 space-y-2">
-                  <BoutonCheckoutPlan plan={plan.id} label={`Passer à ${plan.nom}`} />
-                  <BoutonPortailStripe label="Gérer via Stripe" />
-                </div>
+              {!actif && (
+                <BoutonPasserAuPlan
+                  plan={plan.id as PlanStripe}
+                  label={`Passer à ${plan.nom}`}
+                  abonnementActif={abonnementActif && aCompteStripe}
+                />
               )}
             </div>
           );

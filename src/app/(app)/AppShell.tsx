@@ -35,6 +35,7 @@ import type { NavBadges } from "@/lib/navBadges";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
 import { AppPageEnter } from "@/components/tarineo/motion/AppPageEnter";
 import { MobileShellProvider } from "@/components/tarineo/mobile/MobileShellContext";
+import { MobileSplash } from "@/components/tarineo/mobile/MobileSplash";
 import { RechercheGlobale } from "./RechercheGlobale";
 import { deconnexionAction } from "./deconnexionAction";
 
@@ -596,11 +597,12 @@ export function AppShell({
 
   return (
     <>
+      <MobileSplash />
       <Suspense fallback={<div className="hidden h-[88px] lg:block" aria-hidden="true" />}>
         <TopBar prenom={prenom} email={email} avatarUrl={avatarUrl} notifications={notifications} />
       </Suspense>
 
-      <div className="flex w-full min-w-0 flex-1 gap-4 px-4 pb-8 pt-4 sm:px-6 lg:gap-8 lg:px-8 lg:pt-5">
+      <div className="flex w-full min-w-0 flex-1 gap-4 px-[25px] pb-8 pt-3 sm:px-6 lg:gap-8 lg:px-8 lg:pt-5 lg:bg-background">
         <aside className="sticky top-[88px] hidden h-[calc(100dvh-112px)] w-[240px] shrink-0 flex-col self-start overflow-y-auto scroll-smooth rounded-[24px] border border-border/50 bg-card p-4 shadow-sm xl:w-[264px] lg:flex">
           <div className="flex min-h-0 flex-1 flex-col justify-between">
             <Suspense fallback={<Skeleton className="h-64 rounded-[24px]" />}>
@@ -613,7 +615,7 @@ export function AppShell({
           <MobileShellProvider
             value={{ prenom, avatarUrl, companyName, notifications }}
           >
-            <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-0">
+            <main className="min-w-0 flex-1 overflow-x-hidden bg-[#f6f7f9] pb-28 lg:bg-transparent lg:pb-0">
               <AppPageEnter>{children}</AppPageEnter>
             </main>
           </MobileShellProvider>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MOBILE_GRADIENT_ACCENT } from "./mobileTokens";
 
 export function MobileSectionHeader({
   title,
@@ -11,9 +12,13 @@ export function MobileSectionHeader({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <h2 className="text-[17px] font-bold tracking-[-0.2px] text-[#0f1c28]">{title}</h2>
+      <h2 className="text-[22px] font-medium leading-tight tracking-[-0.3px] text-black">{title}</h2>
       {href && (
-        <Link href={href} className="text-[13px] font-semibold text-primary">
+        <Link
+          href={href}
+          className="shrink-0 bg-clip-text text-[15px] font-medium text-transparent"
+          style={{ backgroundImage: MOBILE_GRADIENT_ACCENT }}
+        >
           {linkLabel}
         </Link>
       )}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { BrandMark } from "@/components/tarineo/BrandMark";
 import { EmptyState } from "@/components/tarineo/EmptyState";
@@ -58,11 +59,17 @@ export default async function VeillePage() {
 
   return (
     <div>
-      <PageHeader
-        title="Veille"
-        subtitle="Les hausses passées sous le seuil d'alerte, mais répétées assez souvent pour peser sur votre marge."
-        actions={<BtnPrimary href="/documents">Importer un document</BtnPrimary>}
-      />
+      <MobilePageHeader title="Veille prix" subtitle="Hausse silencieuse" backHref="/plus" />
+      <div className="mb-4 lg:hidden">
+        <BtnPrimary href="/documents" className="w-full justify-center rounded-full">Importer un document</BtnPrimary>
+      </div>
+      <div className="hidden lg:block">
+        <PageHeader
+          title="Veille"
+          subtitle="Les hausses passées sous le seuil d'alerte, mais répétées assez souvent pour peser sur votre marge."
+          actions={<BtnPrimary href="/documents">Importer un document</BtnPrimary>}
+        />
+      </div>
 
       <PageCard className="mb-5">
         <p className="text-sm text-muted-foreground">

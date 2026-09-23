@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { loadStripe, type Stripe, type StripeElements } from "@stripe/stripe-js";
 import { creerSetupIntentPaiement, verifierActivationCompte, type PlanValide } from "./stripeActions";
@@ -52,9 +53,15 @@ type Etape = "choix_plan" | "chargement_formulaire" | "formulaire" | "confirmati
 export function EcranPaiementRequis({
   bloque = true,
   planInitial = "pro",
+  autoDemarrer = false,
+  masquerGrillePlans = false,
 }: {
   bloque?: boolean;
   planInitial?: PlanValide;
+  /** Ouvre directement le formulaire Stripe pour le plan choisi. */
+  autoDemarrer?: boolean;
+  /** Masque la grille de sélection quand le plan est déjà choisi (ex. depuis Paramètres). */
+  masquerGrillePlans?: boolean;
 }) {
   const router = useRouter();
   const [planChoisi, setPlanChoisi] = useState<PlanValide>(planInitial);
@@ -63,6 +70,12 @@ export function EcranPaiementRequis({
   const conteneurRef = useRef<HTMLDivElement>(null);
   const elementsRef = useRef<StripeElements | null>(null);
   const stripeRef = useRef<Stripe | null>(null);
+  const demarreRef = useRef(false);
+  const planAffiche = PLANS.find((p) => p.cle === planChoisi);
+
+  useEffect(() => {
+    setPlanChoisi(planInitial);
+  }, [planInitial]);
 
   async function demarrerEnregistrementCarte() {
     setErreur(null);
@@ -88,6 +101,12 @@ export function EcranPaiementRequis({
     elementsRef.current = elements;
     setEtape("formulaire");
   }
+
+  useEffect(() => {
+    if (!autoDemarrer || demarreRef.current) return;
+    demarreRef.current = true;
+    void demarrerEnregistrementCarte();
+  }, [autoDemarrer, planInitial]);
 
   async function validerCarte(e: React.FormEvent) {
     e.preventDefault();
@@ -137,52 +156,64 @@ export function EcranPaiementRequis({
 
   return (
     <div className="mt-6 app-banner">
-      <p className="app-display text-lg font-semibold text-[var(--foreground)]">
-        {bloque ? "Votre essai gratuit est terminé" : "Passer à un plan payant"}
-      </p>
-      <p className="mt-2 text-sm leading-relaxed text-foreground">
-        {bloque
-          ? "Ajoutez un moyen de paiement pour continuer à importer et analyser vos documents. Aucun prélèvement immédiat — vous choisissez votre formule au moment d'enregistrer votre carte."
-          : "Vous êtes encore en essai gratuit — rien ne vous oblige à passer à un plan payant dès maintenant. Vous pouvez néanmoins choisir votre formule ici, sans prélèvement immédiat."}
-      </p>
-
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        {PLANS.map((p) => {
-          const selectionne = p.cle === planChoisi;
-          return (
-            <button
-              key={p.cle}
-              type="button"
-              disabled={etape !== "choix_plan"}
-              onClick={() => setPlanChoisi(p.cle)}
-              aria-pressed={selectionne}
-              className={`app-card-sm p-4 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
-                selectionne ? "border-[var(--accent)] bg-[#fff4eb]" : "hover:border-[var(--accent)]/50"
-              }`}
-            >
-              <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{p.nom}</p>
-              <p className="mt-1 font-extrabold text-[var(--foreground)]">
-                <span className="align-top text-base">€</span>
-                <span className="text-2xl">{p.prix}</span>
-                <span className="text-xs font-normal text-muted-foreground">/mois</span>
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">{p.quota} documents/mois</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">+ {p.historique} documents d&apos;import initial</p>
-              <p className={`mt-2 text-xs font-medium ${selectionne ? "text-accent" : "text-transparent"}`}>
-                ✓ Sélectionné
-              </p>
-            </button>
-          );
-        })}
+      <div className="flex flex-col items-center text-center">
+        <Image src="/landing/logo-mark.png" alt="" width={48} height={48} className="size-12" />
+        <p className="app-display mt-3 text-lg font-semibold text-[var(--foreground)]">
+          {bloque ? "Votre essai gratuit est terminé" : `Plan ${planAffiche?.nom ?? "Tarineo"}`}
+        </p>
+        <p className="mt-2 max-w-md text-sm leading-relaxed text-foreground">
+          {bloque
+            ? "Ajoutez votre carte pour continuer à importer et analyser vos documents. Paiement sécurisé Stripe."
+            : masquerGrillePlans
+              ? `Réglez votre abonnement ${planAffiche?.nom} (${planAffiche?.prix} €/mois) — directement dans Tarineo.`
+              : "Choisissez votre formule puis validez votre carte. Paiement sécurisé Stripe."}
+        </p>
       </div>
 
-      {etape === "choix_plan" && (
-        <button
-          type="button"
-          onClick={demarrerEnregistrementCarte}
-          className="mt-5 w-full app-btn-primary"
-        >
-          Ajouter une carte bancaire — Plan {PLANS.find((p) => p.cle === planChoisi)?.nom}
+      {masquerGrillePlans && planAffiche && (
+        <div className="mx-auto mt-5 max-w-sm rounded-2xl border border-[var(--accent)]/30 bg-[#fff4eb] px-4 py-3 text-center">
+          <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{planAffiche.nom}</p>
+          <p className="mt-1 text-2xl font-extrabold text-[var(--foreground)]">
+            {planAffiche.prix} €<span className="text-sm font-normal text-muted-foreground">/mois</span>
+          </p>
+        </div>
+      )}
+
+      {!masquerGrillePlans && (
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {PLANS.map((p) => {
+            const selectionne = p.cle === planChoisi;
+            return (
+              <button
+                key={p.cle}
+                type="button"
+                disabled={etape !== "choix_plan"}
+                onClick={() => setPlanChoisi(p.cle)}
+                aria-pressed={selectionne}
+                className={`app-card-sm p-4 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                  selectionne ? "border-[var(--accent)] bg-[#fff4eb]" : "hover:border-[var(--accent)]/50"
+                }`}
+              >
+                <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{p.nom}</p>
+                <p className="mt-1 font-extrabold text-[var(--foreground)]">
+                  <span className="align-top text-base">€</span>
+                  <span className="text-2xl">{p.prix}</span>
+                  <span className="text-xs font-normal text-muted-foreground">/mois</span>
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{p.quota} documents/mois</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">+ {p.historique} documents d&apos;import initial</p>
+                <p className={`mt-2 text-xs font-medium ${selectionne ? "text-accent" : "text-transparent"}`}>
+                  ✓ Sélectionné
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {etape === "choix_plan" && !autoDemarrer && (
+        <button type="button" onClick={demarrerEnregistrementCarte} className="mt-5 w-full app-btn-primary">
+          Payer — Plan {planAffiche?.nom}
         </button>
       )}
 

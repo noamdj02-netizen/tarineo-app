@@ -19,7 +19,10 @@ export function BanniereLimitesPlan({ plan, subscriptionStatus, className }: Pro
         Historique de prix sur 12 mois, 3 distributeurs suivis. Les devis clients PDF (logo + SIRET) et l&apos;export
         comptable sont réservés au plan Pro.
       </p>
-      <Link href="/parametres?onglet=abonnement" className="mt-2 inline-block text-sm font-medium text-primary hover:underline">
+      <Link
+        href="/parametres?onglet=abonnement&plan=pro&paiement=1#paiement-stripe"
+        className="mt-2 inline-block text-sm font-medium text-primary hover:underline"
+      >
         Passer à Pro →
       </Link>
     </div>

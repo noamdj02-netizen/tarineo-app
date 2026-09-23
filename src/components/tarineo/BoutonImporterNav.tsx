@@ -8,34 +8,40 @@ import { cn } from "@/lib/utils";
 
 type Props = {
   className?: string;
+  style?: React.CSSProperties;
   /** Texte visible desktop — masqué si compact */
   label?: string;
   compact?: boolean;
   size?: "default" | "icon" | "icon-lg";
+  icone?: React.ReactNode;
   "aria-label"?: string;
 };
 
 export function BoutonImporterNav({
   className,
+  style,
   label = "Importer",
   compact = false,
   size = "default",
+  icone,
   "aria-label": ariaLabel,
 }: Props) {
   const reduce = useReducedMotion();
+  const iconeAffiche = icone ?? <UploadIcon className={size === "icon-lg" ? "size-[26px]" : undefined} />;
 
   const trigger =
     size === "icon-lg" ? (
       <Button
         variant="default"
         size="icon-lg"
+        style={style}
         className={cn(
           "size-14 rounded-full shadow-lg shadow-primary/30 transition-shadow duration-200",
           className,
         )}
         aria-label={ariaLabel ?? label}
       >
-        <UploadIcon className="size-[26px]" />
+        {iconeAffiche}
       </Button>
     ) : compact || size === "icon" ? (
       <Button

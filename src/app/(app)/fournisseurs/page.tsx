@@ -196,7 +196,10 @@ export default async function FournisseursPage() {
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {messageFonctionPlanRequise("distributeurs")} ({fournisseursMasques} fournisseur
             {fournisseursMasques > 1 ? "s" : ""} masqué{fournisseursMasques > 1 ? "s" : ""}).
-            <Link href="/parametres?onglet=abonnement" className="ml-1 font-semibold underline">
+            <Link
+              href="/parametres?onglet=abonnement&plan=pro&paiement=1#paiement-stripe"
+              className="ml-1 font-semibold underline"
+            >
               Passer à Pro
             </Link>
           </p>

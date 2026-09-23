@@ -36,7 +36,10 @@ export function ParametresComptable({ emailComptable, exportComptableAuto, acces
       {!accesExport && (
         <p className="rounded-xl bg-[#FFF7F2] px-4 py-3 text-sm text-foreground">
           L&apos;export comptable automatique est inclus dans le plan Pro.{" "}
-          <a href="/parametres?onglet=abonnement" className="font-medium text-primary hover:underline">
+          <a
+            href="/parametres?onglet=abonnement&plan=pro&paiement=1#paiement-stripe"
+            className="font-medium text-primary hover:underline"
+          >
             Passer à Pro
           </a>
         </p>

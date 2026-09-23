@@ -8,6 +8,7 @@ export function MobileAvatarFournisseur({
   logoUrl,
   size = "md",
   variant = "circle",
+  bordered = false,
   className,
 }: {
   nom: string;
@@ -15,12 +16,14 @@ export function MobileAvatarFournisseur({
   logoUrl?: string | null;
   size?: "sm" | "md";
   variant?: "circle" | "square";
+  bordered?: boolean;
   className?: string;
 }) {
-  const px = size === "sm" ? 46 : 58;
+  const px = size === "sm" ? 46 : 55;
   const radius = variant === "square" ? "rounded-[14px]" : "rounded-full";
   const lettre = nom.charAt(0).toUpperCase();
   const couleur = couleurFournisseur(nom, norm);
+  const bordure = bordered ? "border-[3px] border-white shadow-[0_4px_10px_rgba(0,0,0,0.1)]" : "";
 
   if (logoUrl) {
     return (
@@ -29,7 +32,7 @@ export function MobileAvatarFournisseur({
         alt=""
         width={px}
         height={px}
-        className={cn("shrink-0 border-[3px] border-white object-cover shadow-[0_4px_10px_rgba(0,0,0,0.1)]", radius, className)}
+        className={cn("shrink-0 object-cover", bordure, radius, className)}
         style={{ width: px, height: px }}
       />
     );
@@ -38,9 +41,10 @@ export function MobileAvatarFournisseur({
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center justify-center border-[3px] border-white font-bold text-white shadow-[0_4px_10px_rgba(0,0,0,0.1)]",
+        "flex shrink-0 items-center justify-center font-bold text-white",
+        bordure,
         radius,
-        size === "sm" ? "size-[46px] text-base" : "size-[58px] text-lg",
+        size === "sm" ? "size-[46px] text-base" : "size-[55px] text-lg",
         className,
       )}
       style={{ backgroundColor: couleur }}

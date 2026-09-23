@@ -72,7 +72,10 @@ export function PennylaneCarte({ connecte, configure, accesExport, redirectUri }
 
       <div className="mt-4 flex flex-wrap gap-2">
         {!accesExport && (
-          <Link href="/parametres?onglet=abonnement" className="app-btn-secondary text-sm">
+          <Link
+            href="/parametres?onglet=abonnement&plan=pro&paiement=1#paiement-stripe"
+            className="app-btn-secondary text-sm"
+          >
             Plan Pro requis
           </Link>
         )}
