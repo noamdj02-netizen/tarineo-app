@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 
@@ -36,6 +36,9 @@ const LIGNES: { cle: keyof Prefs; titre: string; description: string }[] = [
   },
 ];
 
+let memoire: Prefs = DEFAULTS;
+const auditeurs = new Set<() => void>();
+
 function lirePrefs(): Prefs {
   if (typeof window === "undefined") return DEFAULTS;
   try {
@@ -48,25 +51,40 @@ function lirePrefs(): Prefs {
   }
 }
 
-export function ProfilPreferences() {
-  const [prefs, setPrefs] = useState<Prefs>(DEFAULTS);
-  const [pret, setPret] = useState(false);
+function ecrirePrefs(suivant: Prefs) {
+  memoire = suivant;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(suivant));
+  } catch {
+    // stockage indisponible — l'UI reste cohérente pour la session
+  }
+  auditeurs.forEach((fn) => fn());
+}
 
-  useEffect(() => {
-    setPrefs(lirePrefs());
-    setPret(true);
-  }, []);
+function subscribe(onStoreChange: () => void) {
+  auditeurs.add(onStoreChange);
+  return () => {
+    auditeurs.delete(onStoreChange);
+  };
+}
+
+function getSnapshot(): Prefs {
+  return memoire;
+}
+
+function getServerSnapshot(): Prefs {
+  return DEFAULTS;
+}
+
+if (typeof window !== "undefined") {
+  memoire = lirePrefs();
+}
+
+export function ProfilPreferences() {
+  const prefs = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function maj(cle: keyof Prefs, valeur: boolean) {
-    setPrefs((prev) => {
-      const suivant = { ...prev, [cle]: valeur };
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(suivant));
-      } catch {
-        // stockage indisponible — l'UI reste cohérente pour la session
-      }
-      return suivant;
-    });
+    ecrirePrefs({ ...prefs, [cle]: valeur });
   }
 
   return (
@@ -89,7 +107,6 @@ export function ProfilPreferences() {
               <Switch
                 id={`pref-${ligne.cle}`}
                 checked={prefs[ligne.cle]}
-                disabled={!pret}
                 onCheckedChange={(v) => maj(ligne.cle, v)}
                 aria-label={ligne.titre}
               />
