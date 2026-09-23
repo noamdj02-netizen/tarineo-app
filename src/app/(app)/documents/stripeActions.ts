@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { type PlanStripe, PLANS_STRIPE } from "@/lib/plansStripe";
 import { stripe } from "@/lib/stripe";
+import { erreurCheckoutSiConfigIncomplete } from "@/lib/stripeConfig";
 
 export type PlanValide = PlanStripe;
 
@@ -21,6 +22,11 @@ export async function creerSetupIntentPaiement(plan: string): Promise<ResultatSe
   }
   if (!PLANS_STRIPE.includes(plan as PlanValide)) {
     return { succes: false, erreur: "Plan invalide." };
+  }
+
+  const configIncomplete = erreurCheckoutSiConfigIncomplete();
+  if (configIncomplete) {
+    return { succes: false, erreur: configIncomplete };
   }
 
   const utilisateur = await prisma.user.findUnique({

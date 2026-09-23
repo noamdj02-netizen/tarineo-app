@@ -12,7 +12,7 @@ import { ActionsDocument } from "../ActionsDocument";
 import { isAnthropicConfigured } from "@/lib/anthropic";
 import { comparerLignesAuHistorique, type ComparaisonLigne } from "@/lib/comparaisonPrix";
 import { dateMinHistoriquePlan } from "@/lib/planGating";
-import { SEUIL_CONFIANCE } from "@/lib/extraction";
+import { SEUIL_CONFIANCE } from "@/lib/extractionConfig";
 import { type PointHistoriquePrix } from "./GraphiqueHistoriquePrix";
 import { BandeauAnalyseIA } from "./BandeauAnalyseIA";
 import { AnalyseDocumentProvider } from "./AnalyseDocumentContext";

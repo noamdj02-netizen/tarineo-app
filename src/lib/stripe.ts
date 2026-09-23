@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { validerConfigStripeLive } from "@/lib/stripeConfig";
 
 // Client Stripe serveur unique (clé secrète, jamais exposée côté navigateur) — voir
 // src/app/(app)/documents/stripeActions.ts pour la création du SetupIntent et
@@ -14,6 +15,7 @@ let instance: Stripe | null = null;
 
 function obtenirClientStripe(): Stripe {
   if (!instance) {
+    validerConfigStripeLive();
     instance = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
   }
   return instance;

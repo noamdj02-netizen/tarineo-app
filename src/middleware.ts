@@ -8,9 +8,24 @@ const LIMITES: { prefix: string; limite: number; fenetreMs: number }[] = [
   { prefix: "/api/compte/export-donnees", limite: 5, fenetreMs: 60 * 60_000 },
 ];
 
+const DOMAINE_CANONIQUE = "app.tarineo.com";
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = ipDepuisRequete(request.headers);
+  const host = request.headers.get("host") ?? "";
+
+  // Un seul domaine en production : évite les erreurs PKCE (cookies OAuth sur un autre hôte).
+  if (
+    process.env.NODE_ENV === "production" &&
+    host.endsWith(".vercel.app") &&
+    host !== DOMAINE_CANONIQUE
+  ) {
+    const url = request.nextUrl.clone();
+    url.protocol = "https:";
+    url.host = DOMAINE_CANONIQUE;
+    return NextResponse.redirect(url, 308);
+  }
 
   for (const { prefix, limite, fenetreMs } of LIMITES) {
     if (pathname.startsWith(prefix)) {

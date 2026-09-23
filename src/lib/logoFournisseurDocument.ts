@@ -1,7 +1,7 @@
 import convertHeic from "heic-convert";
-import sharp from "sharp";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
+import { chargerSharp } from "@/lib/sharpLoader";
 
 export type ZoneLogoDocument = {
   x_pct: number;
@@ -20,6 +20,8 @@ function borner(valeur: number, min: number, max: number): number {
 
 async function bufferImageExploitable(buffer: Buffer, extension: string): Promise<Buffer | null> {
   if (extension === "pdf") {
+    const sharp = await chargerSharp();
+    if (!sharp) return null;
     try {
       return await sharp(buffer, { pages: 1, density: 144 }).png().toBuffer();
     } catch {
@@ -68,7 +70,17 @@ export async function extraireEtEnregistrerLogoFournisseur(params: {
   const source = await bufferImageExploitable(fileBuffer, extension);
   if (!source) return;
 
-  const meta = await sharp(source).metadata();
+  const sharp = await chargerSharp();
+  if (!sharp) return;
+
+  let meta: { width?: number; height?: number };
+  try {
+    meta = await sharp(source).metadata();
+  } catch (erreur) {
+    console.warn("Métadonnées image logo fournisseur illisibles :", erreur);
+    return;
+  }
+
   const largeur = meta.width ?? 0;
   const hauteur = meta.height ?? 0;
   if (largeur < 40 || hauteur < 40) return;

@@ -11,8 +11,11 @@ import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
 import { verifierRateLimitAnalyse } from "@/lib/rateLimitIA";
 import type { DocumentType } from "@prisma/client";
 
+import { SEUIL_CONFIANCE } from "@/lib/extractionConfig";
+
+export { SEUIL_CONFIANCE };
+
 const MODELE = "claude-sonnet-5";
-export const SEUIL_CONFIANCE = 0.7;
 
 const TYPE_EXTRAIT_VERS_ENUM: Record<string, DocumentType> = {
   devis: "DEVIS",

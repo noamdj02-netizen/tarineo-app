@@ -9,6 +9,7 @@ import { AuthField } from "./AuthField";
 import { AuthSocialButtons } from "./AuthSocialButtons";
 import { PasswordInput } from "./PasswordInput";
 import { seConnecterAvecGoogle } from "../connexion/actions";
+import { messageErreurAuth } from "@/lib/messagesAuth";
 
 const AUTH_PANEL_CLASS =
   "flex w-full flex-col gap-3.5 rounded-[24px] border border-[#E6E9EB] bg-white p-5 shadow-[0_8px_30px_rgba(23,41,53,0.06)] md:p-6 lg:p-7";
@@ -26,16 +27,7 @@ function messageDepuisParams(params: {
   if (params.erreur === "1") {
     return "Email ou mot de passe incorrect.";
   }
-  if (params.errorAuth === "OAuthAccountNotLinked") {
-    return "Ce compte existe déjà avec un autre mode de connexion. Essayez email + mot de passe, ou le bouton Google avec la même adresse.";
-  }
-  if (params.errorAuth === "AccessDenied") {
-    return "Connexion refusée. Réessayez ou contactez le support.";
-  }
-  if (params.errorAuth) {
-    return "La connexion a échoué. Réessayez.";
-  }
-  return null;
+  return messageErreurAuth(params.errorAuth);
 }
 
 export function FormulaireConnexion({

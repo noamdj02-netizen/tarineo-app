@@ -17,6 +17,8 @@ class ConnexionGoogleUniquement extends CredentialsSignin {
   code = "google_only";
 }
 
+const estProduction = process.env.NODE_ENV === "production";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   adapter: PrismaAdapter(prisma),
@@ -31,6 +33,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // reste de l'app ne saurait pas relier à une session — d'où "jwt" ici, pour
   // Credentials et Google. La table Session n'est donc plus utilisée.
   session: { strategy: "jwt" },
+  cookies: {
+    pkceCodeVerifier: {
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: estProduction,
+      },
+    },
+  },
   providers: [
     Credentials({
       credentials: {
@@ -77,6 +89,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      // Liaison auto email/mdp ↔ Google : autorisée seulement si email_verified (voir signIn).
+      allowDangerousEmailAccountLinking: true,
     }),
   ],
   events: {
@@ -98,8 +112,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // anticipé complet — jamais la connexion d'un compte déjà existant. On ne peut
     // pas se fier à account.isNewUser (pas encore déterminé à ce stade, avant
     // l'adapter) : on vérifie nous-mêmes si un User existe déjà pour cet email.
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider !== "google" || !user.email) return true;
+
+      const emailVerifieGoogle =
+        profile &&
+        typeof profile === "object" &&
+        "email_verified" in profile &&
+        Boolean((profile as { email_verified?: boolean }).email_verified);
 
       const email = user.email.toLowerCase();
       const existant = await prisma.user.findUnique({
@@ -108,15 +128,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       });
 
       if (existant) {
-        if (!existant.emailVerified) {
+        // Compte déjà créé par email/mot de passe : liaison Google uniquement si Google
+        // a vérifié l'adresse — sinon message explicite sur /connexion.
+        if (existant.passwordHash && existant.accounts.length === 0 && !emailVerifieGoogle) {
+          return "/connexion?error=CompteExistant";
+        }
+
+        if (!existant.emailVerified && emailVerifieGoogle) {
           await prisma.user.update({
             where: { id: existant.id },
             data: { emailVerified: new Date() },
           });
         }
-        // Compte email/mot de passe existant : on lie Google pour éviter la page
-        // Auth.js par défaut (« sign in with the same account you used originally »).
-        if (existant.accounts.length === 0 && account.providerAccountId) {
+        // Compte email/mot de passe existant : on lie Google pour éviter OAuthAccountNotLinked.
+        if (existant.accounts.length === 0 && account.providerAccountId && emailVerifieGoogle) {
           await prisma.account.upsert({
             where: {
               provider_providerAccountId: {

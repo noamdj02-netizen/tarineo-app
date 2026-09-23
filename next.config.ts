@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   // Évite que Turbopack fige un @prisma/client périmé dans les chunks serveur après
   // `prisma generate` — sans ça, les nouveaux champs User (importEmailToken, etc.)
   // provoquent des PrismaClientValidationError jusqu'au redémarrage complet.
-  serverExternalPackages: ["@prisma/client", "prisma"],
+  serverExternalPackages: ["@prisma/client", "prisma", "sharp"],
   turbopack: {
     root: path.resolve(__dirname),
   },

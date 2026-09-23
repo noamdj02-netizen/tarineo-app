@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { stripe, PRIX_MENSUEL_PAR_PLAN } from "@/lib/stripe";
+import { erreurCheckoutSiConfigIncomplete } from "@/lib/stripeConfig";
 import { origineActuelle } from "@/lib/origine";
 import { PLANS_STRIPE, type PlanStripe } from "@/lib/plansStripe";
 
@@ -23,9 +24,19 @@ export async function POST(request: Request) {
   }
 
   const plan = corps.data.plan;
+
+  const configIncomplete = erreurCheckoutSiConfigIncomplete();
+  if (configIncomplete) {
+    return NextResponse.json({ erreur: configIncomplete }, { status: 503 });
+  }
+
   const priceId = PRIX_MENSUEL_PAR_PLAN[plan];
   if (!priceId) {
-    return NextResponse.json({ erreur: "Prix Stripe non configuré" }, { status: 500 });
+    console.error(`[Tarineo Stripe] STRIPE_PRICE_* manquant pour le plan « ${plan} ».`);
+    return NextResponse.json(
+      { erreur: "L'abonnement n'est pas disponible pour le moment. Contactez le support." },
+      { status: 503 },
+    );
   }
 
   const utilisateur = await prisma.user.findUnique({
