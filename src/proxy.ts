@@ -8,7 +8,8 @@ const LIMITES: { prefix: string; limite: number; fenetreMs: number }[] = [
   { prefix: "/api/compte/export-donnees", limite: 5, fenetreMs: 60 * 60_000 },
 ];
 
-export function middleware(request: NextRequest) {
+/** Next.js 16 — remplace middleware.ts (même comportement). */
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const ip = ipDepuisRequete(request.headers);
 

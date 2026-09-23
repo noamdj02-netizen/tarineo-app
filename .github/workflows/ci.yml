@@ -19,3 +19,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npx tsc --noEmit
+      - run: npx playwright install chromium --with-deps
+      - run: npm run test:e2e
+        env:
+          CI: "true"
