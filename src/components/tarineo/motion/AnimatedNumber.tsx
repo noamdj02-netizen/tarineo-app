@@ -22,13 +22,12 @@ export function AnimatedNumber({
   className?: string;
 }) {
   const reduce = useReducedMotion();
-  const [affiche, setAffiche] = useState(reduce ? value : 0);
+  const [affiche, setAffiche] = useState(0);
   const prev = useRef(0);
   const frame = useRef<number | null>(null);
 
   useEffect(() => {
     if (reduce) {
-      setAffiche(value);
       prev.current = value;
       return;
     }
@@ -36,7 +35,6 @@ export function AnimatedNumber({
     const debut = prev.current;
     const delta = value - debut;
     if (delta === 0) {
-      setAffiche(value);
       return;
     }
 
@@ -61,9 +59,11 @@ export function AnimatedNumber({
     };
   }, [value, durationMs, reduce]);
 
+  const afficheFinal = reduce ? value : affiche;
+
   return (
     <span className={className} aria-label={format(value)}>
-      {format(affiche)}
+      {format(afficheFinal)}
     </span>
   );
 }
