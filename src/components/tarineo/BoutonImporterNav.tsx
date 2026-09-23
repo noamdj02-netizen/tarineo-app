@@ -1,6 +1,6 @@
 "use client";
 
-import { UploadIcon } from "lucide-react";
+import { ScanLineIcon, UploadIcon } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { ImportDocument } from "@/app/(app)/documents/ImportDocument";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ export function BoutonImporterNav({
         )}
         aria-label={ariaLabel ?? label}
       >
-        <UploadIcon className="size-[26px]" />
+        <ScanLineIcon className="size-[26px]" />
       </Button>
     ) : compact || size === "icon" ? (
       <Button
