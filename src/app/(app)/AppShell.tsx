@@ -600,7 +600,7 @@ export function AppShell({
         <TopBar prenom={prenom} email={email} avatarUrl={avatarUrl} notifications={notifications} />
       </Suspense>
 
-      <div className="flex w-full min-w-0 flex-1 gap-4 px-4 pb-8 pt-4 sm:px-6 lg:gap-8 lg:px-8 lg:pt-5">
+      <div className="flex w-full min-w-0 flex-1 gap-4 px-4 pb-8 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 lg:gap-8 lg:px-8 lg:pt-5">
         <aside className="sticky top-[88px] hidden h-[calc(100dvh-112px)] w-[240px] shrink-0 flex-col self-start overflow-y-auto scroll-smooth rounded-[24px] border border-border/50 bg-card p-4 shadow-sm xl:w-[264px] lg:flex">
           <div className="flex min-h-0 flex-1 flex-col justify-between">
             <Suspense fallback={<Skeleton className="h-64 rounded-[24px]" />}>
@@ -613,7 +613,7 @@ export function AppShell({
           <MobileShellProvider
             value={{ prenom, avatarUrl, companyName, notifications }}
           >
-            <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-0">
+            <main className="min-w-0 flex-1 overflow-x-hidden pb-[calc(7.5rem+env(safe-area-inset-bottom))] lg:pb-0">
               <AppPageEnter>{children}</AppPageEnter>
             </main>
           </MobileShellProvider>

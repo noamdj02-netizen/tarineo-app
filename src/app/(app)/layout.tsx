@@ -116,8 +116,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ]);
     notifications = notifs;
     badgesNav = badges;
-    avatarUrl = await resoudreUrlAvatar(utilisateur?.image);
     companyName = profil?.raisonSociale ?? null;
+    avatarUrl = await resoudreUrlAvatar(utilisateur?.image);
   } catch (e) {
     console.error("Échec du chargement de la navigation :", e);
   }

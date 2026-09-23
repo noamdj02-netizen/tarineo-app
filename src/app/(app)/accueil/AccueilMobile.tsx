@@ -75,7 +75,7 @@ export function AccueilMobile({
 }) {
   return (
     <PullToRefresh>
-    <AppStagger className="flex flex-col gap-5 pb-2 lg:hidden" stagger={0.05} delayChildren={0.02}>
+    <AppStagger className="flex flex-col gap-5 pb-8 lg:hidden" stagger={0.035} delayChildren={0}>
       <AppStaggerItem>
         <MobileAccueilHeader />
       </AppStaggerItem>
@@ -163,12 +163,13 @@ export function AccueilMobile({
               </CardContent>
             </Card>
           ) : (
-            <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-0 flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {fournisseurs.map((f) => (
                 <Link
                   key={f.distributorNorm}
                   href={`/fournisseurs/${encodeURIComponent(f.distributorNorm)}`}
-                  className="flex w-[64px] shrink-0 flex-col items-center gap-2 active:scale-[0.97] motion-reduce:active:scale-100"
+                  className="flex w-[72px] shrink-0 flex-col items-center gap-2 active:scale-[0.97] motion-reduce:active:scale-100"
+                  title={f.distributor}
                 >
                   <MobileAvatarFournisseur
                     nom={f.distributor}
@@ -177,14 +178,14 @@ export function AccueilMobile({
                     variant="square"
                     className="!size-[52px] !rounded-[14px] !border !border-border !shadow-none"
                   />
-                  <span className="max-w-full truncate text-center text-[11px] font-medium text-foreground">
+                  <span className="max-w-full truncate text-center text-[11px] font-medium leading-tight text-foreground">
                     {f.distributor}
                   </span>
                 </Link>
               ))}
               <Link
                 href="/fournisseurs"
-                className="flex w-[64px] shrink-0 flex-col items-center gap-2 active:scale-[0.97] motion-reduce:active:scale-100"
+                className="flex w-[72px] shrink-0 flex-col items-center gap-2 active:scale-[0.97] motion-reduce:active:scale-100"
                 aria-label="Ajouter un fournisseur"
               >
                 <span className="flex size-[52px] items-center justify-center rounded-[14px] border border-dashed border-border bg-muted/40 text-muted-foreground">

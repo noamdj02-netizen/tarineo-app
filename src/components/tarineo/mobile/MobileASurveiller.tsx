@@ -30,7 +30,7 @@ export function MobileASurveiller({ items }: { items: FournisseurASurveiller[] }
           </CardHeader>
         </Card>
       ) : (
-        <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {items.map((f) => (
             <Link
               key={f.distributorNorm}
