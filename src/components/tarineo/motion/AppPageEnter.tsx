@@ -9,12 +9,12 @@ import { useAppNavigation, type TransitionNavigation } from "./AppNavigationCont
 
 function staggerSections(nodes: ReactNode[]): ReactNode {
   if (nodes.length <= 1) return nodes[0] ?? null;
+  // Évite `display: contents` : avec Motion, les variants parent→enfant
+  // ne se propagent pas correctement et les AppStaggerItem restent opacity:0.
   return (
-    <AppStagger className="contents" stagger={0.045} delayChildren={0.02}>
+    <AppStagger className="flex w-full min-w-0 flex-col gap-[inherit]" stagger={0.045} delayChildren={0.02}>
       {nodes.map((node, i) => (
-        <AppStaggerItem key={i} className="contents">
-          {node}
-        </AppStaggerItem>
+        <AppStaggerItem key={i}>{node}</AppStaggerItem>
       ))}
     </AppStagger>
   );
@@ -45,13 +45,16 @@ const VARIANTS: Record<
   TransitionNavigation,
   { initial: Record<string, number>; animate: Record<string, number>; transition: object }
 > = {
+  // opacity toujours à 1 : si l'animation Motion est interrompue (onglet
+  // arrière-plan, headless, prefers-reduced-motion mal détecté), la page
+  // ne doit jamais rester invisible. On anime seulement le léger translateY.
   default: {
-    initial: { opacity: 0, y: 10 },
+    initial: { opacity: 1, y: 10 },
     animate: { opacity: 1, y: 0 },
     transition: { ...appSpringSoft, ease: appEase },
   },
   import: {
-    initial: { opacity: 0, y: 36, scale: 0.97 },
+    initial: { opacity: 1, y: 28, scale: 0.98 },
     animate: { opacity: 1, y: 0, scale: 1 },
     transition: { ...appSpring, ease: appEase },
   },
