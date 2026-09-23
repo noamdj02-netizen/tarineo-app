@@ -113,17 +113,9 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
         aSurveiller={donnees.aSurveiller}
         fournisseurs={fournisseursTop}
         documents={documentsRecentsUi}
+        banniereReprise={etatOnboarding.doitVoirBanniereReprise}
+        documentsEnCours={tableauPeuRempli ? documentsEnCours : 0}
       />
-
-      <div className="mt-5 flex flex-col gap-4 lg:hidden">
-        {etatOnboarding.doitVoirBanniereReprise && <DashboardBanniereReprise etatQuota={etatQuota} />}
-        {/* DashboardAFaire / HeroImport volontairement absents du mobile :
-            la hiérarchie AccueilMobile (Scanner → À surveiller → …) porte déjà
-            les alertes et le CTA, conformément à la maquette APRÈS. */}
-        {tableauPeuRempli && documentsEnCours > 0 && (
-          <DashboardAnalyseEnCours documentsEnCours={documentsEnCours} />
-        )}
-      </div>
 
     <AppStagger className="hidden flex-col gap-8 lg:flex" stagger={0.06}>
       {etatOnboarding.doitVoirBanniereReprise && (

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileTextIcon, HomeIcon, PlusIcon } from "lucide-react";
+import { FileTextIcon, HomeIcon, PlusIcon, ReceiptIcon } from "lucide-react";
 import type { FournisseurASurveiller } from "@/lib/dashboardAccueil";
 import type { DocumentRecent, FournisseurCarte } from "./DashboardSections";
 import { MobileAccueilHeader } from "@/components/tarineo/mobile/MobileAccueilHeader";
@@ -66,12 +66,16 @@ export function AccueilMobile({
   aSurveiller,
   fournisseurs,
   documents,
+  banniereReprise,
+  documentsEnCours,
 }: {
   economies: number;
   evolutionPct: number | null;
   aSurveiller: FournisseurASurveiller[];
   fournisseurs: FournisseurCarte[];
   documents: DocumentRecent[];
+  banniereReprise?: boolean;
+  documentsEnCours?: number;
 }) {
   return (
     <PullToRefresh>
@@ -80,8 +84,50 @@ export function AccueilMobile({
         <MobileAccueilHeader />
       </AppStaggerItem>
 
+      {banniereReprise && (
+        <AppStaggerItem>
+          <Link
+            href="/documents?scanner=1"
+            className="flex min-h-[48px] items-center justify-between gap-3 rounded-[16px] bg-[#FFF8F5] px-4 py-3 ring-1 ring-primary/20 active:bg-[#FFF1EA]"
+          >
+            <div className="min-w-0">
+              <p className="text-[14px] font-semibold text-[#0f1c28]">Import en attente</p>
+              <p className="text-[12px] text-[#8a96a3]">Un scan suffit pour démarrer</p>
+            </div>
+            <span className="shrink-0 text-[13px] font-semibold text-primary">Importer</span>
+          </Link>
+        </AppStaggerItem>
+      )}
+
+      {documentsEnCours != null && documentsEnCours > 0 && (
+        <AppStaggerItem>
+          <div className="flex min-h-[44px] items-center gap-3 rounded-[16px] bg-[#FFF8F5] px-4 py-3 ring-1 ring-[#FFE4D6]">
+            <span className="flex size-8 items-center justify-center rounded-full bg-primary/12 text-[13px] font-bold text-primary">
+              {documentsEnCours}
+            </span>
+            <p className="text-[13px] text-[#53616a]">Analyse IA en cours…</p>
+          </div>
+        </AppStaggerItem>
+      )}
+
       <AppStaggerItem>
         <MobileScannerCard />
+      </AppStaggerItem>
+
+      <AppStaggerItem>
+        <Link
+          href="/devis-clients/nouveau"
+          className="flex min-h-[52px] items-center gap-3 rounded-[20px] bg-white px-4 py-3.5 shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8 active:scale-[0.99] motion-reduce:active:scale-100"
+        >
+          <span className="flex size-10 items-center justify-center rounded-[12px] bg-primary/10 text-primary">
+            <ReceiptIcon className="size-5" strokeWidth={2} aria-hidden />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-semibold text-[#0f1c28]">Créer un devis client</p>
+            <p className="text-[12px] text-[#8a96a3]">PDF pro avec votre logo</p>
+          </div>
+          <PlusIcon className="size-5 shrink-0 text-[#C5CCD3]" aria-hidden />
+        </Link>
       </AppStaggerItem>
 
       <AppStaggerItem>

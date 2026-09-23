@@ -3,8 +3,10 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PageCard, PageHeader } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { StatusBadge } from "@/components/tarineo/StatusBadge";
 import { DataTable, TableCell, TableRow } from "@/components/tarineo/DataTable";
+import { Separator } from "@/components/ui/separator";
 import { BoutonTransformerEnFacture } from "./BoutonTransformerEnFacture";
 import { BoutonRegenererPdf } from "./BoutonRegenererPdf";
 import { BoutonEnvoyerDevis } from "./BoutonEnvoyerDevis";
@@ -34,42 +36,100 @@ export default async function DevisClientDetailPage({ params }: { params: Promis
   const accesPdf = accesDevisClientPdf(utilisateur?.plan ?? null, utilisateur?.subscriptionStatus ?? null);
   const statut = deduireStatutDevis(quote);
   const finValidite = dateFinValiditeDevis(quote.dateEmission, quote.dureeValiditeJours);
+  const aPdf = Boolean(quote.pdfKey);
 
   return (
     <div>
+      <MobilePageHeader
+        backHref="/devis-clients"
+        title={`Devis n° ${quote.numero}`}
+        subtitle={quote.clientNom}
+      />
       <BanniereLimitesPlan
         plan={utilisateur?.plan ?? null}
         subscriptionStatus={utilisateur?.subscriptionStatus ?? null}
         className="mb-4"
       />
-      <PageHeader
-        backHref="/devis-clients"
-        title={
-          <span className="inline-flex flex-wrap items-center gap-3">
-            Devis n° {quote.numero}
-            <StatusBadge statut={statut} />
-          </span>
-        }
-        actions={
-          <div className="flex flex-wrap gap-2">
-            {!quote.invoice && (
-              <Link
-                href={`/devis-clients/${quote.id}/modifier`}
-                className="rounded-full border border-border bg-white px-4 py-2.5 text-sm font-medium hover:bg-secondary"
-              >
-                Modifier
-              </Link>
-            )}
-            {quote.invoice ? (
-              <Link href={`/factures-clients/${quote.invoice.id}`} className="rounded-full bg-primary px-4 py-2.5 text-sm text-white">
-                Voir la facture {quote.invoice.numero}
-              </Link>
-            ) : (
+      <div className="hidden lg:block">
+        <PageHeader
+          backHref="/devis-clients"
+          title={
+            <span className="inline-flex flex-wrap items-center gap-3">
+              Devis n° {quote.numero}
+              <StatusBadge statut={statut} />
+            </span>
+          }
+          actions={
+            <div className="flex flex-wrap gap-2">
+              {!quote.invoice && (
+                <Link
+                  href={`/devis-clients/${quote.id}/modifier`}
+                  className="rounded-full border border-border bg-white px-4 py-2.5 text-sm font-medium hover:bg-secondary"
+                >
+                  Modifier
+                </Link>
+              )}
+              {quote.invoice ? (
+                <Link href={`/factures-clients/${quote.invoice.id}`} className="rounded-full bg-primary px-4 py-2.5 text-sm text-white">
+                  Voir la facture {quote.invoice.numero}
+                </Link>
+              ) : (
+                <BoutonTransformerEnFacture clientQuoteId={quote.id} />
+              )}
+            </div>
+          }
+        />
+      </div>
+
+      {/* Actions mobiles */}
+      <div className="mb-4 flex flex-col gap-2 lg:hidden">
+        <div className="flex items-center gap-2">
+          <StatusBadge statut={statut} />
+        </div>
+        {aPdf && accesPdf && (
+          <a
+            href={`/api/devis-clients/${quote.id}/pdf`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex min-h-[48px] items-center justify-center rounded-full bg-primary px-5 text-[15px] font-semibold text-white shadow-[0_8px_20px_rgba(236,88,33,0.28)]"
+          >
+            Voir le PDF
+          </a>
+        )}
+        {!aPdf && accesPdf && (
+          <p className="rounded-[14px] bg-[#FFF8F5] px-3 py-2 text-[13px] text-[#53616a] ring-1 ring-primary/15">
+            PDF pas encore généré — utilisez « Régénérer ».
+          </p>
+        )}
+        {!accesPdf && (
+          <p className="rounded-[14px] bg-[#FFF8F5] px-3 py-2 text-[13px] text-[#53616a] ring-1 ring-primary/15">
+            PDF réservé au plan Pro — passez à Pro dans Paramètres.
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {!quote.invoice && (
+            <Link
+              href={`/devis-clients/${quote.id}/modifier`}
+              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full border border-border bg-white px-4 text-sm font-medium"
+            >
+              Modifier
+            </Link>
+          )}
+          {quote.invoice ? (
+            <Link
+              href={`/factures-clients/${quote.invoice.id}`}
+              className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-white"
+            >
+              Facture {quote.invoice.numero}
+            </Link>
+          ) : (
+            <div className="flex-1">
               <BoutonTransformerEnFacture clientQuoteId={quote.id} />
-            )}
-          </div>
-        }
-      />
+            </div>
+          )}
+        </div>
+      </div>
+
       <PageCard className="mb-4">
         <dl className="grid gap-3 text-sm sm:grid-cols-2">
           <div>
@@ -115,7 +175,55 @@ export default async function DevisClientDetailPage({ params }: { params: Promis
           )}
         </dl>
       </PageCard>
-      <PageCard>
+
+      {/* Lignes — cartes mobile */}
+      <div className="mb-4 overflow-hidden rounded-[20px] bg-white shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8 lg:hidden">
+        {quote.lines.map((l, i) => (
+          <div key={l.id}>
+            {i > 0 && <Separator className="bg-[#EEF0F2]" />}
+            <div className="px-4 py-3.5">
+              <p className="text-[15px] font-medium text-[#0f1c28]">{l.designation}</p>
+              <p className="mt-1 text-[13px] text-[#8a96a3]">
+                {Number(l.quantite)} × {formaterEuros(Number(l.prixUnitaireHt))} · TVA {Number(l.tauxTva)}%
+              </p>
+              <p className="mt-1 text-right text-[15px] font-semibold text-[#0f1c28]">
+                {formaterEuros(Number(l.totalHt))}
+              </p>
+            </div>
+          </div>
+        ))}
+        <div className="border-t border-[#EEF0F2] px-4 py-4">
+          <p className="text-[13px] text-[#8a96a3]">
+            HT {formaterEuros(Number(quote.totalHt))} · TVA {formaterEuros(Number(quote.totalTva))}
+          </p>
+          <p className="mt-1 text-[17px] font-bold text-[#0f1c28]">
+            TTC {formaterEuros(Number(quote.totalTtc))}
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            {aPdf && accesPdf && (
+              <a
+                href={`/api/devis-clients/${quote.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden lg:inline-flex"
+              >
+                Voir le PDF
+              </a>
+            )}
+            {!quote.invoice && (
+              <BoutonEnvoyerDevis
+                clientQuoteId={quote.id}
+                clientEmail={quote.clientEmail}
+                accesPdf={accesPdf}
+              />
+            )}
+            <BoutonRegenererPdf clientQuoteId={quote.id} accesPdf={accesPdf} />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop table */}
+      <PageCard className="hidden lg:block">
         <DataTable columns={["Désignation", "Quantité", "Prix unitaire HT", "TVA", "Total HT"]}>
           {quote.lines.map((l) => (
             <TableRow key={l.id}>
@@ -133,6 +241,16 @@ export default async function DevisClientDetailPage({ params }: { params: Promis
             <span className="font-semibold text-foreground">TTC {formaterEuros(Number(quote.totalTtc))}</span>
           </p>
           <div className="flex flex-wrap items-center gap-2">
+            {aPdf && accesPdf && (
+              <a
+                href={`/api/devis-clients/${quote.id}/pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-border bg-white px-4 py-2.5 text-sm font-medium hover:bg-secondary"
+              >
+                Voir le PDF
+              </a>
+            )}
             {!quote.invoice && (
               <BoutonEnvoyerDevis
                 clientQuoteId={quote.id}

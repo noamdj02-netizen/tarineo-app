@@ -89,14 +89,48 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         />
       </div>
 
-      <GrilleStatsMotion className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <GrilleStatsMotion className="mb-5 hidden gap-3 sm:grid-cols-2 xl:grid-cols-4 lg:grid">
         <CarteResumeMotion label="Clients" valeur={String(tousLesClients.length)} />
         <CarteResumeMotion label="Devis émis" valeur={String(totalDevis)} />
         <CarteResumeMotion label="Factures émises" valeur={String(totalFactures)} />
         <CarteResumeMotion label="Facturé (HT)" valeur={formaterEuros(totalFacture)} />
       </GrilleStatsMotion>
 
-      <PageCard>
+      <div className="mb-4 lg:hidden">
+        <Suspense fallback={null}>
+          <RechercheClients valeurInitiale={q} />
+        </Suspense>
+      </div>
+
+      {clients.length === 0 ? (
+        <div className="rounded-[20px] bg-secondary px-4 py-10 text-center lg:hidden">
+          <p className="font-medium text-foreground">Aucun client ne correspond.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Essayez un autre nom, SIRET ou e-mail.</p>
+        </div>
+      ) : (
+        <div className="mb-4 flex flex-col gap-2.5 lg:hidden">
+          {clients.map((c) => (
+            <Link
+              key={c.cle}
+              href={hrefClient(c.nom)}
+              className="flex min-h-[64px] items-center gap-3 rounded-[20px] bg-white px-4 py-3.5 shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8 active:bg-muted/40"
+            >
+              <AvatarClient nom={c.nom} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-semibold text-[#0f1c28]">{c.nom}</p>
+                <p className="text-[12px] text-[#8a96a3]">
+                  {c.devis} devis · {c.factures} facture{c.factures > 1 ? "s" : ""}
+                </p>
+              </div>
+              <p className="shrink-0 text-[14px] font-semibold text-[#0f1c28]">
+                {c.totalFactureHt > 0 ? formaterEuros(c.totalFactureHt) : "—"}
+              </p>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <PageCard className="hidden lg:block">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Suspense fallback={null}>
             <RechercheClients valeurInitiale={q} />

@@ -77,7 +77,7 @@ export default async function FacturesClientsPage() {
         />
       </div>
 
-      <GrilleStatsMotion className="mb-5 grid gap-3 sm:grid-cols-3">
+      <GrilleStatsMotion className="mb-5 hidden gap-3 sm:grid-cols-3 lg:grid">
         <CarteResumeMotion label="Factures" valeur={String(factures.length)} />
         <CarteResumeMotion label="Montant total HT" valeur={formaterEuros(totalHt)} />
         <CarteResumeMotion
@@ -87,7 +87,31 @@ export default async function FacturesClientsPage() {
         />
       </GrilleStatsMotion>
 
-      <PageCard>
+      <div className="mb-4 flex flex-col gap-2.5 lg:hidden">
+        {factures.map((f) => {
+          const statut = statutFacture(f.dateEcheance, maintenant);
+          return (
+            <Link
+              key={f.id}
+              href={`/factures-clients/${f.id}`}
+              className="flex min-h-[64px] items-center gap-3 rounded-[20px] bg-white px-4 py-3.5 shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8 active:bg-muted/40"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[15px] font-semibold text-[#0f1c28]">{f.clientNom}</p>
+                <p className="text-[12px] text-[#8a96a3]">
+                  {f.numero} · échéance {formaterDate(f.dateEcheance)}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <p className="text-[15px] font-bold text-[#0f1c28]">{formaterEuros(Number(f.totalHt))}</p>
+                <StatusBadge statut={statut} label={statut === "en_retard" ? "En retard" : "Émise"} />
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <PageCard className="hidden lg:block">
         <DataTable columns={["N° facture", "Client", "Montant HT", "Échéance", "Statut"]}>
           {factures.map((f) => {
             const statut = statutFacture(f.dateEcheance, maintenant);

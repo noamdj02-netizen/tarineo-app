@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
 import { resoudreUrlAvatar } from "@/lib/avatarUtilisateur";
 import { PLANS_TARINEO } from "@/lib/plansTarineo";
 import { MobileMenuRow } from "@/components/tarineo/mobile/MobileMenuRow";
@@ -39,7 +38,6 @@ export default async function PlusPage() {
     plan: string | null;
     subscriptionStatus: string | null;
     stripeCustomerId: string | null;
-    stripeSubscriptionId: string | null;
   } | null = null;
   let entreprise: ProfilMobileData["entreprise"] = null;
 
@@ -54,7 +52,6 @@ export default async function PlusPage() {
           plan: true,
           subscriptionStatus: true,
           stripeCustomerId: true,
-          stripeSubscriptionId: true,
         },
       }),
       prisma.companyProfile.findUnique({
@@ -96,23 +93,8 @@ export default async function PlusPage() {
   const planLabel = LIBELLE_PLAN[plan ?? ""] ?? (abonnementActif ? "Essai Tarinéo" : "Sans abonnement");
   const prixMensuel = PLANS_TARINEO.find((p) => p.id === plan)?.prixMensuel ?? null;
 
-  let prochaineFacturation: string | null = null;
-  if (utilisateur?.stripeSubscriptionId) {
-    try {
-      const subscription = await stripe.subscriptions.retrieve(utilisateur.stripeSubscriptionId);
-      const item = subscription.items.data[0];
-      if (item?.current_period_end) {
-        prochaineFacturation = new Date(item.current_period_end * 1000).toLocaleDateString("fr-FR", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        });
-      }
-    } catch {
-      // Stripe indisponible — on masque la date.
-    }
-  }
-
+  // Pas d'appel Stripe synchrone ici — bloquait le premier paint Profil (~1s+).
+  // La date de facturation reste consultable via le portail Stripe.
   const data: ProfilMobileData = {
     nom,
     email,
@@ -120,7 +102,7 @@ export default async function PlusPage() {
     entreprise,
     planLabel,
     abonnementActif,
-    prochaineFacturation,
+    prochaineFacturation: null,
     prixMensuel,
     aCompteStripe: Boolean(utilisateur?.stripeCustomerId),
   };
@@ -137,7 +119,7 @@ export default async function PlusPage() {
         </p>
         <div className="mt-2 grid max-w-xl gap-2.5">
           {LIENS_DESKTOP.map((lien) => (
-            <MobileMenuRow key={lien.href} {...lien} />
+            <MobileMenuRow key={`${lien.href}-${lien.title}`} {...lien} />
           ))}
         </div>
         <p className="mt-2 text-sm text-muted-foreground">

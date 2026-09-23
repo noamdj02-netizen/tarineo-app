@@ -8,6 +8,7 @@ import {
   CreditCardIcon,
   HelpCircleIcon,
   LogOutIcon,
+  ReceiptIcon,
   ShieldIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -211,6 +212,23 @@ export function ProfilMobile({ data }: { data: ProfilMobileData }) {
               </Button>
             </div>
           )}
+        </section>
+      </AppStaggerItem>
+
+      {/* Facturation clients */}
+      <AppStaggerItem>
+        <section className="overflow-hidden rounded-[20px] bg-white shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
+          <header className="flex items-center gap-2 px-4 pb-1 pt-4">
+            <ReceiptIcon className="size-4 text-primary" strokeWidth={2} aria-hidden />
+            <h2 className="text-[15px] font-semibold tracking-[-0.2px] text-[#0f1c28]">Facturation clients</h2>
+          </header>
+          <div>
+            <LigneLien href="/devis-clients" titre="Devis clients" />
+            <Separator className="bg-[#EEF0F2]" />
+            <LigneLien href="/factures-clients" titre="Factures clients" />
+            <Separator className="bg-[#EEF0F2]" />
+            <LigneLien href="/clients" titre="Clients" />
+          </div>
         </section>
       </AppStaggerItem>
 
