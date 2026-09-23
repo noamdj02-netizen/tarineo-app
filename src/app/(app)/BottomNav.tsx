@@ -6,7 +6,6 @@ import {
   IconCards,
   IconClock,
   IconHome,
-  IconScanner,
   IconUser,
 } from "@/components/tarineo/NavIcons";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
@@ -30,9 +29,8 @@ const ONGLETS = [
   {
     href: "/documents?scanner=1",
     label: "Scanner",
-    prominent: true,
+    prominent: true as const,
     estActif: (_pathname: string, scannerActif: boolean) => scannerActif,
-    icone: IconScanner,
   },
   {
     href: "/fournisseurs",
@@ -83,9 +81,8 @@ export function BottomNav() {
         >
           {ONGLETS.map((onglet) => {
             const actif = onglet.estActif(pathname, scannerActif);
-            const Icone = onglet.icone;
 
-            if (onglet.prominent) {
+            if ("prominent" in onglet && onglet.prominent) {
               return (
                 <div
                   key={onglet.href}
@@ -115,6 +112,8 @@ export function BottomNav() {
                 </div>
               );
             }
+
+            const Icone = onglet.icone;
 
             function aller(e: React.MouseEvent) {
               e.preventDefault();
