@@ -8,9 +8,13 @@ import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
 import { annoncerImportSucces } from "@/lib/feedbackImport";
 import { MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
+import { preparerFichierPourUpload } from "@/lib/preparerFichierUpload";
+import { journaliserErreurUploadServeur, messageErreurEnvoiDocument } from "@/lib/erreursUploadClient";
 
 const TAILLE_MAX_OCTETS = 20 * 1024 * 1024; // 20 Mo — doit rester synchronisé avec src/lib/documents.ts
 const ENVOIS_PARALLELES_MAX = 3;
+
+const MESSAGE_ERREUR_SERVEUR = "Un problème est survenu de notre côté. Réessayez dans un instant.";
 
 const MESSAGES_ERREUR: Record<ErreurEnregistrementDocument, string> = {
   type_invalide: "Type de fichier invalide (PDF, JPEG, PNG ou HEIC attendu).",
@@ -25,6 +29,7 @@ const MESSAGES_ERREUR: Record<ErreurEnregistrementDocument, string> = {
 
 const MESSAGES_ERREUR_ENVOI: Record<string, string> = {
   ...MESSAGES_ERREUR,
+  erreur_serveur: MESSAGE_ERREUR_SERVEUR,
   fichier_invalide: "Fichier illisible par le serveur. Réessayez ou choisissez un autre format.",
   session_invalide: "Session expirée. Rechargez la page puis reconnectez-vous.",
   doublon_detecte: "Ce document semble déjà envoyé.",
@@ -219,19 +224,31 @@ export function FormulaireUpload({
   async function envoyerFichier(item: FichierEnvoi, options: { ignorerDoublon?: boolean } = {}): Promise<string | null> {
     majStatut(item.id, { statut: "envoi" });
 
+    let fichierPret: File;
+    try {
+      fichierPret = await preparerFichierPourUpload(item.file);
+    } catch (erreurPrep) {
+      fichierPret = item.file;
+      console.warn("Préparation fichier ignorée :", erreurPrep);
+    }
+
     const formData = new FormData();
     formData.append("type", typeEnvoi);
-    formData.append("fichier", item.file);
+    formData.append("fichier", fichierPret);
     if (options.ignorerDoublon) formData.append("ignorerDoublon", "true");
 
     let resultat: Awaited<ReturnType<typeof envoyerUnDocument>>;
     try {
       resultat = await envoyerUnDocument(formData);
-    } catch {
-      majStatut(item.id, {
-        statut: "erreur",
-        message: "Connexion interrompue. Vérifiez votre réseau et réessayez.",
-      });
+    } catch (erreur) {
+      const { message, type } = messageErreurEnvoiDocument(erreur);
+      if (type === "serveur") {
+        void journaliserErreurUploadServeur(erreur, {
+          fichier: item.file.name,
+          type: typeEnvoi,
+        });
+      }
+      majStatut(item.id, { statut: "erreur", message });
       return null;
     }
 
@@ -249,7 +266,10 @@ export function FormulaireUpload({
     }
     majStatut(item.id, {
       statut: "erreur",
-      message: MESSAGES_ERREUR_ENVOI[resultat.erreur] ?? MESSAGES_ERREUR.erreur,
+      message:
+        resultat.erreur === "erreur"
+          ? MESSAGE_ERREUR_SERVEUR
+          : (MESSAGES_ERREUR_ENVOI[resultat.erreur] ?? MESSAGE_ERREUR_SERVEUR),
     });
     return null;
   }

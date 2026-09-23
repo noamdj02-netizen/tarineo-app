@@ -6,7 +6,6 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { enregistrerDocument, calculerHashFichier, trouverDoublonParHash } from "@/lib/documents";
 import type { ResultatEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
-import { analyserDocument } from "@/lib/extraction";
 import { calculerEtatQuota, debutMoisUTC } from "@/lib/quota";
 import { verifierRateLimit } from "@/lib/rateLimit";
 
@@ -98,6 +97,7 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
     const userId = session.user.id;
     after(async () => {
       try {
+        const { analyserDocument } = await import("@/lib/extraction");
         await analyserDocument(documentId, userId);
       } catch (erreur) {
         console.error(`Analyse IA échouée pour ${documentId} :`, erreur);

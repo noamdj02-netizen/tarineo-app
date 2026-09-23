@@ -1,11 +1,10 @@
 import { z } from "zod";
-import convertHeic from "heic-convert";
 import { anthropic, isAnthropicConfigured } from "@/lib/anthropic";
+import { construireBlocContenu } from "@/lib/contenuDocumentIA";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
 import { comparerLignesAuHistorique, creerAlertesHausse } from "@/lib/comparaisonPrix";
 import { dateMinHistoriquePlan } from "@/lib/planGating";
-import { extraireEtEnregistrerLogoFournisseur } from "@/lib/logoFournisseurDocument";
 import { normaliserReference, normaliserDistributeur } from "@/lib/normalisation";
 import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
 import { verifierRateLimitAnalyse } from "@/lib/rateLimitIA";
@@ -166,35 +165,6 @@ Extrais les informations dans le JSON demandé :
 Si une information est illisible ou absente, mets une valeur vide ("" ou 0) plutôt que d'inventer,
 et baisse la confiance en conséquence.`;
 
-async function construireBlocContenu(buffer: Buffer, extension: string | undefined) {
-  if (extension === "pdf") {
-    return {
-      type: "document" as const,
-      source: {
-        type: "base64" as const,
-        media_type: "application/pdf" as const,
-        data: buffer.toString("base64"),
-      },
-    };
-  }
-
-  let imageBuffer = buffer;
-  let mediaType: "image/jpeg" | "image/png" = extension === "png" ? "image/png" : "image/jpeg";
-
-  if (extension === "heic") {
-    // L'API vision de Claude n'accepte pas le HEIC : conversion à la volée,
-    // le fichier original reste stocké tel quel dans Supabase Storage.
-    const converti = await convertHeic({ buffer, format: "JPEG", quality: 0.9 });
-    imageBuffer = Buffer.from(converti);
-    mediaType = "image/jpeg";
-  }
-
-  return {
-    type: "image" as const,
-    source: { type: "base64" as const, media_type: mediaType, data: imageBuffer.toString("base64") },
-  };
-}
-
 export async function analyserDocument(documentId: string, userId: string): Promise<boolean> {
   const document = await prisma.document.findFirst({ where: { id: documentId, userId } });
   if (!document) return false;
@@ -295,6 +265,7 @@ export async function analyserDocument(documentId: string, userId: string): Prom
 
     if (extraction.distributeur && distributorNorm) {
       try {
+        const { extraireEtEnregistrerLogoFournisseur } = await import("@/lib/logoFournisseurDocument");
         await extraireEtEnregistrerLogoFournisseur({
           userId,
           distributor: extraction.distributeur,
