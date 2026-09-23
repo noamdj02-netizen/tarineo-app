@@ -44,21 +44,31 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/connexion");
   }
 
+  // Ne pas envelopper `redirect()` dans un try/catch : en App Router, redirect
+  // lève une exception NEXT_REDIRECT — un catch trop large l’avalait et laissait
+  // passer confirmation email / onboarding.
   if (session?.user?.id) {
+    let doitConfirmer = false;
     try {
-      const doitConfirmer = await utilisateurDoitConfirmerEmail(session.user.id);
-      if (doitConfirmer && !estRouteConfirmationEmail(pathname)) {
-        redirect("/confirmer-email");
-      }
-
-      if (!doitConfirmer && doitForcerOnboarding(pathname)) {
-        const etatOnboarding = await chargerEtatOnboarding(session.user.id);
-        if (etatOnboarding.doitVoirChoixImport) {
-          redirect("/onboarding");
-        }
-      }
+      doitConfirmer = await utilisateurDoitConfirmerEmail(session.user.id);
     } catch (e) {
-      console.error("Garde accès app (layout) :", e);
+      console.error("Garde accès app (confirmation email) :", e);
+    }
+
+    if (doitConfirmer && !estRouteConfirmationEmail(pathname)) {
+      redirect("/confirmer-email");
+    }
+
+    if (!doitConfirmer && doitForcerOnboarding(pathname)) {
+      let etatOnboarding: Awaited<ReturnType<typeof chargerEtatOnboarding>> | null = null;
+      try {
+        etatOnboarding = await chargerEtatOnboarding(session.user.id);
+      } catch (e) {
+        console.error("Garde accès app (onboarding) :", e);
+      }
+      if (etatOnboarding?.doitVoirChoixImport) {
+        redirect("/onboarding");
+      }
     }
   }
 

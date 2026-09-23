@@ -12,6 +12,14 @@ import type { DocumentRecent, FournisseurCarte } from "@/app/(app)/accueil/Dashb
 
 const JOURS_COURTS = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
 
+export type FournisseurASurveiller = {
+  distributor: string;
+  distributorNorm: string;
+  logoUrl: string | null;
+  pourcentageMoyen: number;
+  nbReferences: number;
+};
+
 function ajouterMoisUTC(date: Date, mois: number): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + mois, 1));
 }
@@ -37,6 +45,7 @@ export type DonneesDashboardAccueil = {
   montantIdentifie: number;
   payloadsCount: number;
   fournisseursTop: FournisseurCarte[];
+  aSurveiller: FournisseurASurveiller[];
   documentsRecentsUi: DocumentRecent[];
   totalSemaine: number;
   evolutionPct: number | null;
@@ -75,6 +84,7 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
     montantIdentifie: 0,
     payloadsCount: 0,
     fournisseursTop: [],
+    aSurveiller: [],
     documentsRecentsUi: [],
     totalSemaine: 0,
     evolutionPct: null,
@@ -244,7 +254,7 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
 
     const fournisseursTop = [...depenses]
       .sort((a, b) => b.depenses - a.depenses)
-      .slice(0, 3)
+      .slice(0, 5)
       .map((d) => ({
         distributor: d.distributor,
         distributorNorm: d.distributorNorm,
@@ -253,6 +263,37 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
         pourcentageAtteinte: d.pourcentageAtteinte,
         objectif: d.objectif,
       }));
+
+    // Fournisseurs à surveiller : hausses récentes regroupées par enseigne.
+    const haussesParEnseigne = new Map<
+      string,
+      { distributor: string; sommePct: number; refs: Set<string> }
+    >();
+    for (const p of payloadsCeMois) {
+      if ((p.ecartPourcent ?? 0) <= 3) continue;
+      const norm = normaliserDistributeur(p.distributor);
+      const existant = haussesParEnseigne.get(norm);
+      if (existant) {
+        existant.sommePct += p.ecartPourcent ?? 0;
+        existant.refs.add(p.reference);
+      } else {
+        haussesParEnseigne.set(norm, {
+          distributor: p.distributor,
+          sommePct: p.ecartPourcent ?? 0,
+          refs: new Set([p.reference]),
+        });
+      }
+    }
+    const aSurveiller: FournisseurASurveiller[] = [...haussesParEnseigne.entries()]
+      .map(([distributorNorm, v]) => ({
+        distributor: v.distributor,
+        distributorNorm,
+        logoUrl: resoudreLogoFournisseur(v.distributor, distributorNorm, logosImportes),
+        pourcentageMoyen: v.sommePct / v.refs.size,
+        nbReferences: v.refs.size,
+      }))
+      .sort((a, b) => b.pourcentageMoyen - a.pourcentageMoyen)
+      .slice(0, 4);
 
     const distributeursOptions = new Map(
       depenses.map((d) => [d.distributorNorm, d.distributor])
@@ -264,6 +305,7 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       montantIdentifie,
       payloadsCount: payloadsCeMois.length,
       fournisseursTop,
+      aSurveiller,
       documentsRecentsUi,
       totalSemaine,
       evolutionPct,

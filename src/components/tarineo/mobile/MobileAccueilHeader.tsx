@@ -20,7 +20,9 @@ export function MobileAccueilHeader() {
         </Link>
         <div className="min-w-0">
           <p className="truncate text-xl font-bold tracking-[-0.3px] text-[#0f1c28]">Bonjour, {prenom}</p>
-          <p className="text-[13px] text-[#8a96a3]">Bon retour !</p>
+          <p className="text-[13px] leading-snug text-[#8a96a3]">
+            Voici ce qui mérite votre attention aujourd&apos;hui.
+          </p>
         </div>
       </div>
       <MobileNotifButton notifications={notifications} />

@@ -49,7 +49,8 @@ export default async function ParametresPage({
   } catch {
     dbIndisponible = true;
   }
-  const abonnementActif = subscriptionStatus === "active";
+  const abonnementActif =
+    subscriptionStatus === "active" || subscriptionStatus === "trialing";
   const accesEquipePlan = accesEquipe(planActuel, subscriptionStatus);
   let equipeData: Awaited<ReturnType<typeof chargerEquipe>> = null;
   let pennylaneConnecte = false;

@@ -21,7 +21,7 @@ const ONGLETS = [
   },
   {
     href: "/documents",
-    label: "Documents",
+    label: "Devis",
     estActif: (pathname: string, scannerActif: boolean) =>
       (pathname === "/documents" || pathname.startsWith("/documents/")) && !scannerActif,
     icone: IconDocument,
@@ -41,7 +41,7 @@ const ONGLETS = [
   },
   {
     href: "/plus",
-    label: "Plus",
+    label: "Profil",
     estActif: (pathname: string) =>
       pathname === "/plus" ||
       pathname.startsWith("/devis-clients") ||

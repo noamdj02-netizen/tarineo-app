@@ -109,6 +109,8 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
     <>
       <AccueilMobile
         economies={montantIdentifie}
+        evolutionPct={evolutionPct}
+        aSurveiller={donnees.aSurveiller}
         fournisseurs={fournisseursTop}
         documents={documentsRecentsUi}
       />
@@ -118,15 +120,11 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
         {(aVerifier > 0 || payloadsCount > 0) && (
           <DashboardAFaire aVerifier={aVerifier} hausses={payloadsCount} moisCourantStr={moisCourantStr} />
         )}
-        {!etatOnboarding.doitVoirBanniereReprise && (
-          <DashboardHeroImport
-            compteVide={compteVide}
-            enAttenteDeDonnees={enAttenteDeDonnees}
-            etatQuota={etatQuota}
-            documentsEnCours={documentsEnCours}
-          />
+        {/* Hero import desktop-style masqué : la carte Scanner de AccueilMobile
+            porte déjà le CTA principal sur mobile. */}
+        {tableauPeuRempli && documentsEnCours > 0 && (
+          <DashboardAnalyseEnCours documentsEnCours={documentsEnCours} />
         )}
-        {tableauPeuRempli && <DashboardAnalyseEnCours documentsEnCours={documentsEnCours} />}
       </div>
 
     <AppStagger className="hidden flex-col gap-8 lg:flex" stagger={0.06}>

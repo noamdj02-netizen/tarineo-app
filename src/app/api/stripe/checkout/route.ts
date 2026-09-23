@@ -10,7 +10,7 @@ const schema = z.object({
   plan: z.enum(["starter", "pro", "equipe"]),
 });
 
-/** Checkout Session pour changement de plan (utilisateur déjà abonné ou premier paiement). */
+/** Checkout Session pour premier abonnement, ou mise à jour du plan si déjà abonné. */
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -30,7 +30,12 @@ export async function POST(request: Request) {
 
   const utilisateur = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { email: true, stripeCustomerId: true, stripeSubscriptionId: true },
+    select: {
+      email: true,
+      stripeCustomerId: true,
+      stripeSubscriptionId: true,
+      subscriptionStatus: true,
+    },
   });
   if (!utilisateur) {
     return NextResponse.json({ erreur: "Compte introuvable" }, { status: 404 });
@@ -51,7 +56,50 @@ export async function POST(request: Request) {
 
   const origine = await origineActuelle();
 
-  // Abonné actif : mise à jour via Checkout (mode subscription) avec customer existant
+  // Déjà abonné : on met à jour l'abonnement existant (évite un 2ᵉ abonnement
+  // facturé en parallèle si on ouvrait un nouveau Checkout Session).
+  const abonnementActif =
+    Boolean(utilisateur.stripeSubscriptionId) &&
+    (utilisateur.subscriptionStatus === "active" || utilisateur.subscriptionStatus === "trialing");
+
+  if (abonnementActif && utilisateur.stripeSubscriptionId) {
+    try {
+      const abonnement = await stripe.subscriptions.retrieve(utilisateur.stripeSubscriptionId);
+      const itemId = abonnement.items.data[0]?.id;
+      if (!itemId) {
+        return NextResponse.json({ erreur: "Abonnement Stripe incomplet" }, { status: 500 });
+      }
+
+      const actuelPriceId = abonnement.items.data[0]?.price?.id;
+      if (actuelPriceId === priceId) {
+        return NextResponse.json({
+          url: `${origine}/parametres?onglet=abonnement&plan=deja`,
+        });
+      }
+
+      await stripe.subscriptions.update(utilisateur.stripeSubscriptionId, {
+        items: [{ id: itemId, price: priceId }],
+        proration_behavior: "create_prorations",
+        metadata: { userId: session.user.id, plan },
+      });
+
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { plan },
+      });
+
+      return NextResponse.json({
+        url: `${origine}/parametres?onglet=abonnement&plan=ok`,
+      });
+    } catch (erreur) {
+      console.error("Mise à jour abonnement Stripe :", erreur);
+      return NextResponse.json(
+        { erreur: "Impossible de changer de plan pour le moment." },
+        { status: 500 },
+      );
+    }
+  }
+
   const checkout = await stripe.checkout.sessions.create({
     mode: "subscription",
     customer: customerId,
@@ -62,11 +110,7 @@ export async function POST(request: Request) {
     subscription_data: {
       metadata: { userId: session.user.id, plan },
     },
-    ...(utilisateur.stripeSubscriptionId
-      ? {}
-      : {
-          payment_method_collection: "always",
-        }),
+    payment_method_collection: "always",
   });
 
   return NextResponse.json({ url: checkout.url });

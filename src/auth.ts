@@ -66,6 +66,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
   ],
+  events: {
+    // Inscription Google : le PrismaAdapter crée le User sans passer par
+    // creerCompte() — on horodate le consentement RGPD ici (équivalent email/mdp).
+    async createUser({ user }) {
+      if (!user.id) return;
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          consentAt: new Date(),
+          emailVerified: new Date(),
+        },
+      });
+    },
+  },
   callbacks: {
     // Bloque uniquement la CRÉATION de nouveaux comptes Google une fois l'accès
     // anticipé complet — jamais la connexion d'un compte déjà existant. On ne peut
