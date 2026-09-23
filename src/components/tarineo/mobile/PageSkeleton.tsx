@@ -31,10 +31,19 @@ export function PageSkeleton({ variant = "liste" }: { variant?: "accueil" | "lis
 
   if (variant === "profil") {
     return (
-      <div className="flex flex-col gap-3 lg:hidden" aria-hidden="true">
-        <Skeleton className="mb-2 h-7 w-24 rounded-full" />
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-14 w-full rounded-[16px]" />
+      <div className="flex flex-col gap-5 pb-8 lg:hidden" aria-hidden="true">
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <Skeleton className="h-7 w-28 rounded-full" />
+          <Skeleton className="size-11 rounded-full" />
+        </div>
+        <div className="flex flex-col items-center gap-3 pt-2">
+          <Skeleton className="size-[76px] rounded-full" />
+          <Skeleton className="h-6 w-32 rounded-full" />
+          <Skeleton className="h-4 w-44 rounded-full" />
+          <Skeleton className="h-6 w-24 rounded-full" />
+        </div>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-[140px] w-full rounded-[20px]" />
         ))}
       </div>
     );
