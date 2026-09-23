@@ -2,11 +2,12 @@ import Link from "next/link";
 import { ChevronRightIcon, EuroIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { AnimatedNumber } from "@/components/tarineo/motion/AnimatedNumber";
 
 const formaterEuros = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 
-/** Carte secondaire économies — shadcn Card + Badge. */
+/** Carte secondaire économies — shadcn Card + Badge + compteur animé. */
 export function MobileEconomiesRow({
   montant,
   evolutionPct,
@@ -38,8 +39,8 @@ export function MobileEconomiesRow({
             Économies détectées ce mois-ci
           </p>
           <div className="flex shrink-0 items-center gap-2">
-            <p className="text-[16px] font-bold tracking-[-0.3px] text-foreground">
-              {formaterEuros(montant)}
+            <p className="text-[16px] font-bold tracking-[-0.3px] text-foreground tabular-nums">
+              <AnimatedNumber value={montant} format={formaterEuros} />
             </p>
             {pctLabel && (
               <Badge

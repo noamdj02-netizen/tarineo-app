@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import {
@@ -11,6 +10,7 @@ import {
   IconUser,
 } from "@/components/tarineo/NavIcons";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
+import { useAppNavigation } from "@/components/tarineo/motion/AppNavigationContext";
 import { cn } from "@/lib/utils";
 
 const ONGLETS = [
@@ -59,15 +59,14 @@ const ONGLETS = [
   },
 ];
 
-/** Hauteur de la barre (hors safe-area) — labels alignés ; le FAB flotte au-dessus. */
 const HAUTEUR_BARRE = 56;
-/** Espace réservé au label sous le FAB (aligné avec les autres onglets). */
 const HAUTEUR_LABEL = 18;
 
 export function BottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const reduce = useReducedMotion();
+  const { navigateTab, prefetch } = useAppNavigation();
   const scannerActif = pathname.startsWith("/documents") && searchParams.get("scanner") === "1";
 
   if (pathname.startsWith("/onboarding")) return null;
@@ -78,88 +77,99 @@ export function BottomNav() {
       aria-label="Navigation principale"
     >
       <LayoutGroup id="bottom-nav">
-      <div
-        className="relative mx-auto grid max-w-5xl grid-cols-5 items-end px-1"
-        style={{ height: HAUTEUR_BARRE }}
-      >
-        {ONGLETS.map((onglet) => {
-          const actif = onglet.estActif(pathname, scannerActif);
-          const Icone = onglet.icone;
+        <div
+          className="relative mx-auto grid max-w-5xl grid-cols-5 items-end px-1"
+          style={{ height: HAUTEUR_BARRE }}
+        >
+          {ONGLETS.map((onglet) => {
+            const actif = onglet.estActif(pathname, scannerActif);
+            const Icone = onglet.icone;
 
-          if (onglet.prominent) {
-            return (
-              <div
-                key={onglet.href}
-                className="relative flex h-full flex-col items-center justify-end pb-1"
-              >
-                {/* FAB centré au-dessus de la ligne de labels — même baseline que Accueil/Devis/… */}
+            if (onglet.prominent) {
+              return (
                 <div
-                  className="absolute left-1/2 z-10 -translate-x-1/2"
-                  style={{ bottom: HAUTEUR_LABEL }}
+                  key={onglet.href}
+                  className="relative flex h-full flex-col items-center justify-end pb-1"
                 >
-                  <BoutonImporterNav
-                    size="icon-lg"
-                    aria-label="Scanner un document"
+                  <div
+                    className="absolute left-1/2 z-10 -translate-x-1/2"
+                    style={{ bottom: HAUTEUR_LABEL }}
+                  >
+                    <BoutonImporterNav
+                      size="icon-lg"
+                      aria-label="Scanner un document"
+                      className={cn(
+                        "size-[56px] shadow-[0_8px_18px_rgba(237,89,33,0.38)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
+                        actif ? "ring-2 ring-primary/25" : undefined,
+                      )}
+                    />
+                  </div>
+                  <span
                     className={cn(
-                      "size-[56px] shadow-[0_8px_18px_rgba(237,89,33,0.38)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
-                      actif ? "ring-2 ring-primary/25" : undefined,
+                      "relative z-0 text-[10px] leading-none",
+                      actif ? "font-semibold text-primary" : "font-medium text-[#8e8e93]",
                     )}
-                  />
+                  >
+                    {onglet.label}
+                  </span>
                 </div>
-                <span
-                  className={cn(
-                    "relative z-0 text-[10px] leading-none",
-                    actif ? "font-semibold text-primary" : "font-medium text-[#8e8e93]",
+              );
+            }
+
+            function aller(e: React.MouseEvent) {
+              e.preventDefault();
+              if (actif) return;
+              navigateTab(onglet.href, pathname);
+            }
+
+            function precharger() {
+              prefetch(onglet.href);
+            }
+
+            const bouton = (
+              <a
+                href={onglet.href}
+                onClick={aller}
+                onPointerDown={precharger}
+                onTouchStart={precharger}
+                className={cn(
+                  "flex h-full flex-col items-center justify-end gap-0.5 pb-1 transition-colors duration-150 ease-out",
+                  actif ? "text-primary" : "text-[#8e8e93] hover:text-foreground",
+                )}
+                aria-current={actif ? "page" : undefined}
+              >
+                <span className="relative flex size-7 items-center justify-center">
+                  <Icone className="size-6" />
+                  {actif && !reduce && (
+                    <motion.span
+                      layoutId="bottom-nav-indicateur"
+                      className="absolute -bottom-0.5 h-0.5 w-3 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    />
                   )}
-                >
+                </span>
+                <span className={cn("text-[10px] leading-none", actif ? "font-semibold" : "font-medium")}>
                   {onglet.label}
                 </span>
-              </div>
+              </a>
             );
-          }
 
-          const lien = (
-            <Link
-              href={onglet.href}
-              prefetch={false}
-              className={cn(
-                "flex h-full flex-col items-center justify-end gap-0.5 pb-1 transition-colors duration-150 ease-out",
-                actif ? "text-primary" : "text-[#8e8e93] hover:text-foreground",
-              )}
-              aria-current={actif ? "page" : undefined}
-            >
-              <span className="relative flex size-7 items-center justify-center">
-                <Icone className="size-6" />
-                {actif && !reduce && (
-                  <motion.span
-                    layoutId="bottom-nav-indicateur"
-                    className="absolute -bottom-0.5 h-0.5 w-3 rounded-full bg-primary"
-                    transition={{ type: "spring", stiffness: 420, damping: 32 }}
-                  />
-                )}
-              </span>
-              <span className={cn("text-[10px] leading-none", actif ? "font-semibold" : "font-medium")}>
-                {onglet.label}
-              </span>
-            </Link>
-          );
+            if (reduce) {
+              return <div key={onglet.href}>{bouton}</div>;
+            }
 
-          if (reduce) {
-            return <div key={onglet.href}>{lien}</div>;
-          }
-
-          return (
-            <motion.div
-              key={onglet.href}
-              className="h-full"
-              whileTap={{ scale: 0.94 }}
-              transition={{ type: "spring", stiffness: 500, damping: 28 }}
-            >
-              {lien}
-            </motion.div>
-          );
-        })}
-      </div>
+            return (
+              <motion.div
+                key={onglet.href}
+                className="h-full"
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: "spring", stiffness: 500, damping: 28 }}
+              >
+                {bouton}
+              </motion.div>
+            );
+          })}
+        </div>
       </LayoutGroup>
     </nav>
   );

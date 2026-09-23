@@ -18,6 +18,7 @@ import { listerEnseignesPersonnalisees } from "@/lib/rechercherFournisseur";
 import { BibliothequeOnglets } from "./RechercheFournisseurIA";
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
+import { ListeAvecRefresh } from "@/components/tarineo/motion/ListeAvecRefresh";
 import { BtnPrimary, BtnGhost } from "@/components/tarineo/Actions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -172,6 +173,7 @@ export default async function FournisseursPage() {
   }));
 
   return (
+    <ListeAvecRefresh>
     <div>
       <MobilePageHeader
         title="Fournisseurs"
@@ -283,5 +285,6 @@ export default async function FournisseursPage() {
         }
       />
     </div>
+    </ListeAvecRefresh>
   );
 }

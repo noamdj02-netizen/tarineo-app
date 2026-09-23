@@ -14,6 +14,7 @@ import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { MobileMenuRow } from "@/components/tarineo/mobile/MobileMenuRow";
 import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { EmptyState } from "@/components/tarineo/EmptyState";
+import { MobileEmptyState } from "@/components/tarineo/mobile/MobileEmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
 import { IconPlus } from "@/components/tarineo/NavIcons";
 import { StatusBadge } from "@/components/tarineo/StatusBadge";
@@ -32,10 +33,12 @@ export default async function DevisClientsPage({ searchParams }: { searchParams:
       <div>
         <MobilePageHeader title="Devis clients" subtitle="Créer, modifier, transformer" />
         <div className="flex flex-col gap-3 lg:hidden">
-          <MobileMenuRow href="/devis-clients/nouveau" title="Nouveau devis" description="Manuel ou assisté par IA" />
-          <p className="px-1 text-center text-sm text-muted-foreground">
-            Aucun devis pour le moment — commencez par en créer un.
-          </p>
+          <MobileEmptyState
+            title="Aucun devis pour le moment"
+            description="Créez votre premier devis (manuel ou assisté par IA) pour envoyer une proposition à votre client."
+            primary={{ type: "link", href: "/devis-clients/nouveau", label: "Créer un devis" }}
+            secondary={{ type: "link", href: "/documents", label: "D’abord importer un devis fournisseur" }}
+          />
         </div>
         <div className="hidden lg:block">
           <EmptyState

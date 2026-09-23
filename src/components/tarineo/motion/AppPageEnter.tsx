@@ -9,8 +9,6 @@ import { useAppNavigation, type TransitionNavigation } from "./AppNavigationCont
 
 function staggerSections(nodes: ReactNode[]): ReactNode {
   if (nodes.length <= 1) return nodes[0] ?? null;
-  // Évite `display: contents` : avec Motion, les variants parent→enfant
-  // ne se propagent pas correctement et les AppStaggerItem restent opacity:0.
   return (
     <AppStagger className="flex w-full min-w-0 flex-col gap-[inherit]" stagger={0.045} delayChildren={0.02}>
       {nodes.map((node, i) => (
@@ -45,18 +43,26 @@ const VARIANTS: Record<
   TransitionNavigation,
   { initial: Record<string, number>; animate: Record<string, number>; transition: object }
 > = {
-  // opacity toujours à 1 : si l'animation Motion est interrompue (onglet
-  // arrière-plan, headless, prefers-reduced-motion mal détecté), la page
-  // ne doit jamais rester invisible. On anime seulement le léger translateY.
+  // opacity toujours à 1 : page jamais invisible si l'anim est interrompue.
   default: {
-    initial: { opacity: 1, y: 10 },
-    animate: { opacity: 1, y: 0 },
+    initial: { opacity: 1, y: 10, x: 0 },
+    animate: { opacity: 1, y: 0, x: 0 },
     transition: { ...appSpringSoft, ease: appEase },
   },
   import: {
-    initial: { opacity: 1, y: 28, scale: 0.98 },
-    animate: { opacity: 1, y: 0, scale: 1 },
+    initial: { opacity: 1, y: 28, scale: 0.98, x: 0 },
+    animate: { opacity: 1, y: 0, scale: 1, x: 0 },
     transition: { ...appSpring, ease: appEase },
+  },
+  "tab-right": {
+    initial: { opacity: 1, x: 36, y: 0 },
+    animate: { opacity: 1, x: 0, y: 0 },
+    transition: { type: "spring", stiffness: 320, damping: 34, mass: 0.75 },
+  },
+  "tab-left": {
+    initial: { opacity: 1, x: -36, y: 0 },
+    animate: { opacity: 1, x: 0, y: 0 },
+    transition: { type: "spring", stiffness: 320, damping: 34, mass: 0.75 },
   },
 };
 
@@ -91,6 +97,7 @@ export function AppPageEnter({ children }: { children: ReactNode }) {
       animate={variante.animate}
       transition={variante.transition}
       onAnimationComplete={apresAnimation}
+      className="min-w-0"
     >
       {contenu}
     </motion.div>

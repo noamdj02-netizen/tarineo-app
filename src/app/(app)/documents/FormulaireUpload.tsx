@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { IconeImportAnimee, OverlayImportAnime } from "./IconeImportAnimee";
 import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
+import { annoncerImportSucces } from "@/lib/feedbackImport";
 import { MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
 
 const TAILLE_MAX_OCTETS = 20 * 1024 * 1024; // 20 Mo — doit rester synchronisé avec src/lib/documents.ts
@@ -287,6 +288,7 @@ export function FormulaireUpload({
     const dernierDocumentId = documentIdsEnvoyes[documentIdsEnvoyes.length - 1];
 
     if ((modeOnboarding || redirigerVersResume) && succesCount > 0) {
+      annoncerImportSucces(succesCount);
       onImportReussi?.(succesCount, dernierDocumentId);
       if (!onImportReussi) {
         router.push(`/onboarding/analyse?n=${succesCount}`);
@@ -295,6 +297,7 @@ export function FormulaireUpload({
     }
 
     if (succesCount > 0 && dernierDocumentId) {
+      annoncerImportSucces(succesCount);
       onImportReussi?.(succesCount, dernierDocumentId);
       router.push(`/documents/${dernierDocumentId}`);
       return;

@@ -6,6 +6,7 @@ import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { DataTable, TableRow, TableCell } from "@/components/tarineo/DataTable";
 import { EmptyState } from "@/components/tarineo/EmptyState";
+import { MobileEmptyState } from "@/components/tarineo/mobile/MobileEmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
 import { StatusBadge } from "@/components/tarineo/StatusBadge";
 import { CarteResumeMotion, GrilleStatsMotion } from "@/components/tarineo/motion/GrilleStatsMotion";
@@ -31,15 +32,28 @@ export default async function FacturesClientsPage() {
 
   if (factures.length === 0) {
     return (
-      <EmptyState
-        title="Factures clients"
-        subtitle="Factures émises à partir de vos devis."
-        heading="Aucune facture pour le moment"
-        description="Transformez un devis client accepté en facture depuis la fiche du devis."
-        primary={{ href: "/devis-clients", label: "Voir mes devis clients" }}
-        secondary={{ href: "/devis-clients/nouveau", label: "Créer un devis" }}
-        variant="document"
-      />
+      <div>
+        <MobilePageHeader title="Factures clients" subtitle="Depuis vos devis acceptés" />
+        <div className="lg:hidden">
+          <MobileEmptyState
+            title="Aucune facture pour le moment"
+            description="Transformez un devis client accepté en facture depuis la fiche du devis."
+            primary={{ type: "link", href: "/devis-clients", label: "Voir mes devis clients" }}
+            secondary={{ type: "link", href: "/devis-clients/nouveau", label: "Créer un devis" }}
+          />
+        </div>
+        <div className="hidden lg:block">
+          <EmptyState
+            title="Factures clients"
+            subtitle="Factures émises à partir de vos devis."
+            heading="Aucune facture pour le moment"
+            description="Transformez un devis client accepté en facture depuis la fiche du devis."
+            primary={{ href: "/devis-clients", label: "Voir mes devis clients" }}
+            secondary={{ href: "/devis-clients/nouveau", label: "Créer un devis" }}
+            variant="document"
+          />
+        </div>
+      </div>
     );
   }
 

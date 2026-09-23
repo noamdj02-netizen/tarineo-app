@@ -12,6 +12,8 @@ import { chargerEtatOnboarding } from "@/lib/onboarding";
 import { doitForcerOnboarding, estRouteConfirmationEmail } from "@/lib/routeApresAuth";
 import { utilisateurDoitConfirmerEmail } from "@/lib/confirmationEmail";
 import { AppNavigationProvider } from "@/components/tarineo/motion/AppNavigationContext";
+import { ConfettiBurstHost } from "@/components/tarineo/motion/ConfettiBurst";
+import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "./AppShell";
 import { AppThemeScope } from "./AppThemeScope";
 import { BottomNav } from "./BottomNav";
@@ -138,6 +140,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Suspense fallback={null}>
             <BottomNav />
           </Suspense>
+          <Toaster />
+          <ConfettiBurstHost />
         </AppNavigationProvider>
       </div>
     </AppThemeScope>

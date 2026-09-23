@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { AppStagger, AppStaggerItem } from "@/components/tarineo/motion/AppStagger";
+import { PullToRefresh } from "@/components/tarineo/motion/PullToRefresh";
 
 const formaterEuros = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
@@ -73,6 +74,7 @@ export function AccueilMobile({
   documents: DocumentRecent[];
 }) {
   return (
+    <PullToRefresh>
     <AppStagger className="flex flex-col gap-5 pb-2 lg:hidden" stagger={0.05} delayChildren={0.02}>
       <AppStaggerItem>
         <MobileAccueilHeader />
@@ -199,5 +201,6 @@ export function AccueilMobile({
         <MobileEconomiesRow montant={economies} evolutionPct={evolutionPct} />
       </AppStaggerItem>
     </AppStagger>
+    </PullToRefresh>
   );
 }

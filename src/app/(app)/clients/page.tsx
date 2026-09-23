@@ -6,6 +6,7 @@ import { agregerClientsUtilisateur, filtrerClients, hrefClient } from "@/lib/cli
 import { PageHeader, PageCard } from "@/components/tarineo/PageHeader";
 import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { EmptyState } from "@/components/tarineo/EmptyState";
+import { MobileEmptyState } from "@/components/tarineo/mobile/MobileEmptyState";
 import { BtnPrimary } from "@/components/tarineo/Actions";
 import { DataTable, RowActions, TableCell, TableRow } from "@/components/tarineo/DataTable";
 import { IconPlus } from "@/components/tarineo/NavIcons";
@@ -38,15 +39,28 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   if (tousLesClients.length === 0) {
     return (
-      <EmptyState
-        title="Clients"
-        subtitle="Tarinéo crée vos fiches à partir de vos devis et factures."
-        heading="Aucun client pour le moment"
-        description="Créez un devis client : le nom apparaît ici automatiquement. Aucun client n'est inventé."
-        primary={{ href: "/devis-clients/nouveau", label: "+ Créer un devis client" }}
-        secondary={{ href: "/devis-clients", label: "Voir mes devis" }}
-        variant="user"
-      />
+      <div>
+        <MobilePageHeader title="Clients" subtitle="Carnet regroupé" />
+        <div className="lg:hidden">
+          <MobileEmptyState
+            title="Aucun client pour le moment"
+            description="Créez un devis client : le nom apparaît ici automatiquement. Aucun client n’est inventé."
+            primary={{ type: "link", href: "/devis-clients/nouveau", label: "Créer un devis client" }}
+            secondary={{ type: "link", href: "/devis-clients", label: "Voir mes devis" }}
+          />
+        </div>
+        <div className="hidden lg:block">
+          <EmptyState
+            title="Clients"
+            subtitle="Tarinéo crée vos fiches à partir de vos devis et factures."
+            heading="Aucun client pour le moment"
+            description="Créez un devis client : le nom apparaît ici automatiquement. Aucun client n'est inventé."
+            primary={{ href: "/devis-clients/nouveau", label: "+ Créer un devis client" }}
+            secondary={{ href: "/devis-clients", label: "Voir mes devis" }}
+            variant="user"
+          />
+        </div>
+      </div>
     );
   }
 
