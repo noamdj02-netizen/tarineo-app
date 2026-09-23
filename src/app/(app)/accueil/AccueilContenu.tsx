@@ -115,13 +115,11 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
         documents={documentsRecentsUi}
       />
 
-      <div className="mt-6 flex flex-col gap-4 lg:hidden">
+      <div className="mt-5 flex flex-col gap-4 lg:hidden">
         {etatOnboarding.doitVoirBanniereReprise && <DashboardBanniereReprise etatQuota={etatQuota} />}
-        {(aVerifier > 0 || payloadsCount > 0) && (
-          <DashboardAFaire aVerifier={aVerifier} hausses={payloadsCount} moisCourantStr={moisCourantStr} />
-        )}
-        {/* Hero import desktop-style masqué : la carte Scanner de AccueilMobile
-            porte déjà le CTA principal sur mobile. */}
+        {/* DashboardAFaire / HeroImport volontairement absents du mobile :
+            la hiérarchie AccueilMobile (Scanner → À surveiller → …) porte déjà
+            les alertes et le CTA, conformément à la maquette APRÈS. */}
         {tableauPeuRempli && documentsEnCours > 0 && (
           <DashboardAnalyseEnCours documentsEnCours={documentsEnCours} />
         )}

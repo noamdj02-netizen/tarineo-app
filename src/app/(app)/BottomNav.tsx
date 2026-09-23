@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
-  IconDocument,
-  IconFournisseurs,
+  IconCards,
+  IconClock,
   IconHome,
-  IconMore,
   IconScanner,
+  IconUser,
 } from "@/components/tarineo/NavIcons";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,7 @@ const ONGLETS = [
     label: "Devis",
     estActif: (pathname: string, scannerActif: boolean) =>
       (pathname === "/documents" || pathname.startsWith("/documents/")) && !scannerActif,
-    icone: IconDocument,
+    icone: IconClock,
   },
   {
     href: "/documents?scanner=1",
@@ -37,7 +37,7 @@ const ONGLETS = [
     href: "/fournisseurs",
     label: "Fournisseurs",
     estActif: (pathname: string) => pathname.startsWith("/fournisseurs"),
-    icone: IconFournisseurs,
+    icone: IconCards,
   },
   {
     href: "/plus",
@@ -54,7 +54,7 @@ const ONGLETS = [
       pathname.startsWith("/coffre") ||
       pathname.startsWith("/veille") ||
       pathname === "/compte",
-    icone: IconMore,
+    icone: IconUser,
   },
 ];
 
@@ -82,8 +82,8 @@ export function BottomNav() {
                   size="icon-lg"
                   aria-label="Scanner un document"
                   className={cn(
-                    "size-[52px] shadow-[0_6px_14px_rgba(237,89,33,0.35)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
-                    actif ? "ring-2 ring-primary/20" : undefined,
+                    "-mt-3 size-[56px] shadow-[0_8px_18px_rgba(237,89,33,0.38)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
+                    actif ? "ring-2 ring-primary/25" : undefined,
                   )}
                 />
                 <span

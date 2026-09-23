@@ -3,6 +3,7 @@
 import { ScanLineIcon, UploadIcon } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { ImportDocument } from "@/app/(app)/documents/ImportDocument";
+import { IconScanner } from "@/components/tarineo/NavIcons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,7 @@ export function BoutonImporterNav({
         )}
         aria-label={ariaLabel ?? label}
       >
-        <ScanLineIcon className="size-[26px]" />
+        <IconScanner className="size-[26px] text-white" />
       </Button>
     ) : compact || size === "icon" ? (
       <Button

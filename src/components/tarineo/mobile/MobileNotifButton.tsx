@@ -32,7 +32,7 @@ export function MobileNotifButton({ notifications }: { notifications: NotifUi[] 
       >
         <BellIcon className="size-5 text-[#0f1c28]" />
         {nonLues > 0 && (
-          <span className="absolute right-2.5 top-1.5 size-2 rounded-full bg-primary" aria-hidden />
+          <span className="absolute right-2.5 top-2 size-2 rounded-full bg-[#EF4444]" aria-hidden />
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[min(100vw-2rem,360px)] p-2">
