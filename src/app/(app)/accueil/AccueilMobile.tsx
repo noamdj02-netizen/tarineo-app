@@ -10,8 +10,8 @@ import { MobileAvatarFournisseur } from "@/components/tarineo/mobile/MobileAvata
 import { MobileEconomiesRow } from "@/components/tarineo/mobile/MobileEconomiesRow";
 import { MobileScannerCard } from "@/components/tarineo/mobile/MobileScannerCard";
 import { MobileSectionHeader } from "@/components/tarineo/mobile/MobileSectionHeader";
-import { MascotteDashboard } from "@/components/tarineo/MascotteDashboard";
 import { ImportDocument } from "@/app/(app)/documents/ImportDocument";
+import { MobileEmptyState } from "@/components/tarineo/mobile/MobileEmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,22 +138,24 @@ export function AccueilMobile({
         <section className="flex flex-col gap-3">
           <MobileSectionHeader
             title="Devis récents"
-            href="/documents"
+            href="/documents/devis-fournisseurs"
             icon={<FileTextIcon className="size-4" aria-hidden />}
           />
           {documents.length === 0 ? (
-            <Card className="items-center rounded-[20px] border-0 py-8 text-center shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
-              <CardHeader className="items-center">
-                <MascotteDashboard variant="loupe" width={72} height={76} />
-                <CardTitle className="mt-2 text-[16px] font-semibold">Aucun devis pour le moment</CardTitle>
-                <CardDescription className="max-w-[260px]">
-                  Scannez votre premier devis pour commencer.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ImportDocument preferCamera className="h-auto rounded-full px-5 py-2.5" label="Scanner un devis" />
-              </CardContent>
-            </Card>
+            <MobileEmptyState
+              title="Aucun devis pour le moment"
+              description="Scannez votre premier devis pour commencer."
+              primary={{
+                type: "node",
+                node: (
+                  <ImportDocument
+                    preferCamera
+                    className="h-11 w-full max-w-[280px] rounded-full font-semibold"
+                    label="Scanner un devis"
+                  />
+                ),
+              }}
+            />
           ) : (
             <Card className="gap-0 overflow-hidden rounded-[20px] border-0 py-0 shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
               {documents.slice(0, 5).map((doc, i) => (

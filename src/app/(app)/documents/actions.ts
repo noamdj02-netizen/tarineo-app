@@ -36,7 +36,7 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
   }
 
   if (!verifierRateLimit(`upload:${session.user.id}`, 40, 60 * 60 * 1000)) {
-    return { succes: false, erreur: "fichier_invalide" };
+    return { succes: false, erreur: "erreur" };
   }
 
   const parsed = schema.safeParse({
@@ -92,8 +92,8 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
   const resultat = await enregistrerDocument(session.user.id, parsed.data.type, buffer, fileHash);
 
   if (resultat.succes) {
-    // L'analyse IA prend 10–60 s : on la lance après la réponse pour ne pas bloquer
-    // l'upload ni faire expirer la server action côté navigateur.
+    // Secours si le client n'appelle pas POST /api/documents/[id]/analyser (réseau coupé
+    // avant la redirection). Le polling sur la page document relance aussi si besoin.
     const documentId = resultat.documentId;
     const userId = session.user.id;
     after(async () => {

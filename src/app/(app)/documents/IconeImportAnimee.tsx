@@ -181,8 +181,8 @@ export function OverlayImportAnime({
 }) {
   return (
     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 rounded-[16px] bg-[#FFFBF8]/96 px-6 py-8 backdrop-blur-[4px]">
-      <MascotteAnalyse size="lg" priority />
-      <div className="max-w-[260px] text-center">
+      <MascotteAnalyse size="lg" priority className="mx-auto" />
+      <div className="w-full max-w-[260px] text-center">
         <p className="text-[15px] font-semibold text-[#172935]">{label ?? "Analyse en cours…"}</p>
         {sousLabel && <p className="mt-1.5 text-[13px] leading-relaxed text-[#53616A]">{sousLabel}</p>}
       </div>

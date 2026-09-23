@@ -3,10 +3,13 @@ import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+/** Compte fondateur / test — accès complet (plan Équipe, abonnement actif). */
 const COMPTE_FONDATEUR = {
   email: "noamdj02@gmail.com",
   name: "Noam DJ02",
   password: process.env.SEED_PASSWORD ?? "Tarineo2026!",
+  plan: "equipe" as const,
+  subscriptionStatus: "active" as const,
 };
 
 async function main() {
@@ -19,15 +22,20 @@ async function main() {
       name: COMPTE_FONDATEUR.name,
       passwordHash,
       consentAt: new Date(),
-      subscriptionStatus: "trialing",
+      plan: COMPTE_FONDATEUR.plan,
+      subscriptionStatus: COMPTE_FONDATEUR.subscriptionStatus,
     },
     update: {
       name: COMPTE_FONDATEUR.name,
       passwordHash,
+      plan: COMPTE_FONDATEUR.plan,
+      subscriptionStatus: COMPTE_FONDATEUR.subscriptionStatus,
     },
   });
 
-  console.log(`Compte prêt : ${COMPTE_FONDATEUR.email} (${COMPTE_FONDATEUR.name})`);
+  console.log(
+    `Compte test prêt : ${COMPTE_FONDATEUR.email} (plan ${COMPTE_FONDATEUR.plan}, ${COMPTE_FONDATEUR.subscriptionStatus})`,
+  );
 }
 
 main()

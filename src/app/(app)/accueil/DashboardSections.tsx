@@ -92,6 +92,7 @@ export type FournisseurCarte = {
 
 export type DocumentRecent = {
   id: string;
+  type: string;
   distributor: string;
   distributorNorm: string | null;
   logoUrl: string | null;

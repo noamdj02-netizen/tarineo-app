@@ -8,9 +8,16 @@ import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
 import { annoncerImportSucces } from "@/lib/feedbackImport";
 import { MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
+import { declencherAnalyseDocument } from "@/lib/declencherAnalyseDocument";
+import { withTimeout } from "@/lib/withTimeout";
 
 const TAILLE_MAX_OCTETS = 20 * 1024 * 1024; // 20 Mo — doit rester synchronisé avec src/lib/documents.ts
 const ENVOIS_PARALLELES_MAX = 3;
+const TIMEOUT_ENVOI_MS = 120_000;
+const TIMEOUT_ANALYSE_MS = 300_000;
+const INTERVALLE_POLL_ANALYSE_MS = 3_000;
+
+type PhaseImport = "idle" | "uploading" | "analyzing" | "completed" | "failed";
 
 const MESSAGES_ERREUR: Record<ErreurEnregistrementDocument, string> = {
   type_invalide: "Type de fichier invalide (PDF, JPEG, PNG ou HEIC attendu).",
@@ -102,11 +109,16 @@ export function FormulaireUpload({
   const inputGalerieRef = useRef<HTMLInputElement>(null);
   const inputFichierRef = useRef<HTMLInputElement>(null);
   const autoEnvoiDeclencheRef = useRef(false);
+  const envoiVerrouRef = useRef(false);
+  const analysePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [type, setType] = useState<"DEVIS" | "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT">(typeInitial ?? "DEVIS");
   const typeEnvoi = variantCompact ? "DEVIS" : type;
   const [fichiers, setFichiers] = useState<FichierEnvoi[]>([]);
-  const [enCours, setEnCours] = useState(false);
+  const [phase, setPhase] = useState<PhaseImport>("idle");
+  const [documentIdAnalyse, setDocumentIdAnalyse] = useState<string | null>(null);
+  const [erreurPhase, setErreurPhase] = useState<string | null>(null);
   const [progression, setProgression] = useState<{ traites: number; total: number } | null>(null);
+  const enCours = phase === "uploading" || phase === "analyzing";
   const [glisserActif, setGlisserActif] = useState(false);
   // Compteur plutôt qu'un simple booléen : le survol d'un enfant du dropzone
   // déclenche dragleave puis dragenter juste après, ce qui ferait clignoter
@@ -145,6 +157,60 @@ export function FormulaireUpload({
       if (apercuUrl) URL.revokeObjectURL(apercuUrl);
     };
   }, [apercuUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (analysePollRef.current) clearInterval(analysePollRef.current);
+    };
+  }, []);
+
+  // Modal mobile : attendre la fin de l'analyse IA avant redirection.
+  useEffect(() => {
+    if (phase !== "analyzing" || !documentIdAnalyse) return;
+
+    let annule = false;
+    const documentId = documentIdAnalyse;
+    const debut = Date.now();
+
+    void declencherAnalyseDocument(documentId);
+
+    async function verifier() {
+      if (annule) return;
+      if (Date.now() - debut > TIMEOUT_ANALYSE_MS) {
+        setPhase("failed");
+        setErreurPhase(
+          "L'analyse prend plus de temps que prévu. Ouvrez le document pour suivre la progression ou relancer.",
+        );
+        return;
+      }
+      try {
+        const res = await fetch(`/api/documents/${documentId}/statut`, { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { status?: string };
+        if (data.status && data.status !== "PROCESSING") {
+          if (analysePollRef.current) clearInterval(analysePollRef.current);
+          setPhase("completed");
+          annoncerImportSucces(1);
+          onImportReussi?.(1, documentId);
+          if (!onImportReussi && !modeOnboarding && !redirigerVersResume) {
+            router.push(`/documents/${documentId}`);
+          } else if (modeOnboarding || redirigerVersResume) {
+            router.push(`/onboarding/analyse?n=1`);
+          }
+        }
+      } catch {
+        /* prochain poll */
+      }
+    }
+
+    verifier();
+    analysePollRef.current = setInterval(verifier, INTERVALLE_POLL_ANALYSE_MS);
+
+    return () => {
+      annule = true;
+      if (analysePollRef.current) clearInterval(analysePollRef.current);
+    };
+  }, [phase, documentIdAnalyse, modeOnboarding, onImportReussi, redirigerVersResume, router]);
 
   const apercuEnErreur = dernierFichier !== null && apercuErreurId === dernierFichier.id;
 
@@ -216,6 +282,16 @@ export function FormulaireUpload({
     setFichiers((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)));
   }
 
+  function reessayerFichiersEnErreur() {
+    setErreurPhase(null);
+    setPhase("idle");
+    setFichiers((prev) =>
+      prev.map((f) =>
+        f.statut === "erreur" ? { ...f, statut: "en_attente" as const, message: undefined } : f,
+      ),
+    );
+  }
+
   async function envoyerFichier(item: FichierEnvoi, options: { ignorerDoublon?: boolean } = {}): Promise<string | null> {
     majStatut(item.id, { statut: "envoi" });
 
@@ -226,12 +302,17 @@ export function FormulaireUpload({
 
     let resultat: Awaited<ReturnType<typeof envoyerUnDocument>>;
     try {
-      resultat = await envoyerUnDocument(formData);
-    } catch {
-      majStatut(item.id, {
-        statut: "erreur",
-        message: "Connexion interrompue. Vérifiez votre réseau et réessayez.",
-      });
+      resultat = await withTimeout(
+        envoyerUnDocument(formData),
+        TIMEOUT_ENVOI_MS,
+        "timeout_envoi",
+      );
+    } catch (erreur) {
+      const message =
+        erreur instanceof Error && erreur.message === "timeout_envoi"
+          ? "L'envoi a pris trop de temps. Vérifiez votre connexion puis réessayez."
+          : "Impossible d'envoyer le document. Vérifiez votre connexion puis réessayez.";
+      majStatut(item.id, { statut: "erreur", message });
       return null;
     }
 
@@ -265,38 +346,76 @@ export function FormulaireUpload({
   }
 
   async function lancerEnvoi() {
-    setEnCours(true);
+    if (envoiVerrouRef.current || enCoursOuBloque) return;
+    envoiVerrouRef.current = true;
+    setErreurPhase(null);
+    setPhase("uploading");
 
     const aEnvoyer = fichiers.filter((f) => f.statut === "en_attente");
+    if (aEnvoyer.length === 0) {
+      envoiVerrouRef.current = false;
+      setPhase("idle");
+      return;
+    }
+
     setProgression({ traites: 0, total: aEnvoyer.length });
     let curseur = 0;
     const documentIdsEnvoyes: string[] = [];
+    let echecCount = 0;
 
-    async function worker() {
-      while (curseur < aEnvoyer.length) {
-        const item = aEnvoyer[curseur];
-        curseur += 1;
-        const documentId = await envoyerFichier(item);
-        if (documentId) documentIdsEnvoyes.push(documentId);
-        setProgression((prev) => (prev ? { ...prev, traites: prev.traites + 1 } : prev));
+    try {
+      async function worker() {
+        while (curseur < aEnvoyer.length) {
+          const item = aEnvoyer[curseur];
+          curseur += 1;
+          const documentId = await envoyerFichier(item);
+          if (documentId) documentIdsEnvoyes.push(documentId);
+          else echecCount += 1;
+          setProgression((prev) => (prev ? { ...prev, traites: prev.traites + 1 } : prev));
+        }
       }
+
+      await Promise.all(Array.from({ length: ENVOIS_PARALLELES_MAX }, worker));
+    } finally {
+      envoiVerrouRef.current = false;
+      setProgression(null);
     }
 
-    await Promise.all(Array.from({ length: ENVOIS_PARALLELES_MAX }, worker));
-
-    setEnCours(false);
-    setProgression(null);
-    // On retire les envois réussis de la liste ; les échecs et doublons restent visibles.
     setFichiers((prev) => prev.filter((f) => f.statut !== "succes"));
     if (inputPhotoRef.current) inputPhotoRef.current.value = "";
+    if (inputGalerieRef.current) inputGalerieRef.current.value = "";
     if (inputFichierRef.current) inputFichierRef.current.value = "";
 
     const succesCount = documentIdsEnvoyes.length;
     const dernierDocumentId = documentIdsEnvoyes[documentIdsEnvoyes.length - 1];
 
+    if (succesCount === 0) {
+      setPhase(echecCount > 0 ? "failed" : "idle");
+      if (echecCount > 0) {
+        setErreurPhase("Impossible d'envoyer le document. Corrigez ou réessayez.");
+      }
+      router.refresh();
+      return;
+    }
+
+    if (echecCount > 0) {
+      setErreurPhase(
+        `${succesCount} document${succesCount > 1 ? "s" : ""} envoyé${succesCount > 1 ? "s" : ""}, ${echecCount} en échec.`,
+      );
+    }
+
+    // Modal mobile : un seul fichier → rester dans la modal pendant l'analyse.
+    if (variantCompact && succesCount === 1 && dernierDocumentId) {
+      setDocumentIdAnalyse(dernierDocumentId);
+      setPhase("analyzing");
+      void declencherAnalyseDocument(dernierDocumentId);
+      return;
+    }
+
     if ((modeOnboarding || redirigerVersResume) && succesCount > 0) {
       annoncerImportSucces(succesCount);
       onImportReussi?.(succesCount, dernierDocumentId);
+      setPhase("idle");
       if (!onImportReussi) {
         router.push(`/onboarding/analyse?n=${succesCount}`);
       }
@@ -306,10 +425,13 @@ export function FormulaireUpload({
     if (succesCount > 0 && dernierDocumentId) {
       annoncerImportSucces(succesCount);
       onImportReussi?.(succesCount, dernierDocumentId);
+      setPhase("idle");
+      void declencherAnalyseDocument(dernierDocumentId);
       router.push(`/documents/${dernierDocumentId}`);
       return;
     }
 
+    setPhase("idle");
     router.refresh();
   }
 
@@ -319,7 +441,10 @@ export function FormulaireUpload({
     if (enAttente.length !== 1 || !enAttente[0].file.type.startsWith("image/")) return;
     autoEnvoiDeclencheRef.current = true;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- envoi auto après capture photo
-    void lancerEnvoi();
+    void lancerEnvoi().catch(() => {
+      setPhase("failed");
+      setErreurPhase("Impossible d'envoyer le document. Réessayez.");
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- déclenché une seule fois à l'ajout de la photo
   }, [fichiers, autoEnvoiApresCapture, enCours, quotaAtteint]);
 
@@ -561,11 +686,13 @@ export function FormulaireUpload({
 
           {enCours && (
             <OverlayImportAnime
-              label="Analyse en cours…"
+              label={phase === "analyzing" ? "Analyse en cours…" : "Envoi du document…"}
               sousLabel={
-                progression
-                  ? `${progression.traites}/${progression.total} document${progression.total > 1 ? "s" : ""} — Tarinéo lit votre fichier`
-                  : "Tarinéo lit et classe votre document"
+                phase === "analyzing"
+                  ? "Tarinéo extrait les prix et compare à votre historique"
+                  : progression
+                    ? `${progression.traites}/${progression.total} document${progression.total > 1 ? "s" : ""} — envoi sécurisé`
+                    : "Transmission vers le serveur…"
               }
             />
           )}
@@ -750,6 +877,21 @@ export function FormulaireUpload({
         </div>
       )}
 
+      {erreurPhase && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">
+          <p>{erreurPhase}</p>
+          {fichiers.some((f) => f.statut === "erreur") && (
+            <button
+              type="button"
+              onClick={reessayerFichiersEnErreur}
+              className="mt-2 font-semibold text-[#EC5821] underline-offset-2 hover:underline"
+            >
+              Réessayer
+            </button>
+          )}
+        </div>
+      )}
+
       {variantCompact ? (
         <button
           type="button"
@@ -761,7 +903,11 @@ export function FormulaireUpload({
               : "bg-[#ec5821] text-white hover:bg-[#d44d1a]"
           }`}
         >
-          {enCours ? "Envoi en cours..." : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
+          {phase === "uploading"
+            ? "Envoi en cours…"
+            : phase === "analyzing"
+              ? "Analyse en cours…"
+              : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
         </button>
       ) : (
         <Button
@@ -770,7 +916,11 @@ export function FormulaireUpload({
           disabled={enCoursOuBloque || enAttenteCount === 0}
           className="h-12 w-full rounded-full text-base font-semibold disabled:bg-[#E1E3E5] disabled:text-[#8A969E] disabled:opacity-100"
         >
-          {enCours ? "Envoi en cours..." : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
+          {phase === "uploading"
+            ? "Envoi en cours…"
+            : phase === "analyzing"
+              ? "Analyse en cours…"
+              : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
         </Button>
       )}
     </div>

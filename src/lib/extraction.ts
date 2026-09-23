@@ -193,8 +193,19 @@ async function construireBlocContenu(buffer: Buffer, extension: string | undefin
 }
 
 export async function analyserDocument(documentId: string, userId: string): Promise<boolean> {
-  const document = await prisma.document.findFirst({ where: { id: documentId, userId } });
+  const document = await prisma.document.findFirst({
+    where: { id: documentId, userId },
+    include: { _count: { select: { lineItems: true } } },
+  });
   if (!document) return false;
+
+  // Idempotence : analyse déjà terminée (double déclenchement after() + API).
+  if (
+    (document.status === "VALIDATED" || document.status === "NEEDS_REVIEW") &&
+    document._count.lineItems > 0
+  ) {
+    return true;
+  }
 
   if (!verifierRateLimitAnalyse(userId)) {
     await prisma.document.update({

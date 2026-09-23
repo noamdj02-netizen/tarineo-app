@@ -112,7 +112,7 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
         evolutionPct={evolutionPct}
         aSurveiller={donnees.aSurveiller}
         fournisseurs={fournisseursTop}
-        documents={documentsRecentsUi}
+        documents={documentsRecentsUi.filter((d) => d.type === "DEVIS")}
         banniereReprise={etatOnboarding.doitVoirBanniereReprise}
         documentsEnCours={tableauPeuRempli ? documentsEnCours : 0}
       />

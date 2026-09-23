@@ -121,7 +121,7 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
         where: { userId, createdAt: { gte: debutSemaine } },
         orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
         take: 6,
-        select: { id: true, distributor: true, distributorNorm: true, documentDate: true, totalHt: true },
+        select: { id: true, distributor: true, distributorNorm: true, documentDate: true, totalHt: true, type: true },
       }),
       calculerDepensesParDistributeur(userId),
     ]);
@@ -204,6 +204,7 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       const distributor = doc.distributor ?? "Fournisseur";
       return {
         id: doc.id,
+        type: doc.type,
         distributor,
         distributorNorm: doc.distributorNorm,
         logoUrl: resoudreLogoFournisseur(distributor, doc.distributorNorm, logosImportes),
