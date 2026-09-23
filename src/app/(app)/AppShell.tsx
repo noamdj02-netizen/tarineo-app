@@ -112,11 +112,9 @@ function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
 
 const LIENS_NAV = [
   { id: "dashboard", href: "/accueil", libelle: "Accueil" },
-  { id: "documents", href: "/documents", libelle: "Mes documents" },
+  { id: "documents", href: "/documents", libelle: "Mes achats" },
   { id: "fournisseurs", href: "/fournisseurs", libelle: "Fournisseurs" },
-  { id: "analyses", href: "/analyses", libelle: "Analyses" },
-  { id: "facturation", href: "/facturation-clients", libelle: "Facturation clients" },
-  { id: "parametres", href: "/parametres", libelle: "Paramètres" },
+  { id: "plus", href: "/plus", libelle: "Profil" },
 ];
 
 const SOUS_LIENS_DOCUMENTS = [
@@ -143,6 +141,7 @@ function iconeNav(id: string) {
   if (id === "analyses") return <IconAnalyses className={cls} />;
   if (id === "facturation") return <IconInvoice className={cls} />;
   if (id === "parametres") return <IconSettings className={cls} />;
+  if (id === "plus") return <IconSettings className={cls} />;
   return <IconWidget className={cls} />;
 }
 
@@ -353,9 +352,9 @@ function PiedSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <Button
         variant="outline"
         className="h-11 w-full rounded-full"
-        render={<Link href="/compte" prefetch={false} onClick={onNavigate} />}
+        render={<Link href="/plus" prefetch={false} onClick={onNavigate} />}
       >
-        Mon compte
+        Profil
       </Button>
       <form action={deconnexionAction}>
         <Button type="submit" className="h-11 w-full rounded-full">
@@ -394,37 +393,15 @@ function ContenuSidebar({
 
         <nav className="flex w-full flex-col gap-1 rounded-[24px] bg-secondary p-1" aria-label="Navigation principale">
           {LIENS_NAV.map((lien) => {
-            if (lien.id === "documents") {
-              return (
-                <LienNavAvecSousMenu
-                  key={lien.id}
-                  id={lien.id}
-                  href={lien.href}
-                  libelle={lien.libelle}
-                  sousLiens={SOUS_LIENS_DOCUMENTS}
-                  raccourcis={RACCOURCIS_DOCUMENTS}
-                  badgesNav={badgesNav}
-                  badgeTotal={alertesDocuments}
-                  onNavigate={onNavigate}
-                />
-              );
-            }
-            if (lien.id === "facturation") {
-              return (
-                <LienNavAvecSousMenu
-                  key={lien.id}
-                  id={lien.id}
-                  href="/devis-clients"
-                  libelle={lien.libelle}
-                  sousLiens={SOUS_LIENS_FACTURATION}
-                  onNavigate={onNavigate}
-                />
-              );
-            }
             const actif =
-              lien.href === "/accueil"
-                ? pathname === "/accueil"
-                : pathname === lien.href || pathname.startsWith(`${lien.href}/`);
+              lien.id === "plus"
+                ? pathname === "/plus" ||
+                  pathname.startsWith("/compte") ||
+                  pathname.startsWith("/parametres") ||
+                  pathname.startsWith("/entreprise")
+                : lien.href === "/accueil"
+                  ? pathname === "/accueil"
+                  : pathname === lien.href || pathname.startsWith(`${lien.href}/`);
             return (
               <Link
                 key={lien.id}
@@ -440,6 +417,11 @@ function ContenuSidebar({
               >
                 {iconeNav(lien.id)}
                 {lien.libelle}
+                {lien.id === "documents" && alertesDocuments > 0 && (
+                  <Badge className="ml-auto min-w-5 shrink-0 justify-center px-1.5">
+                    {alertesDocuments > 9 ? "9+" : alertesDocuments}
+                  </Badge>
+                )}
               </Link>
             );
           })}
@@ -507,9 +489,9 @@ function MenuCompte({ prenom, email, avatarUrl }: { prenom: string; email: strin
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem render={<Link prefetch={false} href="/parametres" />}>Paramètres</DropdownMenuItem>
-          <DropdownMenuItem render={<Link prefetch={false} href="/compte" />}>Mon compte</DropdownMenuItem>
-          <DropdownMenuItem render={<Link prefetch={false} href="/entreprise" />}>Mon entreprise</DropdownMenuItem>
+          <DropdownMenuItem render={<Link prefetch={false} href="/plus" />}>Profil</DropdownMenuItem>
+          <DropdownMenuItem render={<Link prefetch={false} href="/plus?section=parametres" />}>Paramètres</DropdownMenuItem>
+          <DropdownMenuItem render={<Link prefetch={false} href="/plus?section=compte" />}>Sécurité & compte</DropdownMenuItem>
           <DropdownMenuItem render={<a href="mailto:contact@tarineo.com" />}>Support</DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />

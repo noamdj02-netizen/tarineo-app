@@ -1,6 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { FournisseursOnglets } from "./FournisseursOnglets";
+import { AnalysesContenu } from "../analyses/AnalysesContenu";
+import { VeilleContenu } from "../veille/VeilleContenu";
 import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
@@ -63,7 +67,35 @@ function normCle(valeur: string) {
     .replace(/[^A-Z0-9]/g, "");
 }
 
-export default async function FournisseursPage() {
+export default async function FournisseursPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ onglet?: string; mois?: string }>;
+}) {
+  const { onglet, mois } = await searchParams;
+
+  if (onglet === "analyses") {
+    return (
+      <div>
+        <Suspense fallback={null}>
+          <FournisseursOnglets />
+        </Suspense>
+        <AnalysesContenu mois={mois} />
+      </div>
+    );
+  }
+
+  if (onglet === "veille") {
+    return (
+      <div>
+        <Suspense fallback={null}>
+          <FournisseursOnglets />
+        </Suspense>
+        <VeilleContenu />
+      </div>
+    );
+  }
+
   const session = await getSession();
   if (!session?.user?.id) redirect("/connexion");
   const userId = session.user.id;
@@ -175,6 +207,9 @@ export default async function FournisseursPage() {
   return (
     <ListeAvecRefresh>
     <div>
+      <Suspense fallback={null}>
+        <FournisseursOnglets />
+      </Suspense>
       <MobilePageHeader
         title="Fournisseurs"
         subtitle="Vos enseignes suivies et bibliothèque"
@@ -185,7 +220,7 @@ export default async function FournisseursPage() {
           subtitle="Vos enseignes déjà suivies, puis une bibliothèque pour démarrer un import."
           actions={
             <>
-              <BtnGhost href="/veille">Veille prix</BtnGhost>
+              <BtnGhost href="/fournisseurs?onglet=veille">Veille prix</BtnGhost>
               <BtnPrimary href="/documents">Importer un devis</BtnPrimary>
             </>
           }
@@ -198,7 +233,7 @@ export default async function FournisseursPage() {
           <p className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             {messageFonctionPlanRequise("distributeurs")} ({fournisseursMasques} fournisseur
             {fournisseursMasques > 1 ? "s" : ""} masqué{fournisseursMasques > 1 ? "s" : ""}).
-            <Link href="/parametres?onglet=abonnement" className="ml-1 font-semibold underline">
+            <Link href="/plus?section=parametres&onglet=abonnement" className="ml-1 font-semibold underline">
               Passer à Pro
             </Link>
           </p>

@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { LABELS_TYPE_PLURIEL, ROUTES_DOCUMENTS_PAR_TYPE, TYPES_FILTRABLES } from "@/lib/documentLabels";
+import { LABELS_TYPE_PLURIEL, TYPES_FILTRABLES } from "@/lib/documentLabels";
+import { features } from "@/lib/features";
+import { lienDocumentsType } from "@/lib/typeDocumentQuery";
 import type { DocumentType } from "@prisma/client";
 
 const classeOnglet = (actif: boolean) =>
@@ -7,12 +9,10 @@ const classeOnglet = (actif: boolean) =>
     actif ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
   }`;
 
-// Onglets horizontaux scrollables — équivalent tactile du sous-menu desktop
-// (voir SousMenuDocuments dans AppShell.tsx) : un sous-menu imbriqué dans la sidebar
-// ne fonctionne pas bien au clic tactile sur petit écran. Vient s'ajouter au dropdown
-// "Type" du formulaire de recherche plus bas, qui reste inchangé — ces onglets sont un
-// raccourci, pas un remplacement. Les liens réinitialisent volontairement les autres
-// filtres (mois/distributeur/référence/hausse), comme le sous-menu desktop.
+const TYPES_V1: DocumentType[] = features.purchaseOrders
+  ? [...TYPES_FILTRABLES]
+  : (["DEVIS", "FACTURE"] as DocumentType[]);
+
 export function NavTypeMobile({
   typeActif,
   comptes,
@@ -28,10 +28,10 @@ export function NavTypeMobile({
       <Link href="/documents" aria-current={!typeActif ? "page" : undefined} className={classeOnglet(!typeActif)}>
         Tous
       </Link>
-      {TYPES_FILTRABLES.map((t) => (
+      {TYPES_V1.map((t) => (
         <Link
           key={t}
-          href={ROUTES_DOCUMENTS_PAR_TYPE[t]}
+          href={lienDocumentsType(t)}
           aria-current={typeActif === t ? "page" : undefined}
           className={classeOnglet(typeActif === t)}
         >

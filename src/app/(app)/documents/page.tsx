@@ -14,11 +14,11 @@ import {
   AIDE_PAGE_DOCUMENTS,
   LABELS_TYPE,
   LABELS_TYPE_PLURIEL,
-  ROUTES_DOCUMENTS_PAR_TYPE,
   SOUS_TITRES_PAGE_DOCUMENTS,
   TITRES_PAGE_DOCUMENTS,
   TYPES_FILTRABLES,
 } from "@/lib/documentLabels";
+import { typeDepuisQuery, lienDocumentsType } from "@/lib/typeDocumentQuery";
 import { chargerStatsDocuments } from "@/lib/statsDocuments";
 import { QuotaStrip } from "@/components/tarineo/QuotaStrip";
 import { EnBrefDocuments } from "@/components/tarineo/EnBrefDocuments";
@@ -45,10 +45,6 @@ interface Recherche {
   enseigne?: string;
   onboarding?: string;
   scanner?: string;
-}
-
-function estTypeValide(valeur: string | undefined): valeur is DocumentType {
-  return !!valeur && (TYPES_FILTRABLES as readonly string[]).includes(valeur);
 }
 
 // Formulations pour les messages d'état vide ci-dessous — évite les accords de genre
@@ -85,13 +81,10 @@ export async function DocumentsPage({
     await searchParams;
   const termeRecherche = (q ?? reference)?.trim() || undefined;
 
-  if (!typeFixe && estTypeValide(type)) {
-    redirect(ROUTES_DOCUMENTS_PAR_TYPE[type]);
-  }
-
   const filtreHausse = hausse === "1";
   const filtreVerifier = verifier === "1";
-  const typeValide = typeFixe ?? (estTypeValide(type) ? type : undefined);
+  const typeDepuisUrl = typeDepuisQuery(type);
+  const typeValide = typeFixe ?? typeDepuisUrl;
   const clePage = typeValide ?? "tous";
   const debutMois = debutMoisUTC(maintenant);
 
@@ -325,7 +318,7 @@ export async function DocumentsPage({
           stats={statsDocuments}
           type={typeValide}
           titreSuffixe={typeValide ? LABELS_TYPE_PLURIEL[typeValide] : undefined}
-          cheminBase={typeValide ? ROUTES_DOCUMENTS_PAR_TYPE[typeValide] : "/documents"}
+          cheminBase={typeValide ? lienDocumentsType(typeValide) : "/documents"}
         />
 
         <div className="flex items-center justify-between gap-3">

@@ -1,9 +1,13 @@
 import { auth } from "@/auth";
+import { features } from "@/lib/features";
+import { reponseApiFeatureDesactivee } from "@/lib/featureGating";
 import { prisma } from "@/lib/prisma";
 import { DOCUMENTS_BUCKET, getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase";
 
 /** Sert le PDF d'une facture client (inline) — isolé par userId. */
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!features.clientBilling) return reponseApiFeatureDesactivee();
+
   const { id } = await params;
   const session = await auth();
   if (!session?.user?.id) {

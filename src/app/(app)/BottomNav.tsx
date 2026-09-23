@@ -21,7 +21,7 @@ const ONGLETS = [
   },
   {
     href: "/documents",
-    label: "Devis",
+    label: "Mes achats",
     estActif: (pathname: string, scannerActif: boolean) =>
       (pathname === "/documents" || pathname.startsWith("/documents/")) && !scannerActif,
     icone: IconClock,
@@ -43,16 +43,9 @@ const ONGLETS = [
     label: "Profil",
     estActif: (pathname: string) =>
       pathname === "/plus" ||
-      pathname.startsWith("/devis-clients") ||
-      pathname.startsWith("/factures-clients") ||
-      pathname.startsWith("/clients") ||
-      pathname.startsWith("/facturation-clients") ||
-      pathname.startsWith("/analyses") ||
+      pathname.startsWith("/compte") ||
       pathname.startsWith("/parametres") ||
-      pathname.startsWith("/chantiers") ||
-      pathname.startsWith("/coffre") ||
-      pathname.startsWith("/veille") ||
-      pathname === "/compte",
+      pathname.startsWith("/entreprise"),
     icone: IconUser,
   },
 ];

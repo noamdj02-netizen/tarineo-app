@@ -1,5 +1,6 @@
-import { DocumentsPage } from "../page";
+import { permanentRedirect } from "next/navigation";
 
-export default function FacturesFournisseursPage(props: { searchParams: Promise<Record<string, string | undefined>> }) {
-  return DocumentsPage({ ...props, typeFixe: "FACTURE" });
+/** Ancienne URL — filtre unifié sur /documents. */
+export default function FacturesFournisseursPage() {
+  permanentRedirect("/documents?type=factures");
 }

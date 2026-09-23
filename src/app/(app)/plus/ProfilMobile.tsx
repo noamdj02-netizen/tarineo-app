@@ -39,6 +39,7 @@ export type ProfilMobileData = {
   prochaineFacturation: string | null;
   prixMensuel: number | null;
   aCompteStripe: boolean;
+  afficherFacturationClients?: boolean;
 };
 
 function formaterSiret(siret: string): string {
@@ -120,10 +121,10 @@ export function ProfilMobile({ data }: { data: ProfilMobileData }) {
   const { notifications } = useMobileShell();
   const initiale = (data.nom.charAt(0) || "T").toUpperCase();
   const entrepriseNom = data.entreprise?.raisonSociale ?? "Entreprise non renseignée";
-  const hrefEntreprise = "/parametres";
+  const hrefEntreprise = "/plus?section=parametres&onglet=profil";
 
   return (
-    <AppStagger className="flex flex-col gap-5 pb-8 lg:hidden" stagger={0.04} delayChildren={0}>
+    <AppStagger className="flex flex-col gap-5 pb-8" stagger={0.04} delayChildren={0}>
       {/* Header */}
       <AppStaggerItem>
         <header className="flex items-center justify-between gap-3 pt-1">
@@ -171,7 +172,7 @@ export function ProfilMobile({ data }: { data: ProfilMobileData }) {
             variant="ghost"
             size="sm"
             className="mt-3 h-9 rounded-full px-4 text-[13px] font-medium text-[#53616a] hover:bg-black/[0.04] hover:text-[#0f1c28]"
-            render={<Link href="/compte" />}
+            render={<Link href="/plus?section=compte" />}
             nativeButton={false}
           >
             Modifier mon profil
@@ -215,22 +216,23 @@ export function ProfilMobile({ data }: { data: ProfilMobileData }) {
         </section>
       </AppStaggerItem>
 
-      {/* Facturation clients */}
-      <AppStaggerItem>
-        <section className="overflow-hidden rounded-[20px] bg-white shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
-          <header className="flex items-center gap-2 px-4 pb-1 pt-4">
-            <ReceiptIcon className="size-4 text-primary" strokeWidth={2} aria-hidden />
-            <h2 className="text-[15px] font-semibold tracking-[-0.2px] text-[#0f1c28]">Facturation clients</h2>
-          </header>
-          <div>
-            <LigneLien href="/devis-clients" titre="Devis clients" />
-            <Separator className="bg-[#EEF0F2]" />
-            <LigneLien href="/factures-clients" titre="Factures clients" />
-            <Separator className="bg-[#EEF0F2]" />
-            <LigneLien href="/clients" titre="Clients" />
-          </div>
-        </section>
-      </AppStaggerItem>
+      {data.afficherFacturationClients ? (
+        <AppStaggerItem>
+          <section className="overflow-hidden rounded-[20px] bg-white shadow-[0_4px_14px_rgba(15,28,40,0.04)] ring-1 ring-foreground/8">
+            <header className="flex items-center gap-2 px-4 pb-1 pt-4">
+              <ReceiptIcon className="size-4 text-primary" strokeWidth={2} aria-hidden />
+              <h2 className="text-[15px] font-semibold tracking-[-0.2px] text-[#0f1c28]">Facturation clients</h2>
+            </header>
+            <div>
+              <LigneLien href="/devis-clients" titre="Devis clients" />
+              <Separator className="bg-[#EEF0F2]" />
+              <LigneLien href="/factures-clients" titre="Factures clients" />
+              <Separator className="bg-[#EEF0F2]" />
+              <LigneLien href="/clients" titre="Clients" />
+            </div>
+          </section>
+        </AppStaggerItem>
+      ) : null}
 
       {/* Abonnement */}
       <AppStaggerItem>
@@ -287,7 +289,7 @@ export function ProfilMobile({ data }: { data: ProfilMobileData }) {
                 <Button
                   variant="outline"
                   className="h-11 w-full rounded-full border-[#E6E9EB] bg-white text-sm font-medium text-foreground"
-                  render={<Link href="/parametres?onglet=abonnement" />}
+                  render={<Link href="/plus?section=parametres&onglet=abonnement" />}
                   nativeButton={false}
                 >
                   Gérer mon abonnement
@@ -311,11 +313,11 @@ export function ProfilMobile({ data }: { data: ProfilMobileData }) {
             <h2 className="text-[15px] font-semibold tracking-[-0.2px] text-[#0f1c28]">Sécurité</h2>
           </header>
           <div>
-            <LigneLien href="/compte" titre="Modifier mon mot de passe" />
+            <LigneLien href="/plus?section=compte" titre="Modifier mon mot de passe" />
             <Separator className="bg-[#EEF0F2]" />
-            <LigneLien href="/compte" titre="Authentification" />
+            <LigneLien href="/plus?section=compte" titre="Authentification" />
             <Separator className="bg-[#EEF0F2]" />
-            <LigneLien href="/compte" titre="Appareils connectés" />
+            <LigneLien href="/plus?section=compte" titre="Appareils connectés" />
           </div>
         </section>
       </AppStaggerItem>

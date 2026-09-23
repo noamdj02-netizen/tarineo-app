@@ -36,7 +36,7 @@ export const TYPES_FILTRABLES = [
 
 /** Titres de page /documents selon le filtre type actif. */
 export const TITRES_PAGE_DOCUMENTS: Record<"tous" | DocumentType, string> = {
-  tous: "Mes documents",
+  tous: "Mes achats",
   DEVIS: "Devis fournisseurs",
   FACTURE: "Factures fournisseurs",
   BON_COMMANDE: "Bons de commande",

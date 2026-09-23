@@ -1,5 +1,6 @@
-import { DocumentsPage } from "../page";
+import { permanentRedirect } from "next/navigation";
 
-export default function DevisFournisseursPage(props: { searchParams: Promise<Record<string, string | undefined>> }) {
-  return DocumentsPage({ ...props, typeFixe: "DEVIS" });
+/** Ancienne URL — filtre unifié sur /documents. */
+export default function DevisFournisseursPage() {
+  permanentRedirect("/documents?type=devis");
 }

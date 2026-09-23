@@ -4,8 +4,10 @@ import { getSession } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { resoudreUrlAvatar } from "@/lib/avatarUtilisateur";
 import { PLANS_TARINEO } from "@/lib/plansTarineo";
-import { MobileMenuRow } from "@/components/tarineo/mobile/MobileMenuRow";
+import { features } from "@/lib/features";
 import { ProfilMobile, type ProfilMobileData } from "./ProfilMobile";
+import { CompteContenu } from "../compte/CompteContenu";
+import { ParametresContenu } from "../parametres/ParametresContenu";
 
 const LIBELLE_PLAN: Record<string, string> = {
   starter: "Tarinéo Starter",
@@ -13,23 +15,27 @@ const LIBELLE_PLAN: Record<string, string> = {
   equipe: "Tarinéo Équipe",
 };
 
-const LIENS_DESKTOP = [
-  { href: "/compte", title: "Mon compte", description: "Profil, photo et mot de passe" },
-  { href: "/parametres", title: "Mon entreprise", description: "SIRET, adresse, logo" },
-  { href: "/parametres?onglet=abonnement", title: "Abonnement", description: "Plan et facturation" },
-  { href: "/devis-clients", title: "Devis clients", description: "Créer, modifier, transformer" },
-  { href: "/factures-clients", title: "Factures clients", description: "Depuis vos devis acceptés" },
-  { href: "/clients", title: "Clients", description: "Carnet regroupé" },
-  { href: "/coffre", title: "Mon coffre", description: "Documents archivés" },
-  { href: "/veille", title: "Veille prix", description: "Surveiller vos références" },
-  { href: "/chantiers", title: "Chantiers", description: "Marge & suivi" },
-  { href: "/analyses", title: "Analyses", description: "Hausses & dépenses" },
-  { href: "/parametres", title: "Paramètres", description: "Entreprise, abonnement, équipe" },
-];
-
-export default async function PlusPage() {
+export default async function PlusPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ section?: string; onglet?: string; plan?: string }>;
+}) {
   const session = await getSession();
   if (!session?.user?.id) redirect("/connexion");
+
+  const { section, onglet, plan } = await searchParams;
+
+  if (section === "compte") {
+    return <CompteContenu />;
+  }
+
+  if (section === "parametres") {
+    return (
+      <ParametresContenu
+        searchParams={Promise.resolve({ onglet: onglet ?? "profil", plan })}
+      />
+    );
+  }
 
   let utilisateur: {
     name: string | null;
@@ -87,14 +93,12 @@ export default async function PlusPage() {
   const nom = utilisateur?.name ?? session.user.name ?? "Artisan";
   const email = utilisateur?.email ?? session.user.email ?? "";
   const avatarUrl = await resoudreUrlAvatar(utilisateur?.image);
-  const plan = utilisateur?.plan ?? null;
+  const planUtilisateur = utilisateur?.plan ?? null;
   const subscriptionStatus = utilisateur?.subscriptionStatus ?? null;
   const abonnementActif = subscriptionStatus === "active" || subscriptionStatus === "trialing";
-  const planLabel = LIBELLE_PLAN[plan ?? ""] ?? (abonnementActif ? "Essai Tarinéo" : "Sans abonnement");
-  const prixMensuel = PLANS_TARINEO.find((p) => p.id === plan)?.prixMensuel ?? null;
+  const planLabel = LIBELLE_PLAN[planUtilisateur ?? ""] ?? (abonnementActif ? "Essai Tarinéo" : "Sans abonnement");
+  const prixMensuel = PLANS_TARINEO.find((p) => p.id === planUtilisateur)?.prixMensuel ?? null;
 
-  // Pas d'appel Stripe synchrone ici — bloquait le premier paint Profil (~1s+).
-  // La date de facturation reste consultable via le portail Stripe.
   const data: ProfilMobileData = {
     nom,
     email,
@@ -105,22 +109,43 @@ export default async function PlusPage() {
     prochaineFacturation: null,
     prixMensuel,
     aCompteStripe: Boolean(utilisateur?.stripeCustomerId),
+    afficherFacturationClients: features.clientBilling,
   };
 
   return (
-    <div className="flex w-full max-w-full flex-col gap-2.5 overflow-x-hidden lg:gap-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-2.5 overflow-x-hidden lg:gap-6">
       <ProfilMobile data={data} />
 
       <div className="hidden flex-col gap-2.5 lg:flex">
         <h1 className="text-2xl font-semibold text-[#172935]">Profil</h1>
         <p className="text-sm text-muted-foreground">
-          Gérez votre compte, votre entreprise et votre abonnement. Sur mobile, l&apos;onglet Profil
-          affiche une vue dédiée.
+          Identité, entreprise, abonnement, équipe et sécurité — tout est regroupé ici.
         </p>
         <div className="mt-2 grid max-w-xl gap-2.5">
-          {LIENS_DESKTOP.map((lien) => (
-            <MobileMenuRow key={`${lien.href}-${lien.title}`} {...lien} />
-          ))}
+          <Link
+            href="/plus?section=parametres&onglet=profil"
+            className="rounded-2xl border border-border/60 bg-card px-4 py-3 text-sm font-medium hover:bg-secondary/60"
+          >
+            Mon entreprise
+          </Link>
+          <Link
+            href="/plus?section=parametres&onglet=abonnement"
+            className="rounded-2xl border border-border/60 bg-card px-4 py-3 text-sm font-medium hover:bg-secondary/60"
+          >
+            Abonnement
+          </Link>
+          <Link
+            href="/plus?section=parametres&onglet=equipe"
+            className="rounded-2xl border border-border/60 bg-card px-4 py-3 text-sm font-medium hover:bg-secondary/60"
+          >
+            Équipe
+          </Link>
+          <Link
+            href="/plus?section=compte"
+            className="rounded-2xl border border-border/60 bg-card px-4 py-3 text-sm font-medium hover:bg-secondary/60"
+          >
+            Sécurité & export RGPD
+          </Link>
         </div>
         <p className="mt-2 text-sm text-muted-foreground">
           Besoin d&apos;aide ?{" "}

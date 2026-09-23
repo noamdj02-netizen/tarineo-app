@@ -1,18 +1,6 @@
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/session";
-import { resoudreRouteApresAuth } from "@/lib/routeApresAuth";
+import { permanentRedirect } from "next/navigation";
 
-export default async function ApresConnexionPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ callbackUrl?: string }>;
-}) {
-  const session = await getSession();
-  if (!session?.user?.id) {
-    redirect("/connexion");
-  }
-
-  const { callbackUrl } = await searchParams;
-  const destination = await resoudreRouteApresAuth(session.user.id, callbackUrl ?? null);
-  redirect(destination);
+/** Parcours login redirige directement vers /accueil — URL conservée pour compatibilité. */
+export default function ApresConnexionPage() {
+  permanentRedirect("/accueil");
 }
