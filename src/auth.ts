@@ -42,9 +42,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+        // Select minimal — évite de charger tout le User + relations inutiles.
         const utilisateur = await prisma.user.findUnique({
           where: { email },
-          include: { accounts: { where: { provider: "google" }, take: 1 } },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            passwordHash: true,
+            workspaceOwnerId: true,
+            accounts: { where: { provider: "google" }, take: 1, select: { id: true } },
+          },
         });
         if (!utilisateur) return null;
 
@@ -58,7 +66,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const motDePasseValide = await verifierMotDePasse(password, utilisateur.passwordHash);
         if (!motDePasseValide) return null;
 
-        return { id: utilisateur.id, email: utilisateur.email, name: utilisateur.name };
+        return {
+          id: utilisateur.id,
+          email: utilisateur.email,
+          name: utilisateur.name,
+          workspaceOwnerId: utilisateur.workspaceOwnerId,
+        };
       },
     }),
     Google({
@@ -140,15 +153,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
     async jwt({ token, user }) {
+      // Connexion fraîche : on pose le JWT sans re-requête DB (authorize vient de le faire).
       if (user) {
         token.sub = user.id;
         token.email = user.email;
         token.name = user.name;
+        const ownerId = user.workspaceOwnerId ?? null;
+        token.workspaceOwnerId = ownerId;
+        token.donneesUserId = ownerId ?? user.id;
+        token.checkedAt = Date.now();
+        return token;
       }
 
-      // Cookie JWT encore valide après reset DB ou suppression de compte :
-      // on invalide le token plutôt que de laisser des updates Prisma en P2025.
-      if (token.sub) {
+      // Cookie JWT encore valide après reset DB / suppression :
+      // on revalide au plus toutes les 5 minutes (pas à chaque navigation).
+      const STALE_MS = 5 * 60_000;
+      const checkedAt = typeof token.checkedAt === "number" ? token.checkedAt : 0;
+      const estFrais = Date.now() - checkedAt < STALE_MS;
+
+      if (token.sub && !estFrais) {
         const existant = await prisma.user.findUnique({
           where: { id: token.sub },
           select: { id: true, email: true, name: true, workspaceOwnerId: true },
@@ -161,6 +184,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.name = existant.name;
         token.workspaceOwnerId = existant.workspaceOwnerId;
         token.donneesUserId = existant.workspaceOwnerId ?? existant.id;
+        token.checkedAt = Date.now();
       }
 
       return token;

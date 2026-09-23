@@ -11,6 +11,7 @@ export function PasswordInput({
   minLength,
   autoComplete,
   variant = "light",
+  disabled,
 }: {
   id: string;
   name: string;
@@ -19,6 +20,7 @@ export function PasswordInput({
   minLength?: number;
   autoComplete?: string;
   variant?: "glass" | "solid" | "light";
+  disabled?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
 
@@ -48,12 +50,14 @@ export function PasswordInput({
           required={required}
           minLength={minLength}
           autoComplete={autoComplete}
+          disabled={disabled}
           placeholder="••••••••"
           className={inputClass}
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
+          disabled={disabled}
           className={`absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors ${iconClass}`}
           aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
           aria-pressed={visible}

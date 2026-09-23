@@ -50,27 +50,26 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // lève une exception NEXT_REDIRECT — un catch trop large l’avalait et laissait
   // passer confirmation email / onboarding.
   if (session?.user?.id) {
-    let doitConfirmer = false;
-    try {
-      doitConfirmer = await utilisateurDoitConfirmerEmail(session.user.id);
-    } catch (e) {
-      console.error("Garde accès app (confirmation email) :", e);
-    }
+    // Confirmation email + onboarding en parallèle — moins de latence post-login.
+    const [doitConfirmer, etatOnboarding] = await Promise.all([
+      utilisateurDoitConfirmerEmail(session.user.id).catch((e) => {
+        console.error("Garde accès app (confirmation email) :", e);
+        return false;
+      }),
+      doitForcerOnboarding(pathname)
+        ? chargerEtatOnboarding(session.user.id).catch((e) => {
+            console.error("Garde accès app (onboarding) :", e);
+            return null;
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (doitConfirmer && !estRouteConfirmationEmail(pathname)) {
       redirect("/confirmer-email");
     }
 
-    if (!doitConfirmer && doitForcerOnboarding(pathname)) {
-      let etatOnboarding: Awaited<ReturnType<typeof chargerEtatOnboarding>> | null = null;
-      try {
-        etatOnboarding = await chargerEtatOnboarding(session.user.id);
-      } catch (e) {
-        console.error("Garde accès app (onboarding) :", e);
-      }
-      if (etatOnboarding?.doitVoirChoixImport) {
-        redirect("/onboarding");
-      }
+    if (!doitConfirmer && etatOnboarding?.doitVoirChoixImport) {
+      redirect("/onboarding");
     }
   }
 

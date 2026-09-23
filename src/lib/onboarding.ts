@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
 
@@ -97,7 +98,7 @@ export type EtatOnboarding = {
   doitVoirBanniereReprise: boolean;
 };
 
-export async function chargerEtatOnboarding(userId: string): Promise<EtatOnboarding> {
+export async function chargerEtatOnboardingBrut(userId: string): Promise<EtatOnboarding> {
   const [user, nbDocs] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
@@ -128,3 +129,6 @@ export async function chargerEtatOnboarding(userId: string): Promise<EtatOnboard
     doitVoirBanniereReprise,
   };
 }
+
+/** Une seule lecture onboarding par requête (layout + page Accueil). */
+export const chargerEtatOnboarding = cache(chargerEtatOnboardingBrut);
