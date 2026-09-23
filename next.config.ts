@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   // Sans ça, Next.js bloque silencieusement les ressources JS/HMR pour les requêtes
   // dont l'origine n'est pas localhost — la page s'affiche mais React n'hydrate jamais,
   // donc aucun clic ne répond (aucune erreur visible côté navigateur).
-  allowedDevOrigins: ["172.6.200.227"],
+  allowedDevOrigins: ["172.6.200.227", "127.0.0.1", "localhost"],
   images: {
     // Logos des enseignes (voir src/lib/fournisseursConnus.ts). Passer par next/image
     // plutôt que par une balise <img> a deux avantages ici : le téléchargement se fait
