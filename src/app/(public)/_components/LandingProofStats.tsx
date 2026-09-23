@@ -6,17 +6,20 @@ import { landingSpringSoft } from "./motion/landingMotionConfig";
 
 const STATS = [
   {
-    icon: <Image src="/landing/shield.svg" alt="" width={40} height={40} className="h-10 w-10" />,
+    iconSrc: "/landing/shield.svg",
+    iconAlt: "Protection",
     valeur: "< 10 s",
     desc: "pour analyser un devis fournisseur",
   },
   {
-    icon: <Image src="/landing/star.svg" alt="" width={40} height={40} className="h-10 w-10" />,
+    iconSrc: "/landing/star.svg",
+    iconAlt: "Enseignes",
     valeur: "30+",
     desc: "enseignes reconnues (Cedeo, Point P, Rexel…)",
   },
   {
-    icon: <Image src="/landing/location.svg" alt="" width={40} height={40} className="h-10 w-10" />,
+    iconSrc: "/landing/location.svg",
+    iconAlt: "Historique personnel",
     valeur: "100 %",
     desc: "basé sur votre historique personnel — jamais un comparateur public",
   },
@@ -37,7 +40,7 @@ export function LandingProofStats() {
           transition={{ ...landingSpringSoft, delay: i * 0.08 }}
         >
           <div className="mb-5 flex items-center gap-3">
-            {s.icon}
+            <Image src={s.iconSrc} alt={s.iconAlt} width={40} height={40} className="h-10 w-10" />
             <p className="landing-display text-[2.5rem] font-semibold leading-none text-[var(--landing-text)]">{s.valeur}</p>
           </div>
           <p className="landing-body text-base leading-normal text-[var(--landing-muted)]">{s.desc}</p>

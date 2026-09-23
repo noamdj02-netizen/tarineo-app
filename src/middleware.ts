@@ -24,9 +24,28 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
 
+  // Redirection HTTP → HTTPS en prod (hors localhost / IP privées de dév).
+  const proto = request.headers.get("x-forwarded-proto");
+  const host = request.headers.get("host") ?? "";
+  const estLocal =
+    host.startsWith("localhost") ||
+    host.startsWith("127.0.0.1") ||
+    /^192\.168\./.test(host) ||
+    /^10\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
+  if (proto === "http" && !estLocal) {
+    const url = request.nextUrl.clone();
+    url.protocol = "https:";
+    return NextResponse.redirect(url, 308);
+  }
+
   const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=63072000; includeSubDomains; preload",
+  );
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");

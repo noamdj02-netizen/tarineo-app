@@ -41,6 +41,12 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
+          // Force HTTPS côté navigateur (Vercel termine déjà TLS ; HSTS empêche le
+          // retour en HTTP après la première visite HTTPS).
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -48,7 +54,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com https://*.supabase.co; frame-src https://js.stripe.com https://hooks.stripe.com;",
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://va.vercel-scripts.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://api.stripe.com https://*.supabase.co https://vitals.vercel-insights.com https://va.vercel-scripts.com; frame-src https://js.stripe.com https://hooks.stripe.com;",
           },
         ],
       },

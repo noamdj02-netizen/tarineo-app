@@ -10,9 +10,12 @@ type LegalModal = "legal" | "privacy" | null;
 
 const LIENS_ENTREPRISE: Array<{ label: string; href?: string; modal?: LegalModal }> = [
   { href: "/a-propos", label: "À propos" },
+  { href: "/legal/mentions-legales", label: "Mentions légales" },
   { href: "/legal/confidentialite", label: "Politique de confidentialité" },
-  { href: "mailto:contact@tarineo.com", label: "Support" },
   { href: "/legal/cgu", label: "Conditions d'utilisation" },
+  { href: "/legal/cgv", label: "CGV" },
+  { href: "/legal/cookies", label: "Cookies" },
+  { href: "mailto:contact@tarineo.com", label: "Support" },
 ];
 
 export function LandingFooter() {

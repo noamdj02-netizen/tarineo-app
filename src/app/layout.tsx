@@ -2,7 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Barlow, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { urlSite } from "@/lib/siteUrl";
 import { ChunkLoadRecovery } from "./_components/ChunkLoadRecovery";
+import { Analytics } from "./_components/Analytics";
+import { BandeauCookies } from "@/components/tarineo/BandeauCookies";
 
 const barlow = Barlow({
   variable: "--font-barlow",
@@ -25,20 +28,49 @@ const manrope = Manrope({
   display: "swap",
 });
 
+const site = urlSite();
+
 export const metadata: Metadata = {
-  title: "Tarinéo",
-  description: "Protégez votre marge : comparez vos devis fournisseurs à votre historique d'achats.",
-  applicationName: "Tarinéo",
+  metadataBase: new URL(site),
+  title: {
+    default: "Tarineo — Contrôlez vos devis fournisseurs",
+    template: "%s | Tarineo",
+  },
+  description:
+    "Comparez vos devis fournisseurs à votre historique d'achats. Détectez les hausses de prix chez Cedeo, Point P, Rexel et 30+ distributeurs.",
+  applicationName: "Tarineo",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Tarinéo",
+    title: "Tarineo",
   },
   icons: {
-    icon: [{ url: "/landing/logo-icon.png", type: "image/png" }],
+    icon: [
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/landing/logo-icon.png", type: "image/png" },
+    ],
     apple: [{ url: "/brand/logo-128.png", sizes: "180x180", type: "image/png" }],
   },
+  openGraph: {
+    type: "website",
+    locale: "fr_FR",
+    url: site,
+    siteName: "Tarineo",
+    title: "Tarineo — Contrôlez vos devis fournisseurs",
+    description: "Protégez votre marge : détectez les hausses de prix sur vos devis fournisseurs.",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Tarineo — devis fournisseurs" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tarineo — Contrôlez vos devis fournisseurs",
+    description: "Protégez votre marge : détectez les hausses de prix sur vos devis fournisseurs.",
+    images: ["/og.png"],
+  },
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   formatDetection: {
     telephone: false,
   },
@@ -69,6 +101,8 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans antialiased">
         <ChunkLoadRecovery />
         {children}
+        <BandeauCookies />
+        <Analytics />
       </body>
     </html>
   );

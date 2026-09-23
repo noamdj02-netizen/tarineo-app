@@ -24,6 +24,12 @@ const schema = z
   .refine((data) => data.password === data.confirmation, { path: ["confirmation"] });
 
 export async function creerCompte(formData: FormData) {
+  // Honeypot anti-spam : champ invisible « website » — les bots le remplissent.
+  const piege = String(formData.get("website") ?? "").trim();
+  if (piege) {
+    redirect("/inscription");
+  }
+
   const telephoneBrut = String(formData.get("telephone") ?? "").trim();
   const parsed = schema.safeParse({
     prenom: formData.get("prenom"),
@@ -93,6 +99,11 @@ const schemaWaitlist = z.object({
 });
 
 export async function rejoindreListeAttente(formData: FormData) {
+  const piege = String(formData.get("website") ?? "").trim();
+  if (piege) {
+    redirect("/inscription?liste_attente=1");
+  }
+
   const parsed = schemaWaitlist.safeParse({ email: formData.get("email") });
   if (!parsed.success) {
     redirect("/inscription?erreur=1");

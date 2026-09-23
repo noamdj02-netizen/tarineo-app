@@ -7,8 +7,22 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/accueil", "/documents", "/compte", "/api/"],
+      disallow: [
+        "/accueil",
+        "/documents",
+        "/compte",
+        "/parametres",
+        "/plus",
+        "/devis-clients",
+        "/factures-clients",
+        "/facturation-clients",
+        "/fournisseurs",
+        "/depenses",
+        "/onboarding",
+        "/api/",
+      ],
     },
     sitemap: `${base}/sitemap.xml`,
+    host: base,
   };
 }

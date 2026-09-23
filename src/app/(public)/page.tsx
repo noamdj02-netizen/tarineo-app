@@ -27,14 +27,21 @@ const LandingFooter = dynamic(() =>
 export const metadata: Metadata = {
   title: "Tarineo — Contrôlez vos devis fournisseurs et détectez les hausses de prix",
   description:
-    "Comparez vos devis fournisseurs à votre historique d'achats. Détectez les hausse de prix chez Cedeo, Point P, Rexel et 30+ distributeurs.",
+    "Comparez vos devis fournisseurs à votre historique d'achats. Détectez les hausses de prix chez Cedeo, Point P, Rexel et 30+ distributeurs.",
   alternates: { canonical: urlSite() },
   openGraph: {
-    title: "Tarineo",
+    title: "Tarineo — Contrôlez vos devis fournisseurs",
     description: "Protégez votre marge sur les achats matériaux.",
     url: urlSite(),
     type: "website",
     locale: "fr_FR",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Tarineo" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Tarineo — Contrôlez vos devis fournisseurs",
+    description: "Protégez votre marge sur les achats matériaux.",
+    images: ["/og.png"],
   },
 };
 

@@ -29,8 +29,9 @@ export const CONFIDENTIALITE_SECTIONS = [
       "Accès, rectification, export (depuis Mon compte), opposition, suppression. Contact : contact@tarineo.com. Réclamation possible auprès de la CNIL.",
   },
   {
-    titre: "Cookies",
-    contenu: "Cookie de session strictement nécessaire à l'authentification. Pas de cookie publicitaire.",
+    titre: "Cookies et mesure d'audience",
+    contenu:
+      "Cookie de session strictement nécessaire à l'authentification (Auth.js). Mesure d'audience anonymisée via Vercel Analytics (sans cookie publicitaire). Pas de publicité ciblée.",
   },
 ];
 
@@ -72,6 +73,11 @@ export const COOKIES_SECTIONS = [
       "Cookie de session d'authentification (Auth.js) : indispensable pour vous connecter et maintenir votre session sécurisée. Durée : session ou selon la configuration de connexion. Base légale : intérêt légitime / exécution du contrat.",
   },
   {
+    titre: "Mesure d'audience (Vercel Analytics)",
+    contenu:
+      "Tarineo utilise Vercel Analytics pour mesurer le trafic de façon anonymisée (pages vues, performances). Aucun cookie publicitaire n'est déposé et aucune donnée n'est revendue. Base légale : intérêt légitime (amélioration du service).",
+  },
+  {
     titre: "Cookies de paiement",
     contenu:
       "Lors du paiement via Stripe Checkout, Stripe peut déposer des cookies techniques nécessaires à la sécurisation de la transaction. Consultez la politique de confidentialité de Stripe pour plus de détails.",
@@ -79,7 +85,7 @@ export const COOKIES_SECTIONS = [
   {
     titre: "Gestion des cookies",
     contenu:
-      "Vous pouvez configurer votre navigateur pour refuser les cookies. Le refus des cookies strictement nécessaires empêche l'utilisation de l'application connectée.",
+      "Un bandeau informatif s'affiche à la première visite. Vous pouvez aussi configurer votre navigateur pour refuser les cookies. Le refus des cookies strictement nécessaires empêche l'utilisation de l'application connectée.",
   },
   {
     titre: "Contact",

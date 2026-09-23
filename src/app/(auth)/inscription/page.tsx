@@ -28,8 +28,20 @@ function InscriptionFormPanel({
   showSocial?: boolean;
 }) {
   return (
-    <div className={AUTH_PANEL_CLASS}>
+    <div className={`relative ${AUTH_PANEL_CLASS}`}>
       <form action={creerCompte} className="flex w-full flex-col gap-3">
+        {/* Honeypot anti-bots — ne pas retirer (caché aux humains, rempli par les spammeurs) */}
+        <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
+          <label htmlFor="website">Site web</label>
+          <input
+            id="website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            defaultValue=""
+          />
+        </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <AuthField
             id="prenom"
@@ -168,8 +180,19 @@ function WaitlistView({ erreur, listeAttente }: { erreur?: string; listeAttente?
       </div>
       <form
         action={rejoindreListeAttente}
-        className="rounded-[26px] border border-white/14 bg-[rgba(23,21,19,0.91)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
+        className="relative rounded-[26px] border border-white/14 bg-[rgba(23,21,19,0.91)] p-5 shadow-[0_20px_50px_rgba(0,0,0,0.4)]"
       >
+        <div className="absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0" aria-hidden="true">
+          <label htmlFor="waitlist-website">Site web</label>
+          <input
+            id="waitlist-website"
+            name="website"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            defaultValue=""
+          />
+        </div>
         <AuthField
           id="waitlist-email"
           name="email"

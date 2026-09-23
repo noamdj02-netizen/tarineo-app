@@ -48,7 +48,12 @@ cp .env.example .env
 | `RESEND_API_KEY` / `EMAIL_FROM` | Pour l'email de réinitialisation de mot de passe |
 | `ANTHROPIC_API_KEY` | Extraction des devis/factures par l'IA |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `SUPABASE_STORAGE_BUCKET` | Stockage des fichiers. ⚠️ `SUPABASE_SERVICE_ROLE_KEY` donne un accès complet, ne jamais l'exposer côté client |
-| `STRIPE_*` | Abonnements (Phase 4, pas encore utilisé) |
+| `STRIPE_*` | Abonnements (checkout, webhooks, portal) |
+| `GOOGLE_SITE_VERIFICATION` | Optionnel — code Google Search Console (méta verification) |
+
+### Sauvegardes
+
+Voir [`docs/sauvegardes.md`](docs/sauvegardes.md) : backups automatiques Supabase (DB + Storage), rollback Vercel, checklist périodique.
 
 ### Base de données
 

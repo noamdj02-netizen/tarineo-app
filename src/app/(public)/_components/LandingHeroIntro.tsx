@@ -30,7 +30,7 @@ export function LandingHeroIntro({ ctaHref, ctaLabel }: Props) {
           {...item(0.05)}
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
-            <Image src="/landing/shield.svg" alt="" width={20} height={20} className="h-5 w-5" />
+            <Image src="/landing/shield.svg" alt="" width={20} height={20} className="h-5 w-5" aria-hidden />
           </span>
           <span className="landing-display text-base font-medium text-[var(--landing-text)]">
             Pour tous les artisans du bâtiment
@@ -57,19 +57,10 @@ export function LandingHeroIntro({ ctaHref, ctaLabel }: Props) {
         </div>
       </div>
 
-      <motion.div
-        className="flex flex-wrap items-center justify-center gap-4"
-        {...item(0.28)}
-      >
-        <Link
-          href="/#comment-ca-marche"
-          className="landing-display rounded-full bg-white px-8 py-3.5 text-base font-medium text-black shadow-[var(--landing-shadow-btn)] transition-transform hover:opacity-90 active:scale-[0.98]"
-        >
-          Démo
-        </Link>
+      <motion.div className="flex items-center justify-center" {...item(0.28)}>
         <Link
           href={ctaHref}
-          className="landing-display rounded-full bg-white px-8 py-3.5 text-base font-medium text-black shadow-[var(--landing-shadow-btn)] transition-transform hover:opacity-90 active:scale-[0.98]"
+          className="landing-display rounded-full bg-[var(--landing-accent)] px-8 py-3.5 text-base font-medium text-white shadow-[var(--landing-shadow-btn)] transition-transform hover:opacity-90 active:scale-[0.98]"
         >
           {ctaLabel} →
         </Link>

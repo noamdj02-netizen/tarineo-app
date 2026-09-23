@@ -12,7 +12,7 @@ export function LandingHero({ ctaHref, ctaLabel }: Props) {
     <section className="relative min-h-[640px] overflow-x-hidden pb-0 pt-24 sm:min-h-[800px] sm:pb-0 sm:pt-28">
       <Image
         src="/landing/hero-bg.jpg"
-        alt=""
+        alt="Artisan du bâtiment contrôlant un devis fournisseur"
         fill
         priority
         className="object-cover object-center"
