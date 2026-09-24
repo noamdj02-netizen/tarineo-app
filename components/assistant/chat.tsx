@@ -5,23 +5,30 @@ import { ArrowUp, Square, Trash2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { clearChat } from "@/app/(app)/assistant/actions";
-import { Illustration } from "@/components/illustration";
+import { GlowCard } from "@/components/home/glow-card";
+import { Mascot } from "@/components/home/mascot";
 import { EASE } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
 import { MessageContent } from "./message-content";
 import { ModelSelect, useModel } from "./model-select";
 
-export type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
 type Bubble = ChatMessage & { error?: boolean; pending?: boolean };
 
 export function Chat({
   initial,
   presets,
   keyMissing,
+  firstName,
 }: {
   initial: ChatMessage[];
   presets: string[];
   keyMissing: boolean;
+  firstName?: string | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,6 +37,7 @@ export function Chat({
   const [messages, setMessages] = useState<Bubble[]>(initial);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [focused, setFocused] = useState(false);
   const [model, setModel] = useModel(params.get("model"));
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -37,7 +45,10 @@ export function Chat({
 
   // garde la dernière réponse visible pendant qu'elle s'écrit
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end", behavior: reduce ? "auto" : "smooth" });
+    endRef.current?.scrollIntoView({
+      block: "end",
+      behavior: reduce ? "auto" : "smooth",
+    });
   }, [messages, reduce]);
 
   const ask = useCallback(
@@ -46,7 +57,11 @@ export function Chat({
       if (!q || busy) return;
       setInput("");
       setBusy(true);
-      const userMsg: Bubble = { id: crypto.randomUUID(), role: "user", content: q };
+      const userMsg: Bubble = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: q,
+      };
       const replyId = crypto.randomUUID();
       setMessages((m) => [
         ...m,
@@ -54,7 +69,9 @@ export function Chat({
         { id: replyId, role: "assistant", content: "", pending: true },
       ]);
       const update = (patch: Partial<Bubble>) =>
-        setMessages((m) => m.map((x) => (x.id === replyId ? { ...x, ...patch } : x)));
+        setMessages((m) =>
+          m.map((x) => (x.id === replyId ? { ...x, ...patch } : x)),
+        );
 
       const ctl = new AbortController();
       abortRef.current = ctl;
@@ -69,7 +86,8 @@ export function Chat({
         if (!res.ok || !res.body) {
           const { error } = await res.json().catch(() => ({ error: null }));
           update({
-            content: error ?? "Réponse interrompue. Tu peux renvoyer ta question.",
+            content:
+              error ?? "Réponse interrompue. Tu peux renvoyer ta question.",
             error: true,
             pending: false,
           });
@@ -94,7 +112,8 @@ export function Chat({
         } else {
           update({
             content:
-              (text ? text + "\n\n" : "") + "Réponse interrompue. Tu peux renvoyer ta question.",
+              (text ? text + "\n\n" : "") +
+              "Réponse interrompue. Tu peux renvoyer ta question.",
             error: true,
             pending: false,
           });
@@ -126,16 +145,23 @@ export function Chat({
           role="status"
           className="rounded-card border border-ink/15 bg-accent-soft p-4 text-[14px]"
         >
-          <b className="font-semibold">Le copilote n’est pas encore branché.</b> Ajoute ta clé{" "}
-          <code className="font-mono text-[12.5px]">ANTHROPIC_API_KEY</code> dans{" "}
-          <code className="font-mono text-[12.5px]">.env.local</code>, puis relance le serveur.
+          <b className="font-semibold">Le copilote n’est pas encore branché.</b>{" "}
+          Ajoute ta clé{" "}
+          <code className="font-mono text-[12.5px]">ANTHROPIC_API_KEY</code>{" "}
+          dans <code className="font-mono text-[12.5px]">.env.local</code>, puis
+          relance le serveur.
         </p>
       ) : null}
 
-      <div className="card-soft flex min-h-[min(62dvh,560px)] flex-col overflow-hidden">
+      <GlowCard
+        soft={!empty}
+        className="flex min-h-[min(66dvh,600px)] flex-col"
+      >
         <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
           <p className="mono-label">{"/ Conversation ///"}</p>
-          {!empty ? <ClearButton disabled={busy} onCleared={() => setMessages([])} /> : null}
+          {!empty ? (
+            <ClearButton disabled={busy} onCleared={() => setMessages([])} />
+          ) : null}
         </div>
 
         <div
@@ -144,16 +170,24 @@ export function Chat({
           aria-busy={busy}
         >
           {empty ? (
-            <div className="m-auto flex max-w-[36ch] flex-col items-center gap-2 text-center text-[14px] text-muted">
-              <Illustration name="feedback-aide" className="size-20" />
-              Choisis une question ci-dessous ou écris la tienne.
+            <div className="flex flex-col gap-3 px-1 pt-4 sm:px-4 sm:pt-8">
+              <p className="font-grotesk text-[13px] font-bold tracking-[0.16em] text-ink/75 uppercase">
+                Bonjour{firstName ? ` ${firstName}` : ""} !
+              </p>
+              <p className="max-w-[15ch] font-display text-[clamp(28px,5.4vw,42px)] leading-[1.05] font-semibold tracking-tightest text-balance">
+                Comment puis-je t’aider aujourd’hui ?
+              </p>
             </div>
           ) : null}
           <AnimatePresence initial={false}>
             {messages.map((m) => (
               <motion.div
                 key={m.id}
-                initial={reduce ? { opacity: 0 } : { opacity: 0, y: 10, filter: "blur(4px)" }}
+                initial={
+                  reduce
+                    ? { opacity: 0 }
+                    : { opacity: 0, y: 10, filter: "blur(4px)" }
+                }
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 transition={{ duration: 0.4, ease: EASE }}
                 className={cn(
@@ -161,8 +195,8 @@ export function Chat({
                   m.role === "user"
                     ? "self-end whitespace-pre-wrap bg-ink text-accent-ink"
                     : m.error
-                      ? "self-start border border-destructive/40 bg-surface-2"
-                      : "self-start border border-line bg-surface-2",
+                      ? "self-start border border-destructive/40 bg-surface"
+                      : "self-start border border-line bg-surface",
                 )}
               >
                 {m.role === "user" ? (
@@ -191,7 +225,7 @@ export function Chat({
                 type="button"
                 disabled={busy || keyMissing}
                 onClick={() => void ask(p)}
-                className="min-h-10 rounded-pill border border-line bg-surface px-4 text-[13px] whitespace-nowrap text-ink/80 transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 hover:shadow-soft disabled:opacity-50"
+                className="min-h-10 rounded-pill bg-surface px-4 text-[13px] whitespace-nowrap text-ink/80 shadow-soft transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 hover:shadow-lift disabled:opacity-50"
               >
                 {p}
               </button>
@@ -204,61 +238,78 @@ export function Chat({
             e.preventDefault();
             void ask(input);
           }}
-          className="flex flex-col gap-2 border-t border-line p-3"
+          className="flex flex-col gap-2 px-3 pb-3"
         >
           <label htmlFor="ask" className="sr-only">
             Ta question
           </label>
-          <textarea
-            id="ask"
-            rows={2}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                void ask(input);
-              }
-            }}
-            maxLength={4000}
-            placeholder="Ex : écris le prompt Cursor pour le hero de Tarineo en thème Chantier"
-            className="max-h-36 min-h-12 w-full resize-none rounded-xl bg-surface-2 px-3 py-2.5 text-[15px] outline-none placeholder:text-muted focus:bg-surface focus:ring-1 focus:ring-ink/20"
-          />
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-1.5 rounded-[26px] bg-surface p-1.5 shadow-soft transition-shadow duration-500 ease-out-soft focus-within:shadow-lift">
+            <Mascot
+              mood={busy ? "typing" : input || focused ? "focus" : "idle"}
+              depth={8}
+              className="size-11 flex-none"
+            />
+            <textarea
+              id="ask"
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" &&
+                  !e.shiftKey &&
+                  !e.nativeEvent.isComposing
+                ) {
+                  e.preventDefault();
+                  void ask(input);
+                }
+              }}
+              maxLength={4000}
+              placeholder="Écris le prompt Cursor pour le hero de Tarineo…"
+              className="field-sizing-content max-h-36 min-h-11 min-w-0 flex-1 resize-none self-center bg-transparent px-1 py-2.5 text-[15px] outline-none placeholder:text-muted"
+            />
+            {busy ? (
+              <button
+                type="button"
+                onClick={() => abortRef.current?.abort()}
+                aria-label="Arrêter la réponse"
+                className="grid size-11 flex-none place-items-center rounded-pill bg-surface-2 hover:bg-accent-soft"
+              >
+                <Square className="size-4 fill-current" aria-hidden />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim() || keyMissing}
+                aria-label="Envoyer"
+                className="btn-dark grid size-11 flex-none place-items-center rounded-pill disabled:translate-y-0 disabled:opacity-35"
+              >
+                <ArrowUp className="size-[18px]" aria-hidden />
+              </button>
+            )}
+          </div>
+          <div className="flex px-1">
             <ModelSelect value={model} onChange={setModel} />
-            <div className="ml-auto">
-              {busy ? (
-                <button
-                  type="button"
-                  onClick={() => abortRef.current?.abort()}
-                  aria-label="Arrêter la réponse"
-                  className="grid size-11 place-items-center rounded-pill border border-line bg-surface hover:bg-accent-soft"
-                >
-                  <Square className="size-4 fill-current" aria-hidden />
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={!input.trim() || keyMissing}
-                  aria-label="Envoyer"
-                  className="btn-dark grid size-11 place-items-center rounded-pill disabled:translate-y-0 disabled:opacity-35"
-                >
-                  <ArrowUp className="size-[18px]" aria-hidden />
-                </button>
-              )}
-            </div>
           </div>
         </form>
-      </div>
+      </GlowCard>
       <p className="text-[12.5px] text-muted">
-        Chaque question utilise ta clé Claude. Le copilote connaît tes projets, tes ressources, tes
-        6 thèmes et la méthode landing.
+        Chaque question utilise ta clé Claude. Le copilote connaît tes projets,
+        tes ressources, tes 6 thèmes et la méthode landing.
       </p>
     </div>
   );
 }
 
-function ClearButton({ disabled, onCleared }: { disabled: boolean; onCleared: () => void }) {
+function ClearButton({
+  disabled,
+  onCleared,
+}: {
+  disabled: boolean;
+  onCleared: () => void;
+}) {
   const [armed, setArmed] = useState(false);
   const [pending, startTransition] = useTransition();
   useEffect(() => {
@@ -280,7 +331,9 @@ function ClearButton({ disabled, onCleared }: { disabled: boolean; onCleared: ()
       }}
       className={cn(
         "inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 font-mono text-[10.5px] tracking-[0.08em] uppercase transition-colors disabled:opacity-50",
-        armed ? "bg-destructive text-accent-ink" : "text-muted hover:bg-accent-soft hover:text-ink",
+        armed
+          ? "bg-destructive text-accent-ink"
+          : "text-muted hover:bg-accent-soft hover:text-ink",
       )}
     >
       <Trash2 className="size-3.5" aria-hidden />

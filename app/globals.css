@@ -25,6 +25,10 @@
   --color-side-ink: #ffffff;
   --color-side-muted: rgba(255, 255, 255, 0.5);
   --color-side-line: rgba(255, 255, 255, 0.08);
+  /* Halo pastel des cartes d'accueil (pêche, lavande, bleu doux) */
+  --color-glow-1: #f7c6a3;
+  --color-glow-2: #cbbdf3;
+  --color-glow-3: #b3cbf6;
 
   /* Arrondis */
   --radius-card: 18px;
@@ -35,6 +39,7 @@
   --font-display: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, Menlo, monospace;
   --font-serif: var(--font-instrument-serif), Georgia, serif;
+  --font-grotesk: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 
   /* Ombres douces multi-couches + reflet des boutons sombres */
   --shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04),
@@ -139,6 +144,20 @@
   50%,
   95% {
     opacity: 0;
+  }
+}
+
+/* Dérive lente des halos de GlowCard */
+@keyframes glow-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(6%, -5%, 0) scale(1.08);
+  }
+  66% {
+    transform: translate3d(-5%, 4%, 0) scale(0.95);
   }
 }
 

@@ -79,6 +79,20 @@ export type ChatMessageRow = {
   created_at: string;
 };
 
+export type SchemaKind = "libre" | "architecture" | "parcours" | "tunnel" | "roadmap" | "donnees";
+
+export type SchemaRow = {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  title: string;
+  kind: SchemaKind;
+  /** files = images du tableau (data URL), seulement celles encore utilisées */
+  scene: { elements: unknown[]; appState: Record<string, unknown>; files?: Record<string, unknown> };
+  created_at: string;
+  updated_at: string;
+};
+
 type Table<Row, Required extends keyof Row> = {
   Row: Row;
   Insert: Partial<Row> & Pick<Row, Required>;
@@ -95,6 +109,7 @@ export type Database = {
       project_log: Table<LogRow, "project_id" | "text">;
       resources: Table<ResourceRow, "name">;
       chat_messages: Table<ChatMessageRow, "role" | "content">;
+      project_schemas: Table<SchemaRow, never>;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

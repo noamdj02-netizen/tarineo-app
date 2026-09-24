@@ -1,6 +1,6 @@
 import { ActionCards, type ActionCard } from "@/components/home/action-cards";
+import { GlowCard } from "@/components/home/glow-card";
 import { PromptBox } from "@/components/home/prompt-box";
-import { Illustration } from "@/components/illustration";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { getDb } from "@/lib/db";
 import { getViewer } from "@/lib/session";
@@ -37,7 +37,8 @@ export default async function AccueilPage() {
           n: "01",
           label: "Projet en Focus",
           title: `Continuer ${focus.name}`,
-          text: focus.next || "Ouvre la fiche pour choisir ta prochaine action.",
+          text:
+            focus.next || "Ouvre la fiche pour choisir ta prochaine action.",
           href: `/projets/${focus.slug}`,
           icon: "rocket",
         }
@@ -68,34 +69,20 @@ export default async function AccueilPage() {
   ];
 
   return (
-    <RevealGroup className="mx-auto flex max-w-[760px] flex-col gap-8 pt-[4vh] pb-4 sm:pt-[8vh]">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <Reveal>
-          <Illustration name="dashboard-au-travail" className="-mb-2 size-20 sm:size-24" />
-        </Reveal>
-        <Reveal>
-          <p className="mono-label">{"/ Cockpit ///"}</p>
-        </Reveal>
-        <Reveal>
-          <h1 className="font-display text-[clamp(34px,7vw,56px)] leading-[1.02] font-semibold tracking-tightest text-balance">
-            Bon retour
-            {viewer?.firstName ? (
-              <>
-                ,<span className="text-accent-2"> {viewer.firstName}</span>
-              </>
-            ) : null}
-            <span className="text-accent-2">.</span>
-          </h1>
-        </Reveal>
-        <Reveal>
-          <p className="max-w-[46ch] text-[15.5px] text-muted">
-            Une question, une action. Ton copilote connaît tes projets.
-          </p>
-        </Reveal>
-      </div>
-
+    <RevealGroup className="mx-auto flex max-w-[760px] flex-col gap-8 pt-[1vh] pb-4 sm:pt-[4vh]">
       <Reveal>
-        <PromptBox suggestions={SUGGESTIONS} />
+        <GlowCard
+          tilt
+          className="flex min-h-[min(72dvh,600px)] flex-col px-5 pt-8 pb-5 sm:px-10 sm:pt-12 sm:pb-8"
+        >
+          <p className="font-grotesk text-[13px] font-bold tracking-[0.16em] text-ink/75 uppercase">
+            Bonjour{viewer?.firstName ? ` ${viewer.firstName}` : ""} !
+          </p>
+          <h1 className="mt-3 max-w-[15ch] font-display text-[clamp(32px,6.4vw,52px)] leading-[1.04] font-semibold tracking-tightest text-balance">
+            Comment puis-je t’aider aujourd’hui ?
+          </h1>
+          <PromptBox suggestions={SUGGESTIONS} className="mt-7 flex-1" />
+        </GlowCard>
       </Reveal>
 
       <div className="flex flex-col gap-3">

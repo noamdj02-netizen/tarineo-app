@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import {
+  Instrument_Serif,
+  Inter_Tight,
+  JetBrains_Mono,
+  Space_Grotesk,
+} from "next/font/google";
 import { ServiceWorker } from "@/components/shell/service-worker";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
@@ -21,6 +26,12 @@ const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
   weight: "400",
   style: ["normal", "italic"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -55,7 +66,7 @@ export default function RootLayout({
       lang="fr"
       // l'app est en clair : empêche studio.css de passer les couleurs d'état en mode sombre
       data-theme="light"
-      className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable}`}
+      className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${spaceGrotesk.variable}`}
     >
       <body className="antialiased">
         {children}

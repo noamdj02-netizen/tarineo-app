@@ -3,6 +3,7 @@ import { Chat, type ChatMessage } from "@/components/assistant/chat";
 import { PageHead } from "@/components/shell/page-head";
 import { getDb } from "@/lib/db";
 import { PRESETS } from "@/lib/design-data/assistant";
+import { getViewer } from "@/lib/session";
 
 export const metadata = { title: "Assistant IA" };
 
@@ -20,10 +21,15 @@ async function getHistory(): Promise<ChatMessage[]> {
 }
 
 export default async function AssistantPage() {
-  const history = await getHistory();
+  const [history, viewer] = await Promise.all([getHistory(), getViewer()]);
   return (
     <section className="mx-auto max-w-[820px]">
-      <PageHead art="notif-nouvelle" label="Assistant IA" title="Ton copilote" tail="qui connaît tes projets.">
+      <PageHead
+        art="notif-nouvelle"
+        label="Assistant IA"
+        title="Ton copilote"
+        tail="qui connaît tes projets."
+      >
         Demande-lui un prompt Cursor, un choix de thème ou une section à écrire.
       </PageHead>
       <Suspense>
@@ -31,6 +37,7 @@ export default async function AssistantPage() {
           initial={history}
           presets={PRESETS}
           keyMissing={!process.env.ANTHROPIC_API_KEY}
+          firstName={viewer?.firstName}
         />
       </Suspense>
     </section>

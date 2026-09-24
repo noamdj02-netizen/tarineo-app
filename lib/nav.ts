@@ -7,8 +7,8 @@ import {
   Library,
   Palette,
   ScanSearch,
+  Shapes,
   Sparkles,
-  Workflow,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -28,7 +28,7 @@ export const TABS: Tab[] = [
   { href: "/assistant", label: "Assistant IA", short: "IA", icon: Bot },
   { href: "/ressources", label: "Ressources", short: "Ressources", icon: Library },
   { href: "/outils", label: "Outils", short: "Outils", icon: Wrench },
-  { href: "/workflow", label: "Figma → Cursor", short: "Figma", icon: Workflow },
+  { href: "/schemas", label: "Schémas", short: "Schémas", icon: Shapes },
   { href: "/anatomie", label: "Anatomie", short: "Anatomie", icon: Layers },
   { href: "/composants", label: "Composants", short: "Compos", icon: Blocks },
   { href: "/composants-2", label: "Composants 2", short: "Compos 2", icon: Sparkles },
