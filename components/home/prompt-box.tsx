@@ -3,9 +3,9 @@
 import { useReducedMotion } from "framer-motion";
 import { ArrowUp, Mic, MicOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ModelSelect, useModel } from "@/components/assistant/model-select";
-import { Mascot, type MascotMood } from "@/components/home/mascot";
+import { TypingPlaceholder } from "@/components/home/typing-placeholder";
 import { cn } from "@/lib/utils";
 
 type SpeechRecognitionLike = {
@@ -32,8 +32,8 @@ function getRecognition(): SpeechRecognitionLike | null {
 }
 
 /**
- * Boîte de prompt de l'accueil : suggestions en pastilles, barre en pilule avec la mascotte
- * qui dépasse. Envoie la question au copilote (/assistant).
+ * Boîte de prompt de l'accueil : suggestions en pastilles, barre en pilule où la mascotte
+ * écrit les exemples. Envoie la question au copilote (/assistant).
  */
 export function PromptBox({
   suggestions,
@@ -50,6 +50,16 @@ export function PromptBox({
   const [canDictate, setCanDictate] = useState(false);
   const [focused, setFocused] = useState(false);
   const [sending, setSending] = useState(false);
+  const [active, setActive] = useState(-1);
+  // dernier exemple écrit par la mascotte, repris par Tab une fois le champ focalisé
+  const [lastExample, setLastExample] = useState<string | null>(null);
+  const onExample = useCallback(
+    (i: number) => {
+      setActive(i);
+      if (i >= 0) setLastExample(suggestions[i] ?? null);
+    },
+    [suggestions],
+  );
   const taRef = useRef<HTMLTextAreaElement>(null);
   const recRef = useRef<SpeechRecognitionLike | null>(null);
 
@@ -97,18 +107,10 @@ export function PromptBox({
   }
 
   const empty = value.length === 0;
-  const mood: MascotMood = sending
-    ? "submit"
-    : !empty || listening
-      ? "typing"
-      : focused
-        ? "focus"
-        : "idle";
-
   return (
     <div className={cn("flex flex-col", className)}>
       <ul className="flex flex-wrap gap-2" aria-label="Suggestions">
-        {suggestions.map((s) => (
+        {suggestions.map((s, i) => (
           <li key={s}>
             <button
               type="button"
@@ -116,7 +118,10 @@ export function PromptBox({
                 setValue(s);
                 taRef.current?.focus();
               }}
-              className="min-h-10 rounded-pill bg-surface px-4 text-[13.5px] text-ink/80 shadow-soft transition-[transform,box-shadow,color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:text-ink hover:shadow-lift"
+              className={cn(
+                "min-h-10 rounded-pill bg-surface px-4 text-[13.5px] text-ink/80 shadow-soft ring-1 ring-transparent transition-[transform,box-shadow,color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:text-ink hover:shadow-lift",
+                i === active && "-translate-y-0.5 text-ink shadow-lift ring-ink/10",
+              )}
             >
               {s}
             </button>
@@ -124,12 +129,8 @@ export function PromptBox({
         ))}
       </ul>
 
-      <div className="mt-auto pt-[76px] sm:pt-20">
+      <div className="mt-auto pt-10 sm:pt-12">
         <div className="relative">
-          <Mascot
-            mood={mood}
-            className="absolute bottom-[calc(100%-12px)] left-3 size-[84px] sm:left-5 sm:size-[96px]"
-          />
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -141,14 +142,16 @@ export function PromptBox({
               Ta question au copilote
             </label>
             <div className="relative min-w-0 flex-1 self-center">
-              {/* placeholder avec curseur qui clignote */}
               {empty ? (
                 <div
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 flex items-start truncate py-2 text-[16px] leading-7 text-muted"
+                  className="pointer-events-none absolute inset-0 flex items-center py-2 text-[16px] leading-7 text-muted"
                 >
-                  <span className="mt-[5px] mr-1 inline-block h-[18px] w-[2px] flex-none animate-[caret-blink_1.1s_steps(1)_infinite] rounded-full bg-ink" />
-                  Demande à ton copilote…
+                  <TypingPlaceholder
+                    examples={suggestions}
+                    paused={focused || listening || sending}
+                    onExample={onExample}
+                  />
                 </div>
               ) : null}
               <textarea
@@ -160,6 +163,11 @@ export function PromptBox({
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
                 onKeyDown={(e) => {
+                  if (e.key === "Tab" && !e.shiftKey && empty && lastExample) {
+                    e.preventDefault();
+                    setValue(lastExample);
+                    return;
+                  }
                   if (
                     e.key === "Enter" &&
                     !e.shiftKey &&
@@ -211,7 +219,7 @@ export function PromptBox({
         <div className="mt-3 flex items-center justify-between gap-3 px-1">
           <ModelSelect value={model} onChange={setModel} />
           <p className="hidden text-[12.5px] text-muted sm:block">
-            Entrée pour envoyer
+            {empty && lastExample ? "Tab pour reprendre l’exemple" : "Entrée pour envoyer"}
           </p>
         </div>
       </div>
