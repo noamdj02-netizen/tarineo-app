@@ -1,8 +1,11 @@
 import { ActionCards, type ActionCard } from "@/components/home/action-cards";
+import { CalendarCard } from "@/components/home/calendar-card";
 import { GlowCard } from "@/components/home/glow-card";
 import { PromptBox } from "@/components/home/prompt-box";
+import { WeekCard } from "@/components/home/week-card";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { getDb } from "@/lib/db";
+import { getWeekStats } from "@/lib/home/week";
 import { getViewer } from "@/lib/session";
 
 export const metadata = { title: "Accueil" };
@@ -29,7 +32,11 @@ const SUGGESTIONS = [
 ];
 
 export default async function AccueilPage() {
-  const [viewer, focus] = await Promise.all([getViewer(), getFocusProject()]);
+  const [viewer, focus, week] = await Promise.all([
+    getViewer(),
+    getFocusProject(),
+    getDb().then((db) => (db ? getWeekStats(db) : null)),
+  ]);
 
   const cards: ActionCard[] = [
     focus
@@ -84,6 +91,17 @@ export default async function AccueilPage() {
           <PromptBox suggestions={SUGGESTIONS} className="mt-7 flex-1" />
         </GlowCard>
       </Reveal>
+
+      <div className="flex flex-col gap-3.5">
+        <Reveal>
+          <CalendarCard />
+        </Reveal>
+        {week ? (
+          <Reveal>
+            <WeekCard stats={week} />
+          </Reveal>
+        ) : null}
+      </div>
 
       <div className="flex flex-col gap-3">
         <Reveal>

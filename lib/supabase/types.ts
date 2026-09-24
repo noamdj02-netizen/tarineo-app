@@ -93,6 +93,23 @@ export type SchemaRow = {
   updated_at: string;
 };
 
+export type CalendarEventRow = {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  created_at: string;
+};
+
+export type CalendarFeedRow = {
+  user_id: string;
+  url: string;
+  updated_at: string;
+};
+
 type Table<Row, Required extends keyof Row> = {
   Row: Row;
   Insert: Partial<Row> & Pick<Row, Required>;
@@ -110,6 +127,8 @@ export type Database = {
       resources: Table<ResourceRow, "name">;
       chat_messages: Table<ChatMessageRow, "role" | "content">;
       project_schemas: Table<SchemaRow, never>;
+      calendar_events: Table<CalendarEventRow, "title" | "starts_at">;
+      calendar_feeds: Table<CalendarFeedRow, "url">;
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

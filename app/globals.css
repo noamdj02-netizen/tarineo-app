@@ -163,6 +163,18 @@
   }
 }
 
+/* Barres de « Ma semaine » */
+@keyframes bar-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes bar-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

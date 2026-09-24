@@ -39,14 +39,18 @@ export function ActionCards({ cards }: { cards: ActionCard[] }) {
                   <span className="grid size-10 place-items-center rounded-xl bg-accent-soft text-ink">
                     <Icon className="size-[18px]" aria-hidden />
                   </span>
-                  <span className="font-mono text-[11px] text-muted">{n} /</span>
+                  <span className="font-mono text-[11px] text-muted">
+                    {n} /
+                  </span>
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5">
                   <p className="mono-label">/ {label}</p>
                   <h3 className="text-[17px] leading-snug font-semibold tracking-[-0.02em]">
                     {title}
                   </h3>
-                  <p className="text-[14px] leading-relaxed text-muted">{text}</p>
+                  <p className="text-[14px] leading-relaxed text-muted">
+                    {text}
+                  </p>
                 </div>
                 <span className="flex items-center gap-1.5 font-mono text-[11px] font-medium tracking-[0.1em] text-ink uppercase">
                   Ouvrir

@@ -23,6 +23,7 @@
     "framer-motion": "^13.4.2",
     "lucide-react": "^1.48.0",
     "next": "15.5.26",
+    "node-ical": "^0.27.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "^0.0.1",
