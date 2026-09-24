@@ -17,6 +17,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "navpit.com" }],
+        destination: "https://www.navpit.com/:path*",
+        permanent: true,
+      },
       // l'ancien onglet « Figma → Cursor » vit maintenant en bas de la page Outils
       { source: "/workflow", destination: "/schemas", permanent: false },
       { source: "/cgu", destination: "/cgv", permanent: true },
