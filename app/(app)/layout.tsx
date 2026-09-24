@@ -1,3 +1,4 @@
+import { LogOut } from "lucide-react";
 import { BottomTabs, TopTabs } from "@/components/shell/tab-bar";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -13,6 +14,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               Cursor, kit landing et un assistant IA qui connaît tout ça.
             </p>
           </div>
+          <form action="/auth/signout" method="post">
+            <button className="btn min-h-11" type="submit" aria-label="Se déconnecter">
+              <LogOut aria-hidden />
+              <span className="hidden sm:inline">Déconnexion</span>
+            </button>
+          </form>
         </header>
         <TopTabs />
         <main>{children}</main>

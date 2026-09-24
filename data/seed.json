@@ -1,0 +1,614 @@
+{
+  "projects": [
+    {
+      "id": "devis-instant",
+      "business": {
+        "Budget pub": "10 €/jour max",
+        "Essai": "Gratuit avec filigrane",
+        "Pro": "9 €/mois",
+        "Revenu actuel": "À renseigner",
+        "Stratégie": "80 % acquisition / 20 % produit",
+        "À vie": "12 € une fois"
+      },
+      "desc": "Générateur de devis et factures PDF pour freelances et artisans.",
+      "features": [
+        {
+          "s": "fait",
+          "t": "Éditeur de devis"
+        },
+        {
+          "s": "fait",
+          "t": "Aperçu en direct"
+        },
+        {
+          "s": "fait",
+          "t": "Export PDF"
+        },
+        {
+          "s": "verif",
+          "t": "Factures"
+        },
+        {
+          "s": "verif",
+          "t": "Pré-remplissage SIRET et mentions légales"
+        },
+        {
+          "s": "verif",
+          "t": "Envoi via Gmail"
+        },
+        {
+          "s": "verif",
+          "t": "Suivi clients (dashboard)"
+        },
+        {
+          "s": "verif",
+          "t": "Modèles par métier"
+        },
+        {
+          "s": "verif",
+          "t": "Relances automatiques (Pro)"
+        },
+        {
+          "s": "verif",
+          "t": "Export CSV (Pro)"
+        },
+        {
+          "s": "fait",
+          "t": "Paiement 12 € à vie / 9 €/mois"
+        },
+        {
+          "s": "fait",
+          "t": "Tracking conversion Google Ads (GTM)"
+        },
+        {
+          "s": "encours",
+          "t": "Redesign premium (Figma)"
+        }
+      ],
+      "figma": "",
+      "github": "",
+      "log": [
+        {
+          "d": "28/08/2026",
+          "t": "Redevient projet prioritaire, tracking Ads en place"
+        },
+        {
+          "d": "09/09/2026",
+          "t": "Redesign premium lancé dans Figma"
+        }
+      ],
+      "name": "Devis Instant",
+      "next": "Clarifier 12 € à vie vs 9 €/mois sur la page tarifs, puis ajouter une vidéo démo de 30 s.",
+      "notion": "https://app.notion.com/p/3d6246970fa381c9a64bdba84ac570df",
+      "order": 2,
+      "partner": "",
+      "pitch": "Générateur de devis et factures PDF pour freelances et artisans français : un devis propre, prêt à envoyer en 2 minutes.",
+      "problem": "Faire un devis dans Word prend une soirée et le rendu n’est pas pro. Les logiciels existants sont chers ou compliqués.",
+      "risks": [
+        "Différence entre l’offre à vie et Pro pas claire",
+        "Un seul témoignage visible",
+        "Budget pub limité : bien suivre le coût par vente"
+      ],
+      "site": "https://devisinstant.eu",
+      "stack": [
+        "devisinstant.eu",
+        "Google Tag Manager",
+        "Google Ads",
+        "Stack exacte à compléter"
+      ],
+      "stage": 3,
+      "status": "focus",
+      "target": "Freelances, auto-entrepreneurs et artisans FR",
+      "tasks": [
+        {
+          "done": false,
+          "t": "Clarifier 12 € à vie vs 9 €/mois sur la page tarifs"
+        },
+        {
+          "done": false,
+          "t": "Vidéo démo de 30 s dans le hero"
+        },
+        {
+          "done": false,
+          "t": "4 témoignages, un par métier"
+        },
+        {
+          "done": false,
+          "t": "Finir le redesign premium (WayPilot × Demand IQ)"
+        },
+        {
+          "done": false,
+          "t": "Lancer la pub à 10 €/jour max"
+        }
+      ],
+      "team": [
+        "Noam : tout (produit, design, marketing)"
+      ],
+      "theme": "Thème Nuit Pro"
+    },
+    {
+      "id": "inkflow",
+      "business": {
+        "Essai": "1 mois sans CB",
+        "Prix": "Non affichés",
+        "Statut": "En pause"
+      },
+      "desc": "CRM et réservations pour tatoueurs.",
+      "features": [
+        {
+          "s": "verif",
+          "t": "Agenda partagé"
+        },
+        {
+          "s": "verif",
+          "t": "Réservation en ligne"
+        },
+        {
+          "s": "verif",
+          "t": "Acomptes Stripe en euros"
+        },
+        {
+          "s": "verif",
+          "t": "Galerie de flashs"
+        },
+        {
+          "s": "verif",
+          "t": "CRM clients"
+        },
+        {
+          "s": "verif",
+          "t": "Essai 1 mois sans carte bancaire"
+        },
+        {
+          "s": "afaire",
+          "t": "Landing lisible sans JavaScript (SEO)"
+        }
+      ],
+      "figma": "",
+      "github": "",
+      "log": [
+        {
+          "d": "24/09/2026",
+          "t": "Mis en pause, audit SEO fait"
+        }
+      ],
+      "name": "InkFlow",
+      "next": "En pause. À la reprise : pré-rendre la landing pour le SEO.",
+      "notion": "",
+      "order": 4,
+      "partner": "",
+      "pitch": "Logiciel de gestion pour tatoueurs en France : rendez-vous, acomptes, clients et vitrine en ligne.",
+      "problem": "Les tatoueurs gèrent réservations, acomptes et clients sur Instagram et à la main : oublis et no-shows.",
+      "risks": [
+        "Page quasi vide pour Google et les aperçus de liens",
+        "En pause : ne pas y retourner avant la 1ère vente d’un projet focus"
+      ],
+      "site": "https://ink-flow.me",
+      "stack": [
+        "ink-flow.me",
+        "Stripe",
+        "App côté client (JS)"
+      ],
+      "stage": 2,
+      "status": "pause",
+      "target": "Tatoueurs et studios de tatouage en France",
+      "tasks": [
+        {
+          "done": false,
+          "t": "Pré-rendre la landing pour le SEO"
+        },
+        {
+          "done": false,
+          "t": "Afficher les prix"
+        },
+        {
+          "done": false,
+          "t": "Appliquer le style ticket dark"
+        }
+      ],
+      "team": [
+        "Noam"
+      ],
+      "theme": "Thème Encre"
+    },
+    {
+      "id": "opterieur",
+      "business": {
+        "Client": "Thomas Carréda",
+        "Rémunération": "Service / à définir",
+        "Type": "Freelance"
+      },
+      "desc": "Site de Thomas Carréda, architecte d’intérieur à Rouen (freelance).",
+      "features": [
+        {
+          "s": "fait",
+          "t": "Domaine opterieur.com"
+        },
+        {
+          "s": "fait",
+          "t": "Palette sauge, bleu pétrole, terracotta, crème"
+        },
+        {
+          "s": "encours",
+          "t": "Site Vite + React + TS + Tailwind"
+        },
+        {
+          "s": "encours",
+          "t": "Logo revectorisé en SVG"
+        },
+        {
+          "s": "encours",
+          "t": "Design system réseaux sociaux (Figma)"
+        },
+        {
+          "s": "encours",
+          "t": "Galerie projets (18 photos Airbnb Rouen)"
+        },
+        {
+          "s": "afaire",
+          "t": "Mise en ligne"
+        }
+      ],
+      "figma": "",
+      "github": "",
+      "log": [
+        {
+          "d": "19/09/2026",
+          "t": "Kit réseaux sociaux lancé dans Figma (Cormorant Garamond + Manrope)"
+        }
+      ],
+      "name": "Optérieur",
+      "next": "Finir le site sur opterieur.com avec le logo SVG revectorisé.",
+      "notion": "",
+      "order": 3,
+      "partner": "Thomas Carréda",
+      "pitch": "Site vitrine premium pour Thomas Carréda, architecte d’intérieur à Rouen (marque Optérieur), plus un kit réseaux sociaux.",
+      "problem": "Thomas n’a pas de site à la hauteur de son travail, et son logo n’est pas exploitable (basse résolution).",
+      "risks": [
+        "Pas de date de mise en ligne fixée",
+        "Logo encore en cours"
+      ],
+      "site": "https://opterieur.com",
+      "stack": [
+        "Vite",
+        "React",
+        "TypeScript",
+        "Tailwind",
+        "Prompts motionsites",
+        "Figma"
+      ],
+      "stage": 2,
+      "status": "focus",
+      "target": "Clients particuliers et pros cherchant un architecte d’intérieur en Normandie",
+      "tasks": [
+        {
+          "done": false,
+          "t": "Finir les sections du site"
+        },
+        {
+          "done": false,
+          "t": "Intégrer le logo SVG"
+        },
+        {
+          "done": false,
+          "t": "Mettre en ligne sur opterieur.com"
+        },
+        {
+          "done": false,
+          "t": "Livrer les templates Instagram (posts, carrousels, stories)"
+        }
+      ],
+      "team": [
+        "Noam : design et développement",
+        "Thomas : contenus et validation"
+      ],
+      "theme": "Thème Atelier"
+    },
+    {
+      "id": "tarineo",
+      "business": {
+        "Objectif": "1ère vente",
+        "Offre": "1 mois offert (100 premières places)",
+        "Pro": "29 €/mois · 400 docs",
+        "Revenu actuel": "À renseigner",
+        "Starter": "17 €/mois · 150 docs",
+        "Équipe": "49 €/mois · 1 000 docs"
+      },
+      "desc": "Scan des devis fournisseurs BTP, détection des hausses de prix. Avec Alan.",
+      "features": [
+        {
+          "s": "verif",
+          "t": "Import photo / PDF / transfert mail"
+        },
+        {
+          "s": "verif",
+          "t": "Lecture IA + OCR des lignes (~10 s)"
+        },
+        {
+          "s": "verif",
+          "t": "Comparaison à l’historique 12 mois"
+        },
+        {
+          "s": "verif",
+          "t": "Alertes hausse de prix"
+        },
+        {
+          "s": "verif",
+          "t": "Dashboard des économies"
+        },
+        {
+          "s": "verif",
+          "t": "Suivi multi-chantiers"
+        },
+        {
+          "s": "verif",
+          "t": "Compatibilité 30+ distributeurs"
+        },
+        {
+          "s": "verif",
+          "t": "Calcul de marge automatique (Pro)"
+        },
+        {
+          "s": "afaire",
+          "t": "Dashboard dirigeant (Équipe)"
+        },
+        {
+          "s": "fait",
+          "t": "8 templates email codés en React"
+        },
+        {
+          "s": "encours",
+          "t": "13 templates email supplémentaires (Figma)"
+        },
+        {
+          "s": "fait",
+          "t": "Landing page tarineo.com"
+        }
+      ],
+      "figma": "https://www.figma.com/file/TvO91gJNuCUY5YJ7X52FTY?node-id=1:1599&locale=fr&type=design",
+      "github": "https://github.com/noamdj02-netizen/tarineo-app",
+      "log": [
+        {
+          "d": "17/09/2026",
+          "t": "21 templates email prêts (8 en React, 13 dans Figma)"
+        },
+        {
+          "d": "24/09/2026",
+          "t": "Audit landing : faux chiffres repérés, plan bêta défini"
+        }
+      ],
+      "name": "Tarineo",
+      "next": "Retirer les faux chiffres du site (120K+, 4,9, 89+) et recruter 10 artisans bêta.",
+      "notion": "",
+      "order": 1,
+      "partner": "Alan (backend/IA)",
+      "pitch": "Tarineo lit les devis et factures fournisseurs des artisans BTP (photo, PDF, mail), les compare à leur historique d’achat et détecte les hausses de prix pour leur donner un levier de négociation face aux distributeurs.",
+      "problem": "Les prix des distributeurs (Cedeo, Point P, Rexel…) montent ligne par ligne sans que l’artisan le voie. Comparer à la main prend des heures, donc personne ne le fait.",
+      "risks": [
+        "Faux chiffres sur le site : perte de confiance et pratique commerciale trompeuse",
+        "Partage Noam / Alan pas encore décidé",
+        "Précision de l’OCR sur les vrais devis à valider en bêta"
+      ],
+      "site": "https://www.tarineo.com",
+      "stack": [
+        "Repo GitHub privé tarineo-app",
+        "IA / OCR",
+        "Emails React",
+        "Stack exacte à confirmer avec Alan"
+      ],
+      "stage": 3,
+      "status": "focus",
+      "target": "Artisans BTP en France",
+      "tasks": [
+        {
+          "done": false,
+          "t": "Retirer les faux chiffres du site (120K+, 4,9, 89+)"
+        },
+        {
+          "done": false,
+          "t": "Recruter 10 artisans bêta"
+        },
+        {
+          "done": false,
+          "t": "Collecter 3 vrais témoignages"
+        },
+        {
+          "done": false,
+          "t": "Décider le partage Noam / Alan (%, statut, facturation)"
+        },
+        {
+          "done": false,
+          "t": "Tourner une vidéo démo de 30 s (devis Point P annoté)"
+        },
+        {
+          "done": false,
+          "t": "Coder les 13 emails restants"
+        }
+      ],
+      "team": [
+        "Noam : business, landing, design, emails, terrain",
+        "Alan : backend et IA (depuis ~1,5 mois)"
+      ],
+      "theme": "Thème Chantier"
+    }
+  ],
+  "resources": [
+    {
+      "id": "n-3djack",
+      "cat": "Prompt Design",
+      "created": 1758700000002,
+      "name": "3D Jack Portfolio",
+      "note": "Base de portfolio 3D. Licence perso seulement : s’en inspirer, réécrire avant de vendre.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa381f69821e8fa389e79bd",
+      "source": "notion",
+      "tags": [
+        "3D Immersif",
+        "Portfolio",
+        "Payant/Licence à vérifier"
+      ],
+      "url": "https://github.com/nomaan5541/motionsites-prompt-collection/blob/main/prompts/3D_Jack_Portfolio.md",
+      "verified": false
+    },
+    {
+      "id": "n-claude-code",
+      "cat": "Outils Dev",
+      "created": 1758700000011,
+      "name": "Claude Code (CLI)",
+      "note": "Ton outil principal pour exécuter les prompts : mkdir projet → coller le prompt dans claude → review → itérer.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa38195b94cea7337606ccb",
+      "source": "notion",
+      "tags": [
+        "CLAUDE.md"
+      ],
+      "url": "",
+      "verified": true
+    },
+    {
+      "id": "n-cline",
+      "cat": "Outils Dev",
+      "created": 1758700000010,
+      "name": "Cline (extension VS Code)",
+      "note": "Alternative à Claude Code pour les prompts motionsites. Base du Cline Landing Page Kit.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa381539d3ae2965a6adc6e",
+      "source": "notion",
+      "tags": [
+        ".clinerules"
+      ],
+      "url": "https://github.com/cline/cline",
+      "verified": true
+    },
+    {
+      "id": "n-devis-instant",
+      "cat": "Facturation",
+      "created": 1758700000001,
+      "name": "Devis Instant",
+      "note": "Ton générateur de devis/factures, aussi utile pour facturer tes clients freelance.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa381c9a64bdba84ac570df",
+      "source": "notion",
+      "tags": [
+        "Ton produit"
+      ],
+      "url": "https://devisinstant.eu",
+      "verified": true
+    },
+    {
+      "id": "n-horizonx",
+      "cat": "Animation & 3D",
+      "created": 1758700000004,
+      "name": "HorizonX — 3D WebGL",
+      "note": "Les prompts 3D les plus poussés (vrai WebGL, React Three Fiber + drei). À lire avant usage.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa38150b948e65479006745",
+      "source": "notion",
+      "tags": [
+        "3D Immersif",
+        "Payant/Licence à vérifier"
+      ],
+      "url": "https://github.com/nomaan5541/motionsites-prompt-collection/tree/main/extractions/horizonx",
+      "verified": false
+    },
+    {
+      "id": "n-inkflow-ticket",
+      "cat": "Couleurs & Polices",
+      "created": 1758700000006,
+      "name": "InkFlow — Dark ticket-stub",
+      "note": "Grille de points quasi noire, Bebas Neue, JetBrains Mono, un seul accent rouge, lignes perforées. Réf Canva DAHR3WvBZ6M.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa381238ba3d55f21cc9efd",
+      "source": "notion",
+      "tags": [
+        "Dark"
+      ],
+      "url": "",
+      "verified": true
+    },
+    {
+      "id": "n-motionsites-repo",
+      "cat": "Outils Dev",
+      "created": 1758700000012,
+      "name": "motionsites-prompt-collection",
+      "note": "470+ prompts de landing pages par catégorie. Certains viennent de motionsites.ai (payant) : vérifier la licence avant revente.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa381abbd67f09ecdaa5b0a",
+      "source": "notion",
+      "tags": [
+        "Prompts",
+        "Payant/Licence à vérifier"
+      ],
+      "url": "https://github.com/nomaan5541/motionsites-prompt-collection",
+      "verified": true
+    },
+    {
+      "id": "n-prisma-palette",
+      "cat": "Couleurs & Polices",
+      "created": 1758700000007,
+      "name": "Prisma — Palette éditoriale sombre",
+      "note": "Noir #000 / crème #DEDBC8 / cartes #101010. Almarai + Instrument Serif italique.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa38147af86eed259ea2245",
+      "source": "notion",
+      "tags": [
+        "Architecture",
+        "Agency"
+      ],
+      "url": "",
+      "verified": true
+    },
+    {
+      "id": "n-prisma",
+      "cat": "Prompt Design",
+      "created": 1758700000008,
+      "name": "Prisma Creative Studio",
+      "note": "Éditorial sombre, cinématique, crème. Testé pour Atelier Majuscule. Pour tout client premium.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa3819da035ea8a5da76a7a",
+      "source": "notion",
+      "tags": [
+        "Architecture",
+        "Agency"
+      ],
+      "url": "https://github.com/nomaan5541/motionsites-prompt-collection/blob/main/prompts/Prisma_Creative_Studio.md",
+      "verified": true
+    },
+    {
+      "id": "n-r3f-custom",
+      "cat": "Animation & 3D",
+      "created": 1758700000003,
+      "name": "Prompt custom Immersif 3D (R3F)",
+      "note": "Écrit à la main, revendable sans souci de licence. Hero WebGL + caméra au scroll + sphère interactive.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa38160ba52f27ac288edc0",
+      "source": "notion",
+      "tags": [
+        "3D Immersif",
+        "Portfolio"
+      ],
+      "url": "",
+      "verified": false
+    },
+    {
+      "id": "n-shadcn",
+      "cat": "Composants UI",
+      "created": 1758700000009,
+      "name": "shadcn/ui",
+      "note": "Base par défaut pour tout nouveau projet React + Tailwind. Utilisé dans presque tous les prompts motionsites.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa3819ebf6ac6079dd592de",
+      "source": "notion",
+      "tags": [
+        "SaaS",
+        "React",
+        "Tailwind"
+      ],
+      "url": "https://ui.shadcn.com",
+      "verified": false
+    },
+    {
+      "id": "n-wellness",
+      "cat": "Prompt Design",
+      "created": 1758700000005,
+      "name": "Health/Wellness E-commerce Landing",
+      "note": "Structure en 9 sections pour produit unique : grille produits, marquee, FAQ, bouton gradient.",
+      "notionUrl": "https://app.notion.com/p/3d6246970fa38146933de7bf274c8c35",
+      "source": "notion",
+      "tags": [
+        "E-commerce"
+      ],
+      "url": "",
+      "verified": true
+    }
+  ]
+}
