@@ -7,9 +7,9 @@ export const metadata = { title: "Connexion" };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; signed_out?: string }>;
 }) {
-  const { next, error } = await searchParams;
+  const { next, error, signed_out } = await searchParams;
   return (
     <AuthCard
       art="onboarding-bienvenue"
@@ -25,7 +25,11 @@ export default async function LoginPage({
         </>
       }
     >
-      <LoginForm next={next} linkError={error === "lien"} />
+      <LoginForm
+        next={next}
+        linkError={error === "lien"}
+        signedOut={signed_out === "1"}
+      />
     </AuthCard>
   );
 }

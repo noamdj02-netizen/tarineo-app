@@ -2,6 +2,10 @@
 export const BRAND = {
   name: "Navpit",
   domain: "navpit.com",
+  /** Canonique SEO + emails (www). */
+  siteUrl: "https://www.navpit.com",
+  /** Logo statique (header site + app). */
+  logoSrc: "/icons/logoNavPit.png",
   tagline: "The operating system for focused founders.",
   /** Description courte (français) : balise meta, écran de connexion. */
   description:

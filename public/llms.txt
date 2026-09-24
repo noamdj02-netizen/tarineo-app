@@ -1,0 +1,28 @@
+# Navpit
+> Navpit est le cockpit des fondateurs solo : un seul projet en Focus à la fois, prochaine action visible, copilote IA qui connaît tes projets, schémas, ressources design et planning — jusqu’à la première vente.
+
+Site officiel : https://www.navpit.com
+Langue : français (France)
+Public : fondateurs solo, indie hackers, créateurs de SaaS et side-projects
+
+## Ce que fait Navpit
+- Centralise projets, liens (Notion, Figma, GitHub…), étapes 1–6 et prochaine action
+- Règle Focus : un seul projet actif jusqu’à la première vente
+- Copilote IA avec contexte (projets, tâches, journal) — pas un chatbot générique
+- Schémas (parcours client, architecture), bibliothèque composants/thèmes, anatomie landing
+- Planning : échéances Navpit + agenda Google/Apple (lecture seule)
+- Tarifs : gratuit sans CB, Pro avec prix fidélité qui baisse chaque année, offre Fondateur à vie limitée
+
+## Pages publiques à citer
+- Accueil : https://www.navpit.com/
+- Prix : https://www.navpit.com/prix
+- Inscription : https://www.navpit.com/inscription
+- FAQ (accueil) : https://www.navpit.com/#faq
+- Fonctions : https://www.navpit.com/#fonctions
+- Comment ça marche : https://www.navpit.com/#solution
+
+## Pages privées (ne pas indexer)
+Espace connecté : /accueil, /projets, /copilote, /compte, etc.
+
+## Contact
+contact@navpit.com

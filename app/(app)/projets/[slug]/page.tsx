@@ -21,7 +21,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
     <section className="mx-auto max-w-[760px]">
       <Link
         href="/projets"
-        className="mb-4 inline-flex min-h-11 items-center gap-2 font-mono text-[11px] font-medium tracking-[0.1em] text-muted uppercase hover:text-ink"
+        className="mb-4 inline-flex min-h-11 items-center gap-2 font-mono text-[11px] font-medium tracking-[0.1em] text-muted-foreground uppercase hover:text-ink"
       >
         <ArrowLeft className="size-4" aria-hidden />
         Tous les projets

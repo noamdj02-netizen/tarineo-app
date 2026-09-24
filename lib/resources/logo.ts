@@ -21,9 +21,14 @@ function domainOf(url: string) {
   }
 }
 
+/** Logo de marque via logo.dev (clé publique `pk_…` dans NEXT_PUBLIC_LOGO_DEV_TOKEN). */
+export function brandLogoUrl(domain: string, size = 80) {
+  if (!LOGO_DEV_TOKEN || !domain) return null;
+  return `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}&size=${size}&format=png&retina=true`;
+}
+
 export function resourceLogoUrl(r: Pick<Resource, "name" | "url">) {
-  if (!LOGO_DEV_TOKEN) return null;
   const domain = BY_NAME.find(([re]) => re.test(r.name))?.[1] ?? (r.url ? domainOf(r.url) : null);
   if (!domain) return null;
-  return `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}&size=80&format=png&retina=true`;
+  return brandLogoUrl(domain, 80);
 }

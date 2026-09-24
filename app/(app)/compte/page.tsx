@@ -1,10 +1,13 @@
-import { ArrowLeft, CreditCard, Languages, LogOut, Shield } from "lucide-react";
+import { ArrowLeft, CreditCard, Languages, Shield } from "lucide-react";
 import Link from "next/link";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PageHead } from "@/components/shell/page-head";
 import { getPlan } from "@/lib/billing/plan";
 import { LOYALTY_TIERS, PLAN_LABEL } from "@/lib/billing/plans";
 import { getViewer } from "@/lib/session";
+import { WIZARD_STEPS } from "@/lib/onboarding-wizard";
 import { AvatarForm, LocaleForm, NameForm, PasswordForm } from "./forms";
+import { OnboardingLaunch } from "./onboarding-launch";
 
 export const metadata = { title: "Compte" };
 
@@ -36,7 +39,7 @@ export default async function ComptePage() {
     <section className="mx-auto max-w-[720px]">
       <Link
         href="/accueil"
-        className="mb-4 inline-flex min-h-10 items-center gap-2 text-[14px] text-muted hover:text-ink"
+        className="mb-4 inline-flex min-h-10 items-center gap-2 text-[14px] text-muted-foreground hover:text-ink"
       >
         <ArrowLeft className="size-4" aria-hidden />
         Retour à l’accueil
@@ -46,6 +49,25 @@ export default async function ComptePage() {
       </PageHead>
 
       <div className="flex flex-col gap-4">
+        <div id="configuration" className="card-soft p-5 sm:p-6">
+          <p className="mono-label mb-3">/ Configuration initiale ///</p>
+          <p className="text-[14.5px] leading-relaxed text-muted-foreground">
+            Le parcours en 5 étapes (inscription ou Google) : prénom, projets, analyse IA, goût
+            design, puis entrée dans le cockpit.
+          </p>
+          <ol className="mt-4 flex flex-col gap-2">
+            {WIZARD_STEPS.map((step, i) => (
+              <li key={step} className="flex gap-3 text-[14px] leading-snug text-ink/85">
+                <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{i + 1}.</span>
+                {step}
+              </li>
+            ))}
+          </ol>
+          <div className="mt-5">
+            <OnboardingLaunch needsContinue={viewer.needsOnboarding} />
+          </div>
+        </div>
+
         <div className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-4">/ Photo ///</p>
           <AvatarForm avatarUrl={viewer.avatarUrl} initial={viewer.initial} />
@@ -58,7 +80,7 @@ export default async function ComptePage() {
 
         <div className="card-soft p-5 sm:p-6">
           <p className="mb-4 flex items-center gap-2">
-            <Languages className="size-4 text-muted" aria-hidden />
+            <Languages className="size-4 text-muted-foreground" aria-hidden />
             <span className="mono-label mb-0">/ Langue ///</span>
           </p>
           <LocaleForm locale={viewer.locale} />
@@ -66,7 +88,7 @@ export default async function ComptePage() {
 
         <div className="card-soft p-5 sm:p-6">
           <p className="mb-4 flex items-center gap-2">
-            <Shield className="size-4 text-muted" aria-hidden />
+            <Shield className="size-4 text-muted-foreground" aria-hidden />
             <span className="mono-label mb-0">/ Mot de passe ///</span>
           </p>
           <PasswordForm />
@@ -74,13 +96,13 @@ export default async function ComptePage() {
 
         <div className="card-soft p-5 sm:p-6">
           <p className="mb-4 flex items-center gap-2">
-            <CreditCard className="size-4 text-muted" aria-hidden />
+            <CreditCard className="size-4 text-muted-foreground" aria-hidden />
             <span className="mono-label mb-0">/ Abonnement ///</span>
           </p>
           <p className="font-display text-[28px] font-semibold tracking-tightest">
             {PLAN_LABEL[info.plan]} · {price}
           </p>
-          <p className="mt-1 text-[14px] text-muted">
+          <p className="mt-1 text-[14px] text-muted-foreground">
             {info.plan === "free"
               ? "Gratuit : 2 projets, 30 questions IA / mois, 3 schémas. Pro commence à 15 € / mois, puis 12 €, puis 9 €."
               : info.plan === "pro"
@@ -107,15 +129,9 @@ export default async function ComptePage() {
         </div>
 
         {viewer.canSignOut ? (
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="inline-flex min-h-11 items-center gap-2 rounded-pill border border-line px-5 text-[14px] text-muted hover:text-ink"
-            >
-              <LogOut className="size-4" aria-hidden />
-              Se déconnecter
-            </button>
-          </form>
+          <SignOutButton
+            className="inline-flex min-h-11 w-auto justify-center rounded-pill border border-line px-5 text-[14px] text-muted-foreground hover:bg-accent-soft hover:text-ink"
+          />
         ) : null}
       </div>
     </section>

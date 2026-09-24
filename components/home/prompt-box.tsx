@@ -2,6 +2,7 @@
 
 import { useReducedMotion } from "framer-motion";
 import { ArrowUp, Mic, MicOff, Paperclip, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModelSelect, useModel } from "@/components/assistant/model-select";
 import { TypingPlaceholder } from "@/components/home/typing-placeholder";
@@ -11,8 +12,10 @@ import {
   readAsAssistantFile,
   type AssistantFile,
 } from "@/lib/assistant/files";
-import { openAssistant } from "@/lib/assistant/open";
-import { AUTOMATIONS } from "@/lib/home/automations";
+import { stashCopilotDraft } from "@/lib/assistant/copilot-draft.client";
+import { Mascot } from "@/components/home/mascot";
+import { AutomationChips } from "@/components/home/automation-chips";
+import { AUTOMATIONS, type Automation } from "@/lib/home/automations";
 import { cn } from "@/lib/utils";
 
 type SpeechRecognitionLike = {
@@ -42,9 +45,20 @@ const PLACEHOLDERS = AUTOMATIONS.map((a) => a.hint);
 
 /**
  * Barre de l'accueil : dépôt de fichiers, exemples d'automatisations, mascotte qui écrit.
- * Ouvre le copilote (panneau) avec la question et les pièces jointes.
+ * Envoie vers la page Copilote avec la question et les pièces jointes.
  */
-export function PromptBox({ className }: { className?: string }) {
+export function PromptBox({
+  className,
+  band,
+  large,
+}: {
+  className?: string;
+  /** Bandeau dashboard : sans puces auto. */
+  band?: boolean;
+  /** Zone de saisie plus haute (dashboard featured). */
+  large?: boolean;
+}) {
+  const router = useRouter();
   const reduce = useReducedMotion();
   const [value, setValue] = useState("");
   const [model, setModel] = useModel();
@@ -71,8 +85,9 @@ export function PromptBox({ className }: { className?: string }) {
     const ta = taRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    ta.style.height = `${Math.min(ta.scrollHeight, 180)}px`;
-  }, [value]);
+    const max = large ? 220 : 180;
+    ta.style.height = `${Math.min(ta.scrollHeight, max)}px`;
+  }, [value, large]);
 
   const addFiles = useCallback(async (list: FileList | File[]) => {
     setFileError(null);
@@ -94,15 +109,18 @@ export function PromptBox({ className }: { className?: string }) {
     if ((!q && !files.length) || sending) return;
     setSending(true);
     const attached = files;
-    setTimeout(
-      () => {
-        openAssistant(q, attached.length ? attached : undefined);
-        setValue("");
-        setFiles([]);
-        setSending(false);
-      },
-      reduce ? 0 : 280,
-    );
+    setTimeout(() => {
+      stashCopilotDraft({
+        question: q,
+        files: attached.length ? attached : undefined,
+      });
+      const sp = new URLSearchParams({ send: "1" });
+      if (!attached.length && q) sp.set("q", q.slice(0, 500));
+      router.push(`/copilote?${sp}`);
+      setValue("");
+      setFiles([]);
+      setSending(false);
+    }, reduce ? 0 : 280);
   }
 
   function toggleDictation() {
@@ -134,7 +152,7 @@ export function PromptBox({ className }: { className?: string }) {
 
   return (
     <div className={cn("flex flex-col", className)}>
-      <div className="mt-auto">
+      <div className={band ? undefined : "mt-auto"}>
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -154,7 +172,8 @@ export function PromptBox({ className }: { className?: string }) {
               submit();
             }}
             className={cn(
-              "relative flex flex-col gap-2 rounded-[28px] bg-surface p-2 pl-4 shadow-soft transition-[box-shadow,outline-color] duration-500 ease-out-soft focus-within:shadow-lift",
+              "relative flex flex-col gap-2 rounded-[28px] bg-surface shadow-soft transition-[box-shadow,outline-color] duration-500 ease-out-soft focus-within:shadow-lift",
+              large ? "p-3 pl-5 sm:p-3.5 sm:pl-6" : "p-2 pl-4",
               dragOver && "ring-2 ring-ink/20",
             )}
           >
@@ -185,15 +204,23 @@ export function PromptBox({ className }: { className?: string }) {
               </ul>
             ) : null}
 
-            <div className="flex items-end gap-2">
+            <div className={cn("flex items-end gap-2", large && "gap-2.5")}>
               <label htmlFor="prompt" className="sr-only">
                 Ta question au copilote
               </label>
-              <div className="relative min-w-0 flex-1 self-center">
+              <div
+                className={cn(
+                  "relative min-w-0 flex-1 self-center",
+                  large && "min-h-[4.5rem] sm:min-h-[5rem]",
+                )}
+              >
                 {empty ? (
                   <div
                     aria-hidden
-                    className="pointer-events-none absolute inset-0 flex items-center py-2 text-[16px] leading-7 text-muted"
+                    className={cn(
+                      "pointer-events-none absolute inset-0 flex items-center py-2 text-muted-foreground",
+                      large ? "text-[17px] leading-8 sm:text-[18px]" : "text-[16px] leading-7",
+                    )}
                   >
                     <TypingPlaceholder
                       examples={[...PLACEHOLDERS]}
@@ -205,7 +232,7 @@ export function PromptBox({ className }: { className?: string }) {
                 <textarea
                   id="prompt"
                   ref={taRef}
-                  rows={1}
+                  rows={large ? 2 : 1}
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                   onFocus={() => setFocused(true)}
@@ -222,7 +249,8 @@ export function PromptBox({ className }: { className?: string }) {
                     }
                   }}
                   className={cn(
-                    "block w-full resize-none bg-transparent py-2 text-[16px] leading-7 text-ink outline-none",
+                    "block w-full resize-none bg-transparent py-2 text-ink outline-none",
+                    large ? "text-[17px] leading-8 sm:text-[18px] sm:leading-8" : "text-[16px] leading-7",
                     empty && "caret-transparent",
                   )}
                 />
@@ -243,9 +271,12 @@ export function PromptBox({ className }: { className?: string }) {
                 type="button"
                 onClick={() => fileRef.current?.click()}
                 aria-label="Joindre un fichier"
-                className="grid size-11 flex-none place-items-center rounded-pill bg-surface-2 text-ink hover:bg-accent-soft"
+                className={cn(
+                  "grid flex-none place-items-center rounded-pill bg-surface-2 text-ink hover:bg-accent-soft",
+                  large ? "size-12" : "size-11",
+                )}
               >
-                <Paperclip className="size-[18px]" aria-hidden />
+                <Paperclip className={large ? "size-5" : "size-[18px]"} aria-hidden />
               </button>
               {canDictate ? (
                 <button
@@ -254,7 +285,8 @@ export function PromptBox({ className }: { className?: string }) {
                   aria-pressed={listening}
                   aria-label={listening ? "Arrêter la dictée" : "Dicter ma question"}
                   className={cn(
-                    "grid size-11 flex-none place-items-center rounded-pill transition-colors duration-300",
+                    "grid flex-none place-items-center rounded-pill transition-colors duration-300",
+                    large ? "size-12" : "size-11",
                     listening
                       ? "bg-ink text-accent-ink"
                       : "bg-surface-2 text-ink hover:bg-accent-soft",
@@ -271,9 +303,16 @@ export function PromptBox({ className }: { className?: string }) {
                 type="submit"
                 disabled={!canSend}
                 aria-label="Envoyer"
-                className="btn-dark grid size-11 flex-none place-items-center rounded-pill disabled:translate-y-0 disabled:opacity-35"
+                className={cn(
+                  "btn-dark grid flex-none place-items-center rounded-pill disabled:translate-y-0 disabled:opacity-35",
+                  large ? "size-12" : "size-11",
+                )}
               >
-                <ArrowUp className="size-[18px]" aria-hidden />
+                {sending ? (
+                  <Mascot mood="typing" className="size-8" />
+                ) : (
+                  <ArrowUp className="size-[18px]" aria-hidden />
+                )}
               </button>
             </div>
           </form>
@@ -285,30 +324,26 @@ export function PromptBox({ className }: { className?: string }) {
           </p>
         ) : null}
 
-        <ul className="mt-3 flex flex-wrap gap-2" aria-label="Automatisations">
-          {AUTOMATIONS.map((a, i) => (
-            <li key={a.label}>
-              <button
-                type="button"
-                onClick={() => {
-                  setValue(a.prompt);
-                  taRef.current?.focus();
-                }}
-                className={cn(
-                  "min-h-9 rounded-pill bg-surface px-3.5 text-[13px] text-ink/80 shadow-soft ring-1 ring-transparent transition-[transform,box-shadow,color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:text-ink hover:shadow-lift",
-                  i === active && "-translate-y-0.5 text-ink shadow-lift ring-ink/10",
-                )}
-              >
-                {a.label}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {large || !band ? (
+          <AutomationChips
+            className={cn(large ? "mt-3" : "mt-3")}
+            activeIndex={active}
+            showMoreLink={large}
+            onPick={(a: Automation) => {
+              if (large) {
+                submit(a.prompt);
+                return;
+              }
+              setValue(a.prompt);
+              taRef.current?.focus();
+            }}
+          />
+        ) : null}
 
-        <div className="mt-3 flex items-center justify-between gap-3 px-1">
+        <div className={cn("flex items-center justify-between gap-3 px-1", large || !band ? "mt-3" : "mt-2")}>
           <ModelSelect value={model} onChange={setModel} />
-          <p className="hidden text-[12.5px] text-muted sm:block">
-            Dépose un fichier · Entrée pour envoyer
+          <p className="hidden text-[12px] text-muted-foreground sm:block">
+            {band ? "Entrée pour envoyer" : "Dépose un fichier · Entrée pour envoyer"}
           </p>
         </div>
       </div>

@@ -106,7 +106,7 @@ export default function AnatomiePage() {
                 </article>
               </Reveal>
               {i < FRAMES.length - 1 ? (
-                <div className="conn flex items-center gap-2.5 py-2 pl-6 text-[13px] text-muted" aria-hidden>
+                <div className="conn flex items-center gap-2.5 py-2 pl-6 text-[13px] text-muted-foreground" aria-hidden>
                   <span className="line" />
                   <LucideByName name="arrow-down" />
                   scroll

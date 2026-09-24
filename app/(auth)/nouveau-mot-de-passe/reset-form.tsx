@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FormMessage, PasswordField, SubmitButton } from "@/components/auth/auth-ui";
+import { AuthFieldGroup, FormMessage, PasswordField, SubmitButton } from "@/components/auth/auth-ui";
 import { createClient } from "@/lib/supabase/client";
 import { MIN_PASSWORD } from "../inscription/signup-form";
 
@@ -49,7 +49,8 @@ export function ResetForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <form onSubmit={onSubmit}>
+      <AuthFieldGroup>
       <PasswordField
         label="Nouveau mot de passe"
         autoComplete="new-password"
@@ -67,6 +68,7 @@ export function ResetForm() {
       />
       {error ? <FormMessage>{error}</FormMessage> : null}
       <SubmitButton busy={busy}>Enregistrer</SubmitButton>
+      </AuthFieldGroup>
     </form>
   );
 }

@@ -60,7 +60,16 @@ type Loaded = {
 };
 
 /** Planning façon Calendrier Apple : grille du mois + agenda du jour. */
-export function CalendarCard() {
+export function CalendarCard({
+  layout = "split",
+  className,
+  dense,
+}: {
+  /** `split` = mois | agenda côte à côte ; `stack` = empilé (colonne dashboard). */
+  layout?: "split" | "stack";
+  className?: string;
+  dense?: boolean;
+}) {
   const reduce = useReducedMotion();
   const today = keyOf(new Date());
   const [month, setMonth] = useState(() => {
@@ -123,7 +132,7 @@ export function CalendarCard() {
 
   return (
     <section
-      className="card-soft flex flex-col gap-4 p-4 sm:p-5"
+      className={cn("card-soft flex flex-col gap-4 p-4 sm:p-5", className)}
       aria-label="Planning"
     >
       <header className="flex flex-wrap items-center gap-2">
@@ -135,7 +144,7 @@ export function CalendarCard() {
         </div>
         {loading ? (
           <Loader2
-            className="size-4 animate-spin text-muted"
+            className="size-4 animate-spin text-muted-foreground"
             aria-label="Chargement"
           />
         ) : null}
@@ -166,10 +175,15 @@ export function CalendarCard() {
         </div>
       </header>
 
-      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <div
+        className={cn(
+          "grid gap-5",
+          layout === "split" && "md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]",
+        )}
+      >
         {/* grille du mois */}
         <div>
-          <div className="grid grid-cols-7 text-center font-mono text-[10.5px] text-muted">
+          <div className="grid grid-cols-7 text-center font-mono text-[10.5px] text-muted-foreground">
             {WEEKDAYS.map((d, i) => (
               <span key={i} className="py-1.5">
                 {d}
@@ -209,7 +223,7 @@ export function CalendarCard() {
                           ? "bg-accent-soft font-semibold ring-1 ring-ink/20"
                           : inMonth
                             ? "group-hover:bg-accent-soft"
-                            : "text-muted/60 group-hover:bg-accent-soft",
+                            : "text-muted-foreground/60 group-hover:bg-accent-soft",
                     )}
                   >
                     {d.getDate()}
@@ -232,7 +246,12 @@ export function CalendarCard() {
         </div>
 
         {/* agenda du jour */}
-        <div className="flex min-h-[260px] flex-col rounded-2xl bg-surface-2 p-3.5">
+        <div
+          className={cn(
+            "flex flex-col rounded-2xl bg-surface-2 p-3.5",
+            dense ? "min-h-[200px]" : "min-h-[260px]",
+          )}
+        >
           <div className="flex items-center justify-between gap-2">
             <p className="text-[14px] font-semibold first-letter:uppercase">
               {selDate.toLocaleDateString("fr-FR", {
@@ -288,7 +307,7 @@ export function CalendarCard() {
                     )}
                     aria-hidden
                   />
-                  <span className="w-11 flex-none font-mono text-[11px] leading-tight text-muted">
+                  <span className="w-11 flex-none font-mono text-[11px] leading-tight text-muted-foreground">
                     {e.allDay ? (
                       "Journée"
                     ) : (
@@ -307,7 +326,7 @@ export function CalendarCard() {
                     <span className="block truncate text-[14px]">
                       {e.title}
                     </span>
-                    <span className="block truncate text-[11.5px] text-muted">
+                    <span className="block truncate text-[11.5px] text-muted-foreground">
                       {e.source === "ical"
                         ? data?.feed.connected
                           ? data.feed.provider
@@ -324,7 +343,7 @@ export function CalendarCard() {
           </ul>
 
           {dayEvents.length === 0 && !adding ? (
-            <div className="m-auto flex flex-col items-center gap-1 py-4 text-center text-[13px] text-muted">
+            <div className="m-auto flex flex-col items-center gap-1 py-4 text-center text-[13px] text-muted-foreground">
               <Illustration
                 name="dashboard-tache-validee"
                 className="size-16"
@@ -346,7 +365,7 @@ export function CalendarCard() {
             <button
               type="button"
               onClick={() => setConnectOpen(true)}
-              className="inline-flex min-h-9 items-center gap-1.5 text-[12.5px] text-muted hover:text-ink"
+              className="inline-flex min-h-9 items-center gap-1.5 text-[12.5px] text-muted-foreground hover:text-ink"
             >
               <Link2 className="size-3.5" aria-hidden />
               {data?.feed.connected
@@ -441,7 +460,7 @@ function AddEventForm({ day, onDone }: { day: string; onDone: () => void }) {
               <option value="240">4 h</option>
             </select>
           ) : (
-            <span className="text-[12px] text-muted">
+            <span className="text-[12px] text-muted-foreground">
               Sans heure : toute la journée
             </span>
           )}
@@ -493,7 +512,7 @@ function DeleteEvent({ id, onDeleted }: { id: string; onDeleted: () => void }) {
         "grid h-8 flex-none place-items-center rounded-pill text-[11.5px] transition-colors",
         armed
           ? "bg-destructive px-2.5 text-white"
-          : "w-8 text-muted hover:bg-accent-soft hover:text-ink",
+          : "w-8 text-muted-foreground hover:bg-accent-soft hover:text-ink",
       )}
     >
       {armed ? "Supprimer" : <X className="size-3.5" aria-hidden />}
@@ -588,7 +607,7 @@ function ConnectDialog({
                 type="button"
                 onClick={onClose}
                 aria-label="Fermer"
-                className="grid size-9 place-items-center rounded-pill text-muted hover:bg-accent-soft"
+                className="grid size-9 place-items-center rounded-pill text-muted-foreground hover:bg-accent-soft"
               >
                 <X className="size-4" aria-hidden />
               </button>
@@ -608,7 +627,7 @@ function ConnectDialog({
                 lien peut voir l’agenda.
               </li>
             </ol>
-            <p className="mt-3 text-[12.5px] text-muted">
+            <p className="mt-3 text-[12.5px] text-muted-foreground">
               Lecture seule, relu toutes les 5 minutes. Le lien reste privé :
               seul le serveur le lit.
             </p>
@@ -635,7 +654,7 @@ function ConnectDialog({
                     type="button"
                     onClick={remove}
                     disabled={pending}
-                    className="min-h-10 rounded-xl px-3 text-[13px] text-muted hover:bg-accent-soft hover:text-ink"
+                    className="min-h-10 rounded-xl px-3 text-[13px] text-muted-foreground hover:bg-accent-soft hover:text-ink"
                   >
                     Retirer {feed.provider}
                   </button>

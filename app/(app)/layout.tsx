@@ -1,10 +1,10 @@
 import { Suspense } from "react";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
+import { AppMainScrollRestore } from "@/components/shell/app-main-chrome";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
 import { getPlan } from "@/lib/billing/plan";
-import { PLAN_LABEL } from "@/lib/billing/plans";
 import { getOnboarding } from "@/lib/onboarding";
 import { getViewer } from "@/lib/session";
 
@@ -15,13 +15,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const [viewer, onboarding, plan] = await Promise.all([getViewer(), getOnboarding(), getPlan()]);
 
   return (
-    <div className="flex min-h-dvh bg-bg">
-      <Sidebar onboarding={onboarding} />
-      <div className="flex min-w-0 flex-1 flex-col lg:p-2 lg:pl-0">
-        {/* Zone principale blanche */}
-        <div className="flex min-h-full flex-1 flex-col bg-surface lg:overflow-clip lg:rounded-card lg:shadow-soft">
-          <Topbar viewer={viewer} plan={PLAN_LABEL[plan?.plan ?? "free"]} />
-          <main className="mx-auto w-full max-w-[1080px] flex-1 px-4 pt-6 pb-[calc(120px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:pb-16">
+    <div className="min-h-dvh bg-bg">
+      <Sidebar onboarding={onboarding} viewer={viewer} />
+      {/* Décalage = largeur sidebar fixe ; le scroll reste dans <main> sur desktop */}
+      <div className="flex min-h-dvh min-w-0 flex-col lg:ml-[252px] lg:p-2">
+        <div
+          className="flex min-h-dvh flex-1 flex-col bg-surface lg:min-h-0 lg:max-h-[calc(100dvh-16px)] lg:overflow-hidden lg:rounded-card lg:shadow-soft"
+        >
+          <Topbar viewer={viewer} planId={plan?.plan ?? "free"} />
+          <main
+            id="app-main"
+            className="mx-auto w-full max-w-[1280px] flex-1 px-4 pt-6 pb-[calc(120px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:overflow-x-hidden lg:overflow-y-auto lg:pb-16 lg:overscroll-contain"
+          >
+            <AppMainScrollRestore />
             {children}
           </main>
         </div>

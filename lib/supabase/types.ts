@@ -144,6 +144,10 @@ export type Database = {
       calendar_events: Table<CalendarEventRow, "title" | "starts_at">;
       calendar_feeds: Table<CalendarFeedRow, "url">;
       subscriptions: Table<SubscriptionRow, "user_id">;
+      user_dashboard: Table<
+        { user_id: string; layout: Record<string, unknown>; updated_at: string },
+        "user_id"
+      >;
     };
     Views: Record<string, never>;
     Functions: {

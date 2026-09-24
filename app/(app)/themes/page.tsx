@@ -39,7 +39,7 @@ export default async function ThemesPage() {
         <h2 className="font-display text-[clamp(24px,4.5vw,32px)] leading-[1.05] font-semibold tracking-tightest">
           6 thèmes <span className="text-accent-2">prêts à copier.</span>
         </h2>
-        <p className="max-w-[62ch] text-[15.5px] leading-relaxed text-muted">
+        <p className="max-w-[62ch] text-[15.5px] leading-relaxed text-muted-foreground">
           Chaque thème = couleurs, typos, arrondis et ombres. Une pre-landing donne la structure, le
           thème donne le style.
         </p>

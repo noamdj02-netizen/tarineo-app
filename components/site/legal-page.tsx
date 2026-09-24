@@ -14,7 +14,7 @@ export function LegalPage({
       <h1 className="mt-3 font-display text-[clamp(32px,5vw,46px)] leading-[1.05] font-semibold tracking-tightest">
         {title}
       </h1>
-      <p className="mt-3 text-[14px] text-muted">Mise à jour : {updated}</p>
+      <p className="mt-3 text-[14px] text-muted-foreground">Mise à jour : {updated}</p>
       <div className="mt-10 flex flex-col gap-8">
         {sections.map((s) => (
           <section key={s.h} className="flex flex-col gap-3">

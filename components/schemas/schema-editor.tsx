@@ -185,7 +185,7 @@ export function SchemaEditor({
         <p
           aria-live="polite"
           className={cn(
-            "font-mono text-[11px] text-muted",
+            "font-mono text-[11px] text-muted-foreground",
             status === "error" && "text-destructive",
           )}
         >
@@ -231,7 +231,7 @@ export function SchemaEditor({
                 )}
               />
               {agent === "running" ? (
-                <p className="inline-flex items-center gap-2 text-[14.5px] text-muted">
+                <p className="inline-flex items-center gap-2 text-[14.5px] text-muted-foreground">
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                   L’agent dessine ton schéma…
                 </p>

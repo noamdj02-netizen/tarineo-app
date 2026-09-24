@@ -92,7 +92,7 @@ export function SchemaLibrary({
           <p className="text-[16px] font-semibold tracking-[-0.02em]">
             Aucun schéma ici
           </p>
-          <p className="max-w-[40ch] text-[14px] text-muted">
+          <p className="max-w-[40ch] text-[14px] text-muted-foreground">
             Crée un schéma vide ou laisse un agent dessiner celui d’un projet.
           </p>
         </div>
@@ -141,7 +141,7 @@ function SchemaItem({
       >
         {s.title}
       </Link>
-      <p className="font-mono text-[11.5px] text-muted">
+      <p className="font-mono text-[11.5px] text-muted-foreground">
         Modifié le {formatFrDate(s.updated_at.slice(0, 10))}
       </p>
       <button
@@ -162,7 +162,7 @@ function SchemaItem({
           "absolute top-3 right-3 z-10 grid min-h-9 min-w-9 place-items-center rounded-lg px-1.5 font-mono text-[10.5px] transition-colors",
           armed
             ? "bg-destructive text-accent-ink"
-            : "text-muted hover:bg-accent-soft hover:text-ink",
+            : "text-muted-foreground hover:bg-accent-soft hover:text-ink",
         )}
       >
         {pending ? (
@@ -288,7 +288,7 @@ function NewSchemaDialog({
               onClick={() => setMode(id)}
               className={cn(
                 "inline-flex min-h-10 items-center justify-center gap-1.5 rounded-pill text-[13.5px] font-medium transition-colors disabled:opacity-40",
-                mode === id ? "bg-surface shadow-soft" : "text-muted",
+                mode === id ? "bg-surface shadow-soft" : "text-muted-foreground",
               )}
             >
               <Icon className="size-4" aria-hidden />
@@ -343,7 +343,7 @@ function NewSchemaDialog({
                       <b className="block text-[14.5px] font-semibold">
                         {a.label}
                       </b>
-                      <small className="block text-[12.5px] text-muted">
+                      <small className="block text-[12.5px] text-muted-foreground">
                         {a.hint}
                       </small>
                     </span>

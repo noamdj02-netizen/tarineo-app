@@ -23,7 +23,7 @@ export default async function AuditPage() {
         </PageHead>
         <div className="card-soft flex flex-col items-center gap-3 p-8 text-center">
           <Illustration name="empty-pause-cafe" className="size-24" />
-          <p className="max-w-[46ch] text-[15px] leading-relaxed text-muted">
+          <p className="max-w-[46ch] text-[15px] leading-relaxed text-muted-foreground">
             En attendant, coche les 12 frames une par une dans l’onglet Anatomie.
           </p>
           <Link href="/anatomie" className="btn-dark inline-flex min-h-11 items-center rounded-pill px-5 text-[14px] font-medium">

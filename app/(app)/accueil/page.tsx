@@ -1,35 +1,57 @@
-import { ActionCards, type ActionCard } from "@/components/home/action-cards";
-import { CalendarCard } from "@/components/home/calendar-card";
-import { GlowCard } from "@/components/home/glow-card";
-import { PromptBox } from "@/components/home/prompt-box";
-import { WeekCard } from "@/components/home/week-card";
-import { Reveal, RevealGroup } from "@/components/motion/reveal";
+import { loadDashboardLayout } from "@/app/(app)/accueil/dashboard-actions";
+import type { ActionCard } from "@/components/home/action-cards";
+import { HomeDashboard } from "@/components/home/home-dashboard";
 import { getDb } from "@/lib/db";
 import { getWeekStats } from "@/lib/home/week";
 import { getViewer } from "@/lib/session";
 
-export const metadata = { title: "Accueil" };
+import { siteMetadata } from "@/lib/seo";
 
-async function getFocusProject() {
+export const metadata = {
+  title: "Accueil",
+  ...siteMetadata({ title: "Accueil", path: "/accueil", noIndex: true }),
+};
+
+async function getDashboardData() {
   const db = await getDb();
-  if (!db) return null;
-  const { data } = await db.supabase
-    .from("projects")
-    .select("slug, name, next")
-    .eq("user_id", db.user.id)
-    .eq("status", "focus")
-    .order("sort_order")
-    .limit(1)
-    .maybeSingle();
-  return data;
+  if (!db) return { focus: null, projects: [], schemas: [] as { id: string; title: string; kind: string }[] };
+  const [focusRes, projectsRes, schemasRes] = await Promise.all([
+    db.supabase
+      .from("projects")
+      .select("slug, name, next")
+      .eq("user_id", db.user.id)
+      .eq("status", "focus")
+      .order("sort_order")
+      .limit(1)
+      .maybeSingle(),
+    db.supabase
+      .from("projects")
+      .select("slug, name, status, next")
+      .eq("user_id", db.user.id)
+      .order("sort_order")
+      .limit(8),
+    db.supabase
+      .from("project_schemas")
+      .select("id, title, kind")
+      .eq("user_id", db.user.id)
+      .order("updated_at", { ascending: false })
+      .limit(6),
+  ]);
+  return {
+    focus: focusRes.data,
+    projects: projectsRes.data ?? [],
+    schemas: schemasRes.data ?? [],
+  };
 }
 
 export default async function AccueilPage() {
-  const [viewer, focus, week] = await Promise.all([
+  const [viewer, dashData, week, dashboardLayout] = await Promise.all([
     getViewer(),
-    getFocusProject(),
+    getDashboardData(),
     getDb().then((db) => (db ? getWeekStats(db) : null)),
+    loadDashboardLayout(),
   ]);
+  const { focus, projects, schemas } = dashData;
 
   const cards: ActionCard[] = [
     focus
@@ -69,39 +91,13 @@ export default async function AccueilPage() {
   ];
 
   return (
-    <RevealGroup className="mx-auto flex max-w-[760px] flex-col gap-8 pt-[1vh] pb-4 sm:pt-[4vh]">
-      <Reveal>
-        <GlowCard
-          tilt
-          className="flex flex-col px-5 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-6"
-        >
-          <p className="font-grotesk text-[12px] font-bold tracking-[0.16em] text-ink/75 uppercase">
-            Bonjour{viewer?.firstName ? ` ${viewer.firstName}` : ""} !
-          </p>
-          <h1 className="mt-2 max-w-[18ch] font-display text-[clamp(26px,4.6vw,38px)] leading-[1.06] font-semibold tracking-tightest text-balance">
-            Comment puis-je t’aider aujourd’hui ?
-          </h1>
-          <PromptBox className="mt-5 flex-1" />
-        </GlowCard>
-      </Reveal>
-
-      <div className="flex flex-col gap-3.5">
-        <Reveal>
-          <CalendarCard />
-        </Reveal>
-        {week ? (
-          <Reveal>
-            <WeekCard stats={week} />
-          </Reveal>
-        ) : null}
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <Reveal>
-          <p className="mono-label">{"/ Actions rapides ///"}</p>
-        </Reveal>
-        <ActionCards cards={cards} />
-      </div>
-    </RevealGroup>
+    <HomeDashboard
+      firstName={viewer?.firstName}
+      cards={cards}
+      week={week}
+      initialLayout={dashboardLayout}
+      projects={projects}
+      schemas={schemas}
+    />
   );
 }

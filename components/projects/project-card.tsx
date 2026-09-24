@@ -50,7 +50,7 @@ export function ProjectCard({ project, index }: { project: ProjectSummary; index
                 </Link>
               </h3>
               {p.description ? (
-                <p className="mt-1 text-[13.5px] leading-snug text-muted">{p.description}</p>
+                <p className="mt-1 text-[13.5px] leading-snug text-muted-foreground">{p.description}</p>
               ) : null}
             </div>
             <StatusBadge status={p.status} />
@@ -61,7 +61,7 @@ export function ProjectCard({ project, index }: { project: ProjectSummary; index
           <ProjectLinks site={p.site} github={p.github} figma={p.figma} notion={p.notion} />
 
           {p.featuresTotal || p.tasksTotal ? (
-            <div className="flex flex-wrap gap-4 font-mono text-[11px] text-muted">
+            <div className="flex flex-wrap gap-4 font-mono text-[11px] text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <Layers className="size-3.5" aria-hidden />
                 {p.featuresDone}/{p.featuresTotal} fonctions faites
@@ -107,7 +107,7 @@ export function ProjectCard({ project, index }: { project: ProjectSummary; index
 const field =
   "w-full rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[14px] text-ink outline-none focus:border-ink/40 focus:bg-surface";
 const labelCls =
-  "flex flex-col gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase";
+  "flex flex-col gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted-foreground uppercase";
 
 function EditForm({
   project: p,

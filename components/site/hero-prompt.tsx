@@ -47,7 +47,7 @@ export function HeroPrompt() {
           {empty ? (
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-2 flex items-center text-[16.5px] leading-7 text-muted"
+              className="pointer-events-none absolute inset-x-0 top-2 flex items-center text-[16.5px] leading-7 text-muted-foreground"
             >
               <TypingPlaceholder examples={EXAMPLES} paused={focused} onExample={onExample} />
             </div>

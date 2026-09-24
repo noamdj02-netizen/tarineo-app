@@ -82,7 +82,7 @@ const STATUS_STYLE: Record<FeatureStatus, string> = {
   fait: "bg-ink text-accent-ink",
   encours: "bg-accent-2 text-accent-ink",
   verif: "border border-dashed border-ink/50 text-ink bg-surface",
-  afaire: "border border-line text-muted bg-surface",
+  afaire: "border border-line text-muted-foreground bg-surface",
 };
 const STATUS_BAR: Record<FeatureStatus, string> = {
   fait: "bg-ink",
@@ -168,7 +168,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
             {business.length ? (
               <KV rows={business} />
             ) : (
-              <p className="text-[13.5px] text-muted">À compléter</p>
+              <p className="text-[13.5px] text-muted-foreground">À compléter</p>
             )}
           </Box>
         </Reveal>
@@ -192,7 +192,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
               />
             ))}
           </div>
-          <div className="mt-2.5 flex flex-wrap gap-3 font-mono text-[11px] text-muted">
+          <div className="mt-2.5 flex flex-wrap gap-3 font-mono text-[11px] text-muted-foreground">
             {FEATURE_ORDER.map((s) => (
               <span key={s} className="inline-flex items-center gap-1.5">
                 <b className={cn("inline-block size-2.5 rounded-[3px]", STATUS_BAR[s])} />
@@ -200,7 +200,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
               </span>
             ))}
           </div>
-          <p className="mt-3 mb-2.5 text-[13px] text-muted">
+          <p className="mt-3 mb-2.5 text-[13px] text-muted-foreground">
             Touche un statut pour le changer (À faire → En cours → Fait → À vérifier).
           </p>
           <ul className="flex flex-col gap-1.5">
@@ -270,7 +270,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
                     }}
                     className="size-[18px] flex-none accent-ink"
                   />
-                  <span className={cn(t.done && "text-muted line-through")}>{t.title}</span>
+                  <span className={cn(t.done && "text-muted-foreground line-through")}>{t.title}</span>
                 </label>
                 <ConfirmDelete
                   label={`Supprimer ${t.title}`}
@@ -321,7 +321,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
             {p.team.length ? (
               <Bullets items={p.team} />
             ) : (
-              <p className="text-[13.5px] text-muted">À compléter</p>
+              <p className="text-[13.5px] text-muted-foreground">À compléter</p>
             )}
           </Box>
         </Reveal>
@@ -349,7 +349,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
             <ul className="flex flex-col gap-2.5">
               {p.log.map((l) => (
                 <li key={l.id} className="grid grid-cols-[88px_1fr] gap-2 text-[13.5px]">
-                  <time dateTime={l.date} className="pt-px font-mono text-[11.5px] text-muted">
+                  <time dateTime={l.date} className="pt-px font-mono text-[11.5px] text-muted-foreground">
                     {formatFrDate(l.date)}
                   </time>
                   <span>{l.text}</span>
@@ -398,7 +398,7 @@ function Box({
     <section className={cn("card-soft p-4 sm:p-5", className)}>
       {title ? (
         <h4 className="mb-3 flex items-center gap-2 text-[15px] font-semibold tracking-[-0.02em]">
-          {Icon ? <Icon className="size-4 text-muted" aria-hidden /> : null}
+          {Icon ? <Icon className="size-4 text-muted-foreground" aria-hidden /> : null}
           {title}
         </h4>
       ) : null}
@@ -409,7 +409,7 @@ function Box({
 
 function ArtNote({ art, children }: { art: IllustrationName; children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-3 text-[13.5px] text-muted">
+    <div className="flex items-center gap-3 text-[13.5px] text-muted-foreground">
       <Illustration name={art} className="size-12" />
       <p>{children}</p>
     </div>
@@ -424,7 +424,7 @@ function KV({ rows }: { rows: [string, string][] }) {
           key={k}
           className="flex justify-between gap-3 border-b border-dashed border-line py-1.5 last:border-b-0"
         >
-          <dt className="text-muted">{k}</dt>
+          <dt className="text-muted-foreground">{k}</dt>
           <dd className="text-right font-semibold">{v}</dd>
         </div>
       ))}
@@ -489,7 +489,7 @@ function ConfirmDelete({ label, onConfirm }: { label: string; onConfirm: () => v
       aria-label={armed ? `Confirmer : ${label}` : label}
       className={cn(
         "grid min-h-9 min-w-9 flex-none place-items-center rounded-lg px-1.5 font-mono text-[10.5px] transition-colors",
-        armed ? "bg-destructive text-accent-ink" : "text-muted hover:bg-accent-soft hover:text-ink",
+        armed ? "bg-destructive text-accent-ink" : "text-muted-foreground hover:bg-accent-soft hover:text-ink",
       )}
     >
       {armed ? "Supprimer ?" : <X className="size-3.5" aria-hidden />}
@@ -546,7 +546,7 @@ function Notes({ projectId, initial }: { projectId: string; initial: string }) {
         }}
         className="w-full resize-y rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[14px] leading-relaxed outline-none focus:border-ink/40 focus:bg-surface"
       />
-      <p className="mt-1.5 font-mono text-[11px] text-muted" aria-live="polite">
+      <p className="mt-1.5 font-mono text-[11px] text-muted-foreground" aria-live="polite">
         {status === "typing"
           ? "…"
           : status === "saved"

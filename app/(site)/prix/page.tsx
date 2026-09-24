@@ -1,16 +1,30 @@
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { Faq } from "@/components/site/faq";
 import { Pricing } from "@/components/site/pricing";
+import { JsonLd } from "@/components/site/json-ld";
+import { siteMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { FAQ } from "@/lib/site/content";
 
 export const metadata = {
   title: "Prix",
   description: "Gratuit pour commencer. En Pro, ton prix baisse chaque année où tu restes abonné.",
+  ...siteMetadata({
+    title: "Prix Navpit",
+    description: "Gratuit pour commencer. En Pro, ton prix baisse chaque année où tu restes abonné.",
+    path: "/prix",
+  }),
 };
 
 export default function PrixPage() {
   return (
     <div className="px-5 pt-14 pb-20 sm:px-8 sm:pt-20">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Accueil", path: "/" },
+          { name: "Prix", path: "/prix" },
+        ])}
+      />
       <RevealGroup className="mx-auto mb-12 flex max-w-[640px] flex-col items-center gap-3 text-center">
         <Reveal>
           <p className="mono-label">/ Prix ///</p>
@@ -21,7 +35,7 @@ export default function PrixPage() {
           </h1>
         </Reveal>
         <Reveal>
-          <p className="text-[16.5px] leading-relaxed text-muted">
+          <p className="text-[16.5px] leading-relaxed text-muted-foreground">
             Commence gratuitement. En Pro, ton prix baisse tout seul à chaque anniversaire
             d’abonnement, jusqu’à 40 % de moins.
           </p>

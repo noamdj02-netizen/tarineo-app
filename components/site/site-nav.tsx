@@ -4,10 +4,13 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BRAND } from "@/lib/brand";
+import { LandingButton } from "@/components/site/landing-button";
+import { SiteLogo } from "@/components/site/site-logo";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
+  { href: "/#solution", label: "Solution" },
   { href: "/#fonctions", label: "Fonctions" },
   { href: "/#comment", label: "Comment ça marche" },
   { href: "/prix", label: "Prix" },
@@ -40,63 +43,58 @@ export function SiteNav() {
             : "border-transparent bg-transparent",
         )}
       >
-        <Link
-          href="/"
-          className="font-grotesk text-[22px] leading-none font-bold tracking-[-0.04em]"
-          aria-label={`${BRAND.name}, page d'accueil`}
-        >
-          {BRAND.name}
-          <span className="text-accent-2">.</span>
-        </Link>
+        <SiteLogo className="shrink-0" />
 
         <ul className="hidden items-center gap-1 md:flex">
           {LINKS.map((l) => (
             <li key={l.href}>
-              <Link
-                href={l.href}
-                className="rounded-pill px-3.5 py-2 text-[14px] text-ink/70 transition-colors hover:bg-accent-soft hover:text-ink"
+              <Button
+                variant="ghost"
+                size="sm"
+                render={<Link href={l.href} prefetch={l.href.startsWith("/") && !l.href.includes("#")} />}
+                className="rounded-pill px-3.5 text-muted-foreground hover:text-foreground"
               >
                 {l.label}
-              </Link>
+              </Button>
             </li>
           ))}
         </ul>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="hidden min-h-10 items-center rounded-pill px-4 text-[14px] font-medium text-ink/80 hover:text-ink sm:inline-flex"
-          >
+          <LandingButton href="/login" variant="navGhost" className="hidden sm:inline-flex">
             Connexion
-          </Link>
-          <Link
-            href="/inscription"
-            className="btn-dark inline-flex min-h-10 items-center rounded-pill px-4 text-[14px] font-medium"
-          >
-            Commencer
-          </Link>
-          <button
+          </LandingButton>
+          <LandingButton href="/#commencer" variant="navPrimary" className="hidden sm:inline-flex">
+            Commencer gratuitement
+          </LandingButton>
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
             aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-            className="grid size-10 place-items-center rounded-pill hover:bg-accent-soft md:hidden"
+            className="rounded-pill md:hidden"
           >
-            {open ? <X className="size-5" aria-hidden /> : <Menu className="size-5" aria-hidden />}
-          </button>
+            {open ? <X aria-hidden /> : <Menu aria-hidden />}
+          </Button>
         </div>
       </nav>
 
       {open ? (
         <div className="mx-auto mt-2 max-w-[1120px] rounded-[22px] border border-line bg-surface p-2 shadow-lift md:hidden">
           {[...LINKS, { href: "/login", label: "Connexion" }].map((l) => (
-            <Link
+            <Button
               key={l.href}
-              href={l.href}
-              className="flex min-h-12 items-center rounded-[14px] px-4 text-[15px] hover:bg-accent-soft"
+              variant="ghost"
+              size="lg"
+              render={
+                <Link href={l.href} prefetch={l.href.startsWith("/") && !l.href.includes("#")} />
+              }
+              className="h-12 w-full justify-start rounded-[14px] px-4 text-[15px]"
             >
               {l.label}
-            </Link>
+            </Button>
           ))}
         </div>
       ) : null}

@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           href="/"
           className="inline-flex min-h-11 items-center gap-2 font-grotesk text-[22px] font-bold tracking-[-0.04em]"
         >
-          <ArrowLeft className="size-4 text-muted" aria-hidden />
+          <ArrowLeft className="size-4 text-muted-foreground" aria-hidden />
           {BRAND.name}
           <span className="text-accent-2">.</span>
         </Link>

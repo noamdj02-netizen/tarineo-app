@@ -71,7 +71,7 @@ export function UseTemplateDialog({
             <h2 id="use-template-title" className="mt-4 text-[22px] leading-tight font-semibold tracking-[-0.035em]">
               {template.name} added to {done.projectName}
             </h2>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted">
+            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
               {done.sections} section tasks were added after your existing ones, plus a journal entry.
               Nothing else changed.
             </p>
@@ -98,7 +98,7 @@ export function UseTemplateDialog({
             <h2 id="use-template-title" className="mt-2 text-[24px] leading-tight font-semibold tracking-[-0.035em]">
               Use this pre-landing?
             </h2>
-            <p className="mt-2 text-[15px] leading-relaxed text-muted">
+            <p className="mt-2 text-[15px] leading-relaxed text-muted-foreground">
               This will create a landing structure in your project. You can customize every section
               afterwards.
             </p>
@@ -120,11 +120,11 @@ export function UseTemplateDialog({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden />
+                  <ChevronDown className="pointer-events-none absolute top-1/2 right-3.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
                 </span>
               </label>
             ) : (
-              <p className="mt-5 rounded-xl border border-line bg-surface-2 px-3.5 py-3 text-[14px] text-muted">
+              <p className="mt-5 rounded-xl border border-line bg-surface-2 px-3.5 py-3 text-[14px] text-muted-foreground">
                 No project yet.{" "}
                 <Link href="/projets" className="font-medium text-ink underline underline-offset-2">
                   Create one first

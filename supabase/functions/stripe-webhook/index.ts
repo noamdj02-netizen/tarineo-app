@@ -5,6 +5,7 @@
 
 import Stripe from "npm:stripe@22";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { navpitTransactionalHtml } from "../_shared/navpit-email-html.ts";
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!);
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
@@ -99,15 +100,15 @@ async function applyLoyalty(invoice: Stripe.Invoice) {
   await sendLoyaltyEmail(invoice.customer_email, interval, target);
 }
 
-const APP_URL = Deno.env.get("APP_URL") ?? "https://navpit.vercel.app";
+const APP_URL = Deno.env.get("APP_URL") ?? "https://www.navpit.com";
 
-/** Email simple aux couleurs Navpit (même mise en page que emails/layout.tsx). */
-async function sendEmail(to: string | null | undefined, subject: string, label: string, title: string, body: string, cta?: [string, string]) {
+async function sendEmail(
+  to: string | null | undefined,
+  subject: string,
+  htmlOpts: Parameters<typeof navpitTransactionalHtml>[0],
+) {
   const key = Deno.env.get("RESEND_API_KEY");
   if (!key || !to) return;
-  const button = cta
-    ? `<a href="${cta[0]}" style="display:inline-block;margin-top:12px;background:#111;color:#fff;border-radius:999px;padding:14px 24px;font-size:15px;text-decoration:none">${cta[1]}</a>`
-    : "";
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -115,17 +116,7 @@ async function sendEmail(to: string | null | undefined, subject: string, label: 
       from: Deno.env.get("EMAIL_FROM") ?? "Navpit <bonjour@navpit.com>",
       to,
       subject,
-      html: `<div style="background:#f3f3f2;padding:32px 12px;font-family:Inter,Helvetica,Arial,sans-serif">
-        <div style="max-width:520px;margin:0 auto">
-          <p style="font-size:22px;font-weight:700;letter-spacing:-.04em;margin:0 0 16px 4px;color:#111">Navpit<span style="color:#9a9a9a">.</span></p>
-          <div style="background:#fff;border:1px solid #ececeb;border-radius:24px;padding:32px 28px">
-            <p style="font:500 11px Menlo,monospace;letter-spacing:.14em;color:#8c8c8c;text-transform:uppercase;margin:0">/ ${label} ///</p>
-            <p style="font-size:26px;line-height:1.15;font-weight:600;letter-spacing:-.035em;color:#111;margin:10px 0 14px">${title}</p>
-            <p style="font-size:15px;line-height:1.6;color:#555;margin:0 0 12px">${body}</p>
-            ${button}
-          </div>
-        </div>
-      </div>`,
+      html: navpitTransactionalHtml({ ...htmlOpts, appUrl: APP_URL }),
     }),
   });
   if (!res.ok) console.error("[stripe-webhook] email", subject, res.status);
@@ -135,13 +126,11 @@ async function sendLoyaltyEmail(to: string | null, interval: Interval, tier: num
   const price = TIER_PRICE[interval][tier];
   const unit = interval === "month" ? "par mois" : "par an";
   const years = tier === 1 ? "un an" : "deux ans";
-  await sendEmail(
-    to,
-    `Merci d’être là depuis ${years} : ton prix baisse`,
-    "Prix fidélité",
-    `Ton prix passe à ${price} € ${unit}.`,
-    `Tu es abonné à Navpit Pro depuis ${years}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien faire. Merci de ta confiance.`,
-  );
+  await sendEmail(to, `Merci d’être là depuis ${years} : ton prix baisse`, {
+    label: "Prix fidélité",
+    title: `Ton prix passe à ${price} € ${unit}`,
+    body: `Tu es abonné à Navpit Pro depuis ${years}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien faire. Merci de ta confiance.`,
+  });
 }
 
 async function handle(event: Stripe.Event) {
@@ -161,14 +150,14 @@ async function handle(event: Stripe.Event) {
           current_period_end: null,
           cancel_at_period_end: false,
         });
-        await sendEmail(
-          s.customer_details?.email,
-          "Merci, Fondateur !",
-          "Fondateur",
-          "Merci, Fondateur !",
-          "Ton paiement est reçu : tu as Navpit Pro à vie, sans abonnement. Merci de soutenir le projet dès le début.",
-          [`${APP_URL}/accueil`, "Ouvrir Navpit"],
-        );
+        await sendEmail(s.customer_details?.email, "Merci, Fondateur !", {
+          label: "Fondateur",
+          title: "Merci, Fondateur",
+          body: "Ton paiement est reçu : tu as Navpit Pro à vie, sans abonnement. Merci de soutenir le projet dès le début.",
+          ctaHref: `${APP_URL}/accueil`,
+          ctaLabel: "Ouvrir Navpit",
+          footer: "Tu fais partie des premiers : Navpit Pro à vie, sans abonnement.",
+        });
         return;
       }
       if (s.mode === "subscription" && s.subscription) {
@@ -179,27 +168,25 @@ async function handle(event: Stripe.Event) {
           typeof s.subscription === "string" ? s.subscription : s.subscription.id,
         );
         await syncSubscription(sub);
-        await sendEmail(
-          s.customer_details?.email,
-          "Bienvenue en Pro !",
-          "Pro",
-          "Bienvenue en Pro !",
-          "Projets illimités, 500 questions IA par mois, schémas illimités et agenda synchronisé. Et ton prix baissera à chaque anniversaire d’abonnement.",
-          [`${APP_URL}/accueil`, "Ouvrir Navpit"],
-        );
+        await sendEmail(s.customer_details?.email, "Bienvenue en Pro !", {
+          label: "Pro",
+          title: "Bienvenue en Pro",
+          body: "Projets illimités, 500 questions IA par mois, schémas illimités et agenda synchronisé. Et ton prix baissera à chaque anniversaire d’abonnement.",
+          ctaHref: `${APP_URL}/accueil`,
+          ctaLabel: "Ouvrir Navpit",
+        });
       }
       return;
     }
     case "invoice.payment_failed": {
       const inv = event.data.object;
-      await sendEmail(
-        inv.customer_email,
-        "Ton paiement Navpit n’est pas passé",
-        "Paiement",
-        "Ton paiement n’est pas passé.",
-        "Stripe va réessayer dans quelques jours. Pour garder Pro sans coupure, vérifie ta carte bancaire.",
-        [`${APP_URL}/abonnement`, "Mettre à jour ma carte"],
-      );
+      await sendEmail(inv.customer_email, "Ton paiement Navpit n’est pas passé", {
+        label: "Paiement",
+        title: "Paiement refusé",
+        body: "Stripe va réessayer dans quelques jours. Pour garder Pro sans coupure, vérifie ta carte bancaire.",
+        ctaHref: `${APP_URL}/abonnement`,
+        ctaLabel: "Mettre à jour ma carte",
+      });
       return;
     }
     case "customer.subscription.created":

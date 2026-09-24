@@ -1,6 +1,14 @@
 import { LegalPage } from "@/components/site/legal-page";
+import { siteMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Confidentialité" };
+export const metadata = {
+  title: "Confidentialité",
+  ...siteMetadata({
+    title: "Politique de confidentialité",
+    description: "Données collectées, sous-traitants, cookies et droits RGPD pour Navpit.",
+    path: "/confidentialite",
+  }),
+};
 
 export default function ConfidentialitePage() {
   return (
@@ -37,6 +45,14 @@ export default function ConfidentialitePage() {
           h: "Tes droits",
           p: [
             "Tu peux demander l’accès, la correction, l’export ou la suppression de tes données en écrivant à [À compléter : email]. Tu peux aussi saisir la CNIL (cnil.fr).",
+          ],
+        },
+        {
+          h: "Cookies",
+          p: [
+            "Cookies essentiels : session de connexion (Supabase), préférences d’interface. Ils sont nécessaires au service et ne demandent pas de consentement.",
+            "Cookies de mesure (optionnels) : si tu cliques « Tout accepter » sur le bandeau, nous pouvons charger Google Analytics (audience anonymisée, IP masquée). Tu peux refuser via « Essentiels uniquement ».",
+            "Tu peux retirer ton consentement en supprimant les données du site dans ton navigateur ou en nous contactant.",
           ],
         },
       ]}

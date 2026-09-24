@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Field, FormMessage, SubmitButton } from "@/components/auth/auth-ui";
+import { AuthFieldGroup, Field, FormMessage, SubmitButton } from "@/components/auth/auth-ui";
 import { createClient } from "@/lib/supabase/client";
 
 export function ForgotForm() {
@@ -35,7 +35,8 @@ export function ForgotForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4">
+    <form onSubmit={onSubmit}>
+      <AuthFieldGroup>
       <Field
         label="Email"
         type="email"
@@ -46,6 +47,7 @@ export function ForgotForm() {
       />
       {error ? <FormMessage>{error}</FormMessage> : null}
       <SubmitButton busy={busy}>Envoyer le lien</SubmitButton>
+      </AuthFieldGroup>
     </form>
   );
 }

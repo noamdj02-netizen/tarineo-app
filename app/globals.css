@@ -6,7 +6,7 @@
 /*
  * Direction artistique « Mono Lead ».
  * Avec Tailwind v4, les tokens se déclarent ici via @theme (équivalent de tailwind.config).
- * Jamais de couleur en dur dans les composants : utiliser bg-bg, bg-surface, text-ink, text-muted…
+ * Jamais de couleur en dur dans les composants : utiliser bg-bg, bg-surface, text-ink, text-muted-foreground…
  */
 @theme {
   /* Couleurs */
@@ -14,7 +14,9 @@
   --color-surface: #ffffff;
   --color-surface-2: #f6f6f5;
   --color-ink: #111111;
-  --color-muted: #8c8c8c;
+  /* Texte secondaire (utiliser text-muted-foreground ; bg-muted = surface-2 via @theme inline) */
+  /* ~4.6:1 sur bg pour le petit texte (WCAG AA). */
+  --color-muted-ink: #6f6f6f;
   --color-line: rgba(17, 17, 17, 0.08);
   --color-accent: #111111;
   --color-accent-ink: #ffffff;
@@ -66,6 +68,27 @@
 
   /* Titres serrés */
   --tracking-tightest: -0.045em;
+
+  --animate-marquee: marquee var(--marquee-duration, 52s) linear infinite;
+  --animate-marquee-reverse: marquee-reverse var(--marquee-duration, 58s) linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marquee-reverse {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 /* Les tokens shadcn pointent vers les tokens Mono Lead */
@@ -80,7 +103,8 @@
   --color-primary-foreground: var(--color-accent-ink);
   --color-secondary: var(--color-surface-2);
   --color-secondary-foreground: var(--color-ink);
-  --color-muted-foreground: var(--color-muted);
+  --color-muted: var(--color-surface-2);
+  --color-muted-foreground: var(--color-muted-ink);
   --color-accent-foreground: var(--color-ink);
   --color-destructive: #d23b2b;
   --color-border: var(--color-line);
@@ -105,7 +129,7 @@
   --panel: var(--color-surface);
   --panel2: var(--color-surface-2);
   --ink: var(--color-ink);
-  --ink2: var(--color-muted);
+  --ink2: var(--color-muted-ink);
   --line: var(--color-line);
   --brand: var(--color-ink);
   --brand-soft: var(--color-accent-soft);
@@ -121,6 +145,7 @@
   html {
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-bg font-sans text-ink antialiased;
@@ -135,7 +160,10 @@
 @layer components {
   /* Label « / LABEL /// » en JetBrains Mono */
   .mono-label {
-    @apply font-mono text-[11px] font-medium tracking-[0.14em] text-muted uppercase;
+    @apply font-mono text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase;
+  }
+  .font-serif.italic {
+    font-family: var(--font-instrument-serif-italic), var(--font-instrument-serif), Georgia, serif;
   }
   /* Carte Mono Lead */
   .card-soft {
@@ -143,7 +171,7 @@
   }
   /* Bouton noir avec reflet interne */
   .btn-dark {
-    @apply bg-accent text-accent-ink shadow-dark transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5;
+    @apply bg-accent text-accent-ink shadow-dark transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
   }
 }
 
@@ -186,6 +214,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *,
   *::before,
   *::after {

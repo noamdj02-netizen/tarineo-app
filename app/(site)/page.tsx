@@ -1,68 +1,63 @@
 import { ArrowRight, Check } from "lucide-react";
-import Link from "next/link";
 import { Illustration } from "@/components/illustration";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
-import { Faq } from "@/components/site/faq";
+import { LandingButton } from "@/components/site/landing-button";
+import { LandingFaqTabs } from "@/components/site/landing-faq-tabs";
+import {
+  LandingCtaBand,
+  LandingHowItWorks,
+  LandingWorkspaceDepth,
+} from "@/components/site/landing-folio-sections";
+import { LandingMarquee } from "@/components/site/landing-marquee";
+import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
 import { HeroPrompt } from "@/components/site/hero-prompt";
 import { InView } from "@/components/site/in-view";
 import { Pricing } from "@/components/site/pricing";
 import { ProductPreview } from "@/components/site/product-preview";
+import { Card, CardContent } from "@/components/ui/card";
+import { JsonLd } from "@/components/site/json-ld";
 import { BRAND } from "@/lib/brand";
-import { FAQ, FEATURES, STEPS } from "@/lib/site/content";
+import { siteMetadata } from "@/lib/seo";
+import { faqPageJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
+import { FAQ_GROUPS, FEATURES, STEPS } from "@/lib/site/content";
+
+const HOME_TITLE = `${BRAND.name} · Cockpit fondateur solo, un projet en Focus & copilote IA`;
+const HOME_DESCRIPTION =
+  "Navpit regroupe tes side-projects et SaaS : un seul en Focus, la prochaine action, ressources design et copilote IA contextualisé. Gratuit pour commencer.";
 
 export const metadata = {
-  title: { absolute: `${BRAND.name} · Le cockpit des fondateurs solo` },
-  description: BRAND.description,
+  title: { absolute: HOME_TITLE },
+  description: HOME_DESCRIPTION,
+  ...siteMetadata({ description: HOME_DESCRIPTION, path: "/" }),
 };
 
 const PROOF = ["Gratuit pour commencer", "Sans carte bancaire", "Tes données restent à toi"];
 
-function SectionHead({ label, title, tail, text }: { label: string; title: string; tail?: string; text?: string }) {
-  return (
-    <InView className="mx-auto mb-10 flex max-w-[640px] flex-col items-center gap-3 text-center">
-      <Reveal>
-        <p className="mono-label">{`/ ${label} ///`}</p>
-      </Reveal>
-      <Reveal>
-        <h2 className="font-display text-[clamp(28px,4.4vw,42px)] leading-[1.05] font-semibold tracking-tightest text-balance">
-          {title}
-          {tail ? <span className="text-accent-2"> {tail}</span> : null}
-        </h2>
-      </Reveal>
-      {text ? (
-        <Reveal>
-          <p className="text-[16px] leading-relaxed text-muted">{text}</p>
-        </Reveal>
-      ) : null}
-    </InView>
-  );
-}
-
 export default function LandingPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative isolate -mt-[72px] flex min-h-[min(100dvh,980px)] flex-col justify-center overflow-clip px-5 pt-[132px] pb-24 sm:px-8">
-        {/* Grand halo qui monte du bas, façon Lovable */}
+      <JsonLd data={[softwareApplicationJsonLd(), faqPageJsonLd()]} />
+      <section
+        id="commencer"
+        className="relative isolate -mt-[72px] scroll-mt-24 overflow-clip px-5 pt-[120px] pb-8 sm:px-8 sm:pt-[128px]"
+      >
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute inset-x-[-20%] bottom-[-45%] h-[95%] rounded-[50%] bg-[radial-gradient(closest-side,var(--color-glow-2)_0%,transparent_100%)] opacity-90 blur-2xl" />
-          <div className="absolute bottom-[-30%] left-[-15%] h-[80%] w-[70%] animate-[glow-drift_20s_ease-in-out_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-1)_15%,transparent)] blur-3xl" />
-          <div className="absolute right-[-15%] bottom-[-30%] h-[80%] w-[70%] animate-[glow-drift_24s_ease-in-out_-9s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_15%,transparent)] blur-3xl" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-surface" />
+          {/* Fond coloré hero : lisible derrière le titre + la prompt box */}
+          <div
+            className="absolute inset-x-[-12%] top-[8%] bottom-[-20%] rounded-[48%] opacity-[0.92] blur-3xl"
+            style={{
+              background:
+                "radial-gradient(ellipse 85% 70% at 50% 72%, color-mix(in srgb, var(--color-glow-2) 55%, transparent) 0%, transparent 68%)",
+            }}
+          />
+          <div className="absolute inset-x-[-20%] bottom-[-40%] h-[100%] rounded-[50%] bg-[radial-gradient(closest-side,var(--color-glow-2)_0%,transparent_72%)] opacity-100 blur-2xl" />
+          <div className="absolute bottom-[-28%] left-[-12%] h-[85%] w-[72%] animate-[glow-drift_20s_ease-in-out_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-1)_22%,transparent_70%)] opacity-95 blur-3xl" />
+          <div className="absolute right-[-12%] bottom-[-28%] h-[85%] w-[72%] animate-[glow-drift_24s_ease-in-out_-9s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_22%,transparent_70%)] opacity-95 blur-3xl" />
         </div>
 
         <RevealGroup className="mx-auto flex w-full max-w-[860px] flex-col items-center gap-6 text-center">
           <Reveal>
-            <Link
-              href="/prix"
-              className="inline-flex items-center gap-2 rounded-pill border border-line bg-surface py-1 pr-3 pl-1 text-[13px] text-ink/80 shadow-soft transition-colors hover:text-ink"
-            >
-              <span className="rounded-pill bg-ink px-2 py-0.5 font-mono text-[10px] tracking-[0.1em] text-accent-ink uppercase">
-                Nouveau
-              </span>
-              Un prix qui baisse chaque année où tu restes
-              <ArrowRight className="size-3.5" aria-hidden />
-            </Link>
+            <p className="mono-label">/ Cockpit fondateur ///</p>
           </Reveal>
           <Reveal>
             <h1 className="font-display text-[clamp(40px,7.4vw,76px)] leading-[0.98] font-semibold tracking-tightest text-balance">
@@ -70,16 +65,23 @@ export default function LandingPage() {
             </h1>
           </Reveal>
           <Reveal>
-            <p className="max-w-[56ch] text-[17px] leading-relaxed text-muted sm:text-[18px]">
-              Navpit range tes side-projects, te montre la prochaine action et t’aide à la faire avec un
-              copilote IA qui connaît tout. Jusqu’à ta première vente.
+            <p className="max-w-[56ch] text-[17px] leading-relaxed text-muted-foreground sm:text-[18px]">
+              {BRAND.description}
             </p>
           </Reveal>
-          <Reveal className="mt-2 w-full">
+          <Reveal className="flex flex-wrap justify-center gap-3">
+            <LandingButton href="/inscription" icon={<ArrowRight aria-hidden />}>
+              Commencer gratuitement
+            </LandingButton>
+            <LandingButton href="/#solution" variant="secondary">
+              Voir le produit
+            </LandingButton>
+          </Reveal>
+          <Reveal className="mt-1 w-full max-w-[680px]">
             <HeroPrompt />
           </Reveal>
           <Reveal>
-            <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[13.5px] text-muted">
+            <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[13.5px] text-muted-foreground">
               {PROOF.map((p) => (
                 <li key={p} className="flex items-center gap-1.5">
                   <Check className="size-3.5 text-st-focus" aria-hidden />
@@ -89,19 +91,20 @@ export default function LandingPage() {
             </ul>
           </Reveal>
         </RevealGroup>
+
+        <LandingMarquee className="relative z-10 mt-10 sm:mt-12" />
+
+        <div className="mx-auto mt-8 max-w-[1160px] sm:mt-10">
+          <ProductPreview />
+        </div>
       </section>
 
-      <section className="px-5 sm:px-8">
-        <InView className="mx-auto max-w-[1080px]">
-          <Reveal>
-            <ProductPreview />
-          </Reveal>
-        </InView>
-      </section>
+      <LandingCtaBand />
+      <LandingHowItWorks />
+      <LandingWorkspaceDepth />
 
-      {/* Fonctions */}
-      <section id="fonctions" className="scroll-mt-24 px-5 py-20 sm:px-8">
-        <SectionHead
+      <LandingSection id="fonctions" tone="muted">
+        <LandingSectionHead
           label="Fonctions"
           title="Tout ce qu’il faut pour lancer,"
           tail="au même endroit."
@@ -109,39 +112,42 @@ export default function LandingPage() {
         />
         <InView className="mx-auto grid max-w-[1080px] gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
           {FEATURES.map((f) => (
-            <Reveal
-              key={f.title}
-              className="flex flex-col gap-3 rounded-[22px] border border-line bg-surface p-6 shadow-soft"
-            >
-              <Illustration name={f.art} className="-mt-1 -ml-1 size-16" />
-              <h3 className="text-[18px] font-semibold tracking-[-0.02em]">{f.title}</h3>
-              <p className="text-[14.5px] leading-relaxed text-muted">{f.text}</p>
+            <Reveal key={f.title}>
+              <Card className="h-full gap-0 rounded-[22px] border-border py-0 shadow-soft ring-0">
+                <CardContent className="flex flex-col gap-3 p-6">
+                  <Illustration name={f.art} className="-mt-1 -ml-1 size-16" label={f.title} />
+                  <h3 className="text-lg font-semibold tracking-tight">{f.title}</h3>
+                  <p className="text-[14.5px] leading-relaxed text-muted-foreground">{f.text}</p>
+                </CardContent>
+              </Card>
             </Reveal>
           ))}
         </InView>
-      </section>
+      </LandingSection>
 
-      {/* Comment ça marche */}
-      <section id="comment" className="scroll-mt-24 bg-bg px-5 py-20 sm:px-8">
-        <SectionHead label="Comment ça marche" title="Trois étapes," tail="et tu avances." />
+      <LandingSection id="comment">
+        <LandingSectionHead label="Étapes" title="Trois étapes," tail="et tu avances." />
         <InView className="mx-auto grid max-w-[1080px] gap-4 md:grid-cols-3">
           {STEPS.map((s, i) => (
-            <Reveal key={s.title} className="flex flex-col gap-3 rounded-[22px] bg-surface p-6 shadow-soft">
-              <span className="font-mono text-[12px] font-medium tracking-[0.1em] text-muted">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h3 className="text-[18px] font-semibold tracking-[-0.02em]">{s.title}</h3>
-              <p className="text-[14.5px] leading-relaxed text-muted">{s.text}</p>
+            <Reveal key={s.title}>
+              <Card className="h-full gap-0 rounded-[22px] border-transparent py-0 shadow-soft ring-0">
+                <CardContent className="flex flex-col gap-3 p-6">
+                  <span className="font-mono text-xs font-medium tracking-widest text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="text-lg font-semibold tracking-tight">{s.title}</h3>
+                  <p className="text-[14.5px] leading-relaxed text-muted-foreground">{s.text}</p>
+                </CardContent>
+              </Card>
             </Reveal>
           ))}
         </InView>
-      </section>
+      </LandingSection>
 
-      {/* Mot du fondateur (à la place de faux témoignages) */}
-      <section className="px-5 py-20 sm:px-8">
+      <LandingSection tone="muted">
         <InView className="mx-auto flex max-w-[760px] flex-col items-center gap-6 text-center">
           <Reveal>
-            <Illustration name="landing-idee" className="size-20" />
+            <Illustration name="landing-idee" className="size-20" label="Illustration fondateur" />
           </Reveal>
           <Reveal>
             <blockquote className="font-serif text-[clamp(24px,3.6vw,34px)] leading-[1.25] text-balance italic">
@@ -153,11 +159,10 @@ export default function LandingPage() {
             <p className="mono-label">Noam · Créateur de Navpit</p>
           </Reveal>
         </InView>
-      </section>
+      </LandingSection>
 
-      {/* Prix */}
-      <section id="prix" className="scroll-mt-24 bg-bg px-5 py-20 sm:px-8">
-        <SectionHead
+      <LandingSection id="prix">
+        <LandingSectionHead
           label="Prix"
           title="Plus tu restes,"
           tail="moins tu paies."
@@ -166,17 +171,19 @@ export default function LandingPage() {
         <div className="mx-auto max-w-[1080px]">
           <Pricing />
         </div>
-      </section>
+      </LandingSection>
 
-      {/* FAQ */}
-      <section id="faq" className="scroll-mt-24 px-5 py-20 sm:px-8">
-        <SectionHead label="FAQ" title="Questions fréquentes" />
+      <LandingSection id="faq" tone="muted">
+        <LandingSectionHead
+          label="FAQ"
+          title="Questions fréquentes"
+          text="Tout ce qu’il faut savoir sur Navpit. Une autre question ? Écris-nous depuis ton compte."
+        />
         <div className="mx-auto max-w-[720px]">
-          <Faq items={FAQ} />
+          <LandingFaqTabs groups={FAQ_GROUPS} />
         </div>
-      </section>
+      </LandingSection>
 
-      {/* Appel final */}
       <section className="px-5 pb-20 sm:px-8">
         <InView className="relative isolate mx-auto flex max-w-[1080px] flex-col items-center gap-5 overflow-clip rounded-[28px] bg-ink px-6 py-16 text-center text-accent-ink shadow-lift">
           <Reveal>
@@ -185,18 +192,14 @@ export default function LandingPage() {
             </h2>
           </Reveal>
           <Reveal>
-            <p className="max-w-[48ch] text-[16px] leading-relaxed text-accent-ink/70">
+            <p className="max-w-[48ch] text-base leading-relaxed text-accent-ink/70">
               Crée ton compte en une minute, ajoute tes projets et choisis ton Focus.
             </p>
           </Reveal>
           <Reveal>
-            <Link
-              href="/inscription"
-              className="inline-flex min-h-12 items-center gap-2 rounded-pill bg-accent-ink px-6 text-[15px] font-medium text-ink transition-transform duration-300 ease-out-soft hover:-translate-y-0.5"
-            >
+            <LandingButton href="/inscription" variant="inverse" icon={<ArrowRight aria-hidden />}>
               Commencer gratuitement
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
+            </LandingButton>
           </Reveal>
         </InView>
       </section>

@@ -18,8 +18,55 @@ export type ActionCard = {
 };
 
 /** 3 cartes d'action qui se soulèvent au survol. */
-export function ActionCards({ cards }: { cards: ActionCard[] }) {
+export function ActionCards({
+  cards,
+  layout = "cards",
+  stripCols = 3,
+}: {
+  cards: ActionCard[];
+  layout?: "cards" | "strip";
+  /** Nombre de colonnes en mode bandeau (1 = pile verticale, idéal colonne étroite). */
+  stripCols?: 1 | 2 | 3;
+}) {
   const reduce = useReducedMotion();
+  if (layout === "strip") {
+    return (
+      <div
+        className={
+          stripCols === 1
+            ? "grid grid-cols-1 gap-2"
+            : stripCols === 2
+              ? "grid grid-cols-1 gap-2 sm:grid-cols-2"
+              : "grid grid-cols-1 gap-2 sm:grid-cols-3"
+        }
+      >
+        {cards.map(({ n, label, title, href, icon }) => {
+          const Icon = ICONS[icon];
+          return (
+            <Link
+              key={href + n}
+              href={href}
+              className="card-soft group flex min-h-[4.25rem] items-center gap-3 px-3.5 py-2.5 transition-shadow hover:shadow-lift"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft text-ink">
+                <Icon className="size-4" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="mono-label block text-[10px]">/ {label}</span>
+                <span className="block truncate text-[14px] font-semibold tracking-[-0.02em]">
+                  {title}
+                </span>
+              </span>
+              <ArrowUpRight
+                className="size-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                aria-hidden
+              />
+            </Link>
+          );
+        })}
+      </div>
+    );
+  }
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       {cards.map(({ n, label, title, text, href, icon }) => {
@@ -39,7 +86,7 @@ export function ActionCards({ cards }: { cards: ActionCard[] }) {
                   <span className="grid size-10 place-items-center rounded-xl bg-accent-soft text-ink">
                     <Icon className="size-[18px]" aria-hidden />
                   </span>
-                  <span className="font-mono text-[11px] text-muted">
+                  <span className="font-mono text-[11px] text-muted-foreground">
                     {n} /
                   </span>
                 </div>
@@ -48,7 +95,7 @@ export function ActionCards({ cards }: { cards: ActionCard[] }) {
                   <h3 className="text-[17px] leading-snug font-semibold tracking-[-0.02em]">
                     {title}
                   </h3>
-                  <p className="text-[14px] leading-relaxed text-muted">
+                  <p className="text-[14px] leading-relaxed text-muted-foreground">
                     {text}
                   </p>
                 </div>

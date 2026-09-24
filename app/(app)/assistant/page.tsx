@@ -7,5 +7,7 @@ export default async function AssistantPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  redirect(`/accueil?${new URLSearchParams({ ask: q?.slice(0, 500) || "1" })}`);
+  const sp = new URLSearchParams({ send: "1" });
+  if (q) sp.set("q", q.slice(0, 500));
+  redirect(`/copilote?${sp}`);
 }

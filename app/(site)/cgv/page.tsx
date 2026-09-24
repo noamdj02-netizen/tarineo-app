@@ -1,7 +1,15 @@
 import { LegalPage } from "@/components/site/legal-page";
 import { FOUNDER, LOYALTY_TIERS } from "@/lib/billing/plans";
+import { siteMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Conditions générales" };
+export const metadata = {
+  title: "Conditions générales",
+  ...siteMetadata({
+    title: "Conditions générales de vente et d’utilisation",
+    description: "CGV et CGU Navpit : abonnements, droits et responsabilités.",
+    path: "/cgv",
+  }),
+};
 
 const [y1, y2, y3] = LOYALTY_TIERS;
 

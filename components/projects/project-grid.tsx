@@ -108,7 +108,7 @@ function NewProject({ index }: { index: number }) {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Annuler"
-                className="grid size-9 place-items-center rounded-pill text-muted hover:bg-accent-soft"
+                className="grid size-9 place-items-center rounded-pill text-muted-foreground hover:bg-accent-soft"
               >
                 <X className="size-4" aria-hidden />
               </button>
@@ -148,7 +148,7 @@ function NewProject({ index }: { index: number }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-card p-5 text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-card p-5 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-ink"
           >
             <span className="grid size-11 place-items-center rounded-pill border border-line bg-surface">
               <Plus className="size-5" aria-hidden />

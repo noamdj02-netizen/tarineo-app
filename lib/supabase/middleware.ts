@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { hasRequireLoginCookie, REQUIRE_LOGIN_COOKIE } from "@/lib/auth/require-login-cookie";
 import { isOpenAccess, isSupabaseConfigured } from "./config";
 import type { Database } from "./types";
 
@@ -18,20 +19,19 @@ const PUBLIC_PATHS = [
 /** Pages de connexion : un visiteur déjà connecté part directement dans l'app. */
 const AUTH_PAGES = ["/login", "/inscription"];
 
+/** Fichiers SEO / crawlers : jamais derrière la connexion. */
+const CRAWLER_PATHS = new Set([
+  "/robots.txt",
+  "/sitemap.xml",
+  "/llms.txt",
+  "/google0f1046d02ef1bfa1.html",
+]);
+
 /** Rafraîchit la session et renvoie vers /login si personne n'est connecté. */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  // Supabase pas encore configuré (.env.local vide) : on laisse passer en local
-  // pour pouvoir travailler sur le design. En production, les variables sont obligatoires.
-  // Accès libre : pas de connexion, la page /login renvoie vers l'accueil.
-  if (isOpenAccess()) {
-    if (AUTH_PAGES.includes(request.nextUrl.pathname)) {
-      const url = new URL("/accueil", request.url);
-      const q = request.nextUrl.searchParams.get("q");
-      if (q) url.searchParams.set("ask", q.slice(0, 500));
-      return NextResponse.redirect(url);
-    }
+  if (CRAWLER_PATHS.has(request.nextUrl.pathname)) {
     return response;
   }
 
@@ -61,10 +61,24 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Ne rien mettre entre createServerClient et getUser (recommandation Supabase).
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  const requireLogin = hasRequireLoginCookie(request.cookies.get(REQUIRE_LOGIN_COOKIE)?.value);
+
+  // Accès libre : compte seed seulement sans session et sans avoir cliqué « Se déconnecter ».
+  const openAccessBypass = isOpenAccess() && !user && !requireLogin;
+
+  if (openAccessBypass) {
+    if (AUTH_PAGES.includes(request.nextUrl.pathname)) {
+      const url = new URL("/accueil", request.url);
+      const q = request.nextUrl.searchParams.get("q");
+      if (q) url.searchParams.set("ask", q.slice(0, 500));
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
 
   const { pathname } = request.nextUrl;
   const isPublic =
@@ -80,7 +94,6 @@ export async function updateSession(request: NextRequest) {
   const meta = user?.user_metadata ?? {};
   const needsOnboarding = meta.onboarding_required === true && meta.onboarding_done !== true;
 
-  // Connecté sur /inscription?plan=pro : onboarding d’abord, le plan est conservé.
   if (user && AUTH_PAGES.includes(pathname)) {
     const plan = request.nextUrl.searchParams.get("plan");
     const url = request.nextUrl.clone();

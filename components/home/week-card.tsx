@@ -2,7 +2,7 @@ import type { WeekStats } from "@/lib/home/week";
 import { cn } from "@/lib/utils";
 
 /** Ma semaine : barres d'activité des 7 derniers jours + compteurs. */
-export function WeekCard({ stats }: { stats: WeekStats }) {
+export function WeekCard({ stats, compact }: { stats: WeekStats; compact?: boolean }) {
   const { days, totals, tasks } = stats;
   const max = Math.max(1, ...days.map((d) => d.ai + d.schemas + d.notes));
   const pct = tasks.total ? Math.round((tasks.done / tasks.total) * 100) : 0;
@@ -11,6 +11,49 @@ export function WeekCard({ stats }: { stats: WeekStats }) {
     { label: "Schémas modifiés", value: totals.schemas, dot: "bg-glow-3" },
     { label: "Notes de journal", value: totals.notes, dot: "bg-glow-1" },
   ];
+
+  if (compact) {
+    return (
+      <section
+        className="card-soft flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:gap-6 sm:p-4"
+        aria-label="Ma semaine"
+      >
+        <div className="min-w-0 shrink-0 sm:w-[140px]">
+          <p className="mono-label">{"/ Ma semaine ///"}</p>
+          <p className="mt-0.5 font-display text-[18px] font-semibold leading-tight tracking-tight">
+            {totals.ai + totals.schemas + totals.notes}
+            <span className="text-muted-foreground"> / 7j</span>
+          </p>
+        </div>
+        <div className="flex h-[56px] min-w-0 flex-1 items-end gap-1.5" role="img" aria-label="Activité">
+          {days.map((d, i) => {
+            const total = d.ai + d.schemas + d.notes;
+            return (
+              <div key={d.key} className="flex h-full flex-1 flex-col justify-end gap-1">
+                <div className="flex w-full flex-1 flex-col justify-end overflow-hidden rounded-md bg-surface-2">
+                  <div
+                    className="w-full rounded-md bg-ink/80"
+                    style={{ height: `${(total / max) * 100}%`, minHeight: total ? 4 : 0 }}
+                  />
+                </div>
+                <span
+                  className={cn(
+                    "text-center font-mono text-[9px] uppercase",
+                    i === days.length - 1 ? "font-semibold text-ink" : "text-muted-foreground",
+                  )}
+                >
+                  {d.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="hidden font-mono text-[11px] text-muted-foreground sm:block sm:w-16 sm:text-right">
+          {tasks.done}/{tasks.total} tâches
+        </p>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -22,7 +65,7 @@ export function WeekCard({ stats }: { stats: WeekStats }) {
           <p className="mono-label">{"/ Ma semaine ///"}</p>
           <h2 className="mt-1 font-display text-[22px] leading-none font-semibold tracking-tight">
             {totals.ai + totals.schemas + totals.notes} actions
-            <span className="text-muted"> en 7 jours</span>
+            <span className="text-muted-foreground"> en 7 jours</span>
           </h2>
         </div>
 
@@ -69,7 +112,7 @@ export function WeekCard({ stats }: { stats: WeekStats }) {
                 <span
                   className={cn(
                     "font-mono text-[10.5px] uppercase",
-                    today ? "font-semibold text-ink" : "text-muted",
+                    today ? "font-semibold text-ink" : "text-muted-foreground",
                   )}
                 >
                   {d.label}

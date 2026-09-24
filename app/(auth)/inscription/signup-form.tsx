@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  AuthFieldGroup,
   Divider,
   Field,
   FormMessage,
@@ -12,6 +13,10 @@ import {
   SubmitButton,
 } from "@/components/auth/auth-ui";
 import { Illustration } from "@/components/illustration";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field as UiField, FieldLabel } from "@/components/ui/field";
+import { HoneypotField } from "@/components/site/honeypot-field";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +39,7 @@ export function SignupForm({ next }: { next: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accepted, setAccepted] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
@@ -47,6 +53,10 @@ export function SignupForm({ next }: { next: string }) {
     }
     if (!accepted) {
       setMsg("Accepte les conditions pour créer ton compte.");
+      return;
+    }
+    if (honeypot.trim()) {
+      setSentTo(email.trim());
       return;
     }
     setBusy(true);
@@ -85,14 +95,16 @@ export function SignupForm({ next }: { next: string }) {
 
   if (sentTo) {
     return (
-      <div className="flex flex-col items-center gap-3 text-center">
-        <Illustration name="feedback-envoye" className="size-24" />
-        <p className="text-[18px] font-semibold tracking-[-0.02em]">Vérifie ta boîte mail</p>
-        <p className="text-[14.5px] leading-relaxed text-muted">
-          On a envoyé un lien de confirmation à <b className="text-ink">{sentTo}</b>. Clique dessus pour
-          activer ton compte.
-        </p>
-      </div>
+      <Card className="border-0 bg-transparent shadow-none ring-0">
+        <CardHeader className="items-center px-0 text-center">
+          <Illustration name="feedback-envoye" className="size-24" />
+          <CardTitle className="text-[18px] tracking-[-0.02em]">Vérifie ta boîte mail</CardTitle>
+          <CardDescription className="text-[14.5px] leading-relaxed">
+            On a envoyé un lien de confirmation à <b className="text-foreground">{sentTo}</b>. Clique
+            dessus pour activer ton compte.
+          </CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
@@ -100,7 +112,9 @@ export function SignupForm({ next }: { next: string }) {
     <div className="flex flex-col gap-4">
       <GoogleButton next={next} />
       <Divider />
-      <form onSubmit={onSubmit} className="flex flex-col gap-4">
+      <form onSubmit={onSubmit} className="relative">
+        <HoneypotField value={honeypot} onChange={setHoneypot} />
+        <AuthFieldGroup>
         <Field
           label="Prénom"
           autoComplete="given-name"
@@ -144,31 +158,31 @@ export function SignupForm({ next }: { next: string }) {
                   />
                 ))}
               </div>
-              <span className="w-16 text-right font-mono text-[11px] text-muted">{STRENGTH[score]}</span>
+              <span className="w-16 text-right font-mono text-[11px] text-muted-foreground">{STRENGTH[score]}</span>
             </div>
           ) : null}
         </div>
-        <label className="flex items-start gap-2.5 text-[13.5px] leading-snug text-muted">
-          <input
-            type="checkbox"
+        <UiField orientation="horizontal" data-invalid={!accepted && msg ? true : undefined}>
+          <Checkbox
             checked={accepted}
-            onChange={(e) => setAccepted(e.target.checked)}
-            className="mt-0.5 size-4 flex-none accent-ink"
+            onCheckedChange={(v) => setAccepted(v === true)}
+            aria-invalid={!accepted && !!msg}
           />
-          <span>
+          <FieldLabel className="text-[13.5px] leading-snug font-normal text-muted-foreground">
             J’accepte les{" "}
-            <Link href="/cgv" className="text-ink underline underline-offset-2">
+            <Link href="/cgv" className="text-foreground underline underline-offset-2">
               conditions
             </Link>{" "}
             et la{" "}
-            <Link href="/confidentialite" className="text-ink underline underline-offset-2">
+            <Link href="/confidentialite" className="text-foreground underline underline-offset-2">
               politique de confidentialité
             </Link>
             .
-          </span>
-        </label>
+          </FieldLabel>
+        </UiField>
         {msg ? <FormMessage>{msg}</FormMessage> : null}
         <SubmitButton busy={busy}>Créer mon compte</SubmitButton>
+        </AuthFieldGroup>
       </form>
     </div>
   );

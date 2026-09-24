@@ -1,6 +1,14 @@
 import { LegalPage } from "@/components/site/legal-page";
+import { siteMetadata } from "@/lib/seo";
 
-export const metadata = { title: "Mentions légales" };
+export const metadata = {
+  title: "Mentions légales",
+  ...siteMetadata({
+    title: "Mentions légales",
+    description: "Éditeur, hébergeur et contact légal de Navpit.",
+    path: "/mentions-legales",
+  }),
+};
 
 export default function MentionsPage() {
   return (

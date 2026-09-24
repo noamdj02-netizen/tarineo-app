@@ -48,7 +48,7 @@ export function PreLandingCard({
       <div className="mt-4 px-0.5">
         <p className="mono-label">/ {template.number}</p>
         <h3 className="mt-1 text-[19px] leading-tight font-semibold tracking-[-0.03em]">{template.name}</h3>
-        <p className="mt-1 text-[14px] leading-snug text-muted">{template.description}</p>
+        <p className="mt-1 text-[14px] leading-snug text-muted-foreground">{template.description}</p>
         <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tags">
           {template.tags.map((tag) => (
             <li

@@ -21,7 +21,7 @@ export function StageBar({ stage, theme }: { stage: number; theme?: string }) {
           />
         ))}
       </div>
-      <div className="mt-2 flex items-baseline justify-between gap-3 text-[13px] text-muted">
+      <div className="mt-2 flex items-baseline justify-between gap-3 text-[13px] text-muted-foreground">
         <span>
           Étape {st}/6 : <b className="font-semibold text-ink">{STAGES[st - 1]}</b>
         </span>

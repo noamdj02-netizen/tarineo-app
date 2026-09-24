@@ -1,6 +1,8 @@
 import "server-only";
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 import { cache } from "react";
+import { hasRequireLoginCookie, REQUIRE_LOGIN_COOKIE } from "@/lib/auth/require-login-cookie";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isOpenAccess, isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
@@ -35,19 +37,28 @@ async function findOpenAccessUser(admin: SupabaseClient<Database>) {
 export const getDb = cache(async (): Promise<Db | null> => {
   if (!isSupabaseConfigured()) return null;
 
-  if (isOpenAccess()) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (user) {
+    return { supabase, user };
+  }
+
+  const requireLogin =
+    isOpenAccess() &&
+    hasRequireLoginCookie((await cookies()).get(REQUIRE_LOGIN_COOKIE)?.value);
+
+  if (isOpenAccess() && !requireLogin) {
     const admin = createAdminClient();
     openUser ??= findOpenAccessUser(admin).catch((e) => {
       openUser = null;
       throw e;
     });
-    const user = await openUser;
-    return user ? { supabase: admin, user } : null;
+    const seed = await openUser;
+    return seed ? { supabase: admin, user: seed } : null;
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user ? { supabase, user } : null;
+  return null;
 });

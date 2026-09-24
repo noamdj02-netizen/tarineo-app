@@ -6,8 +6,8 @@ export const EASE = [0.2, 0.8, 0.2, 1] as const;
 
 /** Apparition Mono Lead : fondu + glissement de 14 px + flou léger. */
 const item: Variants = {
-  hidden: { opacity: 0, y: 14, filter: "blur(6px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.6, ease: EASE } },
+  hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
+  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.45, ease: EASE } },
 };
 
 const itemReduced: Variants = {

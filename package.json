@@ -3,13 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NEXT_DIST_DIR=.next-dev next dev --turbopack",
-    "build": "next build --turbopack",
+    "dev": "NEXT_DIST_DIR=.next-dev next dev",
+    "dev:clean": "rm -rf .next-dev && NEXT_DIST_DIR=.next-dev next dev",
+    "dev:turbo": "NEXT_DIST_DIR=.next-dev next dev --turbopack",
+    "build": "next build",
+    "build:turbo": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
     "design-data": "node scripts/build-design-data.mjs",
-    "icons": "node scripts/build-icons.mjs"
+    "icons": "node scripts/build-icons.mjs",
+    "email:auth": "node scripts/auth-emails.mjs",
+    "email:send-all": "tsx --env-file=.env.local scripts/send-test-emails.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
@@ -18,9 +23,11 @@
     "@excalidraw/mermaid-to-excalidraw": "^2.2.2",
     "@react-email/components": "^1.0.12",
     "@react-email/render": "^2.1.0",
+    "@react-email/tailwind": "^1.2.2",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.1",
     "class-variance-authority": "^0.7.1",
+    "cmdk": "^1.1.1",
     "cn": "^0.4.0",
     "framer-motion": "^13.4.2",
     "lucide-react": "^1.48.0",

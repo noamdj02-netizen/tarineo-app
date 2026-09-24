@@ -7,6 +7,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { TABS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
@@ -53,8 +55,10 @@ export function CommandPalette({
 
   const extras = useMemo(
     () => [
+      { href: "/compte#configuration", label: "Configuration initiale", icon: User },
       { href: "/compte", label: "Compte", icon: User },
       { href: "/abonnement", label: "Abonnement", icon: CreditCard },
+      { href: "/onboarding", label: "Onboarding guidé", icon: User },
     ],
     [],
   );
@@ -124,9 +128,9 @@ export function CommandPalette({
             transition={{ duration: 0.35, ease: EASE }}
             onKeyDown={onKeyDown}
           >
-            <div className="flex items-center gap-3 border-b border-line px-4">
-              <Search className="size-4 text-muted" aria-hidden />
-              <input
+            <div className="flex items-center gap-3 border-b border-line px-4 py-1">
+              <Search className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+              <Input
                 ref={inputRef}
                 value={q}
                 onChange={(e) => {
@@ -135,19 +139,20 @@ export function CommandPalette({
                 }}
                 placeholder="Aller à…"
                 aria-label="Rechercher un onglet"
-                className="min-h-13 flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted"
+                className="min-h-11 flex-1 border-0 bg-transparent text-[15px] shadow-none focus-visible:ring-0"
               />
-              <kbd className="rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted">
+              <kbd className="rounded-md border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
                 ÉCHAP
               </kbd>
             </div>
+            <ScrollArea className="max-h-[50vh]">
             <ul
-              className="max-h-[50vh] overflow-y-auto p-2"
+              className="p-2"
               role="listbox"
               aria-label="Résultats"
             >
               {results.length === 0 ? (
-                <li className="flex flex-col items-center gap-1 px-3 py-5 text-center text-sm text-muted">
+                <li className="flex flex-col items-center gap-1 px-3 py-5 text-center text-sm text-muted-foreground">
                   <Illustration
                     name="empty-aucun-resultat"
                     className="size-16"
@@ -166,11 +171,11 @@ export function CommandPalette({
                         i === sel ? "bg-accent-soft text-ink" : "text-ink/80",
                       )}
                     >
-                      <Icon className="size-4 text-muted" aria-hidden />
+                      <Icon className="size-4 text-muted-foreground" aria-hidden />
                       <span className="flex-1">{label}</span>
                       {i === sel ? (
                         <CornerDownLeft
-                          className="size-3.5 text-muted"
+                          className="size-3.5 text-muted-foreground"
                           aria-hidden
                         />
                       ) : null}
@@ -179,6 +184,7 @@ export function CommandPalette({
                 ))
               )}
             </ul>
+            </ScrollArea>
           </motion.div>
         </motion.div>
       ) : null}

@@ -12,7 +12,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EASE } from "@/components/motion/reveal";
-import { openAssistant } from "@/lib/assistant/open";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { TABS, isActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
@@ -107,7 +113,7 @@ export function MobileNav() {
         window.dispatchEvent(new Event("navpit:new-project"));
       else router.push("/projets#nouveau");
     } else if (id === "scan") window.dispatchEvent(new Event("navpit:search"));
-    else openAssistant();
+    else router.push("/copilote");
   }
 
   const moreOn = MORE.some((t) => isActive(pathname, t.href));
@@ -138,51 +144,48 @@ export function MobileNav() {
         }}
       >
         <div className="relative mx-auto w-full max-w-[420px] px-2">
-          {/* autres sections */}
-          <AnimatePresence>
-            {panel === "more" ? (
-              <motion.ul
-                key="more"
-                initial={
-                  reduce ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.97 }
-                }
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={
-                  reduce ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }
-                }
-                transition={{ duration: 0.3, ease: EASE }}
-                className={cn(
-                  "pointer-events-auto absolute inset-x-2 bottom-[calc(100%+48px)] grid origin-bottom grid-cols-4 gap-1 rounded-[20px] bg-nav p-2 text-white",
-                  CIRCLE_SHADOW,
-                )}
-              >
-                {MORE.map(({ href, short, icon: Icon }) => {
+          <Sheet
+            open={panel === "more"}
+            onOpenChange={(open) => setPanel(open ? "more" : "none")}
+          >
+            <SheetContent
+              side="bottom"
+              className="pointer-events-auto max-h-[min(70dvh,520px)] rounded-t-[24px] border-line bg-surface px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]"
+            >
+              <SheetHeader className="px-0 pb-2 text-left">
+                <SheetTitle className="font-grotesk text-lg tracking-[-0.03em]">
+                  Bibliothèque & studio
+                </SheetTitle>
+                <SheetDescription className="text-muted-foreground">
+                  Ressources, schémas, outils et audit.
+                </SheetDescription>
+              </SheetHeader>
+              <ul className="grid grid-cols-4 gap-2">
+                {MORE.map(({ href, short, icon: Icon, label }) => {
                   const on = isActive(pathname, href);
                   return (
                     <li key={href}>
                       <Link
                         href={href}
+                        onClick={() => setPanel("none")}
                         aria-current={on ? "page" : undefined}
                         className={cn(
-                          "flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-xl text-[10.5px] transition-colors",
+                          "flex min-h-[4.5rem] flex-col items-center justify-center gap-1.5 rounded-2xl border text-center text-[10.5px] font-medium transition-colors",
                           on
-                            ? "bg-white/12 text-white"
-                            : "text-white/70 hover:bg-white/6 hover:text-white",
+                            ? "border-ink/15 bg-accent-soft text-ink"
+                            : "border-line bg-surface-2 text-muted-foreground hover:text-ink",
                         )}
                       >
-                        <Icon
-                          className="size-5"
-                          strokeWidth={1.6}
-                          aria-hidden
-                        />
-                        {short}
+                        <Icon className="size-5" strokeWidth={1.6} aria-hidden />
+                        <span className="line-clamp-2 leading-tight">{short}</span>
+                        <span className="sr-only">{label}</span>
                       </Link>
                     </li>
                   );
                 })}
-              </motion.ul>
-            ) : null}
-          </AnimatePresence>
+              </ul>
+            </SheetContent>
+          </Sheet>
 
           <div className="pointer-events-auto relative">
             <div
@@ -205,12 +208,8 @@ export function MobileNav() {
               <NavItem
                 label="IA"
                 icon={Bot}
-                on={false}
-                expanded={false}
-                onClick={() => {
-                  setPanel("none");
-                  openAssistant();
-                }}
+                on={isActive(pathname, "/copilote")}
+                href="/copilote"
               />
               <NavItem
                 label="Plus"

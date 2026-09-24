@@ -1,9 +1,11 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { changePassword, updateProfile, uploadAvatar } from "./actions";
 import { LOCALE_LABEL, type Locale } from "@/lib/i18n";
+import { prepareAvatarFile } from "@/lib/image/prepare-avatar";
 import { cn } from "@/lib/utils";
 
 export function AvatarForm({
@@ -13,10 +15,15 @@ export function AvatarForm({
   avatarUrl: string | null;
   initial: string;
 }) {
+  const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState(avatarUrl);
   const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPreview(avatarUrl);
+  }, [avatarUrl]);
 
   return (
     <div className="flex items-center gap-4">
@@ -40,15 +47,29 @@ export function AvatarForm({
           accept="image/jpeg,image/png,image/webp"
           className="sr-only"
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
+            const raw = e.target.files?.[0];
+            if (!raw) return;
             setError(null);
-            setPreview(URL.createObjectURL(file));
-            const data = new FormData();
-            data.set("file", file);
+            const localUrl = URL.createObjectURL(raw);
+            setPreview(localUrl);
             start(async () => {
-              const res = await uploadAvatar(data);
-              if (!res.ok) setError(res.error);
+              try {
+                const file = await prepareAvatarFile(raw);
+                const data = new FormData();
+                data.set("file", file);
+                const res = await uploadAvatar(data);
+                if (!res.ok) {
+                  setError(res.error);
+                  setPreview(avatarUrl);
+                  return;
+                }
+                router.refresh();
+              } catch (err) {
+                setError(err instanceof Error ? err.message : "Photo impossible à traiter.");
+                setPreview(avatarUrl);
+              } finally {
+                URL.revokeObjectURL(localUrl);
+              }
             });
             e.target.value = "";
           }}
@@ -60,7 +81,7 @@ export function AvatarForm({
         >
           {pending ? "Envoi…" : "Ajouter ou changer la photo"}
         </button>
-        <p className="mt-1 text-[13px] text-muted">JPEG, PNG ou WebP · 2 Mo max</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">JPEG, PNG ou WebP · 2 Mo max</p>
         {error ? <p className="mt-1 text-[13px] text-st-fini-ink">{error}</p> : null}
       </div>
     </div>
@@ -102,7 +123,7 @@ export function NameForm({ firstName, email }: { firstName: string; email: strin
         <input
           value={email}
           readOnly
-          className="min-h-12 rounded-[14px] border border-line bg-surface-2 px-4 text-[15px] text-muted"
+          className="min-h-12 rounded-[14px] border border-line bg-surface-2 px-4 text-[15px] text-muted-foreground"
         />
       </label>
       {msg ? <p className="text-[13px] text-st-fini-ink">{msg}</p> : null}

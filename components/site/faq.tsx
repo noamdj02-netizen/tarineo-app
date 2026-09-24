@@ -13,12 +13,12 @@ export function Faq({ items }: { items: FaqItem[] }) {
   const [open, setOpen] = useState<number | null>(0);
   const base = useId();
   return (
-    <ul className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       {items.map((it, i) => {
         const isOpen = open === i;
         const id = `${base}-${i}`;
         return (
-          <li key={it.q} className="rounded-[18px] border border-line bg-surface shadow-soft">
+          <article key={it.q} className="rounded-[18px] border border-line bg-surface shadow-soft">
             <button
               type="button"
               aria-expanded={isOpen}
@@ -26,7 +26,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
               onClick={() => setOpen(isOpen ? null : i)}
               className="flex min-h-14 w-full items-center justify-between gap-4 px-5 text-left text-[15.5px] font-medium"
             >
-              {it.q}
+              <span>{it.q}</span>
               <Plus
                 aria-hidden
                 className={cn(
@@ -45,13 +45,13 @@ export function Faq({ items }: { items: FaqItem[] }) {
                   transition={{ duration: 0.3, ease: EASE }}
                   className="overflow-hidden"
                 >
-                  <p className="px-5 pb-5 text-[14.5px] leading-relaxed text-muted">{it.a}</p>
+                  <p className="px-5 pb-5 text-[14.5px] leading-relaxed text-muted-foreground">{it.a}</p>
                 </motion.div>
               ) : null}
             </AnimatePresence>
-          </li>
+          </article>
         );
       })}
-    </ul>
+    </div>
   );
 }

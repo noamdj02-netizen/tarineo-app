@@ -69,7 +69,7 @@ export default function OutilsPage() {
                         <b className="block text-[15px] font-semibold">
                           {name}
                         </b>
-                        <small className="block text-[13px] leading-snug text-muted">
+                        <small className="block text-[13px] leading-snug text-muted-foreground">
                           {desc}
                         </small>
                       </span>
@@ -99,13 +99,13 @@ export default function OutilsPage() {
             <b className="block text-[18px] font-semibold tracking-[-0.02em]">
               Figma → Cursor, sans perte
             </b>
-            <small className="block text-[13.5px] text-muted">
+            <small className="block text-[13.5px] text-muted-foreground">
               Pourquoi le code ne ressemble jamais à ta maquette, et la méthode
               en 7 étapes.
             </small>
           </span>
           <ChevronDown
-            className="size-5 text-muted transition-transform duration-300 group-open:rotate-180"
+            className="size-5 text-muted-foreground transition-transform duration-300 group-open:rotate-180"
             aria-hidden
           />
         </summary>

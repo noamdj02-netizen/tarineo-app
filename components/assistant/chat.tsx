@@ -152,7 +152,7 @@ export function Chat({
             <p className="font-display text-[28px] leading-[1.05] font-semibold tracking-tightest text-balance">
               Comment puis-je t’aider ?
             </p>
-            <p className="text-[13.5px] text-muted">
+            <p className="text-[13.5px] text-muted-foreground">
               Un mail à rédiger, un prompt Cursor, ta prochaine action : je connais tes projets.
             </p>
           </div>
@@ -176,7 +176,7 @@ export function Chat({
               {m.role === "user" ? (
                 m.content
               ) : m.pending ? (
-                <span className="inline-flex items-center gap-1.5 text-muted">
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                   Réflexion
                   <span className="inline-block size-1.5 animate-pulse rounded-full bg-muted" />
                 </span>
@@ -237,7 +237,7 @@ export function Chat({
             }}
             maxLength={4000}
             placeholder="Rédige un mail à mon client…"
-            className="field-sizing-content max-h-36 min-h-10 min-w-0 flex-1 resize-none self-center bg-transparent px-1 py-2 text-[14.5px] outline-none placeholder:text-muted"
+            className="field-sizing-content max-h-36 min-h-10 min-w-0 flex-1 resize-none self-center bg-transparent px-1 py-2 text-[14.5px] outline-none placeholder:text-muted-foreground"
           />
           {busy ? (
             <button
@@ -290,7 +290,7 @@ function ClearButton({ disabled, onCleared }: { disabled: boolean; onCleared: ()
       }}
       className={cn(
         "inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 font-mono text-[10.5px] tracking-[0.08em] uppercase transition-colors disabled:opacity-50",
-        armed ? "bg-destructive text-accent-ink" : "text-muted hover:bg-accent-soft hover:text-ink",
+        armed ? "bg-destructive text-accent-ink" : "text-muted-foreground hover:bg-accent-soft hover:text-ink",
       )}
     >
       <Trash2 className="size-3.5" aria-hidden />

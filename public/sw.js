@@ -2,7 +2,7 @@
 // - Fichiers de build (/_next/static), icônes, polices : cache d'abord (ils ne changent jamais d'URL).
 // - Pages : réseau d'abord, copie en cache pour les rouvrir hors ligne.
 // - Jamais de cache pour l'API, l'authentification, ni les requêtes vers d'autres domaines (Supabase, Claude).
-const VERSION = "navpit-v1";
+const VERSION = "navpit-v2";
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 

@@ -81,13 +81,13 @@ export function PreLandingLibrary({
       <div className="mt-7 flex flex-col gap-3">
         <label className="relative block">
           <span className="sr-only">Search templates</span>
-          <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted" aria-hidden />
+          <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search templates..."
-            className="min-h-12 w-full rounded-pill border border-line bg-surface pr-4 pl-10 text-[15px] outline-none placeholder:text-muted focus:border-ink/30 focus:shadow-soft"
+            className="min-h-12 w-full rounded-pill border border-line bg-surface pr-4 pl-10 text-[15px] outline-none placeholder:text-muted-foreground focus:border-ink/30 focus:shadow-soft"
           />
         </label>
         <div className={ROW} role="group" aria-label="Category">
@@ -124,7 +124,7 @@ export function PreLandingLibrary({
         </div>
       </div>
 
-      <p className="mt-6 mb-4 text-[13px] text-muted" aria-live="polite">
+      <p className="mt-6 mb-4 text-[13px] text-muted-foreground" aria-live="polite">
         {results.length} {results.length === 1 ? "template" : "templates"}
       </p>
 
@@ -144,7 +144,7 @@ export function PreLandingLibrary({
         <div className="grid place-items-center rounded-card border border-dashed border-line bg-surface px-6 py-16 text-center">
           <Illustration name="empty-aucun-resultat" className="mb-2 size-24" />
           <p className="text-[17px] font-semibold tracking-[-0.02em]">No template matches</p>
-          <p className="mt-1 text-[14.5px] text-muted">Try another word, or clear the filters.</p>
+          <p className="mt-1 text-[14.5px] text-muted-foreground">Try another word, or clear the filters.</p>
           <button
             type="button"
             onClick={reset}

@@ -2,6 +2,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { WelcomeEmail } from "@/emails/welcome";
 import { sendEmail } from "@/lib/email/send";
+import { clearRequireLoginCookie } from "@/lib/auth/require-login-cookie";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,16 +32,25 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   const meta = user?.user_metadata ?? {};
-  if (meta.onboarding_required === true && meta.onboarding_done !== true) {
+  if (meta.onboarding_done !== true) {
+    if (meta.onboarding_required !== true) {
+      await supabase.auth.updateUser({ data: { onboarding_required: true } });
+    }
     const dest = new URL("/onboarding", origin);
     if (next !== "/accueil" && next !== "/onboarding" && !next.startsWith("/onboarding")) {
       dest.searchParams.set("next", next);
     }
     const ask = new URL(next, origin).searchParams.get("ask");
     if (ask) dest.searchParams.set("ask", ask);
-    return NextResponse.redirect(dest);
+    return redirectWithSession(dest);
   }
-  return NextResponse.redirect(`${origin}${next}`);
+  return redirectWithSession(`${origin}${next}`);
+}
+
+function redirectWithSession(url: string | URL) {
+  const response = NextResponse.redirect(url);
+  clearRequireLoginCookie(response);
+  return response;
 }
 
 /** Email de bienvenue au premier passage (confirmation d'inscription ou premier Google). */

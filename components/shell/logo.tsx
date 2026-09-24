@@ -1,20 +1,7 @@
-import Link from "next/link";
-import { BRAND } from "@/lib/brand";
+import { SiteLogo } from "@/components/site/site-logo";
 import { cn } from "@/lib/utils";
 
-/** Logo en Space Grotesk. */
+/** Logo Navpit (icône + wordmark). */
 export function Logo({ className }: { className?: string }) {
-  return (
-    <Link
-      href="/accueil"
-      className={cn(
-        "inline-flex min-h-11 items-center font-grotesk text-[24px] leading-none font-bold tracking-[-0.04em]",
-        className,
-      )}
-      aria-label={`${BRAND.name}, accueil`}
-    >
-      {BRAND.name}
-      <span className="text-accent-2">.</span>
-    </Link>
-  );
+  return <SiteLogo href="/accueil" className={cn("min-h-11", className)} />;
 }

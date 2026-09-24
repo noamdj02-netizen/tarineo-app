@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  AuthFieldGroup,
   Divider,
   Field,
   FormMessage,
@@ -12,7 +13,9 @@ import {
   PasswordField,
   SubmitButton,
 } from "@/components/auth/auth-ui";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Illustration } from "@/components/illustration";
+import { Button } from "@/components/ui/button";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/client";
 
@@ -24,7 +27,15 @@ function linkToken(input: string) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-export function LoginForm({ next, linkError }: { next?: string; linkError: boolean }) {
+export function LoginForm({
+  next,
+  linkError,
+  signedOut,
+}: {
+  next?: string;
+  linkError: boolean;
+  signedOut?: boolean;
+}) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
@@ -32,7 +43,11 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(
-    linkError ? "Ce lien ne marche plus. Demande un nouveau lien." : null,
+    linkError
+      ? "Ce lien ne marche plus. Demande un nouveau lien."
+      : signedOut
+        ? "Tu es déconnecté. Connecte-toi avec Google ou ton email pour continuer."
+        : null,
   );
 
   const target = safeNext(next);
@@ -106,13 +121,13 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
   if (mode === "code") {
     return (
       <form onSubmit={verifyCode} className="flex flex-col gap-4">
-        <div className="flex items-start gap-3 rounded-[16px] bg-surface-2 p-4 text-[14px] leading-relaxed">
-          <Illustration name="feedback-envoye" className="-my-1 size-12 flex-none" />
-          <span>
+        <Alert className="border-line bg-surface-2">
+          <Illustration name="feedback-envoye" className="size-12" />
+          <AlertDescription className="text-[14px] leading-relaxed">
             Email envoyé à <b>{email}</b>. Clique sur le lien. Dans l’app iPhone : appui long sur le
             lien, « Copier », puis colle-le ici.
-          </span>
-        </div>
+          </AlertDescription>
+        </Alert>
         <Field
           label="Lien ou code reçu"
           autoComplete="one-time-code"
@@ -130,13 +145,9 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
           <KeyRound className="size-4" aria-hidden />
           Me connecter
         </SubmitButton>
-        <button
-          type="button"
-          onClick={() => setMode("link")}
-          className="text-[14px] text-muted underline-offset-4 hover:text-ink hover:underline"
-        >
+        <Button type="button" variant="link" onClick={() => setMode("link")} className="h-auto p-0">
           Changer d’email
-        </button>
+        </Button>
       </form>
     );
   }
@@ -146,7 +157,8 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
     <div className="flex flex-col gap-4">
       <GoogleButton next={target} />
       <Divider />
-      <form onSubmit={byLink ? sendLink : signIn} className="flex flex-col gap-4">
+      <form onSubmit={byLink ? sendLink : signIn}>
+        <AuthFieldGroup>
         <Field
           label="Email"
           type="email"
@@ -165,7 +177,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
             />
             <Link
               href="/mot-de-passe-oublie"
-              className="self-end text-[13px] text-muted underline-offset-4 hover:text-ink hover:underline"
+              className="self-end text-[13px] text-muted-foreground underline-offset-4 hover:text-ink hover:underline"
             >
               Mot de passe oublié ?
             </Link>
@@ -173,18 +185,20 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
         )}
         {msg ? <FormMessage>{msg}</FormMessage> : null}
         <SubmitButton busy={busy}>{byLink ? "Recevoir mon lien" : "Me connecter"}</SubmitButton>
+        </AuthFieldGroup>
       </form>
-      <button
+      <Button
         type="button"
+        variant="link"
         onClick={() => {
           setMsg(null);
           setMode(byLink ? "password" : "link");
         }}
-        className="inline-flex items-center justify-center gap-2 text-[14px] text-muted underline-offset-4 hover:text-ink hover:underline"
+        className="h-auto gap-2 p-0 text-[14px]"
       >
-        {byLink ? <KeyRound className="size-3.5" aria-hidden /> : <Mail className="size-3.5" aria-hidden />}
+        {byLink ? <KeyRound aria-hidden /> : <Mail aria-hidden />}
         {byLink ? "Utiliser mon mot de passe" : "Recevoir un lien par email à la place"}
-      </button>
+      </Button>
     </div>
   );
 }

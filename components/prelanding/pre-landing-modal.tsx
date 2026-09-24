@@ -57,7 +57,7 @@ export function PreLandingModal({
             <p className="mono-label">/ Pre-landing {template.number}</p>
             <h2 className="truncate text-[20px] leading-tight font-semibold tracking-[-0.035em] sm:text-[22px]">
               {template.name}
-              <span className="ml-2 hidden text-[15px] font-normal tracking-normal text-muted sm:inline">
+              <span className="ml-2 hidden text-[15px] font-normal tracking-normal text-muted-foreground sm:inline">
                 {template.description}
               </span>
             </h2>
@@ -102,7 +102,7 @@ function SectionList({ template }: { template: PreLandingTemplate }) {
             key={`${sec.kind}-${i}`}
             className="rounded-pill border border-line bg-surface px-3 py-1.5 text-[13px] font-medium"
           >
-            <span className="mr-1.5 font-mono text-[11px] text-muted">{String(i + 1).padStart(2, "0")}</span>
+            <span className="mr-1.5 font-mono text-[11px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
             {SECTION_LABELS[sec.kind]}
           </li>
         ))}

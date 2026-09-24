@@ -141,7 +141,7 @@ export function AssistantPanel({
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Fermer"
-                  className="grid size-9 place-items-center rounded-lg text-muted transition-colors hover:bg-accent-soft hover:text-ink"
+                  className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent-soft hover:text-ink"
                 >
                   <X className="size-4" aria-hidden />
                 </button>

@@ -54,14 +54,14 @@ export function ResourceLibrary({ initial }: { initial: Resource[] }) {
       <label className="relative block">
         <span className="sr-only">Rechercher</span>
         <Search
-          className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted"
+          className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
           aria-hidden
         />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher (ex : 3D, dark, pricing)…"
-          className="min-h-12 w-full rounded-pill border border-line bg-surface pr-4 pl-10 text-[15px] outline-none placeholder:text-muted focus:border-ink/30 focus:shadow-soft"
+          className="min-h-12 w-full rounded-pill border border-line bg-surface pr-4 pl-10 text-[15px] outline-none placeholder:text-muted-foreground focus:border-ink/30 focus:shadow-soft"
         />
       </label>
 
@@ -105,7 +105,7 @@ export function ResourceLibrary({ initial }: { initial: Resource[] }) {
           </AnimatePresence>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-2 py-8 text-center text-[14px] text-muted">
+        <div className="flex flex-col items-center gap-2 py-8 text-center text-[14px] text-muted-foreground">
           <Illustration name="empty-aucun-resultat" className="size-20" />
           Aucune ressource ne correspond.
         </div>
@@ -141,14 +141,14 @@ function ResourceCard({
         <ResourceLogo r={r} />
         <div className="min-w-0">
           <h3 className="truncate text-[15.5px] font-semibold tracking-[-0.01em]">{r.name}</h3>
-          <p className="font-mono text-[10.5px] tracking-[0.06em] text-muted uppercase">
+          <p className="font-mono text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
             {r.category}
             {origin}
             {r.verified ? " · testé ✓" : ""}
           </p>
         </div>
       </div>
-      {r.note ? <p className="text-[13.5px] leading-snug text-muted">{r.note}</p> : null}
+      {r.note ? <p className="text-[13.5px] leading-snug text-muted-foreground">{r.note}</p> : null}
       {r.tags.length ? (
         <div className="flex flex-wrap gap-1">
           {r.tags.map((t) => (
@@ -158,7 +158,7 @@ function ResourceCard({
                 "rounded-md border px-1.5 py-px font-mono text-[10.5px]",
                 isWarnTag(t)
                   ? "border-ink/40 border-dashed text-ink"
-                  : "border-line bg-surface-2 text-muted",
+                  : "border-line bg-surface-2 text-muted-foreground",
               )}
             >
               {t}
@@ -254,7 +254,7 @@ function DeleteButton({
         "ml-auto inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 font-mono text-[11px] transition-colors",
         armed || failed
           ? "bg-destructive text-accent-ink"
-          : "text-muted hover:bg-accent-soft hover:text-ink",
+          : "text-muted-foreground hover:bg-accent-soft hover:text-ink",
       )}
     >
       {pending ? (
@@ -270,7 +270,7 @@ function DeleteButton({
 const field =
   "w-full rounded-xl border border-line bg-surface-2 px-3 py-2.5 text-[14px] text-ink outline-none focus:border-ink/40 focus:bg-surface";
 const labelCls =
-  "flex flex-col gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase";
+  "flex flex-col gap-1.5 font-mono text-[10.5px] tracking-[0.1em] text-muted-foreground uppercase";
 
 function AddResource({ onAdded }: { onAdded: (r: Resource) => void }) {
   const [open, setOpen] = useState(false);
@@ -317,7 +317,7 @@ function AddResource({ onAdded }: { onAdded: (r: Resource) => void }) {
                   type="button"
                   onClick={() => setOpen(false)}
                   aria-label="Fermer"
-                  className="grid size-9 place-items-center rounded-pill text-muted hover:bg-accent-soft"
+                  className="grid size-9 place-items-center rounded-pill text-muted-foreground hover:bg-accent-soft"
                 >
                   <X className="size-4" aria-hidden />
                 </button>
@@ -381,7 +381,7 @@ function AddResource({ onAdded }: { onAdded: (r: Resource) => void }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-card font-mono text-[11px] font-medium tracking-[0.12em] text-muted uppercase transition-colors hover:bg-surface-2 hover:text-ink"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-card font-mono text-[11px] font-medium tracking-[0.12em] text-muted-foreground uppercase transition-colors hover:bg-surface-2 hover:text-ink"
           >
             <Plus className="size-4" aria-hidden />
             Ajouter une ressource

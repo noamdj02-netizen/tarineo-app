@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { getViewer } from "@/lib/session";
 import { Wizard } from "./wizard";
 
@@ -9,6 +10,6 @@ export default async function OnboardingPage({
   searchParams: Promise<{ next?: string; ask?: string }>;
 }) {
   const [viewer, q] = await Promise.all([getViewer(), searchParams]);
-  if (!viewer) return null;
+  if (!viewer) redirect("/login?next=/onboarding");
   return <Wizard firstName={viewer.firstName} locale={viewer.locale} next={q.next} ask={q.ask} />;
 }

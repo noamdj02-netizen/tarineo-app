@@ -2,9 +2,11 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import { LandingButton } from "@/components/site/landing-button";
 import { EASE } from "@/components/motion/reveal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   FEATURES,
   FOUNDER,
@@ -29,15 +31,16 @@ export function Pricing() {
         className="relative flex rounded-pill border border-line bg-surface-2 p-1"
       >
         {(["month", "year"] as const).map((i) => (
-          <button
+          <Button
             key={i}
             type="button"
+            variant="ghost"
             role="radio"
             aria-checked={interval === i}
             onClick={() => setPeriod(i)}
             className={cn(
-              "relative min-h-10 rounded-pill px-5 text-[14px] font-medium transition-colors",
-              interval === i ? "text-accent-ink" : "text-ink/70 hover:text-ink",
+              "relative min-h-10 rounded-pill px-5 text-[14px] font-medium",
+              interval === i ? "text-accent-ink hover:bg-transparent" : "text-muted-foreground hover:text-foreground",
             )}
           >
             {interval === i ? (
@@ -55,7 +58,7 @@ export function Pricing() {
                 </span>
               ) : null}
             </span>
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -129,9 +132,9 @@ function PlanCard({
       <div className="flex items-center justify-between gap-3">
         <p className={cn("mono-label", dark && "text-accent-ink/60")}>{`/ ${name} ///`}</p>
         {badge ? (
-          <span className="rounded-pill bg-accent-ink/10 px-2.5 py-1 font-mono text-[10px] tracking-[0.1em] uppercase">
+          <Badge variant="secondary" className="rounded-pill font-mono text-[10px] tracking-widest uppercase">
             {badge}
-          </span>
+          </Badge>
         ) : null}
       </div>
       <div className="flex items-baseline gap-2">
@@ -144,9 +147,9 @@ function PlanCard({
         >
           {price}
         </motion.span>
-        <span className={cn("text-[14px]", dark ? "text-accent-ink/60" : "text-muted")}>{unit}</span>
+        <span className={cn("text-[14px]", dark ? "text-accent-ink/60" : "text-muted-foreground")}>{unit}</span>
       </div>
-      <p className={cn("text-[14.5px] leading-relaxed", dark ? "text-accent-ink/75" : "text-muted")}>
+      <p className={cn("text-[14.5px] leading-relaxed", dark ? "text-accent-ink/75" : "text-muted-foreground")}>
         {text}
       </p>
       {children}
@@ -161,15 +164,13 @@ function PlanCard({
           </li>
         ))}
       </ul>
-      <Link
+      <LandingButton
         href={href}
-        className={cn(
-          "mt-auto inline-flex min-h-12 items-center justify-center rounded-pill px-5 text-[15px] font-medium transition-transform duration-300 ease-out-soft hover:-translate-y-0.5",
-          dark ? "bg-accent-ink text-ink" : "btn-dark",
-        )}
+        variant={dark ? "pricingOnDark" : "pricingOnLight"}
+        fullWidth
       >
         {cta}
-      </Link>
+      </LandingButton>
     </div>
   );
 }

@@ -8,6 +8,9 @@ export async function getOnboarding(): Promise<OnboardingStep[]> {
   const counts = { projects: 0, focus: 0, resources: 0, chats: 0 };
   const db = await getDb();
 
+  const meta = db?.user.user_metadata ?? {};
+  const wizardDone = meta.onboarding_done === true;
+
   if (db) {
     const { supabase, user } = db;
     const head = { count: "exact" as const, head: true };
@@ -27,11 +30,24 @@ export async function getOnboarding(): Promise<OnboardingStep[]> {
     counts.chats = chats.count ?? 0;
   }
 
-  return [
+  const checklist = [
     { label: "Créer ton compte", href: "/accueil", done: db !== null },
     { label: "Ajouter un projet", href: "/projets", done: counts.projects > 0 },
     { label: "Mettre un projet en Focus", href: "/projets", done: counts.focus > 0 },
     { label: "Sauver une ressource", href: "/ressources", done: counts.resources > 0 },
     { label: "Poser une question au copilote", href: "/accueil?ask=1", done: counts.chats > 0 },
   ];
+
+  if (!wizardDone) {
+    return [
+      {
+        label: "Parcours guidé (prénom, projets, IA, goût…)",
+        href: "/onboarding",
+        done: false,
+      },
+      ...checklist,
+    ];
+  }
+
+  return checklist;
 }

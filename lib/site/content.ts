@@ -34,6 +34,86 @@ export const FEATURES: { art: IllustrationName; title: string; text: string }[] 
   },
 ];
 
+/** Bandeau défilant (stack outils), style landing Folio — domaines pour logo.dev. */
+export const STACK_MARQUEE = [
+  { label: "Notion", domain: "notion.so" },
+  { label: "Figma", domain: "figma.com" },
+  { label: "GitHub", domain: "github.com" },
+  { label: "Slack", domain: "slack.com" },
+  { label: "Linear", domain: "linear.app" },
+  { label: "Supabase", domain: "supabase.com" },
+  { label: "Vercel", domain: "vercel.com" },
+  { label: "Stripe", domain: "stripe.com" },
+  { label: "Google Agenda", domain: "google.com" },
+  { label: "Excalidraw", domain: "excalidraw.com" },
+] as const;
+
+export type HowWorksRow = {
+  title: string;
+  description: string;
+  art: IllustrationName;
+};
+
+/** Trois blocs alternés texte + visuel (section « How it works »). */
+export const HOW_WORKS_ROWS: HowWorksRow[] = [
+  {
+    title: "Reste dans la boucle",
+    description:
+      "Accueil, projets en Focus, prochaine action et semaine : tu vois ce qui a bougé sans ouvrir dix onglets.",
+    art: "dashboard-tache-validee",
+  },
+  {
+    title: "Branche ta stack",
+    description:
+      "Liens Figma, GitHub, Notion, agenda iCal et ressources design : tout est à côté du projet, pas dans un drive perdu.",
+    art: "onboarding-configurer",
+  },
+  {
+    title: "L’IA rédige la suite",
+    description:
+      "Mail de relance, post LinkedIn, schéma de parcours : le copilote propose, tu envoies ou tu retouches en un clic.",
+    art: "feedback-question",
+  },
+];
+
+export type CompareColumn = {
+  title: string;
+  subtitle: string;
+  points: string[];
+  highlight?: boolean;
+  muted?: boolean;
+};
+
+export const COMPARE_COLUMNS: CompareColumn[] = [
+  {
+    title: "Onglets éparpillés",
+    subtitle: "Notion + Figma + ChatGPT + agenda",
+    points: ["Contexte à recoller à chaque fois", "Pas de règle Focus", "Planning ailleurs"],
+    muted: true,
+  },
+  {
+    title: "Navpit",
+    subtitle: "Cockpit fondateur",
+    points: ["Un Focus, une prochaine action", "Copilote avec ton contexte", "Planning + projets + schémas"],
+    highlight: true,
+  },
+  {
+    title: "Chat seul",
+    subtitle: "IA générique",
+    points: ["Réponses sans tes projets", "Pas de suivi des tâches", "Tu refais le brief"],
+    muted: true,
+  },
+];
+
+export const AUTOMATION_SUGGESTIONS = [
+  "Prochaine action cette semaine",
+  "Rédiger un mail de relance",
+  "Schéma du parcours client",
+  "Checklist avant lancement",
+  "Post LinkedIn sur le Focus",
+  "Résumer un PDF déposé",
+];
+
 export const STEPS: { title: string; text: string }[] = [
   {
     title: "Ajoute tes projets",
@@ -50,6 +130,49 @@ export const STEPS: { title: string; text: string }[] = [
 ];
 
 const [y1, y2, y3] = LOYALTY_TIERS;
+
+export type FaqGroup = { id: string; label: string; items: { q: string; a: string }[] };
+
+export const FAQ_GROUPS: FaqGroup[] = [
+  {
+    id: "general",
+    label: "Général",
+    items: [
+      {
+        q: "Le plan gratuit est-il vraiment gratuit ?",
+        a: `Oui, sans carte bancaire. Tu as ${LIMITS.free.projects} projets, ${LIMITS.free.aiPerMonth} questions au copilote par mois et ${LIMITS.free.schemas} schémas.`,
+      },
+      {
+        q: "Mes données sont-elles privées ?",
+        a: "Oui. Chaque compte ne voit que ses propres données, protégées au niveau de la base. Ton agenda externe est lu en lecture seule.",
+      },
+    ],
+  },
+  {
+    id: "produit",
+    label: "Produit",
+    items: [
+      {
+        q: "C’est quoi l’offre Fondateur ?",
+        a: `Un seul paiement de ${FOUNDER.price} € pour Pro à vie. Réservée aux ${FOUNDER.seats} premiers soutiens.`,
+      },
+      {
+        q: "Je peux annuler quand je veux ?",
+        a: "Oui, depuis ton compte. Tu gardes Pro jusqu’à la fin de la période payée, puis tu repasses en gratuit.",
+      },
+    ],
+  },
+  {
+    id: "prix",
+    label: "Prix",
+    items: [
+      {
+        q: "Comment marche le prix fidélité ?",
+        a: `Pro : ${y1.month} €/mois la 1ʳᵉ année, ${y2.month} € la 2ᵉ, puis ${y3.month} €/mois. Le prix baisse à chaque anniversaire d’abonnement.`,
+      },
+    ],
+  },
+];
 
 export const FAQ: { q: string; a: string }[] = [
   {

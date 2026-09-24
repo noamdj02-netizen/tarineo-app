@@ -34,7 +34,7 @@ export function ProjectLinks({ site, github, figma, notion, className }: Props) 
             {label}
           </a>
         ) : (
-          <span key={label} className={cn(base, "border-dashed border-ink/15 text-muted")}>
+          <span key={label} className={cn(base, "border-dashed border-ink/15 text-muted-foreground")}>
             <Icon className="size-3.5" aria-hidden />
             {label} ?
           </span>

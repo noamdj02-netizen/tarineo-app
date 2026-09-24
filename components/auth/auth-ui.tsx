@@ -1,12 +1,37 @@
 "use client";
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Illustration } from "@/components/illustration";
-import { Reveal, RevealGroup } from "@/components/motion/reveal";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Field as UiField,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import type { IllustrationName } from "@/lib/illustrations";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+
+const inputClass = "h-11 rounded-xl text-[15px]";
 
 export function AuthCard({
   art,
@@ -24,104 +49,138 @@ export function AuthCard({
   footer?: React.ReactNode;
 }) {
   return (
-    <RevealGroup className="flex flex-col gap-4">
-      <Reveal className="rounded-[28px] border border-line bg-surface p-6 shadow-lift sm:p-8">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-2">
-            <p className="mono-label">{`/ ${label} ///`}</p>
-            <h1 className="font-display text-[30px] leading-[1.05] font-semibold tracking-tightest">
-              {title}
-            </h1>
-            {text ? <p className="text-[14.5px] leading-relaxed text-muted">{text}</p> : null}
-          </div>
-          <Illustration name={art} className="-mt-2 -mr-2 size-16 flex-none" />
-        </div>
-        {children}
-      </Reveal>
-      {footer ? (
-        <Reveal className="text-center text-[14px] text-muted">{footer}</Reveal>
-      ) : null}
-    </RevealGroup>
+    <div className="flex flex-col gap-4">
+      <Card className="gap-0 rounded-[28px] border-line py-0 shadow-lift ring-1 ring-line">
+        <CardHeader className="gap-3 border-b border-line px-6 pt-6 pb-5 sm:px-8 sm:pt-8">
+          <p className="mono-label">{`/ ${label} ///`}</p>
+          <CardTitle
+            className="font-serif text-[clamp(1.75rem,6vw,1.9rem)] leading-[1.06] tracking-[-0.02em] sm:font-display sm:text-[30px] sm:font-semibold sm:tracking-tightest"
+          >
+            {title}
+          </CardTitle>
+          {text ? (
+            <CardDescription className="text-[14.5px] leading-relaxed">{text}</CardDescription>
+          ) : null}
+          <CardAction>
+            <Illustration name={art} className="-mt-1 size-16" />
+          </CardAction>
+        </CardHeader>
+        <CardContent className="px-6 py-6 sm:px-8 sm:pb-8">{children}</CardContent>
+      </Card>
+      {footer ? <p className="text-center text-[14px] text-muted-foreground">{footer}</p> : null}
+    </div>
   );
 }
 
-const inputCls =
-  "min-h-12 w-full rounded-[14px] border border-line bg-surface-2 px-4 text-[15px] outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:text-muted focus:border-ink/25 focus:bg-surface focus:shadow-[0_0_0_4px_rgba(17,17,17,0.06)]";
+export function AuthFieldGroup({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return <FieldGroup className={cn("gap-4", className)}>{children}</FieldGroup>;
+}
 
 export function Field({
   label,
   hint,
+  id: idProp,
+  invalid,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string }) {
+}: React.ComponentProps<typeof Input> & {
+  label: string;
+  hint?: string;
+  invalid?: boolean;
+}) {
+  const autoId = useId();
+  const id = idProp ?? autoId;
   return (
-    <label className="flex flex-col gap-1.5 text-[13.5px] font-medium">
-      {label}
-      <input {...props} className={cn(inputCls, props.className)} />
-      {hint ? <span className="text-[12.5px] font-normal text-muted">{hint}</span> : null}
-    </label>
+    <UiField data-invalid={invalid || undefined}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <Input
+        id={id}
+        aria-invalid={invalid || undefined}
+        className={inputClass}
+        {...props}
+      />
+      {hint ? <FieldDescription>{hint}</FieldDescription> : null}
+    </UiField>
   );
 }
 
 export function PasswordField({
   label = "Mot de passe",
   hint,
+  id: idProp,
+  invalid,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & { label?: string; hint?: string }) {
+}: React.ComponentProps<typeof Input> & {
+  label?: string;
+  hint?: string;
+  invalid?: boolean;
+}) {
   const [show, setShow] = useState(false);
+  const autoId = useId();
+  const id = idProp ?? autoId;
   return (
-    <label className="flex flex-col gap-1.5 text-[13.5px] font-medium">
-      {label}
-      <span className="relative">
-        <input {...props} type={show ? "text" : "password"} className={cn(inputCls, "pr-12")} />
-        <button
-          type="button"
-          onClick={() => setShow((s) => !s)}
-          aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-          className="absolute top-1/2 right-1.5 grid size-9 -translate-y-1/2 place-items-center rounded-pill text-muted hover:bg-accent-soft hover:text-ink"
-        >
-          {show ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
-        </button>
-      </span>
-      {hint ? <span className="text-[12.5px] font-normal text-muted">{hint}</span> : null}
-    </label>
+    <UiField data-invalid={invalid || undefined}>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <InputGroup className={cn(inputClass, "h-11")}>
+        <InputGroupInput
+          id={id}
+          type={show ? "text" : "password"}
+          aria-invalid={invalid || undefined}
+          {...props}
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            type="button"
+            onClick={() => setShow((s) => !s)}
+            aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          >
+            {show ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
+      {hint ? <FieldDescription>{hint}</FieldDescription> : null}
+    </UiField>
   );
 }
 
 export function SubmitButton({ busy, children }: { busy: boolean; children: React.ReactNode }) {
   return (
-    <button
+    <Button
       type="submit"
       disabled={busy}
-      className="btn-dark inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill px-5 text-[15px] font-medium disabled:translate-y-0 disabled:opacity-60"
+      size="lg"
+      className="h-12 w-full rounded-full text-[15px] font-medium"
     >
-      {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+      {busy ? <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden /> : null}
       {children}
-    </button>
+    </Button>
   );
 }
 
 export function FormMessage({ tone = "error", children }: { tone?: "error" | "ok"; children: React.ReactNode }) {
+  if (tone === "ok") {
+    return (
+      <Alert className="border-st-focus/30 bg-st-focus-soft text-st-focus-ink">
+        <AlertTitle className="sr-only">Succès</AlertTitle>
+        <AlertDescription className="text-[13.5px] leading-snug">{children}</AlertDescription>
+      </Alert>
+    );
+  }
   return (
-    <p
-      role={tone === "error" ? "alert" : "status"}
-      className={cn(
-        "rounded-[12px] px-3.5 py-2.5 text-[13.5px] leading-snug",
-        tone === "error" ? "bg-st-fini-soft text-st-fini-ink" : "bg-st-focus-soft text-st-focus-ink",
-      )}
-    >
-      {children}
-    </p>
+    <Alert variant="destructive" className="border-destructive/20 bg-st-fini-soft text-st-fini-ink">
+      <AlertTitle className="sr-only">Erreur</AlertTitle>
+      <AlertDescription className="text-[13.5px] leading-snug text-st-fini-ink">{children}</AlertDescription>
+    </Alert>
   );
 }
 
 export function Divider() {
-  return (
-    <div className="my-1 flex items-center gap-3 font-mono text-[10.5px] tracking-[0.12em] text-muted uppercase">
-      <span className="h-px flex-1 bg-line" />
-      ou
-      <span className="h-px flex-1 bg-line" />
-    </div>
-  );
+  return <FieldSeparator>ou</FieldSeparator>;
 }
 
 /** Bouton Google : redirige vers Google puis revient par /auth/callback. */
@@ -144,24 +203,38 @@ export function GoogleButton({ next }: { next: string }) {
   }
   return (
     <div className="flex flex-col gap-2">
-      <button
+      <Button
         type="button"
-        onClick={go}
+        variant="outline"
+        size="lg"
         disabled={busy}
-        className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded-pill border border-line bg-surface px-5 text-[15px] font-medium shadow-soft transition-transform duration-300 ease-out-soft hover:-translate-y-0.5 disabled:opacity-60"
+        onClick={go}
+        className="h-12 w-full rounded-full text-[15px] font-medium shadow-soft"
       >
         {busy ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden />
+          <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />
         ) : (
           <svg viewBox="0 0 24 24" className="size-[18px]" aria-hidden>
-            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7Z" />
-            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24Z" />
-            <path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1Z" />
-            <path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9Z" />
+            <path
+              fill="#4285F4"
+              d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7Z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3c-1.1.7-2.5 1.2-4.1 1.2-3.1 0-5.8-2.1-6.7-5H1.3v3.1A12 12 0 0 0 12 24Z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1Z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1c.9-2.9 3.6-4.9 6.7-4.9Z"
+            />
           </svg>
         )}
         Continuer avec Google
-      </button>
+      </Button>
       {error ? <FormMessage>Google n’est pas encore activé. Utilise ton email.</FormMessage> : null}
     </div>
   );

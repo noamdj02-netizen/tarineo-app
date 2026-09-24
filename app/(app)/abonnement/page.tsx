@@ -52,7 +52,7 @@ export default async function AbonnementPage({
     <section className="mx-auto max-w-[760px]">
       <Link
         href="/compte"
-        className="mb-4 inline-flex min-h-10 items-center gap-2 text-[14px] text-muted hover:text-ink"
+        className="mb-4 inline-flex min-h-10 items-center gap-2 text-[14px] text-muted-foreground hover:text-ink"
       >
         <ArrowLeft className="size-4" aria-hidden />
         Retour au compte
@@ -92,7 +92,7 @@ export default async function AbonnementPage({
             <p className="mono-label">/ Prix fidélité ///</p>
             <Loyalty tier={info.tier} startedAt={subRow.data?.started_at ?? null} interval={info.interval ?? "month"} />
             {info.periodEnd ? (
-              <p className="text-[14px] text-muted">
+              <p className="text-[14px] text-muted-foreground">
                 {info.cancelAtPeriodEnd ? "Se termine le " : "Prochaine facture le "}
                 <b className="text-ink">{dateFr(info.periodEnd)}</b>.
               </p>
@@ -178,10 +178,10 @@ function Usage({ label, used, max }: { label: string; used: number; max: Limits[
   const pct = max ? Math.min(100, (used / max) * 100) : 0;
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-[13px] text-muted">{label}</p>
+      <p className="text-[13px] text-muted-foreground">{label}</p>
       <p className="font-display text-[24px] leading-none font-semibold tracking-tightest">
         {used}
-        <span className="text-[14px] font-normal text-muted"> / {max ?? "∞"}</span>
+        <span className="text-[14px] font-normal text-muted-foreground"> / {max ?? "∞"}</span>
       </p>
       <div className="h-1.5 overflow-hidden rounded-pill bg-line">
         <div
@@ -212,15 +212,15 @@ function Loyalty({ tier, startedAt, interval }: { tier: number; startedAt: strin
             key={t.fromYear}
             className={cn(
               "rounded-[14px] border p-3",
-              i === tier ? "border-ink bg-ink text-accent-ink" : i < tier ? "border-line text-muted line-through" : "border-line",
+              i === tier ? "border-ink bg-ink text-accent-ink" : i < tier ? "border-line text-muted-foreground line-through" : "border-line",
             )}
           >
             <p className="font-display text-[20px] font-semibold tracking-tightest">{t[interval]} €</p>
-            <p className={cn("text-[12px]", i === tier ? "text-accent-ink/70" : "text-muted")}>{t.label}</p>
+            <p className={cn("text-[12px]", i === tier ? "text-accent-ink/70" : "text-muted-foreground")}>{t.label}</p>
           </div>
         ))}
       </div>
-      <p className="text-[14px] text-muted">
+      <p className="text-[14px] text-muted-foreground">
         {next && nextDate ? (
           <>
             Ton prix passe à <b className="text-ink">{next[interval]} €</b> le <b className="text-ink">{nextDate}</b>.

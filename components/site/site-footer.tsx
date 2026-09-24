@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SiteLogo } from "@/components/site/site-logo";
 import { BRAND } from "@/lib/brand";
 
 const COLS = [
@@ -22,7 +23,7 @@ const COLS = [
     title: "Légal",
     links: [
       { href: "/mentions-legales", label: "Mentions légales" },
-      { href: "/cgv", label: "CGV" },
+      { href: "/cgv", label: "CGV / CGU" },
       { href: "/confidentialite", label: "Confidentialité" },
     ],
   },
@@ -33,11 +34,8 @@ export function SiteFooter() {
     <footer className="border-t border-line px-5 pt-14 pb-10 sm:px-8">
       <div className="mx-auto grid max-w-[1120px] gap-10 sm:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div className="flex flex-col gap-3">
-          <Link href="/" className="font-grotesk text-[22px] font-bold tracking-[-0.04em]">
-            {BRAND.name}
-            <span className="text-accent-2">.</span>
-          </Link>
-          <p className="max-w-[34ch] text-[14px] leading-relaxed text-muted">
+          <SiteLogo />
+          <p className="max-w-[34ch] text-[14px] leading-relaxed text-muted-foreground">
             Le cockpit des fondateurs solo : tous tes projets au même endroit, un seul en Focus.
           </p>
         </div>
@@ -56,7 +54,7 @@ export function SiteFooter() {
           </div>
         ))}
       </div>
-      <p className="mx-auto mt-12 max-w-[1120px] font-mono text-[11px] tracking-[0.08em] text-muted uppercase">
+      <p className="mx-auto mt-12 max-w-[1120px] font-mono text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
         © {new Date().getFullYear()} {BRAND.name} · Fait en France
       </p>
     </footer>
