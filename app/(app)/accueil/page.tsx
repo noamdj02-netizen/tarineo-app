@@ -1,18 +1,18 @@
 import { ActionCards, type ActionCard } from "@/components/home/action-cards";
 import { PromptBox } from "@/components/home/prompt-box";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
+import { getDb } from "@/lib/db";
 import { getViewer } from "@/lib/session";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Accueil" };
 
 async function getFocusProject() {
-  if (!isSupabaseConfigured()) return null;
-  const supabase = await createClient();
-  const { data } = await supabase
+  const db = await getDb();
+  if (!db) return null;
+  const { data } = await db.supabase
     .from("projects")
     .select("slug, name, next")
+    .eq("user_id", db.user.id)
     .eq("status", "focus")
     .order("sort_order")
     .limit(1)

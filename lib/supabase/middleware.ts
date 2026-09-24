@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { isSupabaseConfigured } from "./config";
+import { isOpenAccess, isSupabaseConfigured } from "./config";
 import type { Database } from "./types";
 
 const PUBLIC_PATHS = ["/login", "/auth"];
@@ -11,6 +11,14 @@ export async function updateSession(request: NextRequest) {
 
   // Supabase pas encore configuré (.env.local vide) : on laisse passer en local
   // pour pouvoir travailler sur le design. En production, les variables sont obligatoires.
+  // Accès libre : pas de connexion, la page /login renvoie vers l'accueil.
+  if (isOpenAccess()) {
+    if (request.nextUrl.pathname === "/login") {
+      return NextResponse.redirect(new URL("/accueil", request.url));
+    }
+    return response;
+  }
+
   if (!isSupabaseConfigured()) {
     if (process.env.NODE_ENV === "production") {
       return new NextResponse("Supabase n'est pas configuré.", { status: 500 });

@@ -1,12 +1,15 @@
+import "server-only";
 import { cache } from "react";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createClient } from "@/lib/supabase/server";
+import { getDb } from "@/lib/db";
+import { isOpenAccess } from "@/lib/supabase/config";
 
 export type Viewer = {
   /** Prénom affiché (« Bon retour, Noam ») */
   firstName: string;
   email: string;
   initial: string;
+  /** false en accès libre : pas de bouton « Se déconnecter » */
+  canSignOut: boolean;
 };
 
 function firstNameFrom(email: string, meta: Record<string, unknown> | undefined) {
@@ -17,18 +20,16 @@ function firstNameFrom(email: string, meta: Record<string, unknown> | undefined)
   return raw ? raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase() : "";
 }
 
-/** L'utilisateur connecté, ou null. Mis en cache pour la durée d'une requête. */
+/** L'utilisateur courant, ou null. Mis en cache pour la durée d'une requête. */
 export const getViewer = cache(async (): Promise<Viewer | null> => {
-  if (!isSupabaseConfigured()) return null;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user?.email) return null;
-  const firstName = firstNameFrom(user.email, user.user_metadata);
+  const db = await getDb();
+  const email = db?.user.email;
+  if (!email) return null;
+  const firstName = firstNameFrom(email, db.user.user_metadata);
   return {
     firstName,
-    email: user.email,
-    initial: (firstName || user.email).charAt(0).toUpperCase(),
+    email,
+    initial: (firstName || email).charAt(0).toUpperCase(),
+    canSignOut: !isOpenAccess(),
   };
 });

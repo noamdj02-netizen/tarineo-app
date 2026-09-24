@@ -98,7 +98,7 @@ function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
               <p className="mono-label">/ Compte</p>
               <p className="mt-1 truncate text-sm">{viewer?.email ?? "Non connecté"}</p>
             </div>
-            {viewer ? (
+            {viewer?.canSignOut ? (
               <form action="/auth/signout" method="post">
                 <button
                   role="menuitem"
