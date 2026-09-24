@@ -1,11 +1,14 @@
--- Studio Noam : schéma initial.
+-- Navpit : schéma initial.
 -- Chaque ligne n'est lisible et modifiable que par son propriétaire (RLS).
 -- Note : la colonne « desc » du prompt s'appelle « description » (desc est un mot réservé SQL).
+-- Multi-utilisateurs : les ids sont des uuid ; « slug » (ex : devis-instant) est unique par utilisateur
+-- et sert dans les URL (/projets/devis-instant).
 
 -- ─── Projets ────────────────────────────────────────────────────────────────
 create table public.projects (
-  id          text primary key,
+  id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  slug        text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   name        text not null,
   description text not null default '',
   status      text not null default 'pause' check (status in ('focus', 'pause')),
@@ -26,13 +29,14 @@ create table public.projects (
   risks       text[] not null default '{}',
   notes       text not null default '',
   sort_order  integer not null default 0,
-  updated_at  timestamptz not null default now()
+  updated_at  timestamptz not null default now(),
+  unique (user_id, slug)
 );
 create index projects_user_id_idx on public.projects (user_id, sort_order);
 
 create table public.project_features (
   id         uuid primary key default gen_random_uuid(),
-  project_id text not null references public.projects (id) on delete cascade,
+  project_id uuid not null references public.projects (id) on delete cascade,
   title      text not null,
   status     text not null default 'afaire' check (status in ('afaire', 'encours', 'fait', 'verif')),
   position   integer not null default 0
@@ -41,7 +45,7 @@ create index project_features_project_idx on public.project_features (project_id
 
 create table public.project_tasks (
   id         uuid primary key default gen_random_uuid(),
-  project_id text not null references public.projects (id) on delete cascade,
+  project_id uuid not null references public.projects (id) on delete cascade,
   title      text not null,
   done       boolean not null default false,
   position   integer not null default 0
@@ -50,7 +54,7 @@ create index project_tasks_project_idx on public.project_tasks (project_id, posi
 
 create table public.project_log (
   id         uuid primary key default gen_random_uuid(),
-  project_id text not null references public.projects (id) on delete cascade,
+  project_id uuid not null references public.projects (id) on delete cascade,
   date       date not null default current_date,
   text       text not null,
   created_at timestamptz not null default now()
@@ -59,8 +63,10 @@ create index project_log_project_idx on public.project_log (project_id, date des
 
 -- ─── Ressources ─────────────────────────────────────────────────────────────
 create table public.resources (
-  id         text primary key default gen_random_uuid()::text,
+  id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  -- clé stable des ressources importées (ex : n-3djack, c-dribbble) pour relancer le seed sans doublon
+  seed_key   text,
   name       text not null,
   url        text not null default '',
   category   text not null default '',
@@ -69,7 +75,8 @@ create table public.resources (
   source     text not null default 'moi' check (source in ('notion', 'moi', 'curated')),
   verified   boolean not null default false,
   notion_url text not null default '',
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (user_id, seed_key)
 );
 create index resources_user_id_idx on public.resources (user_id, created_at desc);
 

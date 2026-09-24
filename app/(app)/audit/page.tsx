@@ -1,6 +1,6 @@
 import { PageHead, Soon } from "@/components/shell/page-head";
 
-export const metadata = { title: "Audit de tes 3 sites · Studio Noam" };
+export const metadata = { title: "Mes sites" };
 
 export default function AuditPage() {
   return (

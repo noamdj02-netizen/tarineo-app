@@ -1,6 +1,6 @@
 import { PageHead, Soon } from "@/components/shell/page-head";
 
-export const metadata = { title: "Une landing = un tunnel de 12 frames · Studio Noam" };
+export const metadata = { title: "Anatomie" };
 
 export default function AnatomiePage() {
   return (

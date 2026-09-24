@@ -1,6 +1,6 @@
 import { PageHead, Soon } from "@/components/shell/page-head";
 
-export const metadata = { title: "Bibliothèque de composants · Studio Noam" };
+export const metadata = { title: "Composants" };
 
 export default function ComposantsPage() {
   return (

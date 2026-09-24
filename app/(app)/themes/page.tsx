@@ -1,6 +1,6 @@
 import { PageHead, Soon } from "@/components/shell/page-head";
 
-export const metadata = { title: "6 thèmes prêts · Studio Noam" };
+export const metadata = { title: "Thèmes" };
 
 export default function ThemesPage() {
   return (

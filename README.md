@@ -1,6 +1,8 @@
-# Studio Noam
+# Navpit
 
-Ton tableau de bord perso pour piloter tes SaaS, en vraie app installable sur iPhone.
+**The operating system for focused founders.**
+
+Le cockpit pour piloter tes SaaS : un projet en focus jusqu'à sa première vente, en vraie app installable sur iPhone. → navpit.com
 
 ## Lancer en local
 

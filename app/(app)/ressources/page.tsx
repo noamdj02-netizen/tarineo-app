@@ -1,6 +1,6 @@
 import { PageHead, Soon } from "@/components/shell/page-head";
 
-export const metadata = { title: "Ressources design & dev · Studio Noam" };
+export const metadata = { title: "Ressources" };
 
 export default function RessourcesPage() {
   return (

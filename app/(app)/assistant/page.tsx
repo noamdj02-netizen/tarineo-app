@@ -1,6 +1,6 @@
 import { PageHead, Soon } from "@/components/shell/page-head";
 
-export const metadata = { title: "Assistant IA · Studio Noam" };
+export const metadata = { title: "Assistant IA" };
 
 export default function AssistantPage() {
   return (

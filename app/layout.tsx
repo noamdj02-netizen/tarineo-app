@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -21,9 +22,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Studio Noam",
-  description:
-    "Ton QG pour créer tes SaaS : projets, outils, ressources design, workflow Figma → Cursor, kit landing et assistant IA.",
+  title: { default: BRAND.name, template: `%s · ${BRAND.name}` },
+  description: BRAND.description,
+  applicationName: BRAND.name,
+  appleWebApp: { title: BRAND.name, capable: true, statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

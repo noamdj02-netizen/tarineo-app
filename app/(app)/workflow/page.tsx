@@ -1,6 +1,6 @@
 import { PageHead, Soon } from "@/components/shell/page-head";
 
-export const metadata = { title: "Figma → Cursor, sans perte · Studio Noam" };
+export const metadata = { title: "Figma → Cursor" };
 
 export default function WorkflowPage() {
   return (

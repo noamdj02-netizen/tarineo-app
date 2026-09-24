@@ -8,6 +8,7 @@ export type ResourceSource = "notion" | "moi" | "curated";
 export type ProjectRow = {
   id: string;
   user_id: string;
+  slug: string;
   name: string;
   description: string;
   status: ProjectStatus;
@@ -58,6 +59,7 @@ export type LogRow = {
 export type ResourceRow = {
   id: string;
   user_id: string;
+  seed_key: string | null;
   name: string;
   url: string;
   category: string;
@@ -87,7 +89,7 @@ type Table<Row, Required extends keyof Row> = {
 export type Database = {
   public: {
     Tables: {
-      projects: Table<ProjectRow, "id" | "name">;
+      projects: Table<ProjectRow, "slug" | "name">;
       project_features: Table<FeatureRow, "project_id" | "title">;
       project_tasks: Table<TaskRow, "project_id" | "title">;
       project_log: Table<LogRow, "project_id" | "text">;

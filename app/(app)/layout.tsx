@@ -1,5 +1,6 @@
 import { LogOut } from "lucide-react";
 import { BottomTabs, TopTabs } from "@/components/shell/tab-bar";
+import { BRAND } from "@/lib/brand";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,12 +8,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="wrap">
         <header className="top">
           <div>
-            <div className="eyebrow">Tarineo · Devis Instant · Optérieur</div>
-            <h1>Studio Noam</h1>
-            <p className="hidden sm:block">
-              Ton QG pour créer tes SaaS : projets, outils, ressources design, workflow Figma →
-              Cursor, kit landing et un assistant IA qui connaît tout ça.
-            </p>
+            <div className="eyebrow">{BRAND.tagline}</div>
+            <h1>{BRAND.name}</h1>
+            <p className="hidden sm:block">{BRAND.description}</p>
           </div>
           <form action="/auth/signout" method="post">
             <button className="btn min-h-11" type="submit" aria-label="Se déconnecter">
