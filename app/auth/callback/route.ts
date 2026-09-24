@@ -27,6 +27,19 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/login?error=lien`);
   }
   await welcomeOnce(supabase, origin);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const meta = user?.user_metadata ?? {};
+  if (meta.onboarding_required === true && meta.onboarding_done !== true) {
+    const dest = new URL("/onboarding", origin);
+    if (next !== "/accueil" && next !== "/onboarding" && !next.startsWith("/onboarding")) {
+      dest.searchParams.set("next", next);
+    }
+    const ask = new URL(next, origin).searchParams.get("ask");
+    if (ask) dest.searchParams.set("ask", ask);
+    return NextResponse.redirect(dest);
+  }
   return NextResponse.redirect(`${origin}${next}`);
 }
 
@@ -39,7 +52,9 @@ async function welcomeOnce(supabase: Awaited<ReturnType<typeof createClient>>, o
   // comptes créés avant l'envoi des bienvenues : pas d'email surprise
   if (Date.now() - new Date(user.created_at).getTime() > 864e5) return;
   // marque d'abord : un double clic sur le lien n'envoie pas deux emails
-  await supabase.auth.updateUser({ data: { welcomed: true } });
+  const extra =
+    user.user_metadata?.onboarding_done === true ? {} : { onboarding_required: true };
+  await supabase.auth.updateUser({ data: { welcomed: true, ...extra } });
   const meta = user.user_metadata ?? {};
   const name = [meta.first_name, meta.full_name, meta.name].find(
     (v): v is string => typeof v === "string" && v.trim().length > 0,

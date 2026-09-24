@@ -1,4 +1,4 @@
-import { ArrowRight, CreditCard } from "lucide-react";
+import { ArrowLeft, ArrowRight, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { PageHead } from "@/components/shell/page-head";
@@ -41,10 +41,23 @@ export default async function AbonnementPage({
   const seatsLeft = Math.max(0, FOUNDER.seats - (seats.data ?? 0));
   const wanted = q.plan === "founder" ? "founder" : "pro";
   const interval = q.interval === "year" ? "year" : "month";
+  const today =
+    info.plan === "founder"
+      ? `${FOUNDER.price} € une fois`
+      : info.plan === "pro"
+        ? `${LOYALTY_TIERS[info.tier][info.interval ?? "month"]} € / ${info.interval === "year" ? "an" : "mois"}`
+        : "0 €";
 
   return (
     <section className="mx-auto max-w-[760px]">
-      <PageHead art="landing-revenus" label="Abonnement" title={`Plan ${PLAN_LABEL[info.plan]},`} tail="tes limites et ton prix.">
+      <Link
+        href="/compte"
+        className="mb-4 inline-flex min-h-10 items-center gap-2 text-[14px] text-muted hover:text-ink"
+      >
+        <ArrowLeft className="size-4" aria-hidden />
+        Retour au compte
+      </Link>
+      <PageHead art="landing-revenus" label="Abonnement" title={`Tu paies ${today},`} tail={`plan ${PLAN_LABEL[info.plan]}.`}>
         {info.plan === "free"
           ? "Tu es sur le plan Gratuit. Passe Pro quand tu veux : ton prix baissera chaque année."
           : info.plan === "founder"
@@ -92,6 +105,21 @@ export default async function AbonnementPage({
             <p className="font-mono text-[11px] tracking-[0.14em] text-accent-ink/60 uppercase">
               {wanted === "founder" ? "/ Fondateur ///" : "/ Passer Pro ///"}
             </p>
+            {wanted === "pro" ? (
+              <div className="flex gap-2">
+                {(["month", "year"] as const).map((iv) => (
+                  <Link
+                    key={iv}
+                    href={`/abonnement?plan=pro&interval=${iv}`}
+                    className={`min-h-10 rounded-pill px-4 text-[13px] font-medium leading-10 ${
+                      interval === iv ? "bg-accent-ink text-ink" : "border border-white/20 text-accent-ink/80"
+                    }`}
+                  >
+                    {iv === "month" ? "Mensuel" : "Annuel · 2 mois offerts"}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
             <p className="font-display text-[26px] leading-tight font-semibold tracking-tightest">
               {wanted === "founder"
                 ? `${FOUNDER.price} € une fois, Pro à vie.`
@@ -117,6 +145,15 @@ export default async function AbonnementPage({
                 Comparer les offres
                 <ArrowRight className="size-3.5" aria-hidden />
               </Link>
+              {wanted === "pro" ? (
+                <Link href="/abonnement?plan=founder" className="text-[14px] text-accent-ink/70 hover:text-accent-ink">
+                  ou Fondateur · 149 € une fois
+                </Link>
+              ) : (
+                <Link href="/abonnement?plan=pro" className="text-[14px] text-accent-ink/70 hover:text-accent-ink">
+                  ou Pro · 15 € / mois
+                </Link>
+              )}
             </form>
           </Reveal>
         ) : info.hasCustomer ? (

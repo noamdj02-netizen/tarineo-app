@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { STATIC_KNOWLEDGE, userContext } from "@/lib/assistant/context";
+import { fileKind, MAX_FILE_BYTES, MAX_FILES } from "@/lib/assistant/files";
 import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 import { DEFAULT_MODEL, isModelId, type ModelId } from "@/lib/models";
@@ -63,16 +64,21 @@ export async function POST(request: Request) {
   const db = await getDb();
   if (!db) return json(401, "Connecte-toi pour utiliser l’assistant.");
 
-  let body: { question?: unknown; model?: unknown; page?: unknown };
+  let body: { question?: unknown; model?: unknown; page?: unknown; files?: unknown };
   try {
     body = await request.json();
   } catch {
     return json(400, "Requête illisible.");
   }
+  const files = parseFiles(body.files);
   const question = typeof body.question === "string" ? body.question.trim() : "";
-  if (!question) return json(400, "Question vide.");
+  if (!question && !files.length) return json(400, "Question vide.");
   if (question.length > MAX_QUESTION) return json(400, "Question trop longue.");
   const model = pickModel(body.model);
+  const stored = [
+    question || "Lis ce fichier et dis-moi quoi en faire.",
+    ...files.map((f) => `📎 ${f.name}`),
+  ].join("\n");
   const limit = await limitReached(db, "ai");
   if (limit) return json(402, limit);
 
@@ -91,7 +97,7 @@ export async function POST(request: Request) {
 
   const { data: saved, error: saveError } = await db.supabase
     .from("chat_messages")
-    .insert({ user_id: db.user.id, role: "user", content: question })
+    .insert({ user_id: db.user.id, role: "user", content: stored })
     .select("id")
     .single();
   if (saveError || !saved) return json(500, "Impossible d’enregistrer ta question.");
@@ -130,7 +136,7 @@ export async function POST(request: Request) {
             model,
             max_tokens: 16000,
             system,
-            messages: [...history, { role: "user", content: question }],
+            messages: [...history, { role: "user", content: toContent(question, files) }],
             // cache automatique : consignes + historique relus à ~10 % du prix au message suivant
             cache_control: { type: "ephemeral" },
             ...modelOptions(model),
@@ -191,4 +197,51 @@ export async function POST(request: Request) {
       "X-Model": model,
     },
   });
+}
+
+type InFile = { name: string; mime: string; data: string };
+
+function parseFiles(raw: unknown): InFile[] {
+  if (!Array.isArray(raw)) return [];
+  const out: InFile[] = [];
+  for (const x of raw.slice(0, MAX_FILES)) {
+    if (!x || typeof x !== "object") continue;
+    const o = x as Record<string, unknown>;
+    const name = typeof o.name === "string" ? o.name.slice(0, 120) : "";
+    const mime = typeof o.mime === "string" ? o.mime : "";
+    const data = typeof o.data === "string" ? o.data.replace(/\s/g, "") : "";
+    if (!name || !data || !fileKind(mime)) continue;
+    // ~4/3 du binaire : on refuse au-delà de 2 Mo décodés
+    if (data.length > Math.ceil((MAX_FILE_BYTES * 4) / 3) + 64) continue;
+    out.push({ name, mime, data });
+  }
+  return out;
+}
+
+function toContent(question: string, files: InFile[]): Anthropic.MessageParam["content"] {
+  const blocks: Anthropic.ContentBlockParam[] = [];
+  const text = question || "Lis ce fichier et dis-moi quoi en faire.";
+  blocks.push({ type: "text", text });
+  for (const f of files) {
+    const kind = fileKind(f.mime);
+    if (kind === "image") {
+      blocks.push({
+        type: "image",
+        source: { type: "base64", media_type: f.mime as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: f.data },
+      });
+    } else if (kind === "pdf") {
+      blocks.push({
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: f.data },
+      });
+    } else if (kind === "text") {
+      try {
+        const decoded = Buffer.from(f.data, "base64").toString("utf8").slice(0, 40_000);
+        blocks.push({ type: "text", text: `\n--- ${f.name} ---\n${decoded}` });
+      } catch {
+        blocks.push({ type: "text", text: `(Impossible de lire ${f.name})` });
+      }
+    }
+  }
+  return blocks;
 }

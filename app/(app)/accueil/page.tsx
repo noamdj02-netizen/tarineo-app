@@ -24,13 +24,6 @@ async function getFocusProject() {
   return data;
 }
 
-const SUGGESTIONS = [
-  "Quelle est ma prochaine action ?",
-  "Écris le prompt Cursor pour mon hero",
-  "Quel thème pour mon projet ?",
-  "Comment trouver mes 10 premiers clients ?",
-];
-
 export default async function AccueilPage() {
   const [viewer, focus, week] = await Promise.all([
     getViewer(),
@@ -88,7 +81,7 @@ export default async function AccueilPage() {
           <h1 className="mt-2 max-w-[18ch] font-display text-[clamp(26px,4.6vw,38px)] leading-[1.06] font-semibold tracking-tightest text-balance">
             Comment puis-je t’aider aujourd’hui ?
           </h1>
-          <PromptBox suggestions={SUGGESTIONS} className="mt-5 flex-1" />
+          <PromptBox className="mt-5 flex-1" />
         </GlowCard>
       </Reveal>
 

@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/auth",
   "/inscription",
   "/mot-de-passe-oublie",
+  "/nouveau-mot-de-passe",
   "/prix",
   "/mentions-legales",
   "/cgv",
@@ -76,11 +77,24 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Connecté sur /inscription?plan=pro : on garde le choix et on file vers le paiement.
+  const meta = user?.user_metadata ?? {};
+  const needsOnboarding = meta.onboarding_required === true && meta.onboarding_done !== true;
+
+  // Connecté sur /inscription?plan=pro : onboarding d’abord, le plan est conservé.
   if (user && AUTH_PAGES.includes(pathname)) {
     const plan = request.nextUrl.searchParams.get("plan");
     const url = request.nextUrl.clone();
     url.search = "";
+    if (needsOnboarding) {
+      url.pathname = "/onboarding";
+      if (plan) {
+        const next = new URLSearchParams({ plan });
+        const interval = request.nextUrl.searchParams.get("interval");
+        if (interval) next.set("interval", interval);
+        url.searchParams.set("next", `/abonnement?${next}`);
+      }
+      return NextResponse.redirect(url);
+    }
     if (plan) {
       url.pathname = "/abonnement";
       url.searchParams.set("plan", plan);
@@ -91,6 +105,23 @@ export async function updateSession(request: NextRequest) {
       const q = request.nextUrl.searchParams.get("q");
       if (q) url.searchParams.set("ask", q.slice(0, 500));
     }
+    return NextResponse.redirect(url);
+  }
+
+  if (user && needsOnboarding && !pathname.startsWith("/onboarding") && !pathname.startsWith("/auth")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/onboarding";
+    url.search = "";
+    if (pathname.startsWith("/abonnement") && request.nextUrl.search) {
+      url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
+    }
+    return NextResponse.redirect(url);
+  }
+
+  if (user && !needsOnboarding && pathname.startsWith("/onboarding")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/accueil";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

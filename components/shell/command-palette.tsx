@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { CornerDownLeft, Search } from "lucide-react";
+import { CornerDownLeft, CreditCard, Search, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -51,10 +51,18 @@ export function CommandPalette({
   const [sel, setSel] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const extras = useMemo(
+    () => [
+      { href: "/compte", label: "Compte", icon: User },
+      { href: "/abonnement", label: "Abonnement", icon: CreditCard },
+    ],
+    [],
+  );
   const results = useMemo(() => {
+    const all = [...TABS, ...extras];
     const n = normalize(q.trim());
-    return n ? TABS.filter((t) => normalize(t.label).includes(n)) : TABS;
-  }, [q]);
+    return n ? all.filter((t) => normalize(t.label).includes(n)) : all;
+  }, [q, extras]);
 
   const close = useCallback(() => {
     setQ("");

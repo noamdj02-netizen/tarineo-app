@@ -55,7 +55,7 @@ export function SignupForm({ next }: { next: string }) {
       email: email.trim(),
       password,
       options: {
-        data: { first_name: name.trim() },
+        data: { first_name: name.trim(), onboarding_required: true, locale: "fr" },
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });

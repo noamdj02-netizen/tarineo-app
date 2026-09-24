@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { clearChat, type ChatMessage } from "@/app/(app)/assistant/actions";
 import { Mascot } from "@/components/home/mascot";
 import { EASE } from "@/components/motion/reveal";
+import type { AssistantFile } from "@/lib/assistant/files";
 import { cn } from "@/lib/utils";
 import { MessageContent } from "./message-content";
 import { ModelSelect, useModel } from "./model-select";
@@ -15,7 +16,7 @@ export type { ChatMessage };
 type Bubble = ChatMessage & { error?: boolean; pending?: boolean };
 
 /** Question envoyée depuis ailleurs (barre de l'accueil, fiche projet…) ; `id` change à chaque envoi. */
-export type Queued = { id: number; text: string } | null;
+export type Queued = { id: number; text: string; files?: AssistantFile[] } | null;
 
 export function Chat({
   initial,
@@ -52,12 +53,15 @@ export function Chat({
   }, []);
 
   const ask = useCallback(
-    async (question: string) => {
-      const q = question.trim();
-      if (!q || busy) return;
+    async (question: string, files?: AssistantFile[]) => {
+      const q = question.trim() || (files?.length ? "Lis ce fichier et dis-moi quoi en faire." : "");
+      if ((!q && !files?.length) || busy) return;
       setInput("");
       setBusy(true);
-      const userMsg: Bubble = { id: crypto.randomUUID(), role: "user", content: q };
+      const shown = files?.length
+        ? `${q}\n${files.map((f) => `📎 ${f.name}`).join("\n")}`
+        : q;
+      const userMsg: Bubble = { id: crypto.randomUUID(), role: "user", content: shown };
       const replyId = crypto.randomUUID();
       setMessages((m) => [
         ...m,
@@ -74,7 +78,7 @@ export function Chat({
         const res = await fetch("/api/assistant", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: q, model, page: pathname }),
+          body: JSON.stringify({ question: q, model, page: pathname, files: files ?? [] }),
           signal: ctl.signal,
         });
         if (!res.ok || !res.body) {
@@ -122,7 +126,7 @@ export function Chat({
   useEffect(() => {
     if (!queued || queued.id === lastQueued.current || keyMissing || busy) return;
     lastQueued.current = queued.id;
-    if (queued.text) void ask(queued.text);
+    if (queued.text || queued.files?.length) void ask(queued.text, queued.files);
   }, [queued, ask, keyMissing, busy]);
 
   const empty = messages.length === 0;

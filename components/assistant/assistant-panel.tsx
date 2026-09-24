@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { loadAssistant, type ChatMessage } from "@/app/(app)/assistant/actions";
 import { Mascot } from "@/components/home/mascot";
 import { EASE } from "@/components/motion/reveal";
+import type { AssistantFile } from "@/lib/assistant/files";
 import { ASSISTANT_EVENT, type AssistantEventDetail } from "@/lib/assistant/open";
 import { Chat, type Queued } from "./chat";
 
@@ -32,9 +33,11 @@ export function AssistantPanel({
   const [queued, setQueued] = useState<Queued>(null);
   const loading = useRef(false);
 
-  const show = useCallback((question?: string) => {
+  const show = useCallback((question?: string, files?: AssistantFile[]) => {
     setOpen(true);
-    if (question) setQueued((q) => ({ id: (q?.id ?? 0) + 1, text: question }));
+    if (question || files?.length) {
+      setQueued((q) => ({ id: (q?.id ?? 0) + 1, text: question ?? "", files }));
+    }
   }, []);
 
   useEffect(() => {
@@ -54,7 +57,10 @@ export function AssistantPanel({
   }, [open]);
 
   useEffect(() => {
-    const onOpen = (e: Event) => show((e as CustomEvent<AssistantEventDetail>).detail?.question);
+    const onOpen = (e: Event) => {
+      const d = (e as CustomEvent<AssistantEventDetail>).detail;
+      show(d?.question, d?.files);
+    };
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();

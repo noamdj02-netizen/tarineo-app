@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 
@@ -11,7 +12,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="absolute right-[-10%] h-full w-[50%] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_10%,transparent)] opacity-60 blur-3xl" />
       </div>
       <header className="mx-auto flex w-full max-w-[1120px] items-center justify-between py-5">
-        <Link href="/" className="font-grotesk text-[22px] font-bold tracking-[-0.04em]">
+        <Link
+          href="/"
+          className="inline-flex min-h-11 items-center gap-2 font-grotesk text-[22px] font-bold tracking-[-0.04em]"
+        >
+          <ArrowLeft className="size-4 text-muted" aria-hidden />
           {BRAND.name}
           <span className="text-accent-2">.</span>
         </Link>

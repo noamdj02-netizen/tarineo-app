@@ -8,8 +8,13 @@ export type Viewer = {
   firstName: string;
   email: string;
   initial: string;
+  avatarUrl: string | null;
+  locale: "fr" | "en";
   /** false en accès libre : pas de bouton « Se déconnecter » */
   canSignOut: boolean;
+  /** Inscription récente : le wizard d’accueil n’est pas encore fini. */
+  needsOnboarding: boolean;
+  theme: string | null;
 };
 
 function firstNameFrom(email: string, meta: Record<string, unknown> | undefined) {
@@ -25,11 +30,20 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
   const db = await getDb();
   const email = db?.user.email;
   if (!email) return null;
-  const firstName = firstNameFrom(email, db.user.user_metadata);
+  const meta = db.user.user_metadata ?? {};
+  const firstName = firstNameFrom(email, meta);
+  const avatar =
+    [meta.avatar_url, meta.picture].find(
+      (v): v is string => typeof v === "string" && v.startsWith("http"),
+    ) ?? null;
   return {
     firstName,
     email,
     initial: (firstName || email).charAt(0).toUpperCase(),
+    avatarUrl: avatar,
+    locale: meta.locale === "en" ? "en" : "fr",
     canSignOut: !isOpenAccess(),
+    needsOnboarding: meta.onboarding_required === true && meta.onboarding_done !== true,
+    theme: typeof meta.theme === "string" ? meta.theme : null,
   };
 });

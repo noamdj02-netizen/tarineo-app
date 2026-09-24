@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { CreditCard, LogOut, Search } from "lucide-react";
+import { CreditCard, LogOut, Search, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Illustration } from "@/components/illustration";
@@ -91,9 +91,14 @@ function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label="Mon compte"
-        className="btn-dark grid size-10 place-items-center rounded-pill font-mono text-[13px] font-medium"
+        className="btn-dark relative grid size-10 place-items-center overflow-hidden rounded-pill font-mono text-[13px] font-medium"
       >
-        {viewer?.initial ?? "·"}
+        {viewer?.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- photo utilisateur
+          <img src={viewer.avatarUrl} alt="" className="size-full object-cover" />
+        ) : (
+          viewer?.initial ?? "·"
+        )}
       </button>
       <AnimatePresence>
         {open ? (
@@ -112,6 +117,15 @@ function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
                 <p className="mt-1 truncate text-sm">{viewer?.email ?? "Non connecté"}</p>
               </div>
             </div>
+            <Link
+              role="menuitem"
+              href="/compte"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm hover:bg-accent-soft"
+            >
+              <User className="size-4 text-muted" aria-hidden />
+              Compte
+            </Link>
             <Link
               role="menuitem"
               href="/abonnement"

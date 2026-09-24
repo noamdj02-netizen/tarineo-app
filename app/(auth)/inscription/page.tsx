@@ -7,12 +7,11 @@ export const metadata = { title: "Créer un compte" };
 /** Après confirmation : l'app, ou directement le paiement si un plan a été choisi sur /prix. */
 function nextFor(plan?: string, interval?: string, q?: string) {
   if (plan !== "pro" && plan !== "founder") {
-    // question tapée dans le hero : elle s'ouvre dans l'assistant après l'inscription
-    return q ? `/accueil?${new URLSearchParams({ ask: q.slice(0, 500) })}` : "/accueil";
+    return q ? `/onboarding?${new URLSearchParams({ ask: q.slice(0, 500) })}` : "/onboarding";
   }
   const sp = new URLSearchParams({ plan });
   if (plan === "pro" && (interval === "month" || interval === "year")) sp.set("interval", interval);
-  return `/abonnement?${sp}`;
+  return `/onboarding?next=${encodeURIComponent(`/abonnement?${sp}`)}`;
 }
 
 export default async function SignupPage({
