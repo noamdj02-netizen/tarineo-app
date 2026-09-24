@@ -1,6 +1,5 @@
 import {
   Blocks,
-  Bot,
   House,
   LayoutDashboard,
   Layers,
@@ -25,7 +24,6 @@ export type Tab = {
 export const TABS: Tab[] = [
   { href: "/accueil", label: "Accueil", short: "Accueil", icon: House },
   { href: "/projets", label: "Projets", short: "Projets", icon: LayoutDashboard },
-  { href: "/assistant", label: "Assistant IA", short: "IA", icon: Bot },
   { href: "/ressources", label: "Ressources", short: "Ressources", icon: Library },
   { href: "/outils", label: "Outils", short: "Outils", icon: Wrench },
   { href: "/schemas", label: "Schémas", short: "Schémas", icon: Shapes },

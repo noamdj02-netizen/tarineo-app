@@ -2,10 +2,10 @@
 
 import { useReducedMotion } from "framer-motion";
 import { ArrowUp, Mic, MicOff } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ModelSelect, useModel } from "@/components/assistant/model-select";
 import { TypingPlaceholder } from "@/components/home/typing-placeholder";
+import { openAssistant } from "@/lib/assistant/open";
 import { cn } from "@/lib/utils";
 
 type SpeechRecognitionLike = {
@@ -42,7 +42,6 @@ export function PromptBox({
   suggestions: string[];
   className?: string;
 }) {
-  const router = useRouter();
   const reduce = useReducedMotion();
   const [value, setValue] = useState("");
   const [model, setModel] = useModel();
@@ -76,10 +75,16 @@ export function PromptBox({
   function submit(text = value) {
     const q = text.trim();
     if (!q || sending) return;
-    const params = new URLSearchParams({ q, model });
     setSending(true);
     // laisse le temps à la mascotte de lancer son avion
-    setTimeout(() => router.push(`/assistant?${params}`), reduce ? 0 : 320);
+    setTimeout(
+      () => {
+        openAssistant(q);
+        setValue("");
+        setSending(false);
+      },
+      reduce ? 0 : 320,
+    );
   }
 
   function toggleDictation() {

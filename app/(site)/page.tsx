@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Illustration } from "@/components/illustration";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { Faq } from "@/components/site/faq";
+import { HeroPrompt } from "@/components/site/hero-prompt";
 import { InView } from "@/components/site/in-view";
 import { Pricing } from "@/components/site/pricing";
 import { ProductPreview } from "@/components/site/product-preview";
@@ -41,14 +42,16 @@ export default function LandingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative isolate overflow-clip px-5 pt-14 pb-10 sm:px-8 sm:pt-24">
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-[38%] -z-10 h-[70%]">
-          <div className="absolute left-[4%] h-full w-[46%] animate-[glow-drift_18s_ease-in-out_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-1)_10%,transparent)] opacity-70 blur-3xl" />
-          <div className="absolute left-[30%] h-full w-[42%] animate-[glow-drift_22s_ease-in-out_-7s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-2)_10%,transparent)] opacity-70 blur-3xl" />
-          <div className="absolute right-[4%] h-full w-[44%] animate-[glow-drift_26s_ease-in-out_-12s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_10%,transparent)] opacity-70 blur-3xl" />
+      <section className="relative isolate -mt-[72px] flex min-h-[min(100dvh,980px)] flex-col justify-center overflow-clip px-5 pt-[132px] pb-24 sm:px-8">
+        {/* Grand halo qui monte du bas, façon Lovable */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute inset-x-[-20%] bottom-[-45%] h-[95%] rounded-[50%] bg-[radial-gradient(closest-side,var(--color-glow-2)_0%,transparent_100%)] opacity-90 blur-2xl" />
+          <div className="absolute bottom-[-30%] left-[-15%] h-[80%] w-[70%] animate-[glow-drift_20s_ease-in-out_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-1)_15%,transparent)] blur-3xl" />
+          <div className="absolute right-[-15%] bottom-[-30%] h-[80%] w-[70%] animate-[glow-drift_24s_ease-in-out_-9s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_15%,transparent)] blur-3xl" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-surface" />
         </div>
 
-        <RevealGroup className="mx-auto flex max-w-[860px] flex-col items-center gap-6 text-center">
+        <RevealGroup className="mx-auto flex w-full max-w-[860px] flex-col items-center gap-6 text-center">
           <Reveal>
             <Link
               href="/prix"
@@ -72,20 +75,8 @@ export default function LandingPage() {
               copilote IA qui connaît tout. Jusqu’à ta première vente.
             </p>
           </Reveal>
-          <Reveal className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/inscription"
-              className="btn-dark inline-flex min-h-12 items-center gap-2 rounded-pill px-6 text-[15px] font-medium"
-            >
-              Commencer gratuitement
-              <ArrowRight className="size-4" aria-hidden />
-            </Link>
-            <Link
-              href="#fonctions"
-              className="inline-flex min-h-12 items-center rounded-pill border border-line bg-surface px-6 text-[15px] font-medium shadow-soft transition-transform duration-300 ease-out-soft hover:-translate-y-0.5"
-            >
-              Voir les fonctions
-            </Link>
+          <Reveal className="mt-2 w-full">
+            <HeroPrompt />
           </Reveal>
           <Reveal>
             <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[13.5px] text-muted">
@@ -98,12 +89,14 @@ export default function LandingPage() {
             </ul>
           </Reveal>
         </RevealGroup>
+      </section>
 
-        <RevealGroup delay={0.35} className="mx-auto mt-14 max-w-[1080px]">
+      <section className="px-5 sm:px-8">
+        <InView className="mx-auto max-w-[1080px]">
           <Reveal>
             <ProductPreview />
           </Reveal>
-        </RevealGroup>
+        </InView>
       </section>
 
       {/* Fonctions */}

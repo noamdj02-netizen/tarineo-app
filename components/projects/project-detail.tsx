@@ -15,7 +15,6 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import {
   addFeature,
@@ -41,6 +40,7 @@ import {
   type ProjectFull,
   type Task,
 } from "@/lib/projects/types";
+import { openAssistant } from "@/lib/assistant/open";
 import { cn } from "@/lib/utils";
 import { NextAction } from "./next-action";
 import { ProjectLinks } from "./project-links";
@@ -143,13 +143,14 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
             )}
             <div className="flex flex-wrap items-center gap-1.5">
               <ProjectLinks site={p.site} github={p.github} figma={p.figma} notion={p.notion} />
-              <Link
-                href={`/assistant?${new URLSearchParams({ q: bilanPrompt(p.name) })}`}
+              <button
+                type="button"
+                onClick={() => openAssistant(bilanPrompt(p.name))}
                 className="btn-dark inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium"
               >
                 <Bot className="size-3.5" aria-hidden />
                 Bilan IA
-              </Link>
+              </button>
             </div>
           </div>
         </Box>

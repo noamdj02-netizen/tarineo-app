@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { AssistantPanel } from "@/components/assistant/assistant-panel";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
@@ -25,6 +27,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </div>
       <MobileNav />
+      <Suspense>
+        <AssistantPanel keyMissing={!process.env.ANTHROPIC_API_KEY} firstName={viewer?.firstName} />
+      </Suspense>
     </div>
   );
 }

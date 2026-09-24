@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: "Projets", url: "/projets" },
-      { name: "Assistant IA", url: "/assistant" },
+      { name: "Assistant IA", url: "/accueil?ask=1" },
     ],
   };
 }

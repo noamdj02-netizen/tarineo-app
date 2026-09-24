@@ -12,13 +12,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EASE } from "@/components/motion/reveal";
+import { openAssistant } from "@/lib/assistant/open";
 import { TABS, isActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 const MAIN = [
   { href: "/accueil", label: "Accueil", icon: House },
   { href: "/projets", label: "Projets", icon: LayoutDashboard },
-  { href: "/assistant", label: "IA", icon: Bot },
 ] as const;
 
 const MORE = TABS.filter((t) => !MAIN.some((m) => m.href === t.href));
@@ -107,7 +107,7 @@ export function MobileNav() {
         window.dispatchEvent(new Event("navpit:new-project"));
       else router.push("/projets#nouveau");
     } else if (id === "scan") window.dispatchEvent(new Event("navpit:search"));
-    else router.push("/assistant");
+    else openAssistant();
   }
 
   const moreOn = MORE.some((t) => isActive(pathname, t.href));
@@ -198,11 +198,20 @@ export function MobileNav() {
             </div>
 
             <div className="relative flex items-center justify-between px-[5px] pt-[10px] pb-[16px]">
-              {MAIN.slice(0, 2).map((t) => (
+              {MAIN.map((t) => (
                 <NavItem key={t.href} {...t} on={isActive(pathname, t.href)} />
               ))}
               <div className="h-[46px] min-w-px flex-1" aria-hidden />
-              <NavItem {...MAIN[2]} on={isActive(pathname, MAIN[2].href)} />
+              <NavItem
+                label="IA"
+                icon={Bot}
+                on={false}
+                expanded={false}
+                onClick={() => {
+                  setPanel("none");
+                  openAssistant();
+                }}
+              />
               <NavItem
                 label="Plus"
                 icon={LayoutGrid}

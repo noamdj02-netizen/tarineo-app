@@ -32,6 +32,6 @@ export async function getOnboarding(): Promise<OnboardingStep[]> {
     { label: "Ajouter un projet", href: "/projets", done: counts.projects > 0 },
     { label: "Mettre un projet en Focus", href: "/projets", done: counts.focus > 0 },
     { label: "Sauver une ressource", href: "/ressources", done: counts.resources > 0 },
-    { label: "Poser une question au copilote", href: "/assistant", done: counts.chats > 0 },
+    { label: "Poser une question au copilote", href: "/accueil?ask=1", done: counts.chats > 0 },
   ];
 }

@@ -5,19 +5,22 @@ import { SignupForm } from "./signup-form";
 export const metadata = { title: "Créer un compte" };
 
 /** Après confirmation : l'app, ou directement le paiement si un plan a été choisi sur /prix. */
-function nextFor(plan?: string, interval?: string) {
-  if (plan !== "pro" && plan !== "founder") return "/accueil";
-  const q = new URLSearchParams({ plan });
-  if (plan === "pro" && (interval === "month" || interval === "year")) q.set("interval", interval);
-  return `/abonnement?${q}`;
+function nextFor(plan?: string, interval?: string, q?: string) {
+  if (plan !== "pro" && plan !== "founder") {
+    // question tapée dans le hero : elle s'ouvre dans l'assistant après l'inscription
+    return q ? `/accueil?${new URLSearchParams({ ask: q.slice(0, 500) })}` : "/accueil";
+  }
+  const sp = new URLSearchParams({ plan });
+  if (plan === "pro" && (interval === "month" || interval === "year")) sp.set("interval", interval);
+  return `/abonnement?${sp}`;
 }
 
 export default async function SignupPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string; interval?: string }>;
+  searchParams: Promise<{ plan?: string; interval?: string; q?: string }>;
 }) {
-  const { plan, interval } = await searchParams;
+  const { plan, interval, q } = await searchParams;
   return (
     <AuthCard
       art="onboarding-premier-pas"
@@ -37,7 +40,7 @@ export default async function SignupPage({
         </>
       }
     >
-      <SignupForm next={nextFor(plan, interval)} />
+      <SignupForm next={nextFor(plan, interval, q)} />
     </AuthCard>
   );
 }

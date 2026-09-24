@@ -9,6 +9,7 @@ import { EASE } from "@/components/motion/reveal";
 import { STAGES } from "@/lib/design-data/resources";
 import type { ProjectPatch, ProjectSummary } from "@/lib/projects/types";
 import { NextAction } from "./next-action";
+import { openAssistant } from "@/lib/assistant/open";
 import { ProjectLinks } from "./project-links";
 import { StageBar } from "./stage-bar";
 import { StatusBadge, toStatus } from "./status-badge";
@@ -88,13 +89,14 @@ export function ProjectCard({ project, index }: { project: ProjectSummary; index
               <Pencil className="size-4" aria-hidden />
               Modifier
             </button>
-            <Link
-              href={`/assistant?${new URLSearchParams({ q: askNextActionPrompt(p.name) })}`}
+            <button
+              type="button"
+              onClick={() => openAssistant(askNextActionPrompt(p.name))}
               className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13.5px] font-semibold hover:bg-accent-soft"
             >
               <Bot className="size-4" aria-hidden />
               Demander à l’IA
-            </Link>
+            </button>
           </div>
         </>
       )}

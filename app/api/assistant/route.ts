@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   const db = await getDb();
   if (!db) return json(401, "Connecte-toi pour utiliser l’assistant.");
 
-  let body: { question?: unknown; model?: unknown };
+  let body: { question?: unknown; model?: unknown; page?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -102,6 +102,13 @@ export async function POST(request: Request) {
     { type: "text", text: STATIC_KNOWLEDGE },
     { type: "text", text: await userContext(db, viewer?.firstName ?? "") },
   ];
+  const page = typeof body.page === "string" ? body.page.slice(0, 120) : "";
+  if (/^\/[\w\-/]*$/.test(page)) {
+    system.push({
+      type: "text",
+      text: `L'utilisateur t'écrit depuis la page ${page} de Navpit (ex. /projets/<slug> = la fiche de ce projet). Sers-t'en si sa question est implicite (« ce projet », « cette page »).`,
+    });
+  }
 
   const client = new Anthropic();
   const encoder = new TextEncoder();

@@ -26,7 +26,10 @@ export async function updateSession(request: NextRequest) {
   // Accès libre : pas de connexion, la page /login renvoie vers l'accueil.
   if (isOpenAccess()) {
     if (AUTH_PAGES.includes(request.nextUrl.pathname)) {
-      return NextResponse.redirect(new URL("/accueil", request.url));
+      const url = new URL("/accueil", request.url);
+      const q = request.nextUrl.searchParams.get("q");
+      if (q) url.searchParams.set("ask", q.slice(0, 500));
+      return NextResponse.redirect(url);
     }
     return response;
   }
@@ -85,6 +88,8 @@ export async function updateSession(request: NextRequest) {
       if (interval) url.searchParams.set("interval", interval);
     } else {
       url.pathname = "/accueil";
+      const q = request.nextUrl.searchParams.get("q");
+      if (q) url.searchParams.set("ask", q.slice(0, 500));
     }
     return NextResponse.redirect(url);
   }
