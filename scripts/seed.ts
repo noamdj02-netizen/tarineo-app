@@ -3,7 +3,8 @@
  *
  *   npm run seed
  *
- * Besoin dans .env.local : NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SEED_USER_EMAIL.
+ * Besoin dans .env.local : NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, SEED_USER_EMAIL
+ * (et SEED_USER_FIRST_NAME, optionnel).
  * Crée ton compte (sans mot de passe) s'il n'existe pas encore.
  * Relançable sans doublons : projets (par slug) et ressources (par seed_key) sont mis à jour,
  * et les fonctionnalités / tâches / journal de chaque projet sont remplacés.
@@ -106,6 +107,15 @@ async function main() {
     console.log(`Compte créé pour ${email}`);
   } else {
     console.log(`Compte trouvé pour ${email}`);
+  }
+
+  // Prénom affiché sur l'accueil (« Bon retour, Noam »)
+  const firstName = process.env.SEED_USER_FIRST_NAME?.trim();
+  if (firstName) {
+    const { error } = await supabase.auth.admin.updateUserById(userId, {
+      user_metadata: { first_name: firstName },
+    });
+    if (error) throw new Error(`Prénom : ${error.message}`);
   }
 
   const seed = JSON.parse(readFileSync(resolve(process.cwd(), "data/seed.json"), "utf8")) as {
