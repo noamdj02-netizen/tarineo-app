@@ -1,9 +1,9 @@
 "use client";
 
-import { ArrowUp, ChevronDown, Mic, MicOff } from "lucide-react";
+import { ArrowUp, Mic, MicOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { DEFAULT_MODEL, MODELS, type ModelId } from "@/lib/models";
+import { ModelSelect, useModel } from "@/components/assistant/model-select";
 import { cn } from "@/lib/utils";
 
 type SpeechRecognitionLike = {
@@ -31,7 +31,7 @@ function getRecognition(): SpeechRecognitionLike | null {
 export function PromptBox({ suggestions }: { suggestions: string[] }) {
   const router = useRouter();
   const [value, setValue] = useState("");
-  const [model, setModel] = useState<ModelId>(DEFAULT_MODEL);
+  const [model, setModel] = useModel();
   const [listening, setListening] = useState(false);
   const [canDictate, setCanDictate] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
@@ -123,24 +123,7 @@ export function PromptBox({ suggestions }: { suggestions: string[] }) {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <div className="relative">
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value as ModelId)}
-              aria-label="Modèle"
-              className="h-10 appearance-none rounded-pill border border-line bg-surface-2 pr-8 pl-3.5 font-mono text-[11px] font-medium tracking-[0.08em] text-ink/80 uppercase outline-none hover:bg-accent-soft"
-            >
-              {MODELS.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.label} · {m.hint}
-                </option>
-              ))}
-            </select>
-            <ChevronDown
-              className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-muted"
-              aria-hidden
-            />
-          </div>
+          <ModelSelect value={model} onChange={setModel} />
 
           <div className="ml-auto flex items-center gap-2">
             {canDictate ? (
