@@ -3,7 +3,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isOpenAccess, isSupabaseConfigured } from "./config";
 import type { Database } from "./types";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+/** Pages accessibles sans compte (site public, connexion, webhooks). */
+const PUBLIC_PATHS = [
+  "/login",
+  "/auth",
+  "/inscription",
+  "/mot-de-passe-oublie",
+  "/prix",
+  "/mentions-legales",
+  "/cgv",
+  "/confidentialite",
+];
+/** Pages de connexion : un visiteur déjà connecté part directement dans l'app. */
+const AUTH_PAGES = ["/login", "/inscription"];
 
 /** Rafraîchit la session et renvoie vers /login si personne n'est connecté. */
 export async function updateSession(request: NextRequest) {
@@ -13,7 +25,7 @@ export async function updateSession(request: NextRequest) {
   // pour pouvoir travailler sur le design. En production, les variables sont obligatoires.
   // Accès libre : pas de connexion, la page /login renvoie vers l'accueil.
   if (isOpenAccess()) {
-    if (request.nextUrl.pathname === "/login") {
+    if (AUTH_PAGES.includes(request.nextUrl.pathname)) {
       return NextResponse.redirect(new URL("/accueil", request.url));
     }
     return response;
@@ -51,19 +63,29 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  const isPublic =
+    pathname === "/" || PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname)}`;
+    url.search = `?next=${encodeURIComponent(pathname)}`;
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === "/login") {
+  // Connecté sur /inscription?plan=pro : on garde le choix et on file vers le paiement.
+  if (user && AUTH_PAGES.includes(pathname)) {
+    const plan = request.nextUrl.searchParams.get("plan");
     const url = request.nextUrl.clone();
-    url.pathname = "/accueil";
     url.search = "";
+    if (plan) {
+      url.pathname = "/abonnement";
+      url.searchParams.set("plan", plan);
+      const interval = request.nextUrl.searchParams.get("interval");
+      if (interval) url.searchParams.set("interval", interval);
+    } else {
+      url.pathname = "/accueil";
+    }
     return NextResponse.redirect(url);
   }
 

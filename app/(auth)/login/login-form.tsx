@@ -1,13 +1,22 @@
 "use client";
 
-import { Loader2, Mail, KeyRound } from "lucide-react";
+import { KeyRound, Mail } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  Divider,
+  Field,
+  FormMessage,
+  GoogleButton,
+  PasswordField,
+  SubmitButton,
+} from "@/components/auth/auth-ui";
 import { Illustration } from "@/components/illustration";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/client";
 
-type Step = "email" | "code";
+type Mode = "password" | "link" | "code";
 
 /** Jeton du lien magique collé depuis l'email (`…/verify?token=…`), sinon null (code tapé). */
 function linkToken(input: string) {
@@ -17,8 +26,9 @@ function linkToken(input: string) {
 
 export function LoginForm({ next, linkError }: { next?: string; linkError: boolean }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("email");
+  const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(
@@ -27,15 +37,35 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
 
   const target = safeNext(next);
 
+  async function signIn(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    const { error } = await createClient().auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    setBusy(false);
+    if (error) {
+      setMsg(
+        error.code === "email_not_confirmed"
+          ? "Confirme d’abord ton email : clique sur le lien reçu à l’inscription."
+          : "Email ou mot de passe incorrect.",
+      );
+      return;
+    }
+    router.replace(target);
+    router.refresh();
+  }
+
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error } = await createClient().auth.signInWithOtp({
       email: email.trim(),
       options: {
-        // Pas de création de compte depuis cette page : seul ton compte existe.
+        // le lien ne crée pas de compte : on passe par /inscription pour ça
         shouldCreateUser: false,
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(target)}`,
       },
@@ -49,7 +79,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
       );
       return;
     }
-    setStep("code");
+    setMode("code");
   }
 
   async function verifyCode(e: React.FormEvent) {
@@ -73,71 +103,88 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
     router.refresh();
   }
 
-  if (step === "code") {
+  if (mode === "code") {
     return (
-      <form onSubmit={verifyCode} className="edit">
-        <Illustration name="feedback-envoye" className="mx-auto size-20" />
-        <p className="next">
-          <Mail aria-hidden />
+      <form onSubmit={verifyCode} className="flex flex-col gap-4">
+        <div className="flex items-start gap-3 rounded-[16px] bg-surface-2 p-4 text-[14px] leading-relaxed">
+          <Illustration name="feedback-envoye" className="-my-1 size-12 flex-none" />
           <span>
             Email envoyé à <b>{email}</b>. Clique sur le lien. Dans l’app iPhone : appui long sur le
-            lien de l’email, « Copier », puis colle-le ici.
+            lien, « Copier », puis colle-le ici.
           </span>
-        </p>
-        <label>
-          Lien ou code reçu
-          <input
-            autoComplete="one-time-code"
-            autoCapitalize="off"
-            autoCorrect="off"
-            spellCheck={false}
-            required
-            placeholder="Colle le lien de l’email"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            className="min-h-11 font-mono"
-          />
-        </label>
-        {msg ? (
-          <p className="status" role="alert">
-            {msg}
-          </p>
-        ) : null}
-        <div className="flex flex-wrap gap-2">
-          <button className="btn pri min-h-11" type="submit" disabled={busy}>
-            {busy ? <Loader2 className="animate-spin" aria-hidden /> : <KeyRound aria-hidden />}
-            Me connecter
-          </button>
-          <button className="btn min-h-11" type="button" onClick={() => setStep("email")}>
-            Changer d’email
-          </button>
         </div>
+        <Field
+          label="Lien ou code reçu"
+          autoComplete="one-time-code"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          required
+          placeholder="Colle le lien de l’email"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          className="font-mono"
+        />
+        {msg ? <FormMessage>{msg}</FormMessage> : null}
+        <SubmitButton busy={busy}>
+          <KeyRound className="size-4" aria-hidden />
+          Me connecter
+        </SubmitButton>
+        <button
+          type="button"
+          onClick={() => setMode("link")}
+          className="text-[14px] text-muted underline-offset-4 hover:text-ink hover:underline"
+        >
+          Changer d’email
+        </button>
       </form>
     );
   }
 
+  const byLink = mode === "link";
   return (
-    <form onSubmit={sendLink} className="edit">
-      <label>
-        Ton email
-        <input
+    <div className="flex flex-col gap-4">
+      <GoogleButton next={target} />
+      <Divider />
+      <form onSubmit={byLink ? sendLink : signIn} className="flex flex-col gap-4">
+        <Field
+          label="Email"
           type="email"
           autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="min-h-11"
         />
-      </label>
-      {msg ? (
-        <p className="status" role="alert">
-          {msg}
-        </p>
-      ) : null}
-      <button className="btn pri min-h-11 w-fit" type="submit" disabled={busy}>
-        {busy ? <Loader2 className="animate-spin" aria-hidden /> : <Mail aria-hidden />}
-        Recevoir mon lien
+        {byLink ? null : (
+          <div className="flex flex-col gap-1.5">
+            <PasswordField
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Link
+              href="/mot-de-passe-oublie"
+              className="self-end text-[13px] text-muted underline-offset-4 hover:text-ink hover:underline"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
+        )}
+        {msg ? <FormMessage>{msg}</FormMessage> : null}
+        <SubmitButton busy={busy}>{byLink ? "Recevoir mon lien" : "Me connecter"}</SubmitButton>
+      </form>
+      <button
+        type="button"
+        onClick={() => {
+          setMsg(null);
+          setMode(byLink ? "password" : "link");
+        }}
+        className="inline-flex items-center justify-center gap-2 text-[14px] text-muted underline-offset-4 hover:text-ink hover:underline"
+      >
+        {byLink ? <KeyRound className="size-3.5" aria-hidden /> : <Mail className="size-3.5" aria-hidden />}
+        {byLink ? "Utiliser mon mot de passe" : "Recevoir un lien par email à la place"}
       </button>
-    </form>
+    </div>
   );
 }

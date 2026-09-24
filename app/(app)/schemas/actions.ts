@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { limitReached } from "@/lib/billing/plan";
 import { getDb, type Db } from "@/lib/db";
 import { isSchemaKind } from "@/lib/schemas/agents";
 import type { SchemaKind, SchemaRow } from "@/lib/supabase/types";
@@ -41,6 +42,8 @@ export async function createSchema(input: {
   ) {
     return { ok: false, error: "Projet introuvable." };
   }
+  const limit = await limitReached(db, "schemas");
+  if (limit) return { ok: false, error: limit };
   const kind = isSchemaKind(input.kind) ? input.kind : "libre";
   const { data, error } = await db.supabase
     .from("project_schemas")

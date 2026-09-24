@@ -110,6 +110,20 @@ export type CalendarFeedRow = {
   updated_at: string;
 };
 
+export type SubscriptionRow = {
+  user_id: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  plan: "free" | "pro" | "founder";
+  status: string;
+  billing_interval: "month" | "year" | null;
+  tier: number;
+  started_at: string | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+  updated_at: string;
+};
+
 type Table<Row, Required extends keyof Row> = {
   Row: Row;
   Insert: Partial<Row> & Pick<Row, Required>;
@@ -129,9 +143,12 @@ export type Database = {
       project_schemas: Table<SchemaRow, never>;
       calendar_events: Table<CalendarEventRow, "title" | "starts_at">;
       calendar_feeds: Table<CalendarFeedRow, "url">;
+      subscriptions: Table<SubscriptionRow, "user_id">;
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      founder_seats_taken: { Args: Record<string, never>; Returns: number };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

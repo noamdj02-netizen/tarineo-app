@@ -7,6 +7,7 @@ import {
   type CalEvent,
   type CalendarFeedInfo,
 } from "@/lib/calendar/types";
+import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -148,6 +149,8 @@ export async function saveCalendarFeed(
 ): Promise<Result<{ provider: string }>> {
   const db = await getDb();
   if (!db) return { ok: false, error: "Pas connecté." };
+  const limit = await limitReached(db, "calendar");
+  if (limit) return { ok: false, error: limit };
   const norm = typeof raw === "string" ? normalizeFeedUrl(raw) : null;
   if (!norm) {
     return {

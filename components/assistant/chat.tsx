@@ -266,7 +266,7 @@ export function Chat({
                 }
               }}
               maxLength={4000}
-              placeholder="Écris le prompt Cursor pour le hero de Tarineo…"
+              placeholder="Écris le prompt Cursor pour le hero de mon projet…"
               className="field-sizing-content max-h-36 min-h-11 min-w-0 flex-1 resize-none self-center bg-transparent px-1 py-2.5 text-[15px] outline-none placeholder:text-muted"
             />
             {busy ? (

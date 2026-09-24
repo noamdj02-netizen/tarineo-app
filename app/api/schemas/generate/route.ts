@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 import { DEFAULT_MODEL, isModelId } from "@/lib/models";
 import { STAGES } from "@/lib/design-data/resources";
@@ -80,6 +81,8 @@ export async function POST(request: Request) {
   const extra =
     typeof body.extra === "string" ? body.extra.trim().slice(0, MAX_EXTRA) : "";
   const model = isModelId(body.model) ? body.model : DEFAULT_MODEL;
+  const limit = await limitReached(db, "ai");
+  if (limit) return json(402, { error: limit });
 
   const { data } = await db.supabase
     .from("projects")

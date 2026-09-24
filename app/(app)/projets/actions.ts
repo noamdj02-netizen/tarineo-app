@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { limitReached } from "@/lib/billing/plan";
 import { getDb, type Db } from "@/lib/db";
 import {
   FEATURE_ORDER,
@@ -96,6 +97,8 @@ export async function createProject(
     const title = clean(name, 80);
     const base = slugify(title);
     if (!title || !base) return { ok: false, error: "Donne un nom au projet" };
+    const limit = await limitReached(db, "projects");
+    if (limit) return { ok: false, error: limit };
 
     // slug libre : opterieur, opterieur-2, opterieur-3…
     const { data: taken } = await db.supabase

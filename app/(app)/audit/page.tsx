@@ -1,4 +1,8 @@
 import { OctagonAlert } from "lucide-react";
+import Link from "next/link";
+import { Illustration } from "@/components/illustration";
+import { isOwner } from "@/lib/billing/plan";
+import { getDb } from "@/lib/db";
 import { LucideByName } from "@/components/icons/lucide-by-name";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { PageHead } from "@/components/shell/page-head";
@@ -7,7 +11,28 @@ import { FRAMES } from "@/lib/design-data/frames";
 
 export const metadata = { title: "Mes sites" };
 
-export default function AuditPage() {
+export default async function AuditPage() {
+  const db = await getDb();
+  // l'audit ci-dessous porte sur les sites du créateur : les autres comptes voient l'annonce
+  if (!isOwner(db?.user.email)) {
+    return (
+      <section>
+        <PageHead art="dashboard-analyse" label="Mes sites" title="L’audit de tes sites," tail="bientôt.">
+          Navpit comparera tes sites aux 12 frames d’une landing qui convertit, avec les actions à faire
+          dans l’ordre.
+        </PageHead>
+        <div className="card-soft flex flex-col items-center gap-3 p-8 text-center">
+          <Illustration name="empty-pause-cafe" className="size-24" />
+          <p className="max-w-[46ch] text-[15px] leading-relaxed text-muted">
+            En attendant, coche les 12 frames une par une dans l’onglet Anatomie.
+          </p>
+          <Link href="/anatomie" className="btn-dark inline-flex min-h-11 items-center rounded-pill px-5 text-[14px] font-medium">
+            Ouvrir l’Anatomie
+          </Link>
+        </div>
+      </section>
+    );
+  }
   return (
     <section>
       <PageHead art="dashboard-analyse" label="Mes sites" title="Audit de tes 3 sites," tail="face aux 12 frames.">

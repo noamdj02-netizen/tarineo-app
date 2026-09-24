@@ -1,16 +1,18 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { LogOut, Search } from "lucide-react";
+import { CreditCard, LogOut, Search } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
 import type { Viewer } from "@/lib/session";
+import { cn } from "@/lib/utils";
 import { CommandPalette, useCommandPalette } from "./command-palette";
 import { Logo } from "./logo";
 
-/** Barre du haut : recherche ⌘K, chip « Plan gratuit », avatar. */
-export function Topbar({ viewer }: { viewer: Viewer | null }) {
+/** Barre du haut : recherche ⌘K, pastille du plan (vers /abonnement), avatar. */
+export function Topbar({ viewer, plan }: { viewer: Viewer | null; plan: string }) {
   const palette = useCommandPalette();
 
   return (
@@ -43,9 +45,17 @@ export function Topbar({ viewer }: { viewer: Viewer | null }) {
           >
             <Search className="size-5" aria-hidden />
           </button>
-          <span className="hidden rounded-pill border border-line bg-surface-2 px-3 py-1.5 font-mono text-[10.5px] font-medium tracking-[0.12em] text-ink/70 uppercase sm:inline-block">
-            Plan gratuit
-          </span>
+          <Link
+            href="/abonnement"
+            className={cn(
+              "hidden rounded-pill border px-3 py-1.5 font-mono text-[10.5px] font-medium tracking-[0.12em] uppercase transition-colors sm:inline-block",
+              plan === "Gratuit"
+                ? "border-line bg-surface-2 text-ink/70 hover:text-ink"
+                : "border-ink bg-ink text-accent-ink",
+            )}
+          >
+            {plan === "Gratuit" ? "Plan gratuit · Passer Pro" : `Plan ${plan}`}
+          </Link>
           <AvatarMenu viewer={viewer} />
         </div>
       </div>
@@ -102,6 +112,15 @@ function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
                 <p className="mt-1 truncate text-sm">{viewer?.email ?? "Non connecté"}</p>
               </div>
             </div>
+            <Link
+              role="menuitem"
+              href="/abonnement"
+              onClick={() => setOpen(false)}
+              className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm hover:bg-accent-soft"
+            >
+              <CreditCard className="size-4 text-muted" aria-hidden />
+              Abonnement
+            </Link>
             {viewer?.canSignOut ? (
               <form action="/auth/signout" method="post">
                 <button

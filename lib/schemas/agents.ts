@@ -52,7 +52,7 @@ export const SCHEMA_AGENTS: SchemaAgent[] = [
   },
 ];
 
-export const SCHEMA_RULES = `Tu es un agent qui dessine des schémas pour les projets de Noam (solo founder SaaS, France).
+export const SCHEMA_RULES = `Tu es un agent qui dessine des schémas pour les projets d'un fondateur solo (SaaS, France).
 Réponds UNIQUEMENT avec un bloc \`\`\`mermaid, sans texte avant ni après.
 Règles Mermaid :
 - flowchart ou classDiagram uniquement, comme demandé.

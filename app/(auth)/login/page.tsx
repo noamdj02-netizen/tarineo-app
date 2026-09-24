@@ -1,5 +1,5 @@
-import { Illustration } from "@/components/illustration";
-import { BRAND } from "@/lib/brand";
+import Link from "next/link";
+import { AuthCard } from "@/components/auth/auth-ui";
 import { LoginForm } from "./login-form";
 
 export const metadata = { title: "Connexion" };
@@ -11,20 +11,21 @@ export default async function LoginPage({
 }) {
   const { next, error } = await searchParams;
   return (
-    <div className="wrap">
-      <div className="mx-auto flex max-w-md flex-col gap-4 pt-[8vh]">
-        <header className="top">
-          <div>
-            <div className="eyebrow">{BRAND.tagline}</div>
-            <h1>{BRAND.name}</h1>
-            <p>Connecte-toi avec ton email. Pas de mot de passe.</p>
-          </div>
-          <Illustration name="onboarding-bienvenue" className="-my-2 size-20 sm:size-24" />
-        </header>
-        <div className="dbox">
-          <LoginForm next={next} linkError={error === "lien"} />
-        </div>
-      </div>
-    </div>
+    <AuthCard
+      art="onboarding-bienvenue"
+      label="Connexion"
+      title="Bon retour."
+      text="Connecte-toi pour retrouver tes projets."
+      footer={
+        <>
+          Pas encore de compte ?{" "}
+          <Link href="/inscription" className="font-medium text-ink underline-offset-4 hover:underline">
+            Créer un compte
+          </Link>
+        </>
+      }
+    >
+      <LoginForm next={next} linkError={error === "lien"} />
+    </AuthCard>
   );
 }

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { STATIC_KNOWLEDGE, userContext } from "@/lib/assistant/context";
+import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 import { DEFAULT_MODEL, isModelId, type ModelId } from "@/lib/models";
 import { getViewer } from "@/lib/session";
@@ -72,6 +73,8 @@ export async function POST(request: Request) {
   if (!question) return json(400, "Question vide.");
   if (question.length > MAX_QUESTION) return json(400, "Question trop longue.");
   const model = pickModel(body.model);
+  const limit = await limitReached(db, "ai");
+  if (limit) return json(402, limit);
 
   // Historique lu côté serveur (le navigateur n'envoie que la nouvelle question)
   const { data: past } = await db.supabase
