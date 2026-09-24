@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "tsx scripts/seed.ts",
-    "design-data": "node scripts/build-design-data.mjs"
+    "design-data": "node scripts/build-design-data.mjs",
+    "icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

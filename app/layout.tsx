@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Serif, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { ServiceWorker } from "@/components/shell/service-worker";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
@@ -27,6 +28,13 @@ export const metadata: Metadata = {
   description: BRAND.description,
   applicationName: BRAND.name,
   appleWebApp: { title: BRAND.name, capable: true, statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
+  },
 };
 
 export const viewport: Viewport = {
@@ -49,7 +57,10 @@ export default function RootLayout({
       data-theme="light"
       className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <ServiceWorker />
+      </body>
     </html>
   );
 }
