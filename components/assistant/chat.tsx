@@ -246,7 +246,6 @@ export function Chat({
           <div className="flex items-end gap-1.5 rounded-[26px] bg-surface p-1.5 shadow-soft transition-shadow duration-500 ease-out-soft focus-within:shadow-lift">
             <Mascot
               mood={busy ? "typing" : input || focused ? "focus" : "idle"}
-              depth={8}
               className="size-11 flex-none"
             />
             <textarea

@@ -1,7 +1,7 @@
 // Types des tables Supabase (voir supabase/migrations).
 // À régénérer si le schéma change : npx supabase gen types typescript --project-id <id>
 
-export type ProjectStatus = "focus" | "pause";
+export type ProjectStatus = "focus" | "pause" | "fini";
 export type FeatureStatus = "afaire" | "encours" | "fait" | "verif";
 export type ResourceSource = "notion" | "moi" | "curated";
 

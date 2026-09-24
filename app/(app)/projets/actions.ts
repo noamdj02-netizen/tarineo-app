@@ -68,7 +68,7 @@ export async function updateProject(projectId: string, patch: ProjectPatch): Pro
       row.stage = s;
     }
     if (patch.status !== undefined) {
-      if (!(["focus", "pause"] as ProjectStatus[]).includes(patch.status))
+      if (!(["focus", "pause", "fini"] as ProjectStatus[]).includes(patch.status))
         return fail("Statut invalide");
       row.status = patch.status;
     }

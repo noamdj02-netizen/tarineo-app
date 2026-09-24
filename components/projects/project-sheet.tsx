@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { EASE } from "@/components/motion/reveal";
 import type { ProjectStatus } from "@/lib/projects/types";
+import { STATUS_TITLE } from "./status-badge";
 
 /**
  * Fiche projet en panneau : glisse depuis le bas sur mobile, depuis la droite sur desktop.
@@ -59,7 +60,7 @@ export function ProjectSheet({
         <div className="flex items-center justify-between gap-3 border-b border-line bg-surface px-5 pt-3 pb-3 sm:pt-5">
           <div className="min-w-0">
             <p className="mono-label">
-              {status === "focus" ? "/ Projet en focus" : "/ Projet en pause"}
+              {`/ ${STATUS_TITLE[status]}`}
             </p>
             <h2 className="truncate text-[26px] leading-tight font-semibold tracking-[-0.035em]">
               {name}

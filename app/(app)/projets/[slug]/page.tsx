@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProjectDetail } from "@/components/projects/project-detail";
+import { STATUS_TITLE } from "@/components/projects/status-badge";
 import { PageHead } from "@/components/shell/page-head";
 import { getProject } from "@/lib/projects/queries";
 
@@ -26,7 +27,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         Tous les projets
       </Link>
       <PageHead
-        label={project.status === "focus" ? "Projet en focus" : "Projet en pause"}
+        label={STATUS_TITLE[project.status]}
         title={project.name}
       />
       <ProjectDetail project={project} />

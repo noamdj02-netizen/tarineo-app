@@ -124,11 +124,11 @@ export function PromptBox({
         ))}
       </ul>
 
-      <div className="mt-auto pt-28">
+      <div className="mt-auto pt-[76px] sm:pt-20">
         <div className="relative">
           <Mascot
             mood={mood}
-            className="absolute bottom-[calc(100%-16px)] left-3 size-[104px] sm:left-5 sm:size-[124px]"
+            className="absolute bottom-[calc(100%-12px)] left-3 size-[84px] sm:left-5 sm:size-[96px]"
           />
           <form
             onSubmit={(e) => {

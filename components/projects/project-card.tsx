@@ -11,7 +11,7 @@ import type { ProjectPatch, ProjectSummary } from "@/lib/projects/types";
 import { NextAction } from "./next-action";
 import { ProjectLinks } from "./project-links";
 import { StageBar } from "./stage-bar";
-import { StatusBadge } from "./status-badge";
+import { StatusBadge, toStatus } from "./status-badge";
 
 export function askNextActionPrompt(name: string) {
   return `Pour ${name} : quelle est la meilleure prochaine action cette semaine, et pourquoi ? Donne 3 étapes concrètes.`;
@@ -124,7 +124,7 @@ function EditForm({
     const f = new FormData(e.currentTarget);
     const patch: ProjectPatch = {
       stage: Number(f.get("stage")),
-      status: f.get("status") === "focus" ? "focus" : "pause",
+      status: toStatus(f.get("status")),
       next: String(f.get("next") ?? ""),
       site: String(f.get("site") ?? ""),
       github: String(f.get("github") ?? ""),
@@ -159,6 +159,7 @@ function EditForm({
           <select name="status" defaultValue={p.status} className={field}>
             <option value="focus">Focus</option>
             <option value="pause">En pause</option>
+            <option value="fini">Fini</option>
           </select>
         </label>
       </div>

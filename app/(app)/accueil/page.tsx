@@ -80,15 +80,15 @@ export default async function AccueilPage() {
       <Reveal>
         <GlowCard
           tilt
-          className="flex min-h-[min(72dvh,600px)] flex-col px-5 pt-8 pb-5 sm:px-10 sm:pt-12 sm:pb-8"
+          className="flex flex-col px-5 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-6"
         >
-          <p className="font-grotesk text-[13px] font-bold tracking-[0.16em] text-ink/75 uppercase">
+          <p className="font-grotesk text-[12px] font-bold tracking-[0.16em] text-ink/75 uppercase">
             Bonjour{viewer?.firstName ? ` ${viewer.firstName}` : ""} !
           </p>
-          <h1 className="mt-3 max-w-[15ch] font-display text-[clamp(32px,6.4vw,52px)] leading-[1.04] font-semibold tracking-tightest text-balance">
+          <h1 className="mt-2 max-w-[18ch] font-display text-[clamp(26px,4.6vw,38px)] leading-[1.06] font-semibold tracking-tightest text-balance">
             Comment puis-je t’aider aujourd’hui ?
           </h1>
-          <PromptBox suggestions={SUGGESTIONS} className="mt-7 flex-1" />
+          <PromptBox suggestions={SUGGESTIONS} className="mt-5 flex-1" />
         </GlowCard>
       </Reveal>
 

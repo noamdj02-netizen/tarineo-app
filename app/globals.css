@@ -31,6 +31,16 @@
   --color-glow-1: #f7c6a3;
   --color-glow-2: #cbbdf3;
   --color-glow-3: #b3cbf6;
+  /* Statuts de projet (pastille + fond teinté) */
+  --color-st-focus: #16a34a;
+  --color-st-focus-soft: #e8f7ee;
+  --color-st-focus-ink: #166534;
+  --color-st-pause: #eab308;
+  --color-st-pause-soft: #fdf6dc;
+  --color-st-pause-ink: #854d0e;
+  --color-st-fini: #dc2626;
+  --color-st-fini-soft: #fdecec;
+  --color-st-fini-ink: #991b1b;
 
   /* Arrondis */
   --radius-card: 18px;
