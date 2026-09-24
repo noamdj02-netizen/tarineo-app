@@ -2,6 +2,7 @@ import {
   Blocks,
   Bot,
   House,
+  LayoutDashboard,
   Layers,
   Library,
   Palette,
@@ -20,9 +21,10 @@ export type Tab = {
   icon: LucideIcon;
 };
 
-/** Les 10 onglets, dans le même ordre que le HTML d'origine. */
+/** Accueil + les 10 onglets, dans le même ordre que le HTML d'origine. */
 export const TABS: Tab[] = [
-  { href: "/projets", label: "Projets", short: "Projets", icon: House },
+  { href: "/accueil", label: "Accueil", short: "Accueil", icon: House },
+  { href: "/projets", label: "Projets", short: "Projets", icon: LayoutDashboard },
   { href: "/assistant", label: "Assistant IA", short: "IA", icon: Bot },
   { href: "/ressources", label: "Ressources", short: "Ressources", icon: Library },
   { href: "/outils", label: "Outils", short: "Outils", icon: Wrench },

@@ -5,8 +5,10 @@ export const metadata = { title: "Thèmes" };
 export default function ThemesPage() {
   return (
     <section>
-      <PageHead title="6 thèmes prêts">
-        {"Chaque thème = couleurs, typos, arrondis et ombres. Un par projet, plus deux thèmes libres. Style Dribbble/Behance : une couleur d'accent forte, beaucoup d'espace, une typo de titre avec du caractère."}
+      <PageHead label="Thèmes" title="6 thèmes" tail="prêts à copier.">
+        {
+          "Chaque thème = couleurs, typos, arrondis et ombres. Un par projet, plus deux thèmes libres. Style Dribbble/Behance : une couleur d'accent forte, beaucoup d'espace, une typo de titre avec du caractère."
+        }
       </PageHead>
       <Soon step={6} />
     </section>

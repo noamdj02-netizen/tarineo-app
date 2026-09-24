@@ -1,24 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { Instrument_Serif, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
-  subsets: ["latin"],
-  weight: ["500", "700", "800"],
-});
-
-const geist = Geist({
-  variable: "--font-geist",
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrains = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
   weight: ["400", "500"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -32,10 +33,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F3F4F1" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E1012" },
-  ],
+  // même valeur que --color-bg (globals.css)
+  themeColor: "#f3f3f2",
 };
 
 export default function RootLayout({
@@ -46,7 +45,7 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${bricolage.variable} ${geist.variable} ${geistMono.variable}`}
+      className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable}`}
     >
       <body className="antialiased">{children}</body>
     </html>

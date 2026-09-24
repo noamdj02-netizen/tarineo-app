@@ -323,9 +323,6 @@ pre.code{background:#101316;color:#E6E9EC;border-radius:10px;padding:12px;font:1
 .why ul,.bul{list-style:disc}
 /* le preflight remet les titres en poids normal : on garde le gras du navigateur */
 h1,h2,h3,h4,h5,h6{font-weight:700}
-.tab{text-decoration:none;min-height:44px}
-.tab[aria-current="page"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.tab:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
-/* mobile : place pour la barre d'onglets du bas */
-@media (max-width:767px){.wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}}
-.wrap{padding-top:calc(24px + env(safe-area-inset-top,0px))}
+/* Mono Lead : titres serrés, labels en mono */
+h1,h2,h3{letter-spacing:-.035em}
+.eyebrow{letter-spacing:.14em}

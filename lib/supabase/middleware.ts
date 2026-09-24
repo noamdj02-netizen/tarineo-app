@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { isSupabaseConfigured } from "./config";
 import type { Database } from "./types";
 
 const PUBLIC_PATHS = ["/login", "/auth"];
@@ -7,6 +8,15 @@ const PUBLIC_PATHS = ["/login", "/auth"];
 /** Rafraîchit la session et renvoie vers /login si personne n'est connecté. */
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
+
+  // Supabase pas encore configuré (.env.local vide) : on laisse passer en local
+  // pour pouvoir travailler sur le design. En production, les variables sont obligatoires.
+  if (!isSupabaseConfigured()) {
+    if (process.env.NODE_ENV === "production") {
+      return new NextResponse("Supabase n'est pas configuré.", { status: 500 });
+    }
+    return response;
+  }
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,7 +54,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && pathname === "/login") {
     const url = request.nextUrl.clone();
-    url.pathname = "/projets";
+    url.pathname = "/accueil";
     url.search = "";
     return NextResponse.redirect(url);
   }
