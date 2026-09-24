@@ -1,16 +1,18 @@
-import { PageHead, Soon } from "@/components/shell/page-head";
+import { ProjectGrid } from "@/components/projects/project-grid";
+import { PageHead } from "@/components/shell/page-head";
+import { listProjects } from "@/lib/projects/queries";
 
 export const metadata = { title: "Projets" };
 
-export default function ProjetsPage() {
+export default async function ProjetsPage() {
+  const projects = await listProjects();
   return (
     <section>
       <PageHead label="Projets" title="Mes projets" tail="un seul en Focus.">
-        {
-          "Règle Mon Bureau : un seul projet en Focus tant qu’il n’a pas fait sa première vente. Chaque carte montre l’étape (1 à 6), la prochaine action et tous les liens."
-        }
+        Règle Mon Bureau : un seul projet en Focus tant qu’il n’a pas fait sa première vente.
+        Chaque carte montre l’étape (1 à 6), la prochaine action et tous les liens.
       </PageHead>
-      <Soon step={3} />
+      <ProjectGrid projects={projects} />
     </section>
   );
 }
