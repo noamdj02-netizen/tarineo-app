@@ -34,13 +34,3 @@ export function PageHead({
     </RevealGroup>
   );
 }
-
-/** Espace réservé pour les onglets pas encore migrés. */
-export function Soon({ step }: { step: number }) {
-  return (
-    <div className="card-soft p-5">
-      <p className="mono-label">/ Bientôt</p>
-      <p className="mt-2 text-sm text-muted">Contenu migré à l’étape {step}.</p>
-    </div>
-  );
-}

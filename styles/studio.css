@@ -326,3 +326,7 @@ h1,h2,h3,h4,h5,h6{font-weight:700}
 /* Mono Lead : titres serrés, labels en mono */
 h1,h2,h3{letter-spacing:-.035em}
 .eyebrow{letter-spacing:.14em}
+/* Zones tactiles de 44 px sur téléphone */
+@media (pointer:coarse){.copy,.chip{min-height:44px}.copy{padding-inline:12px}}
+.copy{text-decoration:none}
+.picker .chip,.tbtns .copy{flex:none}

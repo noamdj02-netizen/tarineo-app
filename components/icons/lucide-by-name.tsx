@@ -1,9 +1,17 @@
 import "server-only";
 import { icons, type LucideProps } from "lucide-react";
 
+/** Noms du HTML d'origine renommés depuis dans lucide-react. */
+const ALIASES: Record<string, string> = {
+  "circle-help": "circle-question-mark",
+  "help-circle": "circle-question-mark",
+};
+
 /** « arrow-right » → « ArrowRight » */
 function pascal(name: string) {
-  return name.replace(/(^|-)([a-z0-9])/g, (_, __, c: string) => c.toUpperCase());
+  return (ALIASES[name] ?? name).replace(/(^|-)([a-z0-9])/g, (_, __, c: string) =>
+    c.toUpperCase(),
+  );
 }
 
 /**

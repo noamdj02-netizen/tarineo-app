@@ -45,6 +45,8 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
+      // l'app est en clair : empêche studio.css de passer les couleurs d'état en mode sombre
+      data-theme="light"
       className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable}`}
     >
       <body className="antialiased">{children}</body>
