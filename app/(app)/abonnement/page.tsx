@@ -3,7 +3,15 @@ import Link from "next/link";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { PageHead } from "@/components/shell/page-head";
 import { aiUsedThisMonth, planFor } from "@/lib/billing/plan";
-import { FOUNDER, LOYALTY_TIERS, PLAN_LABEL, type Limits } from "@/lib/billing/plans";
+import {
+  FOUNDER,
+  PLAN_LABEL,
+  PRO,
+  PRO_TRIAL_DAYS,
+  STARTER,
+  type Limits,
+  type PlanId,
+} from "@/lib/billing/plans";
 import { isStripeConfigured } from "@/lib/billing/stripe";
 import { getDb } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -13,12 +21,19 @@ export const metadata = { title: "Abonnement" };
 const ERRORS: Record<string, string> = {
   config: "Le paiement n’est pas encore branché sur ce serveur (clés Stripe manquantes).",
   deja: "Tu as déjà un abonnement actif.",
-  complet: "Les places Fondateur sont toutes prises. Le plan Pro reste disponible.",
+  complet: "Les places Fondateur sont toutes prises. Les formules Création et Pro restent disponibles.",
   stripe: "Stripe n’a pas répondu. Réessaie dans un instant.",
 };
 
 const dateFr = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+
+function priceLabel(plan: PlanId, interval: "month" | "year") {
+  if (plan === "founder") return `${FOUNDER.price} € une fois`;
+  if (plan === "starter") return `${STARTER[interval]} € / ${interval === "year" ? "an" : "mois"}`;
+  if (plan === "pro") return `${PRO[interval]} € / ${interval === "year" ? "an" : "mois"}`;
+  return null;
+}
 
 export default async function AbonnementPage({
   searchParams,
@@ -30,23 +45,26 @@ export default async function AbonnementPage({
   if (!db) return null;
 
   const head = { count: "exact" as const, head: true };
-  const [info, ai, projects, schemas, subRow, seats] = await Promise.all([
+  const [info, ai, projects, schemas, seats] = await Promise.all([
     planFor(db),
     aiUsedThisMonth(db),
     db.supabase.from("projects").select("id", head).eq("user_id", db.user.id),
     db.supabase.from("project_schemas").select("id", head).eq("user_id", db.user.id),
-    db.supabase.from("subscriptions").select("started_at").eq("user_id", db.user.id).maybeSingle(),
     db.supabase.rpc("founder_seats_taken"),
   ]);
   const seatsLeft = Math.max(0, FOUNDER.seats - (seats.data ?? 0));
-  const wanted = q.plan === "founder" ? "founder" : "pro";
+  const wanted: PlanId =
+    q.plan === "founder" ? "founder" : q.plan === "starter" ? "starter" : "pro";
   const interval = q.interval === "year" ? "year" : "month";
-  const today =
-    info.plan === "founder"
-      ? `${FOUNDER.price} € une fois`
-      : info.plan === "pro"
-        ? `${LOYALTY_TIERS[info.tier][info.interval ?? "month"]} € / ${info.interval === "year" ? "an" : "mois"}`
-        : "0 €";
+  const today = priceLabel(info.plan, info.interval ?? "month");
+  const headTitle =
+    info.plan === "free" ? "Choisis" : info.isFreeTrial ? "Tu es en" : `Tu paies ${today},`;
+  const headTail =
+    info.plan === "free"
+      ? "ta formule."
+      : info.isFreeTrial
+        ? "sans carte pour l’instant."
+        : `plan ${PLAN_LABEL[info.plan]}.`;
 
   return (
     <section className="mx-auto max-w-[760px]">
@@ -57,12 +75,16 @@ export default async function AbonnementPage({
         <ArrowLeft className="size-4" aria-hidden />
         Retour au compte
       </Link>
-      <PageHead art="landing-revenus" label="Abonnement" title={`Tu paies ${today},`} tail={`plan ${PLAN_LABEL[info.plan]}.`}>
+      <PageHead art="landing-revenus" label="Abonnement" title={headTitle} tail={headTail}>
         {info.plan === "free"
-          ? "Tu es sur le plan Gratuit. Passe Pro quand tu veux : ton prix baissera chaque année."
-          : info.plan === "founder"
-            ? "Tu es Fondateur : Pro à vie, sans abonnement. Merci !"
-            : "Tu es Pro. Ton prix baisse à chaque anniversaire d’abonnement."}
+          ? `Essai Pro ${PRO_TRIAL_DAYS} jours sans carte, puis Création (${STARTER.month} €) ou Pro (${PRO.month} €).`
+          : info.isFreeTrial
+            ? info.periodEnd
+              ? `Ton essai se termine le ${dateFr(info.periodEnd)}. Ajoute un paiement avant cette date pour garder ton compte — sinon il sera supprimé.`
+              : `Profite de tout Pro pendant ${PRO_TRIAL_DAYS} jours. Ajoute un paiement avant la fin pour garder ton compte.`
+            : info.plan === "founder"
+              ? "Tu es Fondateur : Pro à vie, sans abonnement. Merci !"
+              : `Tu es sur ${PLAN_LABEL[info.plan]}. Change de formule depuis le portail Stripe si besoin.`}
       </PageHead>
 
       <RevealGroup className="flex flex-col gap-4">
@@ -87,48 +109,61 @@ export default async function AbonnementPage({
           </div>
         </Reveal>
 
-        {info.plan === "pro" ? (
-          <Reveal className="card-soft flex flex-col gap-4 p-5 sm:p-6">
-            <p className="mono-label">/ Prix fidélité ///</p>
-            <Loyalty tier={info.tier} startedAt={subRow.data?.started_at ?? null} interval={info.interval ?? "month"} />
-            {info.periodEnd ? (
-              <p className="text-[14px] text-muted-foreground">
-                {info.cancelAtPeriodEnd ? "Se termine le " : "Prochaine facture le "}
-                <b className="text-ink">{dateFr(info.periodEnd)}</b>.
-              </p>
-            ) : null}
+        {info.plan === "pro" && !info.isFreeTrial && info.periodEnd ? (
+          <Reveal className="card-soft p-5 text-[14px] text-muted-foreground sm:p-6">
+            {info.cancelAtPeriodEnd ? "Se termine le " : "Prochaine facture le "}
+            <b className="text-ink">{dateFr(info.periodEnd)}</b>.
           </Reveal>
         ) : null}
 
-        {info.plan === "free" ? (
+        {info.plan === "free" || info.isFreeTrial ? (
           <Reveal className="flex flex-col gap-4 rounded-[24px] bg-ink p-6 text-accent-ink shadow-lift sm:p-7">
             <p className="font-mono text-[11px] tracking-[0.14em] text-accent-ink/60 uppercase">
-              {wanted === "founder" ? "/ Fondateur ///" : "/ Passer Pro ///"}
+              {wanted === "founder"
+                ? "/ Fondateur ///"
+                : info.isFreeTrial
+                  ? "/ Garder Navpit après l’essai ///"
+                  : "/ Passer en payant ///"}
             </p>
-            {wanted === "pro" ? (
-              <div className="flex gap-2">
-                {(["month", "year"] as const).map((iv) => (
+            {wanted !== "founder" ? (
+              <div className="flex flex-wrap gap-2">
+                {(["starter", "pro"] as const).map((p) => (
                   <Link
-                    key={iv}
-                    href={`/abonnement?plan=pro&interval=${iv}`}
+                    key={p}
+                    href={`/abonnement?plan=${p}&interval=${interval}`}
                     className={`min-h-10 rounded-pill px-4 text-[13px] font-medium leading-10 ${
-                      interval === iv ? "bg-accent-ink text-ink" : "border border-white/20 text-accent-ink/80"
+                      wanted === p ? "bg-accent-ink text-ink" : "border border-white/20 text-accent-ink/80"
                     }`}
                   >
-                    {iv === "month" ? "Mensuel" : "Annuel · 2 mois offerts"}
+                    {PLAN_LABEL[p]}
                   </Link>
                 ))}
+                <div className="flex gap-2">
+                  {(["month", "year"] as const).map((iv) => (
+                    <Link
+                      key={iv}
+                      href={`/abonnement?plan=${wanted}&interval=${iv}`}
+                      className={`min-h-10 rounded-pill px-4 text-[13px] font-medium leading-10 ${
+                        interval === iv ? "border border-white/40 text-accent-ink" : "text-accent-ink/60"
+                      }`}
+                    >
+                      {iv === "month" ? "Mensuel" : "Annuel"}
+                    </Link>
+                  ))}
+                </div>
               </div>
             ) : null}
             <p className="font-display text-[26px] leading-tight font-semibold tracking-tightest">
               {wanted === "founder"
                 ? `${FOUNDER.price} € une fois, Pro à vie.`
-                : `${LOYALTY_TIERS[0][interval]} € ${interval === "month" ? "par mois" : "par an"}, puis ${LOYALTY_TIERS[1][interval]} €, puis ${LOYALTY_TIERS[2][interval]} €.`}
+                : `${priceLabel(wanted, interval)} · ${wanted === "starter" ? "6 projets, 300 IA, 100 schémas" : "illimité + agenda"}.`}
             </p>
             <p className="text-[14.5px] text-accent-ink/70">
               {wanted === "founder"
                 ? `${seatsLeft} place${seatsLeft > 1 ? "s" : ""} restante${seatsLeft > 1 ? "s" : ""} sur ${FOUNDER.seats}.`
-                : "Paiement sécurisé par Stripe. Résiliable à tout moment."}
+                : info.isFreeTrial
+                  ? "Sans paiement avant la fin de l’essai, ton compte sera supprimé automatiquement."
+                  : "Paiement sécurisé par Stripe. Résiliable à tout moment."}
             </p>
             <form action="/api/billing/checkout" method="post" className="flex flex-wrap items-center gap-3">
               <input type="hidden" name="plan" value={wanted} />
@@ -145,13 +180,18 @@ export default async function AbonnementPage({
                 Comparer les offres
                 <ArrowRight className="size-3.5" aria-hidden />
               </Link>
-              {wanted === "pro" ? (
-                <Link href="/abonnement?plan=founder" className="text-[14px] text-accent-ink/70 hover:text-accent-ink">
-                  ou Fondateur · 149 € une fois
+              {wanted !== "founder" ? (
+                <Link
+                  href={wanted === "starter" ? "/abonnement?plan=pro" : "/abonnement?plan=starter"}
+                  className="text-[14px] text-accent-ink/70 hover:text-accent-ink"
+                >
+                  {wanted === "starter"
+                    ? `ou Pro · ${PRO.month} € / mois`
+                    : `ou Création · ${STARTER.month} € / mois`}
                 </Link>
               ) : (
                 <Link href="/abonnement?plan=pro" className="text-[14px] text-accent-ink/70 hover:text-accent-ink">
-                  ou Pro · 15 € / mois
+                  ou abonnement Pro
                 </Link>
               )}
             </form>
@@ -192,43 +232,6 @@ function Usage({ label, used, max }: { label: string; used: number; max: Limits[
           style={{ width: max ? `${pct}%` : "100%", opacity: max ? 1 : 0.15 }}
         />
       </div>
-    </div>
-  );
-}
-
-function Loyalty({ tier, startedAt, interval }: { tier: number; startedAt: string | null; interval: "month" | "year" }) {
-  const next = LOYALTY_TIERS[tier + 1];
-  let nextDate: string | null = null;
-  if (next && startedAt) {
-    const d = new Date(startedAt);
-    d.setUTCFullYear(d.getUTCFullYear() + tier + 1);
-    nextDate = dateFr(d.toISOString());
-  }
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-3 gap-2">
-        {LOYALTY_TIERS.map((t, i) => (
-          <div
-            key={t.fromYear}
-            className={cn(
-              "rounded-[14px] border p-3",
-              i === tier ? "border-ink bg-ink text-accent-ink" : i < tier ? "border-line text-muted-foreground line-through" : "border-line",
-            )}
-          >
-            <p className="font-display text-[20px] font-semibold tracking-tightest">{t[interval]} €</p>
-            <p className={cn("text-[12px]", i === tier ? "text-accent-ink/70" : "text-muted-foreground")}>{t.label}</p>
-          </div>
-        ))}
-      </div>
-      <p className="text-[14px] text-muted-foreground">
-        {next && nextDate ? (
-          <>
-            Ton prix passe à <b className="text-ink">{next[interval]} €</b> le <b className="text-ink">{nextDate}</b>.
-          </>
-        ) : (
-          "Tu as atteint le prix le plus bas. Merci de ta fidélité !"
-        )}
-      </p>
     </div>
   );
 }

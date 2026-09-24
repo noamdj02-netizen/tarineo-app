@@ -3,7 +3,7 @@ import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PageHead } from "@/components/shell/page-head";
 import { getPlan } from "@/lib/billing/plan";
-import { LOYALTY_TIERS, PLAN_LABEL } from "@/lib/billing/plans";
+import { FOUNDER, PLAN_LABEL, PRO, STARTER } from "@/lib/billing/plans";
 import { getViewer } from "@/lib/session";
 import { WIZARD_STEPS } from "@/lib/onboarding-wizard";
 import { AvatarForm, LocaleForm, NameForm, PasswordForm } from "./forms";
@@ -28,12 +28,15 @@ export default async function ComptePage() {
     tier: 0 as const,
     periodEnd: null,
   };
+  const iv = info.interval ?? "month";
   const price =
     info.plan === "founder"
-      ? "149 € une fois"
-      : info.plan === "pro"
-        ? `${LOYALTY_TIERS[info.tier][info.interval ?? "month"]} € / ${info.interval === "year" ? "an" : "mois"}`
-        : "0 €";
+      ? `${FOUNDER.price} € une fois`
+      : info.plan === "starter"
+        ? `${STARTER[iv]} € / ${iv === "year" ? "an" : "mois"}`
+        : info.plan === "pro"
+          ? `${PRO[iv]} € / ${iv === "year" ? "an" : "mois"}`
+          : "0 €";
 
   return (
     <section className="mx-auto max-w-[720px]">
@@ -104,10 +107,12 @@ export default async function ComptePage() {
           </p>
           <p className="mt-1 text-[14px] text-muted-foreground">
             {info.plan === "free"
-              ? "Gratuit : 2 projets, 30 questions IA / mois, 3 schémas. Pro commence à 15 € / mois, puis 12 €, puis 9 €."
-              : info.plan === "pro"
-                ? `Tu paies ${price} aujourd’hui. Le prix baisse tout seul à chaque anniversaire.`
-                : "Pro à vie, un seul paiement."}
+              ? "Gratuit : 2 projets, 30 IA / mois, 3 schémas. Essai Pro 7 jours sans carte à l’inscription."
+              : info.plan === "founder"
+                ? "Pro à vie, un seul paiement."
+                : info.plan === "starter"
+                  ? "Création : jusqu’à 6 projets, 300 IA et 100 schémas par mois."
+                  : "Pro : projets et schémas illimités, agenda synchronisé."}
           </p>
           <Link
             href="/abonnement"

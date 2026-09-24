@@ -1,5 +1,5 @@
 import { LegalPage } from "@/components/site/legal-page";
-import { FOUNDER, LOYALTY_TIERS } from "@/lib/billing/plans";
+import { FOUNDER, PRO, STARTER } from "@/lib/billing/plans";
 import { siteMetadata } from "@/lib/seo";
 
 export const metadata = {
@@ -10,8 +10,6 @@ export const metadata = {
     path: "/cgv",
   }),
 };
-
-const [y1, y2, y3] = LOYALTY_TIERS;
 
 export default function CgvPage() {
   return (
@@ -34,8 +32,8 @@ export default function CgvPage() {
         {
           h: "3. Offres et prix",
           p: [
-            "Le plan Gratuit est sans engagement et sans carte bancaire, avec des limites d’usage indiquées sur la page Prix.",
-            `Le plan Pro est un abonnement mensuel ou annuel. Son prix suit un barème de fidélité : ${y1.month} € par mois (ou ${y1.year} € par an) la première année, ${y2.month} € (ou ${y2.year} €) la deuxième, puis ${y3.month} € (ou ${y3.year} €) à partir de la troisième année d’abonnement sans interruption. En cas de résiliation, l’ancienneté repart de zéro.`,
+            "Les offres Création, Pro et Fondateur sont détaillées sur la page Prix, avec les limites d’usage et les conditions de résiliation.",
+            `Création : ${STARTER.month} € par mois ou ${STARTER.year} € par an (6 projets, 300 questions IA/mois, 100 schémas). Pro : ${PRO.month} € par mois ou ${PRO.year} € par an (projets et schémas illimités, agenda synchronisé).`,
             `L’offre Fondateur est un paiement unique de ${FOUNDER.price} € donnant accès au plan Pro pour la durée de vie du service, limitée aux ${FOUNDER.seats} premiers clients.`,
             "Les prix sont indiqués en euros, [À compléter : TTC ou « TVA non applicable, art. 293 B du CGI » selon ton statut].",
           ],

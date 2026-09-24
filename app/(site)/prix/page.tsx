@@ -1,6 +1,6 @@
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { Faq } from "@/components/site/faq";
-import { Pricing } from "@/components/site/pricing";
+import { DeferredPricing } from "@/components/site/landing-deferred";
 import { JsonLd } from "@/components/site/json-ld";
 import { siteMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
@@ -8,17 +8,17 @@ import { FAQ } from "@/lib/site/content";
 
 export const metadata = {
   title: "Prix",
-  description: "Gratuit pour commencer. En Pro, ton prix baisse chaque année où tu restes abonné.",
+  description: "7 jours d’essai Pro sans carte, puis Création 15 €, Pro 30 € ou Fondateur 149 €.",
   ...siteMetadata({
     title: "Prix Navpit",
-    description: "Gratuit pour commencer. En Pro, ton prix baisse chaque année où tu restes abonné.",
+    description: "7 jours d’essai Pro sans carte, puis Création 15 €, Pro 30 € ou Fondateur 149 €.",
     path: "/prix",
   }),
 };
 
 export default function PrixPage() {
   return (
-    <div className="px-5 pt-14 pb-20 sm:px-8 sm:pt-20">
+    <div className="px-4 pt-12 pb-16 sm:px-8 sm:pt-20 sm:pb-20">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Accueil", path: "/" },
@@ -31,19 +31,17 @@ export default function PrixPage() {
         </Reveal>
         <Reveal>
           <h1 className="font-display text-[clamp(34px,6vw,56px)] leading-[1.02] font-semibold tracking-tightest text-balance">
-            Plus tu restes, <span className="text-accent-2">moins tu paies.</span>
+            Création, Pro <span className="text-accent-2">ou Fondateur.</span>
           </h1>
         </Reveal>
         <Reveal>
           <p className="text-[16.5px] leading-relaxed text-muted-foreground">
-            Commence gratuitement. En Pro, ton prix baisse tout seul à chaque anniversaire
-            d’abonnement, jusqu’à 40 % de moins.
+            Essai Pro gratuit sans carte, puis Création à 15 € ou Pro à 30 € par mois — avec un prix qui baisse chaque
+            année d’abonnement. Ou 149 € une fois pour Pro à vie.
           </p>
         </Reveal>
       </RevealGroup>
-      <div className="mx-auto max-w-[1080px]">
-        <Pricing />
-      </div>
+      <DeferredPricing />
       <div className="mx-auto mt-20 max-w-[720px]">
         <h2 className="mb-6 text-center font-display text-[28px] font-semibold tracking-tightest">
           Questions fréquentes

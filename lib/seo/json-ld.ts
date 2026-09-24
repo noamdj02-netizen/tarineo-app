@@ -1,5 +1,5 @@
 import { BRAND } from "@/lib/brand";
-import { FOUNDER, LOYALTY_TIERS } from "@/lib/billing/plans";
+import { FOUNDER, PRO, STARTER } from "@/lib/billing/plans";
 import { FAQ_GROUPS } from "@/lib/site/content";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -35,7 +35,6 @@ export function webSiteJsonLd() {
 
 /** Produit SaaS — fiche logiciel pour rich results & citations IA. */
 export function softwareApplicationJsonLd() {
-  const [y1] = LOYALTY_TIERS;
   return {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -49,17 +48,17 @@ export function softwareApplicationJsonLd() {
     offers: [
       {
         "@type": "Offer",
-        name: "Gratuit",
-        price: "0",
+        name: "Création",
+        price: String(STARTER.month),
         priceCurrency: "EUR",
-        description: "Plan gratuit sans carte bancaire",
+        description: "6 projets, 300 questions IA/mois, 100 schémas",
       },
       {
         "@type": "Offer",
         name: "Pro",
-        price: String(y1.month),
+        price: String(PRO.month),
         priceCurrency: "EUR",
-        description: "Abonnement Pro avec prix fidélité dégressif",
+        description: "Projets et schémas illimités, agenda, copilote IA",
       },
       {
         "@type": "Offer",

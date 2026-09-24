@@ -31,7 +31,7 @@ export function SiteLogo({
       {showWordmark ? (
         <span className="font-grotesk text-[22px] leading-none font-bold tracking-[-0.04em]">
           {BRAND.name}
-          <span className="text-accent-2">.</span>
+          <span className="text-brand-violet">.</span>
         </span>
       ) : null}
     </Link>

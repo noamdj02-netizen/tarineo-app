@@ -114,7 +114,7 @@ export type SubscriptionRow = {
   user_id: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
-  plan: "free" | "pro" | "founder";
+  plan: "free" | "starter" | "pro" | "founder";
   status: string;
   billing_interval: "month" | "year" | null;
   tier: number;
@@ -152,6 +152,8 @@ export type Database = {
     Views: Record<string, never>;
     Functions: {
       founder_seats_taken: { Args: Record<string, never>; Returns: number };
+      start_pro_trial: { Args: Record<string, never>; Returns: undefined };
+      enforce_pro_trial_expiry: { Args: Record<string, never>; Returns: undefined };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

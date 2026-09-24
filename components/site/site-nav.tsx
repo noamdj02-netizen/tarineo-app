@@ -65,7 +65,7 @@ export function SiteNav() {
             Connexion
           </LandingButton>
           <LandingButton href="/#commencer" variant="navPrimary" className="hidden sm:inline-flex">
-            Commencer gratuitement
+            Commencer
           </LandingButton>
           <Button
             type="button"
@@ -83,7 +83,7 @@ export function SiteNav() {
 
       {open ? (
         <div className="mx-auto mt-2 max-w-[1120px] rounded-[22px] border border-line bg-surface p-2 shadow-lift md:hidden">
-          {[...LINKS, { href: "/login", label: "Connexion" }].map((l) => (
+          {LINKS.map((l) => (
             <Button
               key={l.href}
               variant="ghost"
@@ -96,6 +96,14 @@ export function SiteNav() {
               {l.label}
             </Button>
           ))}
+          <div className="mt-2 flex flex-col gap-2 border-t border-line px-2 pt-3">
+            <LandingButton href="/login" variant="secondary" fullWidth className="min-h-11">
+              Connexion
+            </LandingButton>
+            <LandingButton href="/#commencer" variant="primary" fullWidth className="min-h-11">
+              Commencer
+            </LandingButton>
+          </div>
         </div>
       ) : null}
     </header>

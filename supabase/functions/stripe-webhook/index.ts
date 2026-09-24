@@ -57,11 +57,18 @@ async function syncSubscription(sub: Stripe.Subscription) {
   if (existing?.plan === "founder") return;
 
   const live = ["active", "trialing", "past_due"].includes(sub.status);
+  const lookup = item?.price.lookup_key ?? "";
+  const metaPlan = sub.metadata?.plan;
+  let plan: "free" | "starter" | "pro" = "free";
+  if (live) {
+    if (lookup.startsWith("navpit_starter_") || metaPlan === "starter") plan = "starter";
+    else plan = "pro";
+  }
   await admin.from("subscriptions").upsert({
     user_id: userId,
     stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
     stripe_subscription_id: sub.id,
-    plan: live ? "pro" : "free",
+    plan,
     status: sub.status,
     billing_interval: interval,
     tier: tierMatch ? Number(tierMatch[1]) : 0,

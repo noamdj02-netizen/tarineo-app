@@ -12,7 +12,8 @@ if (!key) {
 const stripe = new Stripe(key);
 
 // Mêmes montants que lib/billing/plans.ts (en centimes).
-const PRO = { month: [1500, 1200, 900], year: [15000, 12000, 9000] };
+const STARTER = { month: 1500, year: 15000 };
+const PRO = { month: 3000, year: 30000 };
 const FOUNDER = 14900;
 
 async function product(name, description) {
@@ -32,16 +33,27 @@ async function price(lookup_key, params) {
   console.log(`+ ${lookup_key} créé (${p.id})`);
 }
 
-const pro = await product("Navpit Pro", "Projets illimités, copilote IA, schémas, agenda. Prix fidélité.");
+const starter = await product(
+  "Navpit Création",
+  "6 projets, 300 questions IA/mois, 100 schémas.",
+);
 for (const interval of ["month", "year"]) {
-  for (const [tier, amount] of PRO[interval].entries()) {
-    await price(`navpit_pro_${interval}_t${tier}`, {
-      product: pro,
-      unit_amount: amount,
-      recurring: { interval },
-      nickname: `Pro ${interval === "month" ? "mensuel" : "annuel"} · palier ${tier + 1}`,
-    });
-  }
+  await price(`navpit_starter_${interval}`, {
+    product: starter,
+    unit_amount: STARTER[interval],
+    recurring: { interval },
+    nickname: `Création ${interval === "month" ? "mensuel" : "annuel"}`,
+  });
+}
+
+const pro = await product("Navpit Pro", "Projets et schémas illimités, copilote IA, agenda.");
+for (const interval of ["month", "year"]) {
+  await price(`navpit_pro_${interval}`, {
+    product: pro,
+    unit_amount: PRO[interval],
+    recurring: { interval },
+    nickname: `Pro ${interval === "month" ? "mensuel" : "annuel"}`,
+  });
 }
 
 const founder = await product("Navpit Fondateur", "Accès Pro à vie, un seul paiement.");

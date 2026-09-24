@@ -1,29 +1,28 @@
 import { ArrowRight, Check } from "lucide-react";
-import { Illustration } from "@/components/illustration";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
+import { BrandFocus } from "@/components/site/brand-focus";
 import { LandingButton } from "@/components/site/landing-button";
-import { LandingFaqTabs } from "@/components/site/landing-faq-tabs";
-import {
-  LandingCtaBand,
-  LandingHowItWorks,
-  LandingWorkspaceDepth,
-} from "@/components/site/landing-folio-sections";
+import { LandingCtaBand, LandingClosingCta } from "@/components/site/landing-cta";
+import { LandingWorkspaceDepth } from "@/components/site/landing-folio-sections";
+import { LandingProductShowcase } from "@/components/site/landing-product-showcase";
+import { LandingFeatures } from "@/components/site/landing-features";
+import { DeferredFaqTabs, DeferredPricing, DeferredTestimonials } from "@/components/site/landing-deferred";
 import { LandingMarquee } from "@/components/site/landing-marquee";
 import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
 import { HeroPrompt } from "@/components/site/hero-prompt";
-import { InView } from "@/components/site/in-view";
-import { Pricing } from "@/components/site/pricing";
 import { ProductPreview } from "@/components/site/product-preview";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { JsonLd } from "@/components/site/json-ld";
 import { BRAND } from "@/lib/brand";
 import { siteMetadata } from "@/lib/seo";
 import { faqPageJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
-import { FAQ_GROUPS, FEATURES, STEPS } from "@/lib/site/content";
+import { LandingSteps } from "@/components/site/landing-steps";
+import { FAQ_GROUPS } from "@/lib/site/content";
 
 const HOME_TITLE = `${BRAND.name} · Cockpit fondateur solo, un projet en Focus & copilote IA`;
 const HOME_DESCRIPTION =
-  "Navpit regroupe tes side-projects et SaaS : un seul en Focus, la prochaine action, ressources design et copilote IA contextualisé. Gratuit pour commencer.";
+  "Navpit regroupe tes side-projects et SaaS : un seul en Focus, la prochaine action, ressources design et copilote IA contextualisé.";
 
 export const metadata = {
   title: { absolute: HOME_TITLE },
@@ -31,7 +30,11 @@ export const metadata = {
   ...siteMetadata({ description: HOME_DESCRIPTION, path: "/" }),
 };
 
-const PROOF = ["Gratuit pour commencer", "Sans carte bancaire", "Tes données restent à toi"];
+const PROOF = [
+  `${PRO_TRIAL_DAYS} jours d’essai sans carte`,
+  "Prix qui baisse chaque année",
+  "Tes données restent à toi",
+];
 
 export default function LandingPage() {
   return (
@@ -39,7 +42,7 @@ export default function LandingPage() {
       <JsonLd data={[softwareApplicationJsonLd(), faqPageJsonLd()]} />
       <section
         id="commencer"
-        className="relative isolate -mt-[72px] scroll-mt-24 overflow-clip px-5 pt-[120px] pb-8 sm:px-8 sm:pt-[128px]"
+        className="relative isolate -mt-[72px] scroll-mt-24 overflow-clip px-4 pt-[108px] pb-6 sm:px-8 sm:pt-[128px] sm:pb-8"
       >
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
           {/* Fond coloré hero : lisible derrière le titre + la prompt box */}
@@ -55,25 +58,33 @@ export default function LandingPage() {
           <div className="absolute right-[-12%] bottom-[-28%] h-[85%] w-[72%] animate-[glow-drift_24s_ease-in-out_-9s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_22%,transparent_70%)] opacity-95 blur-3xl" />
         </div>
 
-        <RevealGroup className="mx-auto flex w-full max-w-[860px] flex-col items-center gap-6 text-center">
+        <RevealGroup className="mx-auto flex w-full max-w-[860px] flex-col items-center gap-5 text-center sm:gap-6">
           <Reveal>
             <p className="mono-label">/ Cockpit fondateur ///</p>
           </Reveal>
           <Reveal>
-            <h1 className="font-display text-[clamp(40px,7.4vw,76px)] leading-[0.98] font-semibold tracking-tightest text-balance">
-              Tous tes projets. <span className="text-accent-2">Un seul en Focus.</span>
+            <h1 className="font-display text-[clamp(32px,8.2vw,76px)] leading-[1.02] font-semibold tracking-tightest text-balance">
+              Tous tes projets.{" "}
+              <span className="text-muted-foreground">
+                Un seul en <BrandFocus />.
+              </span>
             </h1>
           </Reveal>
           <Reveal>
-            <p className="max-w-[56ch] text-[17px] leading-relaxed text-muted-foreground sm:text-[18px]">
+            <p className="max-w-[56ch] text-[16px] leading-relaxed text-muted-foreground sm:text-[18px]">
               {BRAND.description}
             </p>
           </Reveal>
-          <Reveal className="flex flex-wrap justify-center gap-3">
-            <LandingButton href="/inscription" icon={<ArrowRight aria-hidden />}>
-              Commencer gratuitement
+          <Reveal className="flex w-full max-w-[min(100%,360px)] flex-col gap-2.5 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3">
+            <LandingButton
+              href="/inscription?plan=pro"
+              icon={<ArrowRight aria-hidden />}
+              fullWidth
+              className="sm:w-auto sm:max-w-none"
+            >
+              Essai gratuit {PRO_TRIAL_DAYS} jours
             </LandingButton>
-            <LandingButton href="/#solution" variant="secondary">
+            <LandingButton href="/#solution" variant="secondary" fullWidth className="sm:w-auto sm:max-w-none">
               Voir le produit
             </LandingButton>
           </Reveal>
@@ -81,7 +92,7 @@ export default function LandingPage() {
             <HeroPrompt />
           </Reveal>
           <Reveal>
-            <ul className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-[13.5px] text-muted-foreground">
+            <ul className="flex flex-col items-center gap-2 text-[13px] text-muted-foreground sm:flex-row sm:flex-wrap sm:justify-center sm:gap-x-5 sm:gap-y-2 sm:text-[13.5px]">
               {PROOF.map((p) => (
                 <li key={p} className="flex items-center gap-1.5">
                   <Check className="size-3.5 text-st-focus" aria-hidden />
@@ -94,13 +105,13 @@ export default function LandingPage() {
 
         <LandingMarquee className="relative z-10 mt-10 sm:mt-12" />
 
-        <div className="mx-auto mt-8 max-w-[1160px] sm:mt-10">
+        <div className="mx-auto mt-6 w-full max-w-[1160px] sm:mt-10">
           <ProductPreview />
         </div>
       </section>
 
       <LandingCtaBand />
-      <LandingHowItWorks />
+      <LandingProductShowcase />
       <LandingWorkspaceDepth />
 
       <LandingSection id="fonctions" tone="muted">
@@ -110,67 +121,34 @@ export default function LandingPage() {
           tail="au même endroit."
           text="Fini les onglets Notion, Figma, ChatGPT et agenda éparpillés : Navpit réunit tout autour de tes projets."
         />
-        <InView className="mx-auto grid max-w-[1080px] gap-4 sm:grid-cols-2 lg:grid-cols-3" stagger={0.06}>
-          {FEATURES.map((f) => (
-            <Reveal key={f.title}>
-              <Card className="h-full gap-0 rounded-[22px] border-border py-0 shadow-soft ring-0">
-                <CardContent className="flex flex-col gap-3 p-6">
-                  <Illustration name={f.art} className="-mt-1 -ml-1 size-16" label={f.title} />
-                  <h3 className="text-lg font-semibold tracking-tight">{f.title}</h3>
-                  <p className="text-[14.5px] leading-relaxed text-muted-foreground">{f.text}</p>
-                </CardContent>
-              </Card>
-            </Reveal>
-          ))}
-        </InView>
+        <LandingFeatures />
       </LandingSection>
 
       <LandingSection id="comment">
         <LandingSectionHead label="Étapes" title="Trois étapes," tail="et tu avances." />
-        <InView className="mx-auto grid max-w-[1080px] gap-4 md:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <Reveal key={s.title}>
-              <Card className="h-full gap-0 rounded-[22px] border-transparent py-0 shadow-soft ring-0">
-                <CardContent className="flex flex-col gap-3 p-6">
-                  <span className="font-mono text-xs font-medium tracking-widest text-muted-foreground">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="text-lg font-semibold tracking-tight">{s.title}</h3>
-                  <p className="text-[14.5px] leading-relaxed text-muted-foreground">{s.text}</p>
-                </CardContent>
-              </Card>
-            </Reveal>
-          ))}
-        </InView>
+        <LandingSteps />
       </LandingSection>
 
-      <LandingSection tone="muted">
-        <InView className="mx-auto flex max-w-[760px] flex-col items-center gap-6 text-center">
-          <Reveal>
-            <Illustration name="landing-idee" className="size-20" label="Illustration fondateur" />
-          </Reveal>
-          <Reveal>
-            <blockquote className="font-serif text-[clamp(24px,3.6vw,34px)] leading-[1.25] text-balance italic">
-              « J’avais dix projets ouverts et aucun ne sortait. Navpit, c’est la règle que je me suis
-              imposée : un seul en Focus, jusqu’à la première vente. »
-            </blockquote>
-          </Reveal>
-          <Reveal>
-            <p className="mono-label">Noam · Créateur de Navpit</p>
-          </Reveal>
-        </InView>
+      <LandingSection id="temoignages" className="bg-bg">
+        <LandingSectionHead
+          align="start"
+          className="max-w-[1080px]"
+          label="Témoignages"
+          title="Fondateurs solo,"
+          tail="ils avancent avec Navpit."
+          text="Retours de créateurs qui ont remplacé le chaos d’onglets par un seul cockpit."
+        />
+        <DeferredTestimonials />
       </LandingSection>
 
       <LandingSection id="prix">
         <LandingSectionHead
           label="Prix"
-          title="Plus tu restes,"
-          tail="moins tu paies."
-          text="Commence gratuitement. En Pro, ton prix baisse à chaque anniversaire d’abonnement."
+          title="Essai Pro,"
+          tail="puis la formule qui te va."
+          text={`${PRO_TRIAL_DAYS} jours sans carte, puis Création à 15 € ou Pro à 30 € — ou Fondateur à 149 € une fois.`}
         />
-        <div className="mx-auto max-w-[1080px]">
-          <Pricing />
-        </div>
+        <DeferredPricing />
       </LandingSection>
 
       <LandingSection id="faq" tone="muted">
@@ -180,29 +158,19 @@ export default function LandingPage() {
           text="Tout ce qu’il faut savoir sur Navpit. Une autre question ? Écris-nous depuis ton compte."
         />
         <div className="mx-auto max-w-[720px]">
-          <LandingFaqTabs groups={FAQ_GROUPS} />
+          <Card className="gap-0 rounded-[24px] border-line py-0 shadow-soft ring-1 ring-line">
+            <CardHeader className="border-b border-line px-6 py-5 text-center">
+              <CardTitle className="text-base font-semibold">Par thème</CardTitle>
+              <CardDescription className="text-[14px]">Tarifs, confidentialité, annulation…</CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 py-6 sm:px-6">
+              <DeferredFaqTabs groups={FAQ_GROUPS} />
+            </CardContent>
+          </Card>
         </div>
       </LandingSection>
 
-      <section className="px-5 pb-20 sm:px-8">
-        <InView className="relative isolate mx-auto flex max-w-[1080px] flex-col items-center gap-5 overflow-clip rounded-[28px] bg-ink px-6 py-16 text-center text-accent-ink shadow-lift">
-          <Reveal>
-            <h2 className="font-display text-[clamp(28px,4.6vw,46px)] leading-[1.04] font-semibold tracking-tightest text-balance">
-              Prêt à lancer ton prochain projet ?
-            </h2>
-          </Reveal>
-          <Reveal>
-            <p className="max-w-[48ch] text-base leading-relaxed text-accent-ink/70">
-              Crée ton compte en une minute, ajoute tes projets et choisis ton Focus.
-            </p>
-          </Reveal>
-          <Reveal>
-            <LandingButton href="/inscription" variant="inverse" icon={<ArrowRight aria-hidden />}>
-              Commencer gratuitement
-            </LandingButton>
-          </Reveal>
-        </InView>
-      </section>
+      <LandingClosingCta />
     </>
   );
 }

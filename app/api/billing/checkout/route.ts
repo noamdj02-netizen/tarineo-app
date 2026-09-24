@@ -1,14 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { planFor } from "@/lib/billing/plan";
-import { FOUNDER, type Interval } from "@/lib/billing/plans";
+import { FOUNDER, type Interval, type PlanId } from "@/lib/billing/plans";
 import {
   FOUNDER_LOOKUP_KEY,
   getStripe,
   isStripeConfigured,
   priceIdFor,
-  proLookupKey,
+  proPriceId,
+  starterLookupKey,
 } from "@/lib/billing/stripe";
 import { getDb } from "@/lib/db";
+
+function parsePlan(raw: FormDataEntryValue | null): PlanId {
+  if (raw === "founder") return "founder";
+  if (raw === "starter") return "starter";
+  return "pro";
+}
 
 /** Formulaire de /abonnement : crée la session Stripe Checkout et y redirige. */
 export async function POST(request: NextRequest) {
@@ -20,11 +27,11 @@ export async function POST(request: NextRequest) {
   if (!isStripeConfigured()) return back("erreur=config");
 
   const form = await request.formData();
-  const plan = form.get("plan") === "founder" ? "founder" : "pro";
+  const plan = parsePlan(form.get("plan"));
   const interval: Interval = form.get("interval") === "year" ? "year" : "month";
 
   const current = await planFor(db);
-  if (current.plan !== "free") return back("erreur=deja");
+  if (current.plan === "founder" || current.hasPaidSubscription) return back("erreur=deja");
 
   const { data: sub } = await db.supabase
     .from("subscriptions")
@@ -55,17 +62,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(session.url!, 303);
     }
 
+    const priceId =
+      plan === "starter" ? await priceIdFor(starterLookupKey(interval)) : await proPriceId(interval);
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price: await priceIdFor(proLookupKey(interval, 0)), quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: db.user.id,
-      metadata: { ...meta, plan: "pro" },
-      subscription_data: { metadata: { ...meta, plan: "pro" } },
+      metadata: { ...meta, plan },
+      subscription_data: { metadata: { ...meta, plan } },
       ...(customer ? { customer } : { customer_email: db.user.email }),
       allow_promotion_codes: true,
       locale: "fr",
-      success_url: `${origin}/abonnement?ok=pro`,
-      cancel_url: `${origin}/abonnement?plan=pro&interval=${interval}`,
+      success_url: `${origin}/abonnement?ok=${plan}`,
+      cancel_url: `${origin}/abonnement?plan=${plan}&interval=${interval}`,
     });
     return NextResponse.redirect(session.url!, 303);
   } catch (e) {

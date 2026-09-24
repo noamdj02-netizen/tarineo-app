@@ -6,7 +6,10 @@ import type { Interval, TierIndex } from "./plans";
  * Clés « lookup » des prix Stripe (créés par scripts/stripe-setup.mjs).
  * Mêmes noms dans supabase/functions/stripe-webhook/index.ts.
  */
-export const proLookupKey = (interval: Interval, tier: TierIndex) => `navpit_pro_${interval}_t${tier}`;
+export const starterLookupKey = (interval: Interval) => `navpit_starter_${interval}`;
+/** Prix Pro actuel (30 € / 300 €). */
+export const proLookupKey = (interval: Interval, tier?: TierIndex) =>
+  tier !== undefined ? `navpit_pro_${interval}_t${tier}` : `navpit_pro_${interval}`;
 export const FOUNDER_LOOKUP_KEY = "navpit_founder";
 
 let client: Stripe | null = null;
@@ -27,4 +30,13 @@ export async function priceIdFor(lookupKey: string) {
   const id = data[0]?.id;
   if (!id) throw new Error(`Prix Stripe introuvable : ${lookupKey}`);
   return id;
+}
+
+/** Résout le prix Pro (nouvelle clé puis anciens paliers fidélité). */
+export async function proPriceId(interval: Interval) {
+  try {
+    return await priceIdFor(proLookupKey(interval));
+  } catch {
+    return await priceIdFor(proLookupKey(interval, 0));
+  }
 }

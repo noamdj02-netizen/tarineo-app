@@ -33,6 +33,8 @@
   --color-glow-1: #f7c6a3;
   --color-glow-2: #cbbdf3;
   --color-glow-3: #b3cbf6;
+  /* Violet mascotte / logo (trait de marque « Focus ») */
+  --color-brand-violet: #6e5ce6;
   /* Statuts de projet (pastille + fond teinté) */
   --color-st-focus: #16a34a;
   --color-st-focus-soft: #e8f7ee;
@@ -173,6 +175,56 @@
   .btn-dark {
     @apply bg-accent text-accent-ink shadow-dark transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
   }
+
+  /* Surlignage hero « Focus » — --focus-glow piloté par BrandFocus (2s / teinte, fondu 0.65s) */
+  .brand-focus {
+    @apply relative isolate inline whitespace-nowrap text-ink;
+    --focus-glow: var(--color-glow-2);
+    transition: --focus-glow 0.65s ease-in-out;
+  }
+  .brand-focus::before,
+  .brand-focus::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    transition:
+      background 0.65s ease-in-out,
+      box-shadow 0.65s ease-in-out;
+  }
+  .brand-focus::before {
+    left: -0.11em;
+    right: -0.13em;
+    top: -0.05em;
+    bottom: 0.1em;
+    border-radius: 0.14em 0.26em 0.16em 0.2em;
+    transform: rotate(-1.4deg);
+    background: linear-gradient(
+      98deg,
+      color-mix(in srgb, var(--focus-glow) 52%, transparent) 0%,
+      color-mix(in srgb, var(--focus-glow) 94%, transparent) 42%,
+      color-mix(in srgb, var(--focus-glow) 88%, white) 78%,
+      color-mix(in srgb, var(--focus-glow) 68%, transparent) 100%
+    );
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, white 45%, transparent),
+      0 1px 2px color-mix(in srgb, var(--focus-glow) 28%, transparent);
+  }
+  .brand-focus::after {
+    left: -0.06em;
+    right: -0.16em;
+    top: 0.08em;
+    bottom: 0.02em;
+    border-radius: 0.2em 0.12em 0.18em 0.14em;
+    transform: rotate(-2.25deg);
+    background: color-mix(in srgb, var(--focus-glow) 38%, transparent);
+  }
+}
+
+@property --focus-glow {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #cbbdf3;
 }
 
 /* Curseur qui clignote dans la boîte de prompt */
@@ -223,5 +275,8 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+  .brand-focus {
+    --focus-glow: var(--color-glow-2);
   }
 }

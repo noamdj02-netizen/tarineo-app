@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { enforceProTrialExpiry } from "@/lib/billing/trial";
 import { hasRequireLoginCookie, REQUIRE_LOGIN_COOKIE } from "@/lib/auth/require-login-cookie";
 import { isOpenAccess, isSupabaseConfigured } from "./config";
 import type { Database } from "./types";
@@ -61,9 +62,15 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const {
+  let {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user && !request.nextUrl.pathname.startsWith("/auth/")) {
+    await enforceProTrialExpiry(supabase);
+    const refreshed = await supabase.auth.getUser();
+    user = refreshed.data.user;
+  }
 
   const requireLogin = hasRequireLoginCookie(request.cookies.get(REQUIRE_LOGIN_COOKIE)?.value);
 

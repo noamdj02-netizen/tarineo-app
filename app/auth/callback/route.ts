@@ -4,6 +4,7 @@ import { WelcomeEmail } from "@/emails/welcome";
 import { sendEmail } from "@/lib/email/send";
 import { clearRequireLoginCookie } from "@/lib/auth/require-login-cookie";
 import { safeNext } from "@/lib/safe-next";
+import { signupSkipsProTrial, startProTrial } from "@/lib/billing/trial";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -27,7 +28,14 @@ export async function GET(request: NextRequest) {
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=lien`);
   }
+  const {
+    data: { user: beforeWelcome },
+  } = await supabase.auth.getUser();
+  const firstAuth = Boolean(beforeWelcome && !beforeWelcome.user_metadata?.welcomed);
   await welcomeOnce(supabase, origin);
+  if (firstAuth && !signupSkipsProTrial(next, origin)) {
+    await startProTrial(supabase);
+  }
   const {
     data: { user },
   } = await supabase.auth.getUser();

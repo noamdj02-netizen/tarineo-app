@@ -16,7 +16,7 @@ export function LandingSection({ id, children, className, tone = "default" }: La
     <section
       id={id}
       className={cn(
-        "scroll-mt-24 px-5 py-20 sm:px-8",
+        "scroll-mt-24 px-4 py-14 sm:px-8 sm:py-20",
         tone === "muted" && "bg-background",
         className,
       )}
@@ -31,23 +31,37 @@ export function LandingSectionHead({
   title,
   tail,
   text,
+  align = "center",
   className,
 }: {
   label: string;
   title: string;
   tail?: string;
   text?: string;
+  /** Centré (défaut) ou aligné à gauche sur la grille 1080px. */
+  align?: "center" | "start";
   className?: string;
 }) {
   return (
-    <InView className={cn("mx-auto mb-10 flex max-w-[640px] flex-col items-center gap-3 text-center", className)}>
+    <InView
+      className={cn(
+        "mx-auto mb-8 flex max-w-[1080px] flex-col gap-2.5 sm:mb-10 sm:gap-3",
+        align === "center" && "max-w-[640px] items-center text-center",
+        align === "start" && "w-full items-start text-left",
+        className,
+      )}
+    >
       <Reveal>
         <p className="mono-label">{`/ ${label} ///`}</p>
       </Reveal>
       <Reveal>
-        <h2 className="font-display text-[clamp(28px,4.4vw,42px)] leading-[1.05] font-semibold tracking-tightest text-balance">
+        <h2
+          className={cn(
+            "font-display text-[clamp(26px,6.2vw,42px)] leading-[1.06] font-semibold tracking-tightest text-balance text-foreground",
+          )}
+        >
           {title}
-          {tail ? <span className="text-accent-2"> {tail}</span> : null}
+          {tail ? <span className="text-muted-foreground"> {tail}</span> : null}
         </h2>
       </Reveal>
       {text ? (

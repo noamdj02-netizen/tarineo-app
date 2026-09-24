@@ -11,7 +11,7 @@ export function InView({
     <motion.div
       initial="hidden"
       whileInView="show"
-      viewport={{ once: true, margin: "0px 0px -12% 0px" }}
+      viewport={{ once: true, amount: 0.2, margin: "0px 0px -8% 0px" }}
       variants={{ show: { transition: { staggerChildren: stagger } } }}
       {...props}
     />

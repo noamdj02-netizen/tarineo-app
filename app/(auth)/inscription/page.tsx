@@ -6,11 +6,14 @@ export const metadata = { title: "Créer un compte" };
 
 /** Après confirmation : l'app, ou directement le paiement si un plan a été choisi sur /prix. */
 function nextFor(plan?: string, interval?: string, q?: string) {
-  if (plan !== "pro" && plan !== "founder") {
+  const paid = plan === "pro" || plan === "starter" || plan === "founder";
+  if (!paid) {
     return q ? `/onboarding?${new URLSearchParams({ ask: q.slice(0, 500) })}` : "/onboarding";
   }
-  const sp = new URLSearchParams({ plan });
-  if (plan === "pro" && (interval === "month" || interval === "year")) sp.set("interval", interval);
+  const sp = new URLSearchParams({ plan: plan! });
+  if ((plan === "pro" || plan === "starter") && (interval === "month" || interval === "year")) {
+    sp.set("interval", interval);
+  }
   return `/onboarding?next=${encodeURIComponent(`/abonnement?${sp}`)}`;
 }
 
@@ -26,8 +29,8 @@ export default async function SignupPage({
       label="Inscription"
       title="Crée ton cockpit."
       text={
-        plan === "pro" || plan === "founder"
-          ? "Crée ton compte, puis tu passes au paiement."
+        plan === "pro" || plan === "starter" || plan === "founder"
+          ? "Crée ton compte : essai Pro sans carte, puis tu choisis ta formule."
           : "Gratuit, sans carte bancaire. Une minute suffit."
       }
       footer={

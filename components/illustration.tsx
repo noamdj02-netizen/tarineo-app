@@ -21,11 +21,14 @@ export function Illustration({
   className,
   label,
   depth = 0,
+  tone = "default",
 }: {
   name: IllustrationName;
   className?: string;
   label?: string;
   depth?: number;
+  /** Trait + accent en clair (cartes bg-ink, hero sombre). */
+  tone?: "default" | "on-dark";
 }) {
   const { box, layers } = ILLUSTRATIONS[name];
   const [left, top, width, height] = box.map((v) => `${(v / 320) * 100}%`);
@@ -62,7 +65,10 @@ export function Illustration({
                 src={`/illustrations/${name}-${layer}.svg`}
                 alt=""
                 draggable={false}
-                className="block size-full max-w-none"
+                className={cn(
+                  "block size-full max-w-none",
+                  tone === "on-dark" && "brightness-0 invert",
+                )}
               />
             </div>
           </div>

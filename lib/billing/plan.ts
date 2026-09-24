@@ -12,9 +12,13 @@ export type PlanInfo = {
   periodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   hasCustomer: boolean;
+  /** Abonnement Stripe actif (hors essai interne sans carte). */
+  hasPaidSubscription: boolean;
+  /** Essai Pro interne encore en cours. */
+  isFreeTrial: boolean;
 };
 
-const ACTIVE = new Set(["active", "trialing", "past_due"]);
+const PAID_STATUSES = new Set(["active", "past_due"]);
 
 /** Comptes du créateur (NAVPIT_OWNER_EMAILS, séparés par des virgules) : jamais limités. */
 export function isOwner(email: string | undefined) {
@@ -37,20 +41,40 @@ async function load(db: Db): Promise<PlanInfo> {
       periodEnd: null,
       cancelAtPeriodEnd: false,
       hasCustomer: false,
+      hasPaidSubscription: false,
+      isFreeTrial: false,
     };
   }
   const { data } = await db.supabase
     .from("subscriptions")
-    .select("plan, status, billing_interval, tier, current_period_end, cancel_at_period_end, stripe_customer_id")
+    .select(
+      "plan, status, billing_interval, tier, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id",
+    )
     .eq("user_id", db.user.id)
     .maybeSingle();
+
+  const hasPaidSubscription = Boolean(data?.stripe_subscription_id);
+  const periodEndMs = data?.current_period_end ? Date.parse(data.current_period_end) : NaN;
+  const trialLive =
+    data?.status === "trialing" &&
+    !hasPaidSubscription &&
+    Number.isFinite(periodEndMs) &&
+    periodEndMs > Date.now();
+  const paidLive =
+    PAID_STATUSES.has(data?.status ?? "") || (data?.status === "trialing" && hasPaidSubscription);
+  const paidStarter = data?.plan === "starter" && paidLive;
+  const paidPro = data?.plan === "pro" && paidLive;
 
   const plan: PlanId =
     data?.plan === "founder"
       ? "founder"
-      : data?.plan === "pro" && ACTIVE.has(data.status)
+      : trialLive
         ? "pro"
-        : "free";
+        : paidPro
+          ? "pro"
+          : paidStarter
+            ? "starter"
+            : "free";
   return {
     plan,
     limits: LIMITS[plan],
@@ -60,6 +84,8 @@ async function load(db: Db): Promise<PlanInfo> {
     periodEnd: data?.current_period_end ?? null,
     cancelAtPeriodEnd: data?.cancel_at_period_end ?? false,
     hasCustomer: Boolean(data?.stripe_customer_id),
+    hasPaidSubscription,
+    isFreeTrial: trialLive,
   };
 }
 
@@ -116,8 +142,9 @@ export async function limitReached(db: Db, kind: LimitKind): Promise<string | nu
 }
 
 export const LIMIT_MESSAGES = {
-  projects: "Le plan Gratuit est limité à 2 projets. Passe Pro pour en ajouter d’autres.",
-  ai: "Tu as utilisé toutes tes questions IA du mois. Passe Pro, ou attends le 1er du mois.",
-  schemas: "Le plan Gratuit est limité à 3 schémas. Passe Pro pour en créer d’autres.",
-  calendar: "La synchro d’agenda Google ou Apple fait partie du plan Pro.",
+  projects:
+    "Limite de projets atteinte. Passe en Création (6 projets) ou Pro (illimité) depuis Abonnement.",
+  ai: "Quota IA du mois épuisé. Passe en Création ou Pro, ou attends le 1er du mois.",
+  schemas: "Limite de schémas atteinte. Passe en Création (100) ou Pro (illimité).",
+  calendar: "La synchro d’agenda Google ou Apple est incluse dans le plan Pro.",
 } as const;

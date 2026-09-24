@@ -1,137 +1,18 @@
-import { ArrowRight } from "lucide-react";
-import { Illustration } from "@/components/illustration";
+import { Mascot } from "@/components/mascot";
 import { Reveal } from "@/components/motion/reveal";
-import { LandingButton } from "@/components/site/landing-button";
 import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
 import { InView } from "@/components/site/in-view";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  AUTOMATION_SUGGESTIONS,
-  COMPARE_COLUMNS,
-  HOW_WORKS_ROWS,
-} from "@/lib/site/content";
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { AUTOMATION_SUGGESTIONS, COMPARE_COLUMNS } from "@/lib/site/content";
 import { cn } from "@/lib/utils";
-
-export function LandingCtaBand() {
-  return (
-    <section className="border-y border-line bg-surface px-5 py-14 sm:px-8">
-      <InView className="mx-auto flex max-w-[1080px] flex-col items-center gap-5 text-center sm:flex-row sm:justify-between sm:text-left">
-        <Reveal>
-          <h2 className="font-display text-[clamp(24px,3.6vw,34px)] font-semibold tracking-tightest text-balance">
-            Arrête de jongler entre dix onglets.
-          </h2>
-          <p className="mt-2 max-w-[42ch] text-[15px] leading-relaxed text-muted-foreground">
-            Choisis ton Focus, pose une question au copilote et avance avant la fin de la journée.
-          </p>
-        </Reveal>
-        <Reveal>
-          <LandingButton href="/inscription" icon={<ArrowRight aria-hidden />}>
-            Commencer gratuitement
-          </LandingButton>
-        </Reveal>
-      </InView>
-    </section>
-  );
-}
-
-function MockActivityFeed() {
-  return (
-    <ul className="flex flex-col gap-2 p-4">
-      {[
-        { who: "Studio Devis", what: "Prochaine action mise à jour", when: "8 min" },
-        { who: "Copilote", what: "Mail de relance généré", when: "1 h" },
-        { who: "Menu QR", what: "Passé en pause", when: "Hier" },
-      ].map((e) => (
-        <li key={e.what} className="rounded-xl border border-line bg-surface px-3 py-2.5">
-          <p className="text-[13px] font-medium">{e.what}</p>
-          <p className="mt-0.5 text-[12px] text-muted-foreground">
-            {e.who} · {e.when}
-          </p>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function MockIntegrations() {
-  const tools = ["Notion", "Figma", "Slack", "Agenda iCal"];
-  return (
-    <ul className="grid gap-2 p-4 sm:grid-cols-2">
-      {tools.map((t) => (
-        <li
-          key={t}
-          className="flex items-center justify-between rounded-xl border border-line bg-surface px-3 py-3"
-        >
-          <span className="text-[13px] font-medium">{t}</span>
-          <Badge variant="secondary" className="rounded-pill font-mono text-[10px] uppercase">
-            Lié
-          </Badge>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function MockAiDraft() {
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      <p className="rounded-xl bg-surface-2 px-3 py-2 text-[12px] text-muted-foreground">
-        Rédige un mail de relance pour Studio Devis…
-      </p>
-      <div className="rounded-xl border border-line bg-surface p-3 text-[13px] leading-relaxed">
-        <p className="font-medium">Objet : Suite à notre échange</p>
-        <p className="mt-2 text-muted-foreground">
-          Bonjour Marcus, merci pour le temps hier. Voici la prochaine étape pour la bêta…
-        </p>
-      </div>
-      <span className="self-start rounded-pill bg-ink px-3 py-1 font-mono text-[10px] text-accent-ink uppercase">
-        Suggestion copilote
-      </span>
-    </div>
-  );
-}
-
-const MOCK_PANELS = [MockActivityFeed, MockIntegrations, MockAiDraft];
-
-export function LandingHowItWorks() {
-  return (
-    <LandingSection id="solution" tone="muted" className="bg-bg">
-      <LandingSectionHead
-        className="mb-14 max-w-[640px]"
-        label="Comment ça marche"
-        title="Tout autour de tes projets,"
-        tail="dans un seul cockpit."
-      />
-      <div className="mx-auto flex max-w-[1080px] flex-col gap-16">
-        {HOW_WORKS_ROWS.map((row, i) => {
-          const Mock = MOCK_PANELS[i] ?? MockActivityFeed;
-          const flip = i % 2 === 1;
-          return (
-            <InView
-              key={row.title}
-              className={cn(
-                "grid items-center gap-8 lg:grid-cols-2 lg:gap-12",
-                flip && "lg:[&>div:first-child]:order-2",
-              )}
-            >
-              <Reveal className="flex flex-col gap-3">
-                <Illustration name={row.art} className="size-16" label={row.title} />
-                <h3 className="font-display text-[22px] font-semibold tracking-tightest">{row.title}</h3>
-                <p className="text-[15px] leading-relaxed text-muted-foreground">{row.description}</p>
-              </Reveal>
-              <Reveal>
-                <div className="overflow-hidden rounded-[22px] border border-line bg-surface-2 shadow-soft">
-                  <Mock />
-                </div>
-              </Reveal>
-            </InView>
-          );
-        })}
-      </div>
-    </LandingSection>
-  );
-}
 
 export function LandingWorkspaceDepth() {
   return (
@@ -152,7 +33,13 @@ export function LandingWorkspaceDepth() {
               Un clic envoie la consigne au copilote avec le contexte de ton Focus.
             </p>
           </Reveal>
-          <Reveal className="card-soft flex flex-col gap-2 p-4">
+          <Reveal>
+            <Card className="gap-0 rounded-[24px] border-line py-0 shadow-soft ring-1 ring-line">
+              <CardHeader className="border-b border-line px-5 py-4">
+                <CardTitle className="text-[15px] font-semibold">Raccourcis copilote</CardTitle>
+                <CardDescription className="text-[13px]">Contexte du Focus inclus</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-2 p-4">
             {AUTOMATION_SUGGESTIONS.map((label, i) => (
               <div
                 key={label}
@@ -165,12 +52,18 @@ export function LandingWorkspaceDepth() {
                 {label}
               </div>
             ))}
+              </CardContent>
+            </Card>
           </Reveal>
         </InView>
 
-        <InView className="card-soft overflow-hidden p-4 sm:p-5">
+        <InView>
+          <Card className="h-full gap-0 overflow-hidden rounded-[24px] border-line py-0 shadow-soft ring-1 ring-line">
+            <CardHeader className="border-b border-line px-5 py-4">
+              <CardTitle className="mono-label text-[10px] font-normal">{"/ Pipeline exemple ///"}</CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 sm:p-5">
           <Reveal>
-            <p className="mono-label mb-3 text-[10px]">{"/ Pipeline exemple ///"}</p>
             <ol className="flex flex-col gap-2">
               {[
                 { s: "Complété", t: "Question sur le Focus" },
@@ -195,6 +88,8 @@ export function LandingWorkspaceDepth() {
               ))}
             </ol>
           </Reveal>
+            </CardContent>
+          </Card>
         </InView>
       </div>
 
@@ -203,13 +98,27 @@ export function LandingWorkspaceDepth() {
           <Reveal key={col.title}>
             <Card
               className={cn(
-                "h-full gap-4 rounded-[22px] py-6 ring-0",
-                col.highlight ? "border-ink/15 bg-card shadow-lift" : "border-border bg-muted/40",
+                "h-full gap-0 rounded-[24px] py-0 ring-1",
+                col.highlight
+                  ? "border-ink/15 bg-card shadow-lift ring-ink/10"
+                  : "border-line bg-muted/40 ring-line",
               )}
             >
-              <CardHeader className="gap-1 px-6">
-                <CardTitle className="text-[17px] font-semibold tracking-tight">{col.title}</CardTitle>
+              <CardHeader className="gap-1 border-b border-line px-6 py-5">
+                <CardTitle className="pr-14 text-[17px] font-semibold tracking-tight">{col.title}</CardTitle>
                 <CardDescription className="text-[13px]">{col.subtitle}</CardDescription>
+                {col.mascot ? (
+                  <CardAction className="flex items-end justify-end">
+                    <Mascot
+                      name={col.mascot}
+                      label={col.title}
+                      className={cn(
+                        "h-14 w-[6rem]",
+                        col.highlight && "h-[4.25rem] w-[7.25rem]",
+                      )}
+                    />
+                  </CardAction>
+                ) : null}
               </CardHeader>
               <CardContent className="px-6">
                 <ul className="flex flex-col gap-2 text-sm leading-snug">
