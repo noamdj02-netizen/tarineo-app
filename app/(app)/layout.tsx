@@ -4,6 +4,9 @@ import { Topbar } from "@/components/shell/topbar";
 import { getOnboarding } from "@/lib/onboarding";
 import { getViewer } from "@/lib/session";
 
+// Données propres à l'utilisateur : toujours rendues à la demande, jamais figées au build.
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const [viewer, onboarding] = await Promise.all([getViewer(), getOnboarding()]);
 
