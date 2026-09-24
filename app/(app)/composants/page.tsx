@@ -16,7 +16,7 @@ export default async function ComposantsPage({
 
   return (
     <section>
-      <PageHead label="Composants" title="Bibliothèque" tail="de composants.">
+      <PageHead art="dashboard-devis" label="Composants" title="Bibliothèque" tail="de composants.">
         {
           "Choisis un thème : tous les composants changent. Le bouton « Copier » copie le HTML. Colle aussi les tokens du thème (onglet Thèmes) pour que les variables --k-* marchent."
         }

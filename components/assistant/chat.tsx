@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ArrowUp, Sparkles, Square, Trash2 } from "lucide-react";
+import { ArrowUp, Square, Trash2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { clearChat } from "@/app/(app)/assistant/actions";
+import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
 import { MessageContent } from "./message-content";
@@ -144,7 +145,7 @@ export function Chat({
         >
           {empty ? (
             <div className="m-auto flex max-w-[36ch] flex-col items-center gap-2 text-center text-[14px] text-muted">
-              <Sparkles className="size-5 text-ink" aria-hidden />
+              <Illustration name="feedback-aide" className="size-20" />
               Choisis une question ci-dessous ou écris la tienne.
             </div>
           ) : null}

@@ -5,6 +5,7 @@ import { CornerDownLeft, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
 import { TABS } from "@/lib/nav";
 import { cn } from "@/lib/utils";
@@ -122,7 +123,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
             </div>
             <ul className="max-h-[50vh] overflow-y-auto p-2" role="listbox" aria-label="Résultats">
               {results.length === 0 ? (
-                <li className="px-3 py-6 text-center text-sm text-muted">Rien trouvé.</li>
+                <li className="flex flex-col items-center gap-1 px-3 py-5 text-center text-sm text-muted">
+                  <Illustration name="empty-aucun-resultat" className="size-16" />
+                  Rien trouvé.
+                </li>
               ) : (
                 results.map(({ href, label, icon: Icon }, i) => (
                   <li key={href} role="option" aria-selected={i === sel}>

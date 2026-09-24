@@ -3,10 +3,17 @@
 import { Loader2, Mail, KeyRound } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Illustration } from "@/components/illustration";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/client";
 
 type Step = "email" | "code";
+
+/** Jeton du lien magique collé depuis l'email (`…/verify?token=…`), sinon null (code tapé). */
+function linkToken(input: string) {
+  const match = input.trim().match(/[?&]token=([^&\s]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export function LoginForm({ next, linkError }: { next?: string; linkError: boolean }) {
   const router = useRouter();
@@ -35,7 +42,11 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
     });
     setBusy(false);
     if (error) {
-      setMsg("Envoi impossible. Vérifie l’adresse, puis réessaie.");
+      setMsg(
+        error.status === 429
+          ? "Trop d’emails envoyés d’un coup. Utilise le dernier email reçu, ou réessaie dans une heure."
+          : "Envoi impossible. Vérifie l’adresse, puis réessaie.",
+      );
       return;
     }
     setStep("code");
@@ -46,14 +57,16 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
-    const { error } = await supabase.auth.verifyOtp({
-      email: email.trim(),
-      token: code.trim(),
-      type: "email",
-    });
+    const tokenHash = linkToken(code);
+    let { error } = tokenHash
+      ? await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "email" })
+      : await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
+    if (error && tokenHash?.startsWith("pkce_")) {
+      ({ error } = await supabase.auth.verifyOtp({ token_hash: tokenHash.slice(5), type: "email" }));
+    }
     setBusy(false);
     if (error) {
-      setMsg("Code faux ou expiré.");
+      setMsg("Lien ou code faux, déjà utilisé ou expiré. Demande un nouvel email.");
       return;
     }
     router.replace(target);
@@ -63,23 +76,26 @@ export function LoginForm({ next, linkError }: { next?: string; linkError: boole
   if (step === "code") {
     return (
       <form onSubmit={verifyCode} className="edit">
+        <Illustration name="feedback-envoye" className="mx-auto size-20" />
         <p className="next">
           <Mail aria-hidden />
           <span>
-            Email envoyé à <b>{email}</b>. Clique sur le lien, ou tape le code reçu ici (pratique
-            dans l’app iPhone).
+            Email envoyé à <b>{email}</b>. Clique sur le lien. Dans l’app iPhone : appui long sur le
+            lien de l’email, « Copier », puis colle-le ici.
           </span>
         </p>
         <label>
-          Code à 6 chiffres
+          Lien ou code reçu
           <input
-            inputMode="numeric"
             autoComplete="one-time-code"
-            pattern="[0-9]{6,10}"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
             required
+            placeholder="Colle le lien de l’email"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            className="min-h-11 font-mono text-lg tracking-[.3em]"
+            className="min-h-11 font-mono"
           />
         </label>
         {msg ? (

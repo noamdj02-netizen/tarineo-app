@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { LogOut, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
 import type { Viewer } from "@/lib/session";
 import { CommandPalette, useCommandPalette } from "./command-palette";
@@ -94,9 +95,12 @@ function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.25, ease: EASE }}
           >
-            <div className="px-3 py-2">
-              <p className="mono-label">/ Compte</p>
-              <p className="mt-1 truncate text-sm">{viewer?.email ?? "Non connecté"}</p>
+            <div className="flex items-center gap-3 px-3 py-2">
+              <Illustration name="onboarding-configurer" className="-my-1 size-12" />
+              <div className="min-w-0">
+                <p className="mono-label">/ Compte</p>
+                <p className="mt-1 truncate text-sm">{viewer?.email ?? "Non connecté"}</p>
+              </div>
             </div>
             {viewer?.canSignOut ? (
               <form action="/auth/signout" method="post">

@@ -1,5 +1,6 @@
 import { ActionCards, type ActionCard } from "@/components/home/action-cards";
 import { PromptBox } from "@/components/home/prompt-box";
+import { Illustration } from "@/components/illustration";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { getDb } from "@/lib/db";
 import { getViewer } from "@/lib/session";
@@ -69,6 +70,9 @@ export default async function AccueilPage() {
   return (
     <RevealGroup className="mx-auto flex max-w-[760px] flex-col gap-8 pt-[4vh] pb-4 sm:pt-[8vh]">
       <div className="flex flex-col items-center gap-3 text-center">
+        <Reveal>
+          <Illustration name="dashboard-au-travail" className="-mb-2 size-20 sm:size-24" />
+        </Reveal>
         <Reveal>
           <p className="mono-label">{"/ Cockpit ///"}</p>
         </Reveal>

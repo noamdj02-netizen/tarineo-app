@@ -4,9 +4,11 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ExternalLink, Loader2, NotebookText, Plus, Save, Search, Trash2, X } from "lucide-react";
 import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "react";
 import { addResource, deleteResource } from "@/app/(app)/ressources/actions";
+import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
 import { RESOURCE_CATEGORIES } from "@/lib/design-data/resources";
 import { safeUrl } from "@/lib/projects/types";
+import { resourceLogoUrl } from "@/lib/resources/logo";
 import { isWarnTag, type Resource } from "@/lib/resources/types";
 import { cn } from "@/lib/utils";
 
@@ -103,7 +105,10 @@ export function ResourceLibrary({ initial }: { initial: Resource[] }) {
           </AnimatePresence>
         </div>
       ) : (
-        <p className="py-8 text-center text-[14px] text-muted">Aucune ressource ne correspond.</p>
+        <div className="flex flex-col items-center gap-2 py-8 text-center text-[14px] text-muted">
+          <Illustration name="empty-aucun-resultat" className="size-20" />
+          Aucune ressource ne correspond.
+        </div>
       )}
     </div>
   );
@@ -133,9 +138,7 @@ function ResourceCard({
       className="card-soft flex flex-col gap-2.5 p-4 transition-shadow duration-300 ease-out-soft hover:shadow-lift"
     >
       <div className="flex items-center gap-3">
-        <span className="btn-dark grid size-10 flex-none place-items-center rounded-xl text-[15px] font-bold">
-          {(r.name || "?").trim().charAt(0).toUpperCase()}
-        </span>
+        <ResourceLogo r={r} />
         <div className="min-w-0">
           <h3 className="truncate text-[15.5px] font-semibold tracking-[-0.01em]">{r.name}</h3>
           <p className="font-mono text-[10.5px] tracking-[0.06em] text-muted uppercase">
@@ -189,6 +192,31 @@ function ResourceCard({
         {r.source === "moi" ? <DeleteButton id={r.id} name={r.name} onDeleted={onDeleted} /> : null}
       </div>
     </motion.article>
+  );
+}
+
+/** Logo de la marque (logo.dev) ; l'initiale sur fond noir si pas de logo. */
+function ResourceLogo({ r }: { r: Resource }) {
+  const src = resourceLogoUrl(r);
+  const [failed, setFailed] = useState(false);
+  if (src && !failed) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- petite image externe, pas besoin de next/image
+      <img
+        src={src}
+        alt=""
+        width={40}
+        height={40}
+        loading="lazy"
+        onError={() => setFailed(true)}
+        className="size-10 flex-none rounded-xl border border-line bg-surface object-contain"
+      />
+    );
+  }
+  return (
+    <span className="btn-dark grid size-10 flex-none place-items-center rounded-xl text-[15px] font-bold">
+      {(r.name || "?").trim().charAt(0).toUpperCase()}
+    </span>
   );
 }
 

@@ -1,10 +1,11 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, Plus, TriangleAlert, X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { createProject } from "@/app/(app)/projets/actions";
+import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
 import type { ProjectSummary } from "@/lib/projects/types";
 import { ProjectCard } from "./project-card";
@@ -31,9 +32,9 @@ function FocusWarning({ names }: { names: string[] }) {
   return (
     <div
       role="status"
-      className="flex items-start gap-3 rounded-card border border-ink/15 bg-accent-soft p-4 text-[14px] leading-snug"
+      className="flex items-center gap-3 rounded-card border border-ink/15 bg-accent-soft p-4 text-[14px] leading-snug"
     >
-      <TriangleAlert className="mt-0.5 size-4 flex-none" aria-hidden />
+      <Illustration name="feedback-surcharge" className="-my-2 size-14" />
       <p>
         <b className="font-semibold">{names.length} projets en Focus</b> ({names.join(", ")}). Ta
         règle : un seul, jusqu’à sa première vente. Choisis-en un et passe les autres en pause.

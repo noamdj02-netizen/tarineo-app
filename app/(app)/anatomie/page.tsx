@@ -1,11 +1,29 @@
 import { Fragment } from "react";
 import { LucideByName } from "@/components/icons/lucide-by-name";
+import { Illustration } from "@/components/illustration";
 import { Checklist } from "@/components/kit/checklist";
 import { Reveal } from "@/components/motion/reveal";
 import { PageHead } from "@/components/shell/page-head";
 import { FRAMES, ZONES } from "@/lib/design-data/frames";
+import type { IllustrationName } from "@/lib/illustrations";
 
 export const metadata = { title: "Anatomie" };
+
+/** Illustration par frame, dans l'ordre de FRAMES (généré, donc indexé ici). */
+const FRAME_ART: (IllustrationName | null)[] = [
+  null,
+  "landing-idee",
+  "notif-like",
+  null,
+  "landing-progression",
+  "landing-croissance",
+  null,
+  "landing-victoire",
+  "landing-resultats",
+  "landing-revenus",
+  "feedback-question",
+  "landing-commencer",
+];
 
 const FUNNEL = [
   { cls: "zA", icon: "eye", n: "Attention", s: "Frames 1–3 · tout le monde les voit" },
@@ -17,7 +35,7 @@ const FUNNEL = [
 export default function AnatomiePage() {
   return (
     <section>
-      <PageHead label="Anatomie" title="Une landing =" tail="un tunnel de 12 frames.">
+      <PageHead art="dashboard-rapport" label="Anatomie" title="Une landing =" tail="un tunnel de 12 frames.">
         {
           "Chaque frame a un seul rôle. Le visiteur descend et on lui fait passer 4 étapes : il remarque, il comprend, il a envie, il clique. Plus on descend, moins il reste de monde, donc le haut de page compte le plus."
         }
@@ -45,6 +63,9 @@ export default function AnatomiePage() {
                       <span className="fnum" style={{ background: z.s, color: z.c }}>
                         {String(i + 1).padStart(2, "0")} · {z.n}
                       </span>
+                      {FRAME_ART[i] ? (
+                        <Illustration name={FRAME_ART[i]} className="-my-2 ml-auto size-14" />
+                      ) : null}
                     </div>
                     <div className="fhead">
                       <span className="note">

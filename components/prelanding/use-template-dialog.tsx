@@ -1,10 +1,11 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, ChevronDown, LoaderCircle } from "lucide-react";
+import { ArrowRight, ChevronDown, LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { applyPreLanding, type ApplyResult } from "@/app/(app)/themes/actions";
+import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
 import type { PreLandingTemplate } from "@/lib/prelanding/templates";
 import { useScrollLock } from "./use-scroll-lock";
@@ -66,9 +67,7 @@ export function UseTemplateDialog({
       >
         {done ? (
           <>
-            <span className="grid size-11 place-items-center rounded-pill bg-ink text-accent-ink">
-              <Check className="size-5" aria-hidden />
-            </span>
+            <Illustration name="feedback-succes" className="-mt-1 -ml-1 size-20" />
             <h2 id="use-template-title" className="mt-4 text-[22px] leading-tight font-semibold tracking-[-0.035em]">
               {template.name} added to {done.projectName}
             </h2>
@@ -94,6 +93,7 @@ export function UseTemplateDialog({
           </>
         ) : (
           <>
+            <Illustration name="feedback-upload" className="float-right -mt-2 -mr-2 ml-3 size-16" />
             <p className="mono-label">/ {template.name} · {template.sections.length} sections</p>
             <h2 id="use-template-title" className="mt-2 text-[24px] leading-tight font-semibold tracking-[-0.035em]">
               Use this pre-landing?

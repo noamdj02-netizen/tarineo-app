@@ -1,3 +1,4 @@
+import { Illustration } from "@/components/illustration";
 import { BRAND } from "@/lib/brand";
 import { LoginForm } from "./login-form";
 
@@ -18,6 +19,7 @@ export default async function LoginPage({
             <h1>{BRAND.name}</h1>
             <p>Connecte-toi avec ton email. Pas de mot de passe.</p>
           </div>
+          <Illustration name="onboarding-bienvenue" className="-my-2 size-20 sm:size-24" />
         </header>
         <div className="dbox">
           <LoginForm next={next} linkError={error === "lien"} />

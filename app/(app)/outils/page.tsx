@@ -9,7 +9,7 @@ export const metadata = { title: "Outils" };
 export default function OutilsPage() {
   return (
     <section>
-      <PageHead label="Outils" title="Tes outils," tail="rangés par étape.">
+      <PageHead art="dashboard-depenses" label="Outils" title="Tes outils," tail="rangés par étape.">
         Tous tes logiciels avec leurs vrais logos, rangés par étape de création d’un SaaS. Le badge
         « Claude ✓ » veut dire que Claude peut déjà s’y connecter.
       </PageHead>

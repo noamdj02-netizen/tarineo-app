@@ -23,7 +23,7 @@ export default async function AssistantPage() {
   const history = await getHistory();
   return (
     <section className="mx-auto max-w-[820px]">
-      <PageHead label="Assistant IA" title="Ton copilote" tail="qui connaît tes projets.">
+      <PageHead art="notif-nouvelle" label="Assistant IA" title="Ton copilote" tail="qui connaît tes projets.">
         Demande-lui un prompt Cursor, un choix de thème ou une section à écrire.
       </PageHead>
       <Suspense>

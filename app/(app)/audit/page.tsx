@@ -10,7 +10,7 @@ export const metadata = { title: "Mes sites" };
 export default function AuditPage() {
   return (
     <section>
-      <PageHead label="Mes sites" title="Audit de tes 3 sites," tail="face aux 12 frames.">
+      <PageHead art="dashboard-analyse" label="Mes sites" title="Audit de tes 3 sites," tail="face aux 12 frames.">
         {
           "Chaque site est comparé aux 12 frames. Vert = présent, orange = à améliorer, rouge = manquant. Audit fait sur le contenu public des pages le 24/09/2026."
         }

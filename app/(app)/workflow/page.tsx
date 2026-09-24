@@ -10,7 +10,7 @@ export const metadata = { title: "Figma → Cursor" };
 export default function WorkflowPage() {
   return (
     <section>
-      <PageHead label="Figma → Cursor" title="Figma → Cursor," tail="sans perte.">
+      <PageHead art="onboarding-decouvrir" label="Figma → Cursor" title="Figma → Cursor," tail="sans perte.">
         {
           "Pourquoi le code ne ressemble jamais à ta maquette, et la méthode en 7 étapes pour que ça marche."
         }

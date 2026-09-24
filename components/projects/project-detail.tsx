@@ -27,7 +27,9 @@ import {
   toggleTask,
   updateProject,
 } from "@/app/(app)/projets/actions";
+import { Illustration } from "@/components/illustration";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
+import type { IllustrationName } from "@/lib/illustrations";
 import {
   FEATURE_LABELS,
   FEATURE_ORDER,
@@ -127,7 +129,18 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
           <p className="mb-4 text-[15.5px] leading-relaxed">{p.pitch || p.description}</p>
           <StageBar stage={p.stage} theme={p.theme} />
           <div className="mt-4 flex flex-col gap-3">
-            <NextAction text={p.next} />
+            {p.next ? (
+              <div className="flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <NextAction text={p.next} />
+                </div>
+                <Illustration name="dashboard-deadline" className="hidden size-14 sm:block" />
+              </div>
+            ) : (
+              <ArtNote art="empty-pause-cafe">
+                Pas de prochaine action. Demande un bilan IA pour la choisir.
+              </ArtNote>
+            )}
             <div className="flex flex-wrap items-center gap-1.5">
               <ProjectLinks site={p.site} github={p.github} figma={p.figma} notion={p.notion} />
               <Link
@@ -267,6 +280,11 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
               </li>
             ))}
           </ul>
+          {T.length === 0 ? (
+            <ArtNote art="empty-rien-ici">Aucune tâche pour l’instant.</ArtNote>
+          ) : T.every((t) => t.done) ? (
+            <ArtNote art="dashboard-tache-validee">Tout est fait. Ajoute la suite.</ArtNote>
+          ) : null}
           <AddRow
             placeholder="Nouvelle tâche"
             onAdd={(title) => {
@@ -313,7 +331,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
           {p.risks.length ? (
             <Bullets items={p.risks} />
           ) : (
-            <p className="text-[13.5px] text-muted">Rien de noté</p>
+            <ArtNote art="empty-tout-est-calme">Rien de noté</ArtNote>
           )}
         </Box>
       </Reveal>
@@ -338,7 +356,7 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
               ))}
             </ul>
           ) : (
-            <p className="text-[13.5px] text-muted">Aucune entrée</p>
+            <ArtNote art="onboarding-premier-pas">Aucune entrée. Note ce qui a avancé.</ArtNote>
           )}
           <AddRow
             placeholder="Ce qui a avancé aujourd’hui"
@@ -385,6 +403,15 @@ function Box({
       ) : null}
       {children}
     </section>
+  );
+}
+
+function ArtNote({ art, children }: { art: IllustrationName; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 text-[13.5px] text-muted">
+      <Illustration name={art} className="size-12" />
+      <p>{children}</p>
+    </div>
   );
 }
 

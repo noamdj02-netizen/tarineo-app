@@ -3,6 +3,7 @@
 import { AnimatePresence } from "framer-motion";
 import { Plus, Search, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
+import { Illustration } from "@/components/illustration";
 import {
   CATEGORIES,
   PRE_LANDING_TEMPLATES,
@@ -141,6 +142,7 @@ export function PreLandingLibrary({
         </div>
       ) : (
         <div className="grid place-items-center rounded-card border border-dashed border-line bg-surface px-6 py-16 text-center">
+          <Illustration name="empty-aucun-resultat" className="mb-2 size-24" />
           <p className="text-[17px] font-semibold tracking-[-0.02em]">No template matches</p>
           <p className="mt-1 text-[14.5px] text-muted">Try another word, or clear the filters.</p>
           <button
