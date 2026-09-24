@@ -27,13 +27,25 @@ export function useCommandPalette() {
         setOpen((o) => !o);
       }
     };
+    // ouverte aussi par le raccourci « Rechercher » de la barre mobile
+    const onOpen = () => setOpen(true);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("navpit:search", onOpen);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("navpit:search", onOpen);
+    };
   }, []);
   return { open, setOpen };
 }
 
-export function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CommandPalette({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(0);
@@ -121,10 +133,17 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 ÉCHAP
               </kbd>
             </div>
-            <ul className="max-h-[50vh] overflow-y-auto p-2" role="listbox" aria-label="Résultats">
+            <ul
+              className="max-h-[50vh] overflow-y-auto p-2"
+              role="listbox"
+              aria-label="Résultats"
+            >
               {results.length === 0 ? (
                 <li className="flex flex-col items-center gap-1 px-3 py-5 text-center text-sm text-muted">
-                  <Illustration name="empty-aucun-resultat" className="size-16" />
+                  <Illustration
+                    name="empty-aucun-resultat"
+                    className="size-16"
+                  />
                   Rien trouvé.
                 </li>
               ) : (
@@ -142,7 +161,10 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                       <Icon className="size-4 text-muted" aria-hidden />
                       <span className="flex-1">{label}</span>
                       {i === sel ? (
-                        <CornerDownLeft className="size-3.5 text-muted" aria-hidden />
+                        <CornerDownLeft
+                          className="size-3.5 text-muted"
+                          aria-hidden
+                        />
                       ) : null}
                     </button>
                   </li>

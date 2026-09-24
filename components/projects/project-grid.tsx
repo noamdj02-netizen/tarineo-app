@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { createProject } from "@/app/(app)/projets/actions";
 import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
@@ -15,7 +15,9 @@ export function ProjectGrid({ projects }: { projects: ProjectSummary[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {focus.length > 1 ? <FocusWarning names={focus.map((p) => p.name)} /> : null}
+      {focus.length > 1 ? (
+        <FocusWarning names={focus.map((p) => p.name)} />
+      ) : null}
 
       <div className="grid gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(310px,1fr))]">
         {projects.map((p, i) => (
@@ -36,8 +38,9 @@ function FocusWarning({ names }: { names: string[] }) {
     >
       <Illustration name="feedback-surcharge" className="-my-2 size-14" />
       <p>
-        <b className="font-semibold">{names.length} projets en Focus</b> ({names.join(", ")}). Ta
-        règle : un seul, jusqu’à sa première vente. Choisis-en un et passe les autres en pause.
+        <b className="font-semibold">{names.length} projets en Focus</b> (
+        {names.join(", ")}). Ta règle : un seul, jusqu’à sa première vente.
+        Choisis-en un et passe les autres en pause.
       </p>
     </div>
   );
@@ -49,6 +52,21 @@ function NewProject({ index }: { index: number }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const ref = useRef<HTMLDivElement>(null);
+
+  // ouverte par le raccourci « Nouveau projet » de la barre mobile (/projets#nouveau)
+  useEffect(() => {
+    const show = () => {
+      setOpen(true);
+      ref.current?.scrollIntoView({ block: "center" });
+    };
+    if (window.location.hash === "#nouveau") {
+      show();
+      history.replaceState(null, "", window.location.pathname);
+    }
+    window.addEventListener("navpit:new-project", show);
+    return () => window.removeEventListener("navpit:new-project", show);
+  }, []);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,6 +85,7 @@ function NewProject({ index }: { index: number }) {
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 14, filter: "blur(6px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.6, ease: EASE, delay: index * 0.06 }}

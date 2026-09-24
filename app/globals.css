@@ -25,6 +25,8 @@
   --color-side-ink: #ffffff;
   --color-side-muted: rgba(255, 255, 255, 0.5);
   --color-side-line: rgba(255, 255, 255, 0.08);
+  /* Barre du bas mobile (même teinte que public/figma/navbar/notch.svg) */
+  --color-nav: #1f1f1f;
   /* Halo pastel des cartes d'accueil (pêche, lavande, bleu doux) */
   --color-glow-1: #f7c6a3;
   --color-glow-2: #cbbdf3;

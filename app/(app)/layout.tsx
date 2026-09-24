@@ -17,7 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {/* Zone principale blanche */}
         <div className="flex min-h-full flex-1 flex-col bg-surface lg:overflow-clip lg:rounded-card lg:shadow-soft">
           <Topbar viewer={viewer} />
-          <main className="mx-auto w-full max-w-[1080px] flex-1 px-4 pt-6 pb-[calc(96px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:pb-16">
+          <main className="mx-auto w-full max-w-[1080px] flex-1 px-4 pt-6 pb-[calc(120px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:pb-16">
             {children}
           </main>
         </div>

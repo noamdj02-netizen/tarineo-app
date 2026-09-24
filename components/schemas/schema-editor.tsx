@@ -199,7 +199,7 @@ export function SchemaEditor({
         </p>
       </div>
 
-      <div className="relative h-[calc(100dvh-250px)] min-h-[420px] overflow-hidden rounded-card border border-line lg:h-[calc(100dvh-200px)]">
+      <div className="relative h-[calc(100dvh-275px)] min-h-[420px] overflow-hidden rounded-card border border-line lg:h-[calc(100dvh-200px)]">
         <Excalidraw
           excalidrawAPI={setApi}
           initialData={{
