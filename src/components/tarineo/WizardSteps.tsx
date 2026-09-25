@@ -35,7 +35,7 @@ export function WizardSteps({
             </span>
             <span
               className={cn(
-                "whitespace-nowrap text-sm transition-colors duration-300",
+                "hidden whitespace-nowrap text-sm transition-colors duration-300 sm:inline",
                 current ? "font-medium text-foreground" : "text-muted-foreground"
               )}
             >

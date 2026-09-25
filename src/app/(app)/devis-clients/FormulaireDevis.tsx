@@ -10,7 +10,7 @@ import { PRESETS_CONDITIONS_PAIEMENT, PRESETS_VALIDITE_JOURS } from "@/lib/devis
 
 // Étapes du wizard de création/modification. L'étape 1 (IA) reste facultative : on peut
 // la traverser sans rien écrire et saisir les lignes à la main à l'étape 3.
-const ETAPES = ["Description", "Client", "Prestations", "Aperçu"] as const;
+const ETAPES = ["Description", "Client", "Prestations", "Récap"] as const;
 
 interface LigneFormulaire {
   cle: string;
@@ -123,6 +123,7 @@ export function FormulaireDevis({
   actionGenererIA,
   actionSoumettre,
   actionSuggererPrix,
+  entrepriseComplete = true,
 }: {
   conditionsPaiementParDefaut: string;
   dureeValiditeParDefaut?: number;
@@ -131,6 +132,8 @@ export function FormulaireDevis({
   actionGenererIA: (texte: string, lignesActuelles: LigneEnvoi[]) => Promise<ResultatGenerationIA>;
   actionSoumettre: (donnees: DonneesSoumissionDevis) => Promise<ResultatSoumissionDevis>;
   actionSuggererPrix: (referenceTexte: string) => Promise<ResultatSuggestionPrix>;
+  /** Si false, le bouton final reste désactivé (profil entreprise manquant). */
+  entrepriseComplete?: boolean;
 }) {
   const router = useRouter();
   const modeModification = Boolean(devisExistant);
@@ -675,12 +678,11 @@ export function FormulaireDevis({
           {etape === 4 && (
             <>
             <section className="app-card p-4 sm:p-5">
-              <h2 className="text-base font-semibold">Conditions</h2>
-              <p className="mt-1 text-xs text-muted-foreground">Pré-réglages courants — modifiables à tout moment.</p>
+              <h2 className="text-base font-semibold">Validité &amp; paiement</h2>
               <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_2fr]">
                 <div>
                   <label htmlFor="dureeValiditeJours" className={labelClasse}>
-                    Validité (jours)
+                    Validité
                   </label>
                   <div className="mb-2 flex flex-wrap gap-1.5">
                     {PRESETS_VALIDITE_JOURS.map((jours) => (
@@ -705,7 +707,7 @@ export function FormulaireDevis({
                 </div>
                 <div>
                   <label htmlFor="conditionsPaiement" className={labelClasse}>
-                    Conditions de paiement
+                    Paiement
                   </label>
                   <div className="mb-2 flex flex-wrap gap-1.5">
                     {PRESETS_CONDITIONS_PAIEMENT.map((preset) => (
@@ -730,9 +732,9 @@ export function FormulaireDevis({
             </section>
 
             <section className="app-card p-5 sm:p-6">
-              <h2 className="text-lg font-semibold">Aperçu</h2>
+              <h2 className="text-lg font-semibold">Récapitulatif</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Dernière vérification avant {modeModification ? "l'enregistrement" : "la génération du PDF"}.
+                Vérifiez avant {modeModification ? "l'enregistrement" : "de générer le PDF"}.
               </p>
 
               <p className="mt-4 text-sm">
@@ -781,12 +783,12 @@ export function FormulaireDevis({
 
         {erreur && <p className="text-sm text-red-400">{erreur}</p>}
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-20 -mx-1 flex items-center justify-between gap-3 border-t border-border/60 bg-background/95 px-1 py-3 backdrop-blur-sm lg:static lg:bottom-auto lg:border-0 lg:bg-transparent lg:px-0 lg:py-0 lg:backdrop-blur-none">
           <button
             type="button"
             onClick={() => allerA(Math.max(1, etape - 1))}
             disabled={etape === 1 || enCours}
-            className="rounded-md border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+            className="min-h-[44px] rounded-full border border-border px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
           >
             ← Retour
           </button>
@@ -795,15 +797,15 @@ export function FormulaireDevis({
             <button
               type="button"
               onClick={continuer}
-              className="rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
+              className="min-h-[44px] rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
             >
               Continuer →
             </button>
           ) : (
             <button
               type="submit"
-              disabled={enCours}
-              className="relative overflow-hidden rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:bg-[#E1E3E5] disabled:text-[#8A969E] disabled:opacity-100"
+              disabled={enCours || !entrepriseComplete}
+              className="relative min-h-[44px] overflow-hidden rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:bg-[#E1E3E5] disabled:text-[#8A969E] disabled:opacity-100"
             >
               {enCours && (
                 <span className="devis-ia-balayage absolute inset-y-0 left-0 w-1/3 bg-white/30" aria-hidden="true" />
@@ -812,7 +814,7 @@ export function FormulaireDevis({
                 {enCours
                   ? "Enregistrement…"
                   : modeModification
-                    ? "Enregistrer les modifications"
+                    ? "Enregistrer"
                     : "Générer le devis"}
               </span>
             </button>

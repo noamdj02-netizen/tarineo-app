@@ -1,47 +1,42 @@
 "use client";
 
-import { UploadIcon } from "lucide-react";
+import { ScanLineIcon, UploadIcon } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { ImportDocument } from "@/app/(app)/documents/ImportDocument";
+import { IconScanner } from "@/components/tarineo/NavIcons";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type Props = {
   className?: string;
-  style?: React.CSSProperties;
   /** Texte visible desktop — masqué si compact */
   label?: string;
   compact?: boolean;
   size?: "default" | "icon" | "icon-lg";
-  icone?: React.ReactNode;
   "aria-label"?: string;
 };
 
 export function BoutonImporterNav({
   className,
-  style,
   label = "Importer",
   compact = false,
   size = "default",
-  icone,
   "aria-label": ariaLabel,
 }: Props) {
   const reduce = useReducedMotion();
-  const iconeAffiche = icone ?? <UploadIcon className={size === "icon-lg" ? "size-[26px]" : undefined} />;
 
   const trigger =
     size === "icon-lg" ? (
       <Button
         variant="default"
         size="icon-lg"
-        style={style}
         className={cn(
           "size-14 rounded-full shadow-lg shadow-primary/30 transition-shadow duration-200",
           className,
         )}
         aria-label={ariaLabel ?? label}
       >
-        {iconeAffiche}
+        <IconScanner className="size-[26px] text-white" />
       </Button>
     ) : compact || size === "icon" ? (
       <Button

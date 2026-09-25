@@ -25,6 +25,7 @@ import { EnBrefDocuments } from "@/components/tarineo/EnBrefDocuments";
 import { AidePageTooltip } from "@/components/tarineo/AidePageTooltip";
 import { NavTypeMobile } from "./NavTypeMobile";
 import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
+import { ListeAvecRefresh } from "@/components/tarineo/motion/ListeAvecRefresh";
 import { filtreRechercheDocument } from "@/lib/rechercheDocuments";
 import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
 import { filtreDocumentHorsBrouillon } from "@/lib/filtreBrouillonDocument";
@@ -258,6 +259,7 @@ export async function DocumentsPage({
   const enseigneCible = enseigne?.trim();
 
   return (
+    <ListeAvecRefresh>
     <div className="app-page flex flex-col gap-6">
       <MobilePageHeader
         title={TITRES_PAGE_DOCUMENTS[clePage]}
@@ -585,6 +587,7 @@ export async function DocumentsPage({
 
       {afficherPopupOnboarding && <PopupOnboardingDevis />}
     </div>
+    </ListeAvecRefresh>
   );
 }
 

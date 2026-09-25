@@ -3,12 +3,13 @@
 import { AuthError } from "next-auth";
 import { redirect } from "next/navigation";
 import { signIn } from "@/auth";
-import { estCallbackUrlInterne, lienHubApresConnexion } from "@/lib/routeApresAuth";
+import { estCallbackUrlInterne } from "@/lib/routeApresAuth";
 
+/** Destination post-login — le layout (app) gère confirmation email / onboarding. */
 function redirectToDepuisFormData(formData: FormData): string {
   const brut = String(formData.get("callbackUrl") ?? "").trim();
-  const callbackUrl = brut && estCallbackUrlInterne(brut) ? brut : null;
-  return lienHubApresConnexion(callbackUrl);
+  if (brut && estCallbackUrlInterne(brut)) return brut;
+  return "/accueil";
 }
 
 function suffixeCallbackUrl(formData: FormData): string {

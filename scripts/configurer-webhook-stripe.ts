@@ -15,6 +15,7 @@ config({ path: resolve(process.cwd(), ".env") });
 
 const EVENEMENTS = [
   "setup_intent.succeeded",
+  "checkout.session.completed",
   "customer.subscription.updated",
   "customer.subscription.deleted",
   "invoice.payment_failed",

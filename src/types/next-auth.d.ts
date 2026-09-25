@@ -1,6 +1,10 @@
 import "next-auth";
 
 declare module "next-auth" {
+  interface User {
+    workspaceOwnerId?: string | null;
+  }
+
   interface Session {
     user: {
       id: string;
@@ -19,5 +23,7 @@ declare module "next-auth/jwt" {
   interface JWT {
     workspaceOwnerId?: string | null;
     donneesUserId?: string;
+    /** Epoch ms — dernière revalidation User en base (throttle JWT). */
+    checkedAt?: number;
   }
 }

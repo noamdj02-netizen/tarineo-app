@@ -74,6 +74,37 @@ export function IconSettings({ className }: { className?: string }) {
   );
 }
 
+/** Menu horloge — onglet Devis (historique) mobile */
+export function IconClock({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <circle cx="12" cy="12" r="8.25" />
+      <path d="M12 8v4.5l3 1.75" />
+    </svg>
+  );
+}
+
+/** Cartes / wallet — onglet Fournisseurs mobile (maquette APRÈS) */
+export function IconCards({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <rect x="3.5" y="6" width="17" height="12" rx="2.2" />
+      <path d="M3.5 10h17" />
+      <path d="M7 14.5h4" />
+    </svg>
+  );
+}
+
+/** Profil utilisateur */
+export function IconUser({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
+      <circle cx="12" cy="8.5" r="3.25" />
+      <path d="M5.5 19c1.6-3.2 4-4.75 6.5-4.75S16.9 15.8 18.5 19" />
+    </svg>
+  );
+}
+
 /** Accueil mobile */
 export function IconHome({ className }: { className?: string }) {
   return (
@@ -84,12 +115,12 @@ export function IconHome({ className }: { className?: string }) {
   );
 }
 
-/** Scanner document */
+/** Scanner document — coins de viseur */
 export function IconScanner({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={cn("size-6", className)} aria-hidden="true" {...stroke}>
       <path d="M7 3h3M14 3h3M21 7v3M21 14v3M17 21h-3M10 21H7M3 17v-3M3 10V7" />
-      <circle cx="12" cy="12" r="3.5" />
+      <rect x="8" y="8" width="8" height="8" rx="1.5" />
     </svg>
   );
 }

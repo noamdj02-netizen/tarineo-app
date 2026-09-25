@@ -32,7 +32,8 @@ export default async function AccueilPage() {
   }
 
   if (!membreEquipe) {
-    await envoyerRelancesUtilisateur(session.user.id).catch((erreur) => {
+    // Ne bloque plus le rendu Accueil (Resend pouvait ajouter ~1s+ ou échouer).
+    void envoyerRelancesUtilisateur(session.user.id).catch((erreur) => {
       console.error("Relances email accueil :", erreur);
     });
   }

@@ -44,7 +44,9 @@ export function AppStaggerItem({ children, className = "" }: { children: ReactNo
     <motion.div
       className={className}
       variants={{
-        hidden: { opacity: 0, y: 14 },
+        // Pas d'opacity:0 — évite les pages blanches si le stagger parent
+        // n'atteint jamais l'état "visible" (display:contents, headless…).
+        hidden: { opacity: 1, y: 10 },
         visible: { opacity: 1, y: 0, transition: appSpringSoft },
       }}
     >

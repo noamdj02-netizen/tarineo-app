@@ -26,13 +26,13 @@ export function MobileNotifButton({ notifications }: { notifications: NotifUi[] 
           <Button
             variant="secondary"
             size="icon"
-            className="relative size-[55px] rounded-full bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)]"
+            className="relative size-11 rounded-[22px] bg-white shadow-[0_4px_16px_rgba(15,23,36,0.06)]"
           />
         }
       >
-        <BellIcon className="size-[30px] text-[#171717]" strokeWidth={1.5} />
+        <BellIcon className="size-5 text-[#0f1c28]" />
         {nonLues > 0 && (
-          <span className="absolute right-3 top-3 size-2 rounded-full bg-[#e63b0b]" aria-hidden />
+          <span className="absolute right-2.5 top-2 size-2 rounded-full bg-[#EF4444]" aria-hidden />
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[min(100vw-2rem,360px)] p-2">

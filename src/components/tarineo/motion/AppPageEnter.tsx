@@ -3,18 +3,16 @@
 import { Children, cloneElement, isValidElement, type ReactElement, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { appEase, appSpring, appSpringSoft } from "./appMotionConfig";
+import { appEase } from "./appMotionConfig";
 import { AppStagger, AppStaggerItem } from "./AppStagger";
 import { useAppNavigation, type TransitionNavigation } from "./AppNavigationContext";
 
 function staggerSections(nodes: ReactNode[]): ReactNode {
   if (nodes.length <= 1) return nodes[0] ?? null;
   return (
-    <AppStagger className="contents" stagger={0.045} delayChildren={0.02}>
+    <AppStagger className="flex w-full min-w-0 flex-col gap-[inherit]" stagger={0.03} delayChildren={0}>
       {nodes.map((node, i) => (
-        <AppStaggerItem key={i} className="contents">
-          {node}
-        </AppStaggerItem>
+        <AppStaggerItem key={i}>{node}</AppStaggerItem>
       ))}
     </AppStagger>
   );
@@ -45,15 +43,26 @@ const VARIANTS: Record<
   TransitionNavigation,
   { initial: Record<string, number>; animate: Record<string, number>; transition: object }
 > = {
+  // opacity toujours à 1 : page jamais invisible si l'anim est interrompue.
   default: {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    transition: { ...appSpringSoft, ease: appEase },
+    initial: { opacity: 1, y: 4, x: 0 },
+    animate: { opacity: 1, y: 0, x: 0 },
+    transition: { duration: 0.18, ease: appEase },
   },
   import: {
-    initial: { opacity: 0, y: 36, scale: 0.97 },
-    animate: { opacity: 1, y: 0, scale: 1 },
-    transition: { ...appSpring, ease: appEase },
+    initial: { opacity: 1, y: 12, scale: 0.99, x: 0 },
+    animate: { opacity: 1, y: 0, scale: 1, x: 0 },
+    transition: { duration: 0.22, ease: appEase },
+  },
+  "tab-right": {
+    initial: { opacity: 1, x: 18, y: 0 },
+    animate: { opacity: 1, x: 0, y: 0 },
+    transition: { duration: 0.2, ease: appEase },
+  },
+  "tab-left": {
+    initial: { opacity: 1, x: -18, y: 0 },
+    animate: { opacity: 1, x: 0, y: 0 },
+    transition: { duration: 0.2, ease: appEase },
   },
 };
 
@@ -88,6 +97,7 @@ export function AppPageEnter({ children }: { children: ReactNode }) {
       animate={variante.animate}
       transition={variante.transition}
       onAnimationComplete={apresAnimation}
+      className="min-w-0"
     >
       {contenu}
     </motion.div>

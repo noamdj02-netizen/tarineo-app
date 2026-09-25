@@ -8,6 +8,7 @@ import { FileImportQueue } from "./FileImportQueue";
 import { IconeImportAnimee, OverlayImportAnime } from "./IconeImportAnimee";
 import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
+import { annoncerImportSucces } from "@/lib/feedbackImport";
 import { MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
 import { hrefApresImportDocuments, urlAnalysesEnCours } from "@/lib/importNavigation";
 
@@ -69,6 +70,8 @@ export function FormulaireUpload({
   autoEnvoiApresCapture = false,
   variantPc = false,
   variantCompact = false,
+  choixSourcesMobile = false,
+  preferCameraHint = false,
   maxFichiers,
   onImportReussi,
   onVoirDocumentExistant,
@@ -91,6 +94,10 @@ export function FormulaireUpload({
   variantPc?: boolean;
   /** Panneau latéral : pas de choix de type (l'IA reclasse après analyse). */
   variantCompact?: boolean;
+  /** Mobile : affiche Photo / Photothèque / Fichier au lieu de forcer la caméra. */
+  choixSourcesMobile?: boolean;
+  /** Surligne « Prendre une photo » dans le choix mobile. */
+  preferCameraHint?: boolean;
   /** Wizard onboarding : callback au lieu d'une navigation vers /onboarding/analyse. */
   /** Fourni par la modale Importer : fermeture + navigation côté parent (évite blocage Radix Dialog). */
   onImportReussi?: (nbSucces: number, documentIds: string[]) => void;
@@ -99,6 +106,7 @@ export function FormulaireUpload({
 }) {
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
+  const inputGalerieRef = useRef<HTMLInputElement>(null);
   const inputFichierRef = useRef<HTMLInputElement>(null);
   const autoEnvoiDeclencheRef = useRef(false);
   const idsEnvoyesRef = useRef<string[]>([]);
@@ -396,6 +404,7 @@ export function FormulaireUpload({
       )}
 
       <div>
+        {/* Caméra — capture rear */}
         <input
           ref={inputPhotoRef}
           id="photo"
@@ -409,6 +418,20 @@ export function FormulaireUpload({
           }}
           className="sr-only"
         />
+        {/* Photothèque — images sans capture (galerie iOS/Android) */}
+        <input
+          ref={inputGalerieRef}
+          id="galerie"
+          type="file"
+          accept="image/jpeg,image/png,image/heic,image/heif"
+          disabled={enCoursOuBloque}
+          onChange={(e) => {
+            onSelectionFichiers(e.target.files);
+            e.target.value = "";
+          }}
+          className="sr-only"
+        />
+        {/* Fichiers — PDF + images */}
         <input
           ref={inputFichierRef}
           id="fichiers"
@@ -423,6 +446,54 @@ export function FormulaireUpload({
           className="sr-only"
         />
 
+        {choixSourcesMobile && fichiers.length === 0 && !enCours ? (
+          <div className="flex flex-col gap-2.5">
+            <button
+              type="button"
+              disabled={enCoursOuBloque}
+              onClick={() => inputPhotoRef.current?.click()}
+              className={`flex h-14 w-full items-center gap-3 rounded-2xl border px-4 text-left text-[15px] font-semibold transition-colors disabled:opacity-50 ${
+                preferCameraHint
+                  ? "border-primary bg-primary text-white shadow-[0_8px_18px_rgba(236,88,33,0.28)]"
+                  : "border-border bg-white text-foreground hover:border-primary/40"
+              }`}
+            >
+              <span
+                className={`flex size-10 items-center justify-center rounded-full ${
+                  preferCameraHint ? "bg-white/20" : "bg-primary/10 text-primary"
+                }`}
+              >
+                📷
+              </span>
+              Prendre une photo
+            </button>
+            <button
+              type="button"
+              disabled={enCoursOuBloque}
+              onClick={() => inputGalerieRef.current?.click()}
+              className="flex h-14 w-full items-center gap-3 rounded-2xl border border-border bg-white px-4 text-left text-[15px] font-semibold text-foreground transition-colors hover:border-primary/40 disabled:opacity-50"
+            >
+              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                🖼️
+              </span>
+              Photothèque
+            </button>
+            <button
+              type="button"
+              disabled={enCoursOuBloque}
+              onClick={() => inputFichierRef.current?.click()}
+              className="flex h-14 w-full items-center gap-3 rounded-2xl border border-border bg-white px-4 text-left text-[15px] font-semibold text-foreground transition-colors hover:border-primary/40 disabled:opacity-50"
+            >
+              <span className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                📄
+              </span>
+              Choisir un fichier
+            </button>
+            <p className="px-1 pt-1 text-center text-[12px] text-muted-foreground">
+              Devis, factures, bons — PDF ou photo, même anciens.
+            </p>
+          </div>
+        ) : (
         <div
           role="button"
           tabIndex={enCoursOuBloque ? -1 : 0}
@@ -433,15 +504,19 @@ export function FormulaireUpload({
                 ? "Ajouter d'autres fichiers"
                 : "Choisir des fichiers à importer"
               : dernierFichier
-                ? "Ajouter une autre photo"
+                ? "Ajouter une autre photo ou un fichier"
                 : "Photographiez votre devis"
           }
-          onClick={() => !enCoursOuBloque && (variantPc ? inputFichierRef.current?.click() : inputPhotoRef.current?.click())}
+          onClick={() => {
+            if (enCoursOuBloque) return;
+            if (variantPc || choixSourcesMobile) inputFichierRef.current?.click();
+            else inputPhotoRef.current?.click();
+          }}
           onKeyDown={(e) => {
             if (enCoursOuBloque) return;
             if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
-              if (variantPc) inputFichierRef.current?.click();
+              if (variantPc || choixSourcesMobile) inputFichierRef.current?.click();
               else inputPhotoRef.current?.click();
             }
           }}
@@ -518,6 +593,36 @@ export function FormulaireUpload({
             />
           )}
         </div>
+        )}
+
+        {choixSourcesMobile && fichiers.length > 0 && !enCours && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => inputPhotoRef.current?.click()}
+              disabled={enCoursOuBloque}
+              className="rounded-full border border-border bg-white px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+            >
+              + Photo
+            </button>
+            <button
+              type="button"
+              onClick={() => inputGalerieRef.current?.click()}
+              disabled={enCoursOuBloque}
+              className="rounded-full border border-border bg-white px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+            >
+              + Photothèque
+            </button>
+            <button
+              type="button"
+              onClick={() => inputFichierRef.current?.click()}
+              disabled={enCoursOuBloque}
+              className="rounded-full border border-border bg-white px-3 py-2 text-[12px] font-semibold disabled:opacity-50"
+            >
+              + Fichier
+            </button>
+          </div>
+        )}
 
         {!variantCompact && (
         <div className="mt-2 flex items-center justify-between gap-3 text-xs">
@@ -546,11 +651,11 @@ export function FormulaireUpload({
             <>
               <button
                 type="button"
-                onClick={() => inputFichierRef.current?.click()}
+                onClick={() => inputGalerieRef.current?.click()}
                 disabled={enCoursOuBloque}
                 className="text-[#53616A] underline decoration-dotted underline-offset-2 hover:text-primary disabled:opacity-50"
               >
-                ou choisir un fichier existant
+                ou photothèque / fichier
               </button>
               {dernierFichier && (
                 <button

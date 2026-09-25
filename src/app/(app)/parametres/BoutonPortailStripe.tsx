@@ -30,7 +30,7 @@ export function BoutonPortailStripe({ label = "Gérer la facturation Stripe" }: 
         type="button"
         onClick={ouvrir}
         disabled={enCours}
-        className="inline-flex h-11 items-center justify-center rounded-full border border-[#E6E9EB] bg-white px-5 text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50"
+        className="inline-flex h-11 w-full items-center justify-center rounded-full border border-[#E6E9EB] bg-white px-5 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-secondary active:scale-[0.99] disabled:opacity-50 sm:w-auto"
       >
         {enCours ? "Ouverture…" : label}
       </button>

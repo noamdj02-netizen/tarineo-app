@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { etatQuotaDevisIA, CONDITIONS_PAIEMENT_PAR_DEFAUT } from "@/lib/devisClients";
 import { PageHeader } from "@/components/tarineo/PageHeader";
+import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { FormulaireDevis } from "../../FormulaireDevis";
 import { mettreAJourDevis, modifierLignesAvecIA, suggererPrix } from "./actions";
 
@@ -23,12 +24,19 @@ export default async function ModifierDevisPage({ params }: { params: Promise<{ 
 
   return (
     <div className="app-page-wide">
-      <PageHeader
+      <MobilePageHeader
         backHref={`/devis-clients/${quote.id}`}
-        backLabel={`Devis ${quote.numero}`}
-        title={`Modifier le devis ${quote.numero}`}
-        subtitle="Corrigez une ligne manuellement, ou décrivez la modification pour que l'IA reconstruise les lignes concernées."
+        title={`Modifier ${quote.numero}`}
+        subtitle={quote.clientNom}
       />
+      <div className="hidden lg:block">
+        <PageHeader
+          backHref={`/devis-clients/${quote.id}`}
+          backLabel={`Devis ${quote.numero}`}
+          title={`Modifier le devis ${quote.numero}`}
+          subtitle="Corrigez une ligne manuellement, ou décrivez la modification pour que l'IA reconstruise les lignes concernées."
+        />
+      </div>
 
       <FormulaireDevis
         conditionsPaiementParDefaut={CONDITIONS_PAIEMENT_PAR_DEFAUT}

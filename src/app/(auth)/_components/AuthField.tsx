@@ -7,6 +7,7 @@ export function AuthField({
   required,
   autoComplete,
   variant = "light",
+  disabled,
 }: {
   id: string;
   name: string;
@@ -16,13 +17,14 @@ export function AuthField({
   required?: boolean;
   autoComplete?: string;
   variant?: "glass" | "solid" | "light";
+  disabled?: boolean;
 }) {
   const inputClass =
     variant === "light"
-      ? "h-[52px] w-full rounded-[14px] border border-[#E6E9EB] bg-[#F8F8F8] px-4 text-[15px] text-[#172935] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#EC5821] focus:bg-white focus:ring-2 focus:ring-[#EC5821]/15"
+      ? "h-[52px] w-full rounded-[14px] border border-[#E6E9EB] bg-[#F8F8F8] px-4 text-[15px] text-[#172935] outline-none transition-colors placeholder:text-[#9CA3AF] focus:border-[#EC5821] focus:bg-white focus:ring-2 focus:ring-[#EC5821]/15 disabled:opacity-60"
       : variant === "solid"
-        ? "h-[52px] w-full rounded-[14px] border border-[#3a3836] bg-[#1a1816] px-4 text-[15px] text-white outline-none placeholder:text-[#6b6560] focus:border-[#EC5821]"
-        : "h-[52px] w-full rounded-[14px] border border-white/14 bg-[#1a1816]/90 px-4 text-[15px] text-white outline-none placeholder:text-[#6b6560] focus:border-[#EC5821]";
+        ? "h-[52px] w-full rounded-[14px] border border-[#3a3836] bg-[#1a1816] px-4 text-[15px] text-white outline-none placeholder:text-[#6b6560] focus:border-[#EC5821] disabled:opacity-60"
+        : "h-[52px] w-full rounded-[14px] border border-white/14 bg-[#1a1816]/90 px-4 text-[15px] text-white outline-none placeholder:text-[#6b6560] focus:border-[#EC5821] disabled:opacity-60";
 
   const labelClass =
     variant === "light" ? "text-[13px] font-semibold text-[#53616A]" : "text-[13px] font-semibold text-[#b9b4b0]";
@@ -39,6 +41,7 @@ export function AuthField({
         placeholder={placeholder}
         required={required}
         autoComplete={autoComplete}
+        disabled={disabled}
         className={inputClass}
       />
     </div>

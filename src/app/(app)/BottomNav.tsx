@@ -1,24 +1,27 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { History, Home, Scan, User } from "lucide-react";
-import { IconCardSend } from "@/components/tarineo/NavIcons";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
+import {
+  IconCards,
+  IconClock,
+  IconHome,
+  IconUser,
+} from "@/components/tarineo/NavIcons";
 import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
-import { MOBILE_GRADIENT_ACCENT, MOBILE_GRADIENT_HERO, MOBILE_NAV_SHADOW, MOBILE_TEXT_MUTED } from "@/components/tarineo/mobile/mobileTokens";
+import { useAppNavigation } from "@/components/tarineo/motion/AppNavigationContext";
 import { cn } from "@/lib/utils";
 
-// Ventes clients et réglages avancés : hub /plus (pas un 6e onglet). Compte = profil uniquement.
 const ONGLETS = [
   {
     href: "/accueil",
     label: "Accueil",
     estActif: (pathname: string) => pathname === "/accueil" || pathname === "/analyses",
-    icone: Home,
+    icone: IconHome,
   },
   {
     href: "/documents",
-    label: "Documents",
+    label: "Devis",
     estActif: (pathname: string, scannerActif: boolean) => {
       if (scannerActif) return false;
       return (
@@ -29,24 +32,23 @@ const ONGLETS = [
         pathname.startsWith("/bons-enlevement")
       );
     },
-    icone: History,
+    icone: IconClock,
   },
   {
     href: "/documents?scanner=1",
     label: "Scanner",
-    prominent: true,
+    prominent: true as const,
     estActif: (_pathname: string, scannerActif: boolean) => scannerActif,
-    icone: Scan,
   },
   {
     href: "/fournisseurs",
     label: "Fournisseurs",
     estActif: (pathname: string) => pathname.startsWith("/fournisseurs"),
-    icone: IconCardSend,
+    icone: IconCards,
   },
   {
     href: "/plus",
-    label: "Menu",
+    label: "Profil",
     estActif: (pathname: string) =>
       pathname === "/plus" ||
       pathname === "/compte" ||
@@ -54,71 +56,123 @@ const ONGLETS = [
       pathname.startsWith("/devis-clients") ||
       pathname.startsWith("/factures-clients") ||
       pathname.startsWith("/clients"),
-    icone: User,
+    icone: IconUser,
   },
 ];
+
+const HAUTEUR_BARRE = 56;
+const HAUTEUR_LABEL = 18;
 
 export function BottomNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const reduce = useReducedMotion();
+  const { navigateTab, prefetch } = useAppNavigation();
   const scannerActif = pathname.startsWith("/documents") && searchParams.get("scanner") === "1";
 
   if (pathname.startsWith("/onboarding")) return null;
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 bg-white pb-[max(28px,env(safe-area-inset-bottom))] pt-4 lg:hidden"
-      style={{ boxShadow: MOBILE_NAV_SHADOW }}
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-[#e5e5ea] bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-0.5px_0_rgba(0,0,0,0.06)] lg:hidden"
       aria-label="Navigation principale"
     >
-      <div className="mx-auto flex max-w-lg items-end justify-between px-6">
-        {ONGLETS.map((onglet) => {
-          const actif = onglet.estActif(pathname, scannerActif);
-          const Icone = onglet.icone;
+      <LayoutGroup id="bottom-nav">
+        <div
+          className="relative mx-auto grid max-w-5xl grid-cols-5 items-end px-1"
+          style={{ height: HAUTEUR_BARRE }}
+        >
+          {ONGLETS.map((onglet) => {
+            const actif = onglet.estActif(pathname, scannerActif);
 
-          if (onglet.prominent) {
-            return (
-              <div key={onglet.href} className="-mt-7 flex flex-1 flex-col items-center gap-2.5">
-                <BoutonImporterNav
-                  size="icon-lg"
-                  aria-label="Scanner un document"
-                  icone={<Scan className="size-[30px] text-white" strokeWidth={2} />}
-                  className="size-[58px] !bg-transparent border-[3px] border-white text-white shadow-[0_8px_20px_rgba(230,59,11,0.4)] hover:!opacity-95"
-                  style={{ backgroundImage: MOBILE_GRADIENT_HERO }}
-                />
-                <span className="text-[11px] font-medium" style={{ color: MOBILE_TEXT_MUTED }}>
+            if ("prominent" in onglet && onglet.prominent) {
+              return (
+                <div
+                  key={onglet.href}
+                  className="relative flex h-full flex-col items-center justify-end pb-1"
+                >
+                  <div
+                    className="absolute left-1/2 z-10 -translate-x-1/2"
+                    style={{ bottom: HAUTEUR_LABEL }}
+                  >
+                    <BoutonImporterNav
+                      size="icon-lg"
+                      aria-label="Scanner un document"
+                      className={cn(
+                        "size-[56px] shadow-[0_8px_18px_rgba(237,89,33,0.38)] transition-transform duration-150 ease-out motion-reduce:active:scale-100",
+                        actif ? "ring-2 ring-primary/25" : undefined,
+                      )}
+                    />
+                  </div>
+                  <span
+                    className={cn(
+                      "relative z-0 text-[10px] leading-none",
+                      actif ? "font-semibold text-primary" : "font-medium text-[#8e8e93]",
+                    )}
+                  >
+                    {onglet.label}
+                  </span>
+                </div>
+              );
+            }
+
+            const Icone = onglet.icone;
+
+            function aller(e: React.MouseEvent) {
+              e.preventDefault();
+              if (actif) return;
+              navigateTab(onglet.href, pathname);
+            }
+
+            function precharger() {
+              prefetch(onglet.href);
+            }
+
+            const bouton = (
+              <a
+                href={onglet.href}
+                onClick={aller}
+                onPointerDown={precharger}
+                onTouchStart={precharger}
+                className={cn(
+                  "flex h-full flex-col items-center justify-end gap-0.5 pb-1 transition-colors duration-150 ease-out",
+                  actif ? "text-primary" : "text-[#8e8e93] hover:text-foreground",
+                )}
+                aria-current={actif ? "page" : undefined}
+              >
+                <span className="relative flex size-7 items-center justify-center">
+                  <Icone className="size-6" />
+                  {actif && !reduce && (
+                    <motion.span
+                      layoutId="bottom-nav-indicateur"
+                      className="absolute -bottom-0.5 h-0.5 w-3 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    />
+                  )}
+                </span>
+                <span className={cn("text-[10px] leading-none", actif ? "font-semibold" : "font-medium")}>
                   {onglet.label}
                 </span>
-              </div>
+              </a>
             );
-          }
 
-          return (
-            <Link
-              key={onglet.href}
-              href={onglet.href}
-              prefetch={false}
-              className="flex flex-1 flex-col items-center gap-2.5 transition-transform duration-200 active:scale-95"
-              aria-current={actif ? "page" : undefined}
-            >
-              <Icone
-                className={cn("size-[30px]", actif ? "text-[#ff6b16]" : "text-[#8e8e93]")}
-                strokeWidth={actif ? 2.25 : 1.75}
-                fill={actif && onglet.href === "/accueil" ? "currentColor" : "none"}
-              />
-              <span
-                className={cn(
-                  "text-[11px] leading-none",
-                  actif ? "bg-clip-text font-semibold text-transparent" : "font-medium text-[#8e8e93]",
-                )}
-                style={actif ? { backgroundImage: MOBILE_GRADIENT_ACCENT } : undefined}
+            if (reduce) {
+              return <div key={onglet.href}>{bouton}</div>;
+            }
+
+            return (
+              <motion.div
+                key={onglet.href}
+                className="h-full"
+                whileTap={{ scale: 0.94 }}
+                transition={{ type: "spring", stiffness: 500, damping: 28 }}
               >
-                {onglet.label}
-              </span>
-            </Link>
-          );
-        })}
-      </div>
+                {bouton}
+              </motion.div>
+            );
+          })}
+        </div>
+      </LayoutGroup>
     </nav>
   );
 }

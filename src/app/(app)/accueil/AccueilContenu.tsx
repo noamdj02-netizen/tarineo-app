@@ -114,34 +114,13 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
     <>
       <AccueilMobile
         economies={montantIdentifie}
+        evolutionPct={evolutionPct}
+        aSurveiller={donnees.aSurveiller}
         fournisseurs={fournisseursTop}
         documents={documentsRecentsUi}
+        banniereReprise={etatOnboarding.doitVoirBanniereReprise}
+        documentsEnCours={tableauPeuRempli ? documentsEnCours : 0}
       />
-
-      {(etatOnboarding.doitVoirBanniereReprise ||
-        aVerifier > 0 ||
-        payloadsCount > 0 ||
-        compteVide ||
-        enAttenteDeDonnees ||
-        (tableauPeuRempli && documentsEnCours > 0)) && (
-        <div className="mt-6 flex flex-col gap-4 lg:hidden">
-          {etatOnboarding.doitVoirBanniereReprise && <DashboardBanniereReprise etatQuota={etatQuota} />}
-          {(aVerifier > 0 || payloadsCount > 0) && (
-            <DashboardAFaire aVerifier={aVerifier} hausses={payloadsCount} moisCourantStr={moisCourantStr} />
-          )}
-          {!etatOnboarding.doitVoirBanniereReprise && (compteVide || enAttenteDeDonnees) && (
-            <DashboardHeroImport
-              compteVide={compteVide}
-              enAttenteDeDonnees={enAttenteDeDonnees}
-              etatQuota={etatQuota}
-              documentsEnCours={documentsEnCours}
-            />
-          )}
-          {tableauPeuRempli && documentsEnCours > 0 && (
-            <DashboardAnalyseEnCours documentsEnCours={documentsEnCours} />
-          )}
-        </div>
-      )}
 
     <AppStagger className="hidden flex-col gap-8 lg:flex" stagger={0.06}>
       {etatOnboarding.doitVoirBanniereReprise && (

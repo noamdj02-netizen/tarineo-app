@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadIcon } from "lucide-react";
-import { estAppareilMobile } from "@/lib/mobile";
+import { estViewportMobile } from "@/lib/mobile";
 import { hrefApresImportDocuments } from "@/lib/importNavigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +20,7 @@ type Props = {
   quotaAtteint?: boolean;
   maxFichiers?: number;
   autoOpen?: boolean;
+  /** Met en avant la caméra dans le choix (n’ouvre plus la caméra automatiquement). */
   preferCamera?: boolean;
   label?: string;
   size?: "default" | "sm";
@@ -29,6 +30,10 @@ type Props = {
   trigger?: React.ReactElement;
 };
 
+/**
+ * Import unifié — sur mobile : choix Photo / Photothèque / Fichier
+ * (plus de forçage caméra qui bloquait les anciens devis).
+ */
 export function ImportDocument({
   quotaAtteint = false,
   maxFichiers,
@@ -44,19 +49,26 @@ export function ImportDocument({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [importSession, setImportSession] = useState(0);
+  const [mobileUi, setMobileUi] = useState(false);
   const urlNettoyee = useRef(false);
 
-  // Laisse la transition de page « import » se terminer avant d'ouvrir la modale.
+  useEffect(() => {
+    function maj() {
+      setMobileUi(estViewportMobile());
+    }
+    maj();
+    const mq = window.matchMedia("(max-width: 1023px)");
+    mq.addEventListener("change", maj);
+    return () => mq.removeEventListener("change", maj);
+  }, []);
+
   useEffect(() => {
     if (!autoOpen) return;
-    const delai = estAppareilMobile() ? 200 : 320;
+    const delai = mobileUi ? 200 : 320;
     const timer = window.setTimeout(() => setOpen(true), delai);
     return () => window.clearTimeout(timer);
-  }, [autoOpen]);
+  }, [autoOpen, mobileUi]);
 
-  const cameraActive = preferCamera || estAppareilMobile();
-
-  // Évite que ?scanner=1 ou ?onboarding=1 rouvre la modale à chaque navigation.
   useEffect(() => {
     if (!autoOpen || urlNettoyee.current || typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -110,15 +122,15 @@ export function ImportDocument({
           )
         }
       />
-      <DialogContent
-        className="import-modal-figma gap-6 border-0 bg-[#f3f4f6] p-8 font-sans shadow-[0_8px_12px_rgba(0,0,0,0.12)] sm:max-w-[528px]"
-      >
+      <DialogContent className="import-modal-figma gap-6 border-0 bg-[#f3f4f6] p-6 font-sans shadow-[0_8px_12px_rgba(0,0,0,0.12)] sm:max-w-[528px] sm:p-8">
         <DialogHeader className="gap-2">
           <DialogTitle className="text-[20px] font-bold leading-normal tracking-normal text-[#111827]">
             Importer un document
           </DialogTitle>
           <DialogDescription className="text-[14px] font-normal leading-[1.45] tracking-normal text-[#6b7280]">
-            PDF ou photo — Tarinéo détecte le type et classe le document pour vous.
+            {mobileUi
+              ? "Photo, photothèque ou fichier PDF — Tarineo détecte le type automatiquement."
+              : "PDF ou photo — Tarineo détecte le type et classe le document pour vous."}
           </DialogDescription>
         </DialogHeader>
         <FormulaireUpload
@@ -126,9 +138,11 @@ export function ImportDocument({
           quotaAtteint={quotaAtteint}
           maxFichiers={maxFichiers}
           variantCompact
-          variantPc={!cameraActive}
-          autoOuvrirCamera={cameraActive && open}
-          autoEnvoiApresCapture={cameraActive}
+          variantPc={!mobileUi}
+          choixSourcesMobile={mobileUi}
+          preferCameraHint={preferCamera}
+          autoOuvrirCamera={false}
+          autoEnvoiApresCapture={false}
           onImportReussi={apresImport}
           onVoirDocumentExistant={ouvrirDocumentExistant}
         />

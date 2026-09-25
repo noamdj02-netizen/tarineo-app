@@ -13,6 +13,8 @@ import { purgerBrouillonsExpiresPourUtilisateur } from "@/lib/purgeBrouillonsDoc
 import { doitForcerOnboarding, estRouteConfirmationEmail } from "@/lib/routeApresAuth";
 import { utilisateurDoitConfirmerEmail } from "@/lib/confirmationEmail";
 import { AppNavigationProvider } from "@/components/tarineo/motion/AppNavigationContext";
+import { ConfettiBurstHost } from "@/components/tarineo/motion/ConfettiBurst";
+import { Toaster } from "@/components/ui/sonner";
 import { AppShell } from "./AppShell";
 import { AppThemeScope } from "./AppThemeScope";
 import { BottomNav } from "./BottomNav";
@@ -45,21 +47,30 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/connexion");
   }
 
+  // Ne pas envelopper `redirect()` dans un try/catch : en App Router, redirect
+  // lève une exception NEXT_REDIRECT — un catch trop large l’avalait et laissait
+  // passer confirmation email / onboarding.
   if (session?.user?.id) {
-    try {
-      const doitConfirmer = await utilisateurDoitConfirmerEmail(session.user.id);
-      if (doitConfirmer && !estRouteConfirmationEmail(pathname)) {
-        redirect("/confirmer-email");
-      }
+    // Confirmation email + onboarding en parallèle — moins de latence post-login.
+    const [doitConfirmer, etatOnboarding] = await Promise.all([
+      utilisateurDoitConfirmerEmail(session.user.id).catch((e) => {
+        console.error("Garde accès app (confirmation email) :", e);
+        return false;
+      }),
+      doitForcerOnboarding(pathname)
+        ? chargerEtatOnboarding(session.user.id).catch((e) => {
+            console.error("Garde accès app (onboarding) :", e);
+            return null;
+          })
+        : Promise.resolve(null),
+    ]);
 
-      if (!doitConfirmer && doitForcerOnboarding(pathname)) {
-        const etatOnboarding = await chargerEtatOnboarding(session.user.id);
-        if (etatOnboarding.doitVoirChoixImport) {
-          redirect("/onboarding");
-        }
-      }
-    } catch (e) {
-      console.error("Garde accès app (layout) :", e);
+    if (doitConfirmer && !estRouteConfirmationEmail(pathname)) {
+      redirect("/confirmer-email");
+    }
+
+    if (!doitConfirmer && etatOnboarding?.doitVoirChoixImport) {
+      redirect("/onboarding");
     }
 
     purgerBrouillonsExpiresPourUtilisateur(session.user.id).catch((e) => {
@@ -109,8 +120,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     ]);
     notifications = notifs;
     badgesNav = badges;
-    avatarUrl = await resoudreUrlAvatar(utilisateur?.image);
     companyName = profil?.raisonSociale ?? null;
+    avatarUrl = await resoudreUrlAvatar(utilisateur?.image);
   } catch (e) {
     console.error("Échec du chargement de la navigation :", e);
   }
@@ -133,6 +144,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Suspense fallback={null}>
             <BottomNav />
           </Suspense>
+          <Toaster />
+          <ConfettiBurstHost />
         </AppNavigationProvider>
       </div>
     </AppThemeScope>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Barlow, Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -8,39 +8,48 @@ const barlow = Barlow({
   variable: "--font-barlow",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
 });
 
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Tarineo",
+  title: "Tarinéo",
   description: "Protégez votre marge : comparez vos devis fournisseurs à votre historique d'achats.",
+  applicationName: "Tarinéo",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Tarineo",
+    title: "Tarinéo",
   },
   icons: {
-    apple: "/landing/logo-icon.png",
+    icon: [{ url: "/landing/logo-icon.png", type: "image/png" }],
+    apple: [{ url: "/brand/logo-128.png", sizes: "180x180", type: "image/png" }],
+  },
+  formatDetection: {
+    telephone: false,
   },
 };
 
-export const viewport = {
-  themeColor: "#EC5821",
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover" as const,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#F5F5F3",
 };
 
 // Coquille minimale : la distinction pages publiques (marketing, connexion) / pages
