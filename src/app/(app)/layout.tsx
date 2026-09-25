@@ -9,6 +9,7 @@ import { chargerNotifications } from "@/lib/notifications";
 import { chargerBadgesNav } from "@/lib/navBadges";
 import { estRouteLegale } from "@/lib/legalRoutes";
 import { chargerEtatOnboarding } from "@/lib/onboarding";
+import { purgerBrouillonsExpiresPourUtilisateur } from "@/lib/purgeBrouillonsDocuments";
 import { doitForcerOnboarding, estRouteConfirmationEmail } from "@/lib/routeApresAuth";
 import { utilisateurDoitConfirmerEmail } from "@/lib/confirmationEmail";
 import { AppNavigationProvider } from "@/components/tarineo/motion/AppNavigationContext";
@@ -60,6 +61,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     } catch (e) {
       console.error("Garde accès app (layout) :", e);
     }
+
+    purgerBrouillonsExpiresPourUtilisateur(session.user.id).catch((e) => {
+      console.error("Purge brouillons :", e);
+    });
   }
 
   const classesTheme = `${geist.variable} ${manrope.variable} ${inter.variable} app-theme flex min-h-full flex-1 flex-col`;

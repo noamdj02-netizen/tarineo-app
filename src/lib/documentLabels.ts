@@ -1,5 +1,7 @@
 import type { DocumentType } from "@prisma/client";
 
+// Libellés du sous-menu sidebar : src/lib/navigationApp.ts (SOUS_LIENS_DISTRIBUTEUR).
+
 export const LABELS_STATUT: Record<string, string> = {
   PROCESSING: "En traitement",
   NEEDS_REVIEW: "À vérifier",
@@ -36,7 +38,7 @@ export const TYPES_FILTRABLES = [
 
 /** Titres de page /documents selon le filtre type actif. */
 export const TITRES_PAGE_DOCUMENTS: Record<"tous" | DocumentType, string> = {
-  tous: "Mes documents",
+  tous: "Document distributeur",
   DEVIS: "Devis fournisseurs",
   FACTURE: "Factures fournisseurs",
   BON_COMMANDE: "Bons de commande",
@@ -44,7 +46,7 @@ export const TITRES_PAGE_DOCUMENTS: Record<"tous" | DocumentType, string> = {
 };
 
 export const SOUS_TITRES_PAGE_DOCUMENTS: Record<"tous" | DocumentType, string> = {
-  tous: "Importez et analysez vos devis, factures et bons fournisseur (PDF, photo, 20 Mo max).",
+  tous: "Achats chez vos distributeurs — importez et analysez devis, factures et bons (PDF, photo, 20 Mo max).",
   DEVIS: "Propositions de prix reçues de vos distributeurs — base de comparaison pour détecter les hausses.",
   FACTURE: "Factures d'achat validées — alimentent votre historique de prix et vos dépenses.",
   BON_COMMANDE: "Bons de commande engagés chez vos fournisseurs.",

@@ -3,6 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ChevronDownIcon } from "lucide-react";
+import { ROUTES_DOCUMENTS_PAR_TYPE } from "@/lib/documentLabels";
+import {
+  LIBELLE_SECTION_DOCUMENT_DISTRIBUTEUR,
+  LIBELLE_SECTION_DOCUMENT_ENTREPRISE,
+  SOUS_TITRE_SECTION_DISTRIBUTEUR,
+  SOUS_TITRE_SECTION_ENTREPRISE,
+} from "@/lib/navigationApp";
 import { cn } from "@/lib/utils";
 import { MOBILE_GRADIENT_ACCENT } from "./mobileTokens";
 
@@ -10,24 +17,36 @@ type Lien = { href: string; title: string; description?: string };
 
 const SECTIONS: { id: string; title: string; subtitle: string; liens: Lien[] }[] = [
   {
-    id: "facturation",
-    title: "Facturation clients",
-    subtitle: "Devis, factures et carnet",
+    id: "analyses",
+    title: "Analyses",
+    subtitle: "Où votre marge se joue sur vos achats fournisseurs",
+    liens: [
+      { href: "/analyses", title: "Tableau d'analyses", description: "Hausses, dépenses, tendances" },
+      { href: "/documents?hausse=1", title: "Hausses détectées", description: "Documents concernés" },
+    ],
+  },
+  {
+    id: "distributeur",
+    title: LIBELLE_SECTION_DOCUMENT_DISTRIBUTEUR,
+    subtitle: SOUS_TITRE_SECTION_DISTRIBUTEUR,
+    liens: [
+      { href: "/documents", title: "Tous les documents", description: "Liste complète" },
+      { href: ROUTES_DOCUMENTS_PAR_TYPE.DEVIS, title: "Devis", description: "Propositions fournisseur" },
+      { href: ROUTES_DOCUMENTS_PAR_TYPE.BON_COMMANDE, title: "Bons de commande", description: "Achats engagés" },
+      { href: ROUTES_DOCUMENTS_PAR_TYPE.BON_ENLEVEMENT, title: "Bons d'enlèvement", description: "Retraits en agence" },
+      { href: ROUTES_DOCUMENTS_PAR_TYPE.FACTURE, title: "Factures", description: "Achats validés" },
+      { href: "/coffre", title: "Mon coffre", description: "Archives par mois" },
+      { href: "/fournisseurs", title: "Fournisseurs", description: "Objectifs et suivi par enseigne" },
+    ],
+  },
+  {
+    id: "entreprise",
+    title: LIBELLE_SECTION_DOCUMENT_ENTREPRISE,
+    subtitle: SOUS_TITRE_SECTION_ENTREPRISE,
     liens: [
       { href: "/devis-clients", title: "Devis clients", description: "Créer ou modifier" },
       { href: "/factures-clients", title: "Factures clients", description: "Depuis vos devis" },
       { href: "/clients", title: "Clients", description: "Carnet regroupé" },
-    ],
-  },
-  {
-    id: "suivi",
-    title: "Suivi & archives",
-    subtitle: "Coffre, veille et analyses",
-    liens: [
-      { href: "/coffre", title: "Mon coffre", description: "Documents archivés" },
-      { href: "/veille", title: "Veille prix", description: "Surveiller vos références" },
-      { href: "/analyses", title: "Analyses", description: "Hausses & dépenses" },
-      { href: "/chantiers", title: "Chantiers", description: "Marge par chantier" },
     ],
   },
   {
@@ -106,7 +125,7 @@ export function MobileHub() {
         style={{ backgroundImage: MOBILE_GRADIENT_ACCENT }}
       >
         <p className="text-lg font-semibold">Menu Tarineo</p>
-        <p className="mt-1 text-sm text-white/85">Toutes vos sections, regroupées par thème.</p>
+        <p className="mt-1 text-sm text-white/85">Achats distributeurs et ventes clients, bien séparés.</p>
       </div>
       {SECTIONS.map((section, index) => (
         <SectionTiroir

@@ -1,25 +1,35 @@
 #!/usr/bin/env node
 /**
- * Capture automatique dashboard + écrans de détail → Figma.
+ * Capture automatique app → Figma (html-to-design).
  *
  * Usage :
- *   npm run figma:capture                    # tout (listes + détails)
- *   npm run figma:capture -- details          # seulement les fiches (comme votre capture)
- *   npm run figma:capture -- document-detail  # une fiche document
+ *   npm run figma:capture                         # desktop, listes + détails
+ *   npm run figma:capture -- --mobile             # viewport mobile (427×952)
+ *   npm run figma:capture -- --both                # desktop puis mobile
+ *   npm run figma:capture -- details              # fiches détail seulement
+ *   npm run figma:capture -- accueil              # une page (slug)
  *
- * Prod (vos vraies données type F Agencement) :
- *   npm run figma:capture:prod -- details
+ * Prod :
+ *   npm run figma:capture:prod
+ *   CAPTURE_BASE=https://app.tarineo.com npm run figma:capture -- --mobile
  *
- * Ne fermez pas la fenêtre Chromium pendant la capture (~2 min).
+ * Fichier Figma : https://www.figma.com/design/TvO91gJNuCUY5YJ7X52FTY/Tarineo
+ * Ne fermez pas Chromium pendant la capture.
  */
 import { chromium } from "playwright";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { STATIC_PAGES, DETAIL_TEMPLATES } from "./figma-capture-pages.mjs";
+import {
+  STATIC_PAGES,
+  MOBILE_STATIC_PAGES,
+  DETAIL_TEMPLATES,
+  MOBILE_DETAIL_TEMPLATES,
+} from "./figma-capture-pages.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROFILE = join(__dirname, "..", ".figma-capture-profile");
+const POOL_PATH = join(__dirname, "figma-capture-id-pool.json");
 const BASE = process.env.CAPTURE_BASE ?? "http://localhost:3000";
 const FILE_KEY = "TvO91gJNuCUY5YJ7X52FTY";
 const CAPTURE_JS = "https://mcp.figma.com/mcp/html-to-design/capture.js";
@@ -27,26 +37,32 @@ const isLocal = BASE.includes("localhost") || BASE.includes("127.0.0.1");
 
 const args = process.argv.slice(2);
 const onlyDetails = args.includes("details") || args.includes("detail");
-const filterArgs = args.filter((a) => !["details", "detail"].includes(a));
+const modeMobile = args.includes("mobile");
+const modeBoth = args.includes("both");
+const filterArgs = args.filter((a) => !["details", "detail", "mobile", "both"].includes(a));
 
-// IDs Figma MCP (single-use — regénérer via Figma MCP si erreur 409)
+const VIEWPORT_DESKTOP = { width: 1440, height: 900 };
+const VIEWPORT_MOBILE = { width: 427, height: 952 };
+
+function loadCapturePool() {
+  if (existsSync(POOL_PATH)) {
+    const data = JSON.parse(readFileSync(POOL_PATH, "utf8"));
+    if (Array.isArray(data.pool) && data.pool.length > 0) return [...data.pool];
+  }
+  console.warn("⚠ Pool vide — ajoutez des IDs dans scripts/figma-capture-id-pool.json (Figma MCP generate_figma_design).");
+  return [];
+}
+
+let capturePool = loadCapturePool();
 let captureCounter = 0;
-const CAPTURE_IDS = [
-  "900c8906-a704-454b-9fa3-d2b653b0158e", "d41d1d1c-cd29-4440-bc8c-457e3d69932b",
-  "9da49ae6-4a53-46db-88bf-dd7124443925", "85a241d7-12c0-483f-b55f-2a354d625944",
-  "5bc96959-bf2b-42ad-b867-ada203dd45a3", "56f8d5fd-9382-4ea9-8f31-f3ce7fc2b6bf",
-  "3d0ee459-060a-45b8-8ecf-1c5082ad0cbe", "be1dd2a2-1121-4ab1-8b40-6b86475bf25a",
-  "f0659b9c-11a4-4deb-9991-167417f84dec", "903076d0-8d71-4ee1-9d07-03fdf00590b4",
-  "ef5c26b7-aaef-4a19-adbd-4f1d255e21c7", "fc164286-8a41-485b-9bb1-a8993bdca802",
-  "5e2ee4d0-51cb-47d0-af4a-f59fc87eae13", "8d46a76b-80b4-4f9b-bd18-57548a645051",
-  "f2310770-d77b-43e1-ba3c-605c6677dc53", "f63fb3c1-d112-46d6-93c6-4cca629c738b",
-  "e533dc1d-79b1-4015-a360-6c85696026f1", "57e9b326-4ee5-42ca-82c4-a553d3aeb2a4",
-  "c8f4e901-1111-4222-8333-444455556666", "d9e5f012-2222-4333-9444-555566667777",
-];
+
 function nextCaptureId() {
-  const id = CAPTURE_IDS[captureCounter % CAPTURE_IDS.length];
-  captureCounter++;
-  return id;
+  if (captureCounter >= capturePool.length) {
+    throw new Error(
+      `Plus d'IDs de capture (${captureCounter} utilisés). Regénérez le pool via Figma MCP (generate_figma_design) et mettez à jour figma-capture-id-pool.json.`,
+    );
+  }
+  return capturePool[captureCounter++];
 }
 
 mkdirSync(PROFILE, { recursive: true });
@@ -110,9 +126,9 @@ async function findFirstLink(page, listPath, pattern) {
   }, pattern.source);
 }
 
-async function discoverDetailPages(page) {
+async function discoverDetailPages(page, templates) {
   const pages = [];
-  for (const tpl of DETAIL_TEMPLATES) {
+  for (const tpl of templates) {
     const path = await findFirstLink(page, tpl.listPath, tpl.linkPattern);
     if (path) {
       pages.push({
@@ -131,7 +147,7 @@ async function discoverDetailPages(page) {
 
 async function capturePage(page, { label, path, captureId }) {
   const endpoint = `https://mcp.figma.com/mcp/capture/${captureId}/submit?bindVariables=true`;
-  const url = `${BASE}${path}`;
+  const url = path.startsWith("/") ? `${BASE}${path}` : `${BASE}/${path}`;
 
   console.log(`📸 ${label}…`);
 
@@ -172,44 +188,48 @@ async function capturePage(page, { label, path, captureId }) {
   return false;
 }
 
-const context = await chromium.launchPersistentContext(PROFILE, {
-  headless: false,
-  viewport: { width: 1440, height: 900 },
-  locale: "fr-FR",
-});
+function buildTargets({ mobile }) {
+  const staticPages = mobile ? MOBILE_STATIC_PAGES : STATIC_PAGES;
+  const detailTemplates = mobile ? MOBILE_DETAIL_TEMPLATES : DETAIL_TEMPLATES;
 
-const page = context.pages()[0] ?? await context.newPage();
+  if (onlyDetails || filterArgs.some((a) => detailTemplates.some((t) => t.slug === a || t.slug.replace("-mobile", "") === a))) {
+    return { staticPages: [], detailTemplates, filterDetails: true };
+  }
+  if (filterArgs.length) {
+    return {
+      staticPages: staticPages.filter((p) => filterArgs.some((a) => p.slug === a || p.slug.replace("-mobile", "") === a || p.path.includes(a))),
+      detailTemplates: [],
+      filterDetails: false,
+    };
+  }
+  return { staticPages, detailTemplates, filterDetails: false };
+}
 
-try {
-  console.log(`Base: ${BASE}${isLocal ? "" : " (prod — injection script Figma)"}`);
-  console.log(`Fichier: https://www.figma.com/design/${FILE_KEY}/Tarineo\n`);
+async function runPass(page, { mobile, labelPass }) {
+  console.log(`\n—— ${labelPass} ——\n`);
+  await page.setViewportSize(mobile ? VIEWPORT_MOBILE : VIEWPORT_DESKTOP);
 
-  await waitForLogin(page);
-
+  const { staticPages, detailTemplates, filterDetails } = buildTargets({ mobile });
   let targets = [];
 
-  if (onlyDetails || filterArgs.some((a) => DETAIL_TEMPLATES.some((t) => t.slug === a))) {
+  if (filterDetails || onlyDetails) {
     console.log("Découverte des fiches détail…");
-    const details = await discoverDetailPages(page);
+    const details = await discoverDetailPages(page, detailTemplates);
     targets = filterArgs.length
-      ? details.filter((p) => filterArgs.some((a) => p.slug === a))
+      ? details.filter((p) => filterArgs.some((a) => p.slug === a || p.slug.replace("-mobile", "") === a))
       : details;
-  } else if (filterArgs.length) {
-    targets = STATIC_PAGES
-      .filter((p) => filterArgs.some((a) => p.slug === a || p.path.includes(a)))
-      .map((p) => ({ ...p, captureId: nextCaptureId() }));
   } else {
     console.log("Découverte des fiches détail…");
-    const details = await discoverDetailPages(page);
+    const details = await discoverDetailPages(page, detailTemplates);
     targets = [
-      ...STATIC_PAGES.map((p) => ({ ...p, captureId: nextCaptureId() })),
+      ...staticPages.map((p) => ({ ...p, captureId: nextCaptureId() })),
       ...details,
     ];
   }
 
   if (targets.length === 0) {
-    console.error("Aucune page à capturer.");
-    process.exit(1);
+    console.error("Aucune page à capturer pour ce passage.");
+    return 0;
   }
 
   let ok = 0;
@@ -221,8 +241,40 @@ try {
       break;
     }
   }
+  console.log(`\n✅ ${labelPass} : ${ok}/${targets.length} pages envoyées`);
+  return ok;
+}
 
-  console.log(`\n✅ ${ok}/${targets.length} pages dans Figma → page « App — Sync code »`);
+const context = await chromium.launchPersistentContext(PROFILE, {
+  headless: false,
+  viewport: VIEWPORT_DESKTOP,
+  locale: "fr-FR",
+});
+
+const page = context.pages()[0] ?? await context.newPage();
+
+try {
+  console.log(`Base: ${BASE}${isLocal ? "" : " (prod)"}`);
+  console.log(`Fichier: https://www.figma.com/design/${FILE_KEY}/Tarineo\n`);
+  console.log(`IDs disponibles dans le pool : ${capturePool.length}`);
+
+  await waitForLogin(page);
+
+  let totalOk = 0;
+  if (modeBoth) {
+    totalOk += await runPass(page, { mobile: false, labelPass: "Desktop 1440×900" });
+    totalOk += await runPass(page, { mobile: true, labelPass: "Mobile 427×952" });
+  } else {
+    totalOk += await runPass(page, {
+      mobile: modeMobile,
+      labelPass: modeMobile ? "Mobile 427×952" : "Desktop 1440×900",
+    });
+  }
+
+  console.log(`\n🎨 Total : ${totalOk} capture(s) → Figma (page « App — Sync code » ou nouvelle page)`);
+  if (captureCounter >= capturePool.length) {
+    console.log("\n💡 Pool épuisé : demandez à l’agent de regénérer des IDs Figma avant la prochaine resync.");
+  }
 } catch (err) {
   console.error("\n❌", err.message);
   process.exit(1);

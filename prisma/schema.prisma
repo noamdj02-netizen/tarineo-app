@@ -218,6 +218,8 @@ model Document {
   // sous un fichier différent — le hash ne suffit pas dans ce cas). Force une revue
   // manuelle plutôt qu'une validation automatique (voir analyserDocument).
   possibleDoublon Boolean        @default(false)
+  // Brouillon créé via « Envoyer quand même » sur un doublon hash — purge auto à cette date.
+  brouillonExpireAt DateTime?
   // Revue artisan par ligne : { [lineItemId]: { status: "verified"|"ignored", at: ISO } }
   lineReviews     Json?
   createdAt       DateTime       @default(now())
@@ -228,6 +230,7 @@ model Document {
   @@index([userId, createdAt])
   @@index([userId, distributorNorm])
   @@index([userId, fileHash])
+  @@index([userId, brouillonExpireAt])
 }
 
 model LineItem {

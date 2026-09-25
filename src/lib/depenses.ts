@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
+import { filtreDocumentsDistributeur, filtreDocumentsSuiviFournisseur } from "@/lib/filtreDocumentsDistributeur";
+import { documentComptePourSuiviFournisseur, nomRessembleANonNegoce } from "@/lib/heuristiqueNonNegoce";
 
 export interface DepenseDistributeur {
   distributor: string;
@@ -37,11 +39,19 @@ export async function calculerDepensesParDistributeur(userId: string): Promise<D
   const documents = await prisma.document.findMany({
     where: {
       userId,
+      ...filtreDocumentsDistributeur,
+      ...filtreDocumentsSuiviFournisseur,
       type: { in: [...TYPES_ACHAT_REEL] },
       status: "VALIDATED",
       distributorNorm: { not: null },
     },
-    select: { distributor: true, distributorNorm: true, documentDate: true, totalHt: true },
+    select: {
+      distributor: true,
+      distributorNorm: true,
+      documentDate: true,
+      totalHt: true,
+      rawExtraction: true,
+    },
     orderBy: { documentDate: "desc" },
   });
 
@@ -49,7 +59,13 @@ export async function calculerDepensesParDistributeur(userId: string): Promise<D
 
   const groupes = new Map<string, { distributor: string; documents: typeof documents }>();
   for (const doc of documents) {
-    if (!doc.distributorNorm) continue;
+    if (
+      !doc.distributorNorm ||
+      nomRessembleANonNegoce(doc.distributor) ||
+      !documentComptePourSuiviFournisseur(doc.rawExtraction)
+    ) {
+      continue;
+    }
     const existant = groupes.get(doc.distributorNorm);
     if (existant) {
       existant.documents.push(doc);

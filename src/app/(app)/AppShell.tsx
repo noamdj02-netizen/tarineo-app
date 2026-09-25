@@ -4,7 +4,14 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { BellIcon, ChevronDownIcon, LifeBuoyIcon, LogOutIcon } from "lucide-react";
-import { ROUTES_DOCUMENTS_PAR_TYPE } from "@/lib/documentLabels";
+import {
+  RACCOURCIS_DISTRIBUTEUR,
+  SECTIONS_NAV_SIDEBAR,
+  SOUS_LIENS_DISTRIBUTEUR,
+  SOUS_LIENS_ENTREPRISE,
+  lienNavParId,
+  lienSidebarActif,
+} from "@/lib/navigationApp";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
   IconAnalyses,
@@ -49,11 +56,6 @@ const classeLienSidebarInactif = "text-muted-foreground hover:bg-foreground/[0.0
 
 const classeSousLienBase =
   "mx-3 block rounded-xl py-2.5 pr-4 text-sm transition-[color,background-color,transform] duration-200 ease-out hover:bg-foreground/[0.04] active:scale-[0.99] motion-reduce:active:scale-100";
-
-const RACCOURCIS_DOCUMENTS = [
-  { href: "/documents?hausse=1", libelle: "Hausses détectées", cle: "hausses" as const },
-  { href: "/documents?verifier=1", libelle: "À vérifier", cle: "aVerifier" as const },
-];
 
 function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
   const nonLues = notifications.filter((n) => n.nonLu).length;
@@ -111,51 +113,26 @@ function MenuNotifications({ notifications }: { notifications: NotifUi[] }) {
   );
 }
 
-const LIENS_NAV = [
-  { id: "dashboard", href: "/accueil", libelle: "Accueil" },
-  { id: "documents", href: "/documents", libelle: "Mes documents" },
-  { id: "fournisseurs", href: "/fournisseurs", libelle: "Fournisseurs" },
-  { id: "analyses", href: "/analyses", libelle: "Analyses" },
-  { id: "facturation", href: "/facturation-clients", libelle: "Facturation clients" },
-  { id: "parametres", href: "/parametres", libelle: "Paramètres" },
-];
-
-const SOUS_LIENS_DOCUMENTS = [
-  { href: "/documents", libelle: "Tous" },
-  { href: "/coffre", libelle: "Mon coffre" },
-  { href: ROUTES_DOCUMENTS_PAR_TYPE.DEVIS, libelle: "Devis fournisseurs" },
-  { href: ROUTES_DOCUMENTS_PAR_TYPE.FACTURE, libelle: "Factures fournisseurs" },
-  { href: ROUTES_DOCUMENTS_PAR_TYPE.BON_COMMANDE, libelle: "Bons de commande" },
-  { href: ROUTES_DOCUMENTS_PAR_TYPE.BON_ENLEVEMENT, libelle: "Bons d'enlèvement" },
-];
-
-const SOUS_LIENS_FACTURATION = [
-  { href: "/devis-clients", libelle: "Devis clients" },
-  { href: "/factures-clients", libelle: "Factures clients" },
-  { href: "/clients", libelle: "Clients" },
-  { href: "/facturation-clients", libelle: "Facturation électronique" },
-];
-
 function iconeNav(id: string) {
   const cls = "size-6 shrink-0";
   if (id === "dashboard") return <IconWidget className={cls} />;
-  if (id === "documents") return <IconDocument className={cls} />;
+  if (id === "distributeur") return <IconDocument className={cls} />;
+  if (id === "entreprise") return <IconInvoice className={cls} />;
   if (id === "fournisseurs") return <IconFournisseurs className={cls} />;
   if (id === "analyses") return <IconAnalyses className={cls} />;
-  if (id === "facturation") return <IconInvoice className={cls} />;
   if (id === "parametres") return <IconSettings className={cls} />;
   return <IconWidget className={cls} />;
 }
 
-function lienSidebarActif(pathname: string, href: string): boolean {
-  const base = href.split("?")[0];
-  if (base === "/documents" && href === "/documents") {
-    return pathname === "/documents";
-  }
-  if (pathname === base) return true;
-  if (base.startsWith("/documents/")) return pathname === base;
-  if (base !== "/accueil") return pathname.startsWith(`${base}/`);
-  return false;
+function EnteteSectionNav({ libelle }: { libelle: string }) {
+  return (
+    <p
+      className="mx-1 mb-1 mt-4 px-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--nav-section-label,var(--muted-foreground))] first:mt-0"
+      role="presentation"
+    >
+      // {libelle} //
+    </p>
+  );
 }
 
 function SousMenu({
@@ -296,7 +273,7 @@ function LienNavAvecSousMenu({
           )}
         >
           {iconeNav(id)}
-          <span className="min-w-0 flex-1 truncate">{libelle}</span>
+          <span className="min-w-0 flex-1 text-sm leading-snug whitespace-normal">{libelle}</span>
           {badgeTotal != null && badgeTotal > 0 && (
             <Badge className="mr-1 min-w-5 shrink-0 justify-center px-1.5">
               {badgeTotal > 9 ? "9+" : badgeTotal}
@@ -368,6 +345,72 @@ function PiedSidebar({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function renderLienNavPrincipal(
+  lien: { id: string; href: string; libelle: string },
+  pathname: string,
+  badgesNav: NavBadges,
+  alertesDocuments: number,
+  onNavigate?: () => void,
+) {
+  if (lien.id === "distributeur") {
+    return (
+      <LienNavAvecSousMenu
+        key={lien.id}
+        id={lien.id}
+        href={lien.href}
+        libelle={lien.libelle}
+        sousLiens={SOUS_LIENS_DISTRIBUTEUR}
+        raccourcis={RACCOURCIS_DISTRIBUTEUR}
+        badgesNav={badgesNav}
+        badgeTotal={alertesDocuments}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+  if (lien.id === "entreprise") {
+    return (
+      <LienNavAvecSousMenu
+        key={lien.id}
+        id={lien.id}
+        href={lien.href}
+        libelle={lien.libelle}
+        sousLiens={SOUS_LIENS_ENTREPRISE}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+  const actif =
+    lien.href === "/accueil"
+      ? pathname === "/accueil"
+      : pathname === lien.href || pathname.startsWith(`${lien.href}/`);
+  const badgeAnalyses = lien.id === "analyses" ? badgesNav.hausses : 0;
+  return (
+    <Link
+      key={lien.id}
+      href={lien.href}
+      prefetch={false}
+      onClick={onNavigate}
+      aria-current={actif ? "page" : undefined}
+      className={cn(
+        classeLienSidebarBase,
+        "mx-1",
+        actif ? classeLienSidebarActif : classeLienSidebarInactif,
+        badgeAnalyses > 0 && "justify-between",
+      )}
+    >
+      <span className="flex min-w-0 items-center gap-3">
+        {iconeNav(lien.id)}
+        {lien.libelle}
+      </span>
+      {badgeAnalyses > 0 && (
+        <Badge className="min-w-5 shrink-0 justify-center px-1.5">
+          {badgeAnalyses > 9 ? "9+" : badgeAnalyses}
+        </Badge>
+      )}
+    </Link>
+  );
+}
+
 function ContenuSidebar({
   prenom,
   dateLabel,
@@ -384,66 +427,33 @@ function ContenuSidebar({
 
   return (
     <>
-      <div className="flex flex-col gap-8 lg:gap-11">
+      <div className="flex flex-col gap-5">
         <div className="hidden lg:block">
-          <p className="max-w-[224px] text-[28px] leading-[1.15] text-foreground xl:text-[32px]">
-            <span className="font-normal">Bon retour, </span>
+          <BrandLogo
+            href="/accueil"
+            wordmarkStyle="dashboard"
+            iconClassName="h-7 w-8"
+            className="gap-1"
+            priority
+          />
+          <p className="mt-4 text-sm text-foreground">
+            <span className="text-muted-foreground">Bon retour, </span>
             <span className="font-medium">{prenom}</span>
           </p>
-          <p className="mt-2 text-sm capitalize text-muted-foreground">{dateLabel}</p>
+          <p className="mt-0.5 text-xs capitalize text-muted-foreground">{dateLabel}</p>
         </div>
 
-        <nav className="flex w-full flex-col gap-1 rounded-[24px] bg-secondary p-1" aria-label="Navigation principale">
-          {LIENS_NAV.map((lien) => {
-            if (lien.id === "documents") {
-              return (
-                <LienNavAvecSousMenu
-                  key={lien.id}
-                  id={lien.id}
-                  href={lien.href}
-                  libelle={lien.libelle}
-                  sousLiens={SOUS_LIENS_DOCUMENTS}
-                  raccourcis={RACCOURCIS_DOCUMENTS}
-                  badgesNav={badgesNav}
-                  badgeTotal={alertesDocuments}
-                  onNavigate={onNavigate}
-                />
-              );
-            }
-            if (lien.id === "facturation") {
-              return (
-                <LienNavAvecSousMenu
-                  key={lien.id}
-                  id={lien.id}
-                  href="/devis-clients"
-                  libelle={lien.libelle}
-                  sousLiens={SOUS_LIENS_FACTURATION}
-                  onNavigate={onNavigate}
-                />
-              );
-            }
-            const actif =
-              lien.href === "/accueil"
-                ? pathname === "/accueil"
-                : pathname === lien.href || pathname.startsWith(`${lien.href}/`);
-            return (
-              <Link
-                key={lien.id}
-                href={lien.href}
-                prefetch={false}
-                onClick={onNavigate}
-                aria-current={actif ? "page" : undefined}
-                className={cn(
-                  classeLienSidebarBase,
-                  "mx-1",
-                  actif ? classeLienSidebarActif : classeLienSidebarInactif,
-                )}
-              >
-                {iconeNav(lien.id)}
-                {lien.libelle}
-              </Link>
-            );
-          })}
+        <nav className="flex w-full flex-col gap-0.5" aria-label="Navigation principale">
+          {SECTIONS_NAV_SIDEBAR.map((section, index) => (
+            <div key={section.libelleSection ?? `section-${index}`} className="flex flex-col gap-0.5">
+              {section.libelleSection ? <EnteteSectionNav libelle={section.libelleSection} /> : null}
+              {section.lienIds.map((id) => {
+                const lien = lienNavParId(id);
+                if (!lien) return null;
+                return renderLienNavPrincipal(lien, pathname, badgesNav, alertesDocuments, onNavigate);
+              })}
+            </div>
+          ))}
         </nav>
 
         {pathname === "/accueil" && alertesDocuments > 0 && (
@@ -542,14 +552,6 @@ function TopBar({
     <header className="sticky top-0 z-30 hidden bg-background/90 backdrop-blur-md lg:block">
       <div className="w-full px-6 py-4 xl:px-8">
         <div className="flex h-14 items-center gap-3 rounded-full border border-border/60 bg-card/95 py-2 pl-4 pr-2 shadow-sm transition-shadow duration-200 hover:shadow-md xl:pl-5 xl:pr-3">
-          <BrandLogo
-            href="/accueil"
-            wordmarkStyle="dashboard"
-            iconClassName="h-7 w-8"
-            className="shrink-0 gap-1"
-            priority
-          />
-
           <Suspense fallback={<Skeleton className="hidden h-11 min-w-0 flex-1 rounded-full md:block" />}>
             <RechercheGlobale className="hidden min-w-0 flex-1 md:flex" />
           </Suspense>

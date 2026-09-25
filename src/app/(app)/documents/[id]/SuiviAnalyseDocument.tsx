@@ -4,7 +4,15 @@ import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { MascotteAnalyse } from "@/components/tarineo/MascotteAnalyse";
 
-const INTERVALLE_MS = 15_000;
+const INTERVALLE_MS = 3_000;
+
+type StatutAnalyse = {
+  status?: string;
+  redirectTo?: string;
+  sectionHref?: string;
+  domaine?: "distributeur" | "entreprise";
+  libelleDestination?: string;
+};
 
 export function SuiviAnalyseDocument({
   documentId,
@@ -15,9 +23,38 @@ export function SuiviAnalyseDocument({
 }) {
   const router = useRouter();
   const enCours = useRef(false);
+  const redirige = useRef(false);
 
   useEffect(() => {
     if (!actif) return;
+
+    function apresAnalyse(data: StatutAnalyse) {
+      if (!data.status || data.status === "PROCESSING" || redirige.current) return;
+
+      const termine =
+        data.status === "VALIDATED" || data.status === "NEEDS_REVIEW";
+      if (termine && data.redirectTo) {
+        redirige.current = true;
+        // Achats distributeur : rester sur la fiche pour voir hausses et lignes analysées.
+        if (data.domaine === "distributeur") {
+          router.refresh();
+          return;
+        }
+        router.replace(data.redirectTo);
+        return;
+      }
+
+      if (data.status === "ERROR") {
+        redirige.current = true;
+        router.refresh();
+        return;
+      }
+
+      if (termine) {
+        redirige.current = true;
+        router.refresh();
+      }
+    }
 
     async function verifier() {
       if (enCours.current || document.hidden) return;
@@ -25,10 +62,8 @@ export function SuiviAnalyseDocument({
       try {
         const res = await fetch(`/api/documents/${documentId}/statut`, { cache: "no-store" });
         if (!res.ok) return;
-        const data = (await res.json()) as { status?: string };
-        if (data.status && data.status !== "PROCESSING") {
-          router.refresh();
-        }
+        const data = (await res.json()) as StatutAnalyse;
+        apresAnalyse(data);
       } catch {
         // ignore — prochain poll
       } finally {
@@ -57,7 +92,8 @@ export function SuiviAnalyseDocument({
       <div className="min-w-0">
         <p className="text-base font-semibold text-[#172935]">Analyse en cours…</p>
         <p className="mt-1.5 text-sm leading-relaxed text-[#53616A]">
-          Tarinéo lit votre document — cette page se met à jour automatiquement.
+          Tarinéo lit le document, choisit l&apos;espace distributeur ou entreprise, puis le range dans Devis /
+          Factures / Bons ou dans vos devis et factures clients.
         </p>
       </div>
     </div>

@@ -82,14 +82,17 @@ export async function envoyerUnDocument(formData: FormData): Promise<ResultatEnv
   const buffer = Buffer.from(await file.arrayBuffer());
   const fileHash = calculerHashFichier(buffer);
 
+  const doublonHash = await trouverDoublonParHash(session.user.id, fileHash);
+
   if (!parsed.data.ignorerDoublon) {
-    const doublon = await trouverDoublonParHash(session.user.id, fileHash);
-    if (doublon) {
-      return { succes: false, erreur: "doublon_detecte", doublon };
+    if (doublonHash) {
+      return { succes: false, erreur: "doublon_detecte", doublon: doublonHash };
     }
   }
 
-  const resultat = await enregistrerDocument(session.user.id, parsed.data.type, buffer, fileHash);
+  const resultat = await enregistrerDocument(session.user.id, parsed.data.type, buffer, fileHash, {
+    brouillonDoublon: parsed.data.ignorerDoublon === "true" && doublonHash !== null,
+  });
 
   if (resultat.succes) {
     // L'analyse IA prend 10–60 s : on la lance après la réponse pour ne pas bloquer

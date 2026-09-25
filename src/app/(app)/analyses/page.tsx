@@ -13,6 +13,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FiltrePeriodeAnalyses } from "./FiltrePeriodeAnalyses";
 import { GraphiqueEvolutionPrix } from "./GraphiqueEvolutionPrix";
 import { GraphiqueDonutDepenses } from "./GraphiqueDonutDepenses";
+import { BandeauApresImport } from "./BandeauApresImport";
+import { KpisAnalyses } from "./KpisAnalyses";
+
+const SOUS_TITRE =
+  "Où votre marge se joue sur vos achats fournisseurs — distinct des devis et factures clients.";
 
 const euros = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
@@ -26,7 +31,7 @@ function parsePeriode(valeur: string | undefined): PeriodeAnalyses {
 export default async function AnalysesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ mois?: string }>;
+  searchParams: Promise<{ mois?: string; import?: string }>;
 }) {
   const session = await getSession();
   if (!session?.user?.id) redirect("/connexion");
@@ -40,11 +45,11 @@ export default async function AnalysesPage({
     return (
       <EmptyState
         title="Analyses"
-        subtitle="Visualisez l'évolution des prix et vos économies."
+        subtitle={SOUS_TITRE}
         heading="Pas encore de données à analyser"
-        description="Importez vos factures et bons de commande fournisseurs — Tarinéo construit automatiquement vos graphiques de dépenses, hausses et produits commandés."
+        description="Importez des factures ou bons de commande fournisseurs — revenez ici pour voir dépenses, hausses et tendances. Les documents clients sont dans Ventes clients."
         primary={{ href: "/documents?scanner=1", label: "Importer un document" }}
-        secondary={{ href: "/accueil", label: "Retour à l'accueil" }}
+        secondary={{ href: "/devis-clients", label: "Ventes clients" }}
         variant="document"
       />
     );
@@ -52,9 +57,9 @@ export default async function AnalysesPage({
 
   return (
     <div>
-      <MobilePageHeader title="Analyses" subtitle="Hausses & dépenses" />
+      <MobilePageHeader title="Analyses" subtitle="Hausses & dépenses fournisseurs" />
       <div className="mb-4 flex items-center justify-between gap-3 lg:hidden">
-        <p className="text-sm text-muted-foreground">Évolution des prix et économies</p>
+        <p className="text-sm text-muted-foreground">{SOUS_TITRE}</p>
         <Suspense fallback={null}>
           <FiltrePeriodeAnalyses periode={periode} />
         </Suspense>
@@ -62,7 +67,7 @@ export default async function AnalysesPage({
       <div className="hidden lg:block">
         <PageHeader
           title="Analyses"
-          subtitle="Visualisez l'évolution des prix et vos économies."
+          subtitle={SOUS_TITRE}
           actions={
             <Suspense fallback={null}>
               <FiltrePeriodeAnalyses periode={periode} />
@@ -71,27 +76,26 @@ export default async function AnalysesPage({
         />
       </div>
 
+      <Suspense fallback={null}>
+        <BandeauApresImport />
+      </Suspense>
+
+      <p className="mb-4 text-sm text-muted-foreground lg:hidden">
+        <Link href="/devis-clients" className="font-medium text-primary hover:underline">
+          Devis et factures clients →
+        </Link>
+      </p>
+
       <AppStagger className="flex flex-col gap-6">
         <AppStaggerItem>
-          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
-            <Card className="rounded-[24px] ring-0">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">Évolution des prix par fournisseur</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <GraphiqueEvolutionPrix series={donnees.evolutionPrix} />
-              </CardContent>
-            </Card>
-
-            <Card className="rounded-[24px] ring-0">
-              <CardHeader>
-                <CardTitle className="text-base font-medium">Répartition des dépenses</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <GraphiqueDonutDepenses tranches={donnees.tranches} total={donnees.totalDepenses} />
-              </CardContent>
-            </Card>
-          </div>
+          <KpisAnalyses
+            totalDepenses={donnees.totalDepenses}
+            impactHaussesEuros={donnees.impactHaussesEuros}
+            nbHaussesPeriode={donnees.nbHaussesPeriode}
+            nbHaussesActives={donnees.nbHaussesActives}
+            nbAVerifier={donnees.nbAVerifier}
+            periodeMois={donnees.periodeMois}
+          />
         </AppStaggerItem>
 
         <AppStaggerItem>
@@ -102,6 +106,10 @@ export default async function AnalysesPage({
                 Voir tout →
               </Link>
             </div>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Comparé à votre historique personnel — un prix plus bas chez un autre distributeur est indiqué sur chaque
+              fiche document.
+            </p>
             {donnees.hausses.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">Aucune hausse sur la période sélectionnée.</p>
             ) : (
@@ -126,6 +134,28 @@ export default async function AnalysesPage({
               </DataTable>
             )}
           </PageCard>
+        </AppStaggerItem>
+
+        <AppStaggerItem>
+          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
+            <Card className="rounded-[24px] ring-0">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">Évolution des prix par fournisseur</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <GraphiqueEvolutionPrix series={donnees.evolutionPrix} />
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-[24px] ring-0">
+              <CardHeader>
+                <CardTitle className="text-base font-medium">Répartition des dépenses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <GraphiqueDonutDepenses tranches={donnees.tranches} total={donnees.totalDepenses} />
+              </CardContent>
+            </Card>
+          </div>
         </AppStaggerItem>
 
         <AppStaggerItem>

@@ -9,7 +9,7 @@ export default async function PlusPage() {
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <MobilePageHeader title="Menu" subtitle="Toutes les sections" backHref="/compte" />
+      <MobilePageHeader title="Menu" subtitle="Analyses, ventes clients, réglages" backHref="/accueil" />
       <MobileHub />
       <p className="hidden text-sm text-muted-foreground lg:block">
         Sur ordinateur, utilisez le menu latéral pour accéder à ces sections.

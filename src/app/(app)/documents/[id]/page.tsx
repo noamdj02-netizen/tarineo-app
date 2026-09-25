@@ -2,11 +2,13 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { LABELS_TYPE } from "@/lib/documentLabels";
+import { LABELS_TYPE, LABELS_TYPE_PLURIEL, TITRES_PAGE_DOCUMENTS } from "@/lib/documentLabels";
+import { routeSectionDocumentDistributeur } from "@/lib/routeSectionDocument";
 import { BadgeStatutDocument } from "@/components/tarineo/BadgeStatutDocument";
 import { FormulaireCorrection } from "./FormulaireCorrection";
 import { BoutonRelancerAnalyse } from "./BoutonRelancerAnalyse";
 import { SuiviAnalyseDocument } from "./SuiviAnalyseDocument";
+import { BandeauBrouillonDocument } from "./BandeauBrouillonDocument";
 import { ApercuDocument } from "./ApercuDocument";
 import { ActionsDocument } from "../ActionsDocument";
 import { isAnthropicConfigured } from "@/lib/anthropic";
@@ -25,6 +27,7 @@ import {
 } from "@/lib/analyseDocument";
 import { proposerRapprochementsProduit } from "@/lib/rapprochementProduit";
 import type { Prisma } from "@prisma/client";
+import { lireCibleEntreprise } from "@/lib/filtreDocumentsDistributeur";
 
 const formaterMontant = (valeur: Prisma.Decimal | number | string | null) =>
   valeur === null
@@ -58,8 +61,9 @@ export default async function DocumentDetailPage({
   }
 
   const extraction = document.rawExtraction as
-    | { numero?: string | null; confiance?: number }
+    | { numero?: string | null; confiance?: number; domaine?: string; importEntreprise?: string }
     | null;
+  const cibleEntreprise = lireCibleEntreprise(document.rawExtraction);
   const totalManquant = document.totalHt === null || Number(document.totalHt) === 0;
 
   const dateMinHistorique = dateMinHistoriquePlan(
@@ -212,6 +216,61 @@ export default async function DocumentDetailPage({
       </div>
 
       <SuiviAnalyseDocument documentId={document.id} actif={document.status === "PROCESSING"} />
+
+      {document.brouillonExpireAt && new Date(document.brouillonExpireAt) > new Date() && (
+        <BandeauBrouillonDocument
+          documentId={document.id}
+          expireLe={document.brouillonExpireAt.toISOString()}
+        />
+      )}
+
+      {extraction?.domaine !== "entreprise" && document.status !== "PROCESSING" && (
+        <div className="rounded-xl border border-border bg-secondary/40 px-4 py-3 text-sm text-foreground">
+          <p className="font-medium">
+            Classé · {TITRES_PAGE_DOCUMENTS[document.type]}
+            {document.distributor ? ` · ${document.distributor}` : ""}
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Document distributeur rangé dans la section « {LABELS_TYPE_PLURIEL[document.type]} » après analyse IA.
+          </p>
+          <Link
+            href={routeSectionDocumentDistributeur(document.type)}
+            className="mt-3 inline-flex text-sm font-medium text-primary hover:underline"
+          >
+            Voir tous les {LABELS_TYPE_PLURIEL[document.type].toLowerCase()}
+          </Link>
+        </div>
+      )}
+
+      {extraction?.domaine === "entreprise" && (
+        <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-foreground">
+          <p className="font-medium">Ventes clients</p>
+          {cibleEntreprise ? (
+            <p className="mt-1 text-muted-foreground">
+              L&apos;IA a classé ce scan hors des achats distributeur et l&apos;a placé dans vos{" "}
+              {cibleEntreprise.type === "facture_client" ? "factures clients" : "devis clients"}.
+            </p>
+          ) : (
+            <p className="mt-1 text-muted-foreground">
+              {extraction.importEntreprise === "profil_manquant"
+                ? "Complétez « Mon entreprise » dans les paramètres, puis relancez l'analyse pour créer le devis ou la facture client."
+                : "Vérifiez l'extraction ou relancez l'analyse pour créer le document dans l'espace entreprise."}
+            </p>
+          )}
+          {cibleEntreprise && (
+            <Link
+              href={
+                cibleEntreprise.type === "facture_client"
+                  ? `/factures-clients/${cibleEntreprise.id}`
+                  : `/devis-clients/${cibleEntreprise.id}`
+              }
+              className="mt-3 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-white"
+            >
+              Ouvrir dans Ventes clients
+            </Link>
+          )}
+        </div>
+      )}
 
       {document.status === "ERROR" && (
         <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">

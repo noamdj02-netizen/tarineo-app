@@ -81,11 +81,19 @@ async function detecterTypeFichier(buffer: Buffer): Promise<{ mime: string; exte
   return null;
 }
 
+export const DUREE_BROUILLON_DOUBLON_JOURS = 4;
+
+export type OptionsEnregistrementDocument = {
+  /** Ré-import du même fichier (hash) : brouillon temporaire avant conservation. */
+  brouillonDoublon?: boolean;
+};
+
 export async function enregistrerDocument(
   userId: string,
   type: DocumentType,
   buffer: Buffer,
-  fileHash: string
+  fileHash: string,
+  options: OptionsEnregistrementDocument = {},
 ): Promise<ResultatEnregistrementDocument> {
   // Vérifié avant de lire le fichier : sans cette garde, getSupabaseAdmin() lève et la
   // page entière plante au lieu d'afficher l'erreur dans le formulaire. Cas typique
@@ -118,6 +126,11 @@ export async function enregistrerDocument(
     return { succes: false, erreur: "stockage_indisponible" };
   }
 
+  const brouillonExpireAt =
+    options.brouillonDoublon === true
+      ? new Date(Date.now() + DUREE_BROUILLON_DOUBLON_JOURS * 24 * 60 * 60 * 1000)
+      : null;
+
   try {
     const document = await prisma.document.create({
       data: {
@@ -126,6 +139,7 @@ export async function enregistrerDocument(
         fileKey: cleStockage,
         fileHash,
         status: "PROCESSING",
+        brouillonExpireAt,
       },
     });
 

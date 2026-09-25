@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LABELS_TYPE_PLURIEL, ROUTES_DOCUMENTS_PAR_TYPE, TYPES_FILTRABLES } from "@/lib/documentLabels";
+import { LIBELLE_SECTION_DOCUMENT_DISTRIBUTEUR } from "@/lib/navigationApp";
 import type { DocumentType } from "@prisma/client";
 
 const classeOnglet = (actif: boolean) =>
@@ -21,10 +22,14 @@ export function NavTypeMobile({
   comptes: Partial<Record<DocumentType, number>>;
 }) {
   return (
-    <nav
-      aria-label="Filtrer par type de document"
-      className="-mx-1 mb-5 flex gap-5 overflow-x-auto border-b border-[#EEE] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-    >
+    <div className="mb-5 lg:hidden">
+      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {LIBELLE_SECTION_DOCUMENT_DISTRIBUTEUR}
+      </p>
+      <nav
+        aria-label="Filtrer par type de document distributeur"
+        className="-mx-1 flex gap-5 overflow-x-auto border-b border-[#EEE] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
       <Link href="/documents" aria-current={!typeActif ? "page" : undefined} className={classeOnglet(!typeActif)}>
         Tous
       </Link>
@@ -38,6 +43,7 @@ export function NavTypeMobile({
           {LABELS_TYPE_PLURIEL[t]} ({comptes[t] ?? 0})
         </Link>
       ))}
-    </nav>
+      </nav>
+    </div>
   );
 }

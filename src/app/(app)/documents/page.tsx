@@ -26,6 +26,8 @@ import { AidePageTooltip } from "@/components/tarineo/AidePageTooltip";
 import { NavTypeMobile } from "./NavTypeMobile";
 import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { filtreRechercheDocument } from "@/lib/rechercheDocuments";
+import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
+import { filtreDocumentHorsBrouillon } from "@/lib/filtreBrouillonDocument";
 import { historiqueEstSuffisant } from "@/lib/historique";
 import { calculerEtatQuota, debutMoisUTC, documentsRestantsEnvoi, MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
 import { parserPayloadsAlertesHausse, type PayloadAlerteHausse } from "@/lib/comparaisonPrix";
@@ -122,7 +124,11 @@ export async function DocumentsPage({
   const historiqueSuffisant = historiqueEstSuffisant(historiquePrix);
   const documentsTotal = documentsAvantCeMois + documentsCeMois;
 
-  const where: Prisma.DocumentWhereInput = { userId };
+  const where: Prisma.DocumentWhereInput = {
+    userId,
+    ...filtreDocumentsDistributeur,
+    ...filtreDocumentHorsBrouillon,
+  };
   if (distributeur) {
     where.distributorNorm = distributeur;
   }
@@ -144,7 +150,11 @@ export async function DocumentsPage({
   // mais volontairement pas Référence ni Hausse — la référence est un filtre fin, et la
   // hausse impliquerait de recalculer les alertes ici alors qu'elle n'a de sens qu'une
   // fois un type déjà choisi.
-  const whereComptageParType: Prisma.DocumentWhereInput = { userId };
+  const whereComptageParType: Prisma.DocumentWhereInput = {
+    userId,
+    ...filtreDocumentsDistributeur,
+    ...filtreDocumentHorsBrouillon,
+  };
   if (distributeur) whereComptageParType.distributorNorm = distributeur;
   if (bornesMois) whereComptageParType.documentDate = bornesMois;
   const comptesParTypeBruts = await prisma.document.groupBy({

@@ -8,6 +8,9 @@ import { dateMinHistoriquePlan } from "@/lib/planGating";
 import { extraireEtEnregistrerLogoFournisseur } from "@/lib/logoFournisseurDocument";
 import { normaliserReference, normaliserDistributeur } from "@/lib/normalisation";
 import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
+import { importerDocumentEntreprise, type DonneesImportEntreprise } from "@/lib/importDocumentEntreprise";
+import { nomRessembleANonNegoce } from "@/lib/heuristiqueNonNegoce";
+import { revaliderTableauDeBordApresClassification } from "@/lib/pipelineImportArtisan";
 import { verifierRateLimitAnalyse } from "@/lib/rateLimitIA";
 import type { DocumentType } from "@prisma/client";
 
@@ -30,6 +33,7 @@ const ligneSchema = z.object({
   prix_unitaire_ht: z.number(),
   remise_pct: z.number(),
   total_ligne_ht: z.number(),
+  taux_tva: z.number().optional(),
 });
 
 const logoZoneSchema = z
@@ -43,15 +47,29 @@ const logoZoneSchema = z
   .nullable();
 
 const extractionSchema = z.object({
+  domaine: z.preprocess(
+    (v) => (v === "entreprise" ? "entreprise" : "distributeur"),
+    z.enum(["distributeur", "entreprise"]),
+  ),
   distributeur: z.string(),
+  client_nom: z.preprocess((v) => (typeof v === "string" ? v : null), z.string().nullable()),
+  client_adresse: z.preprocess((v) => (typeof v === "string" ? v : null), z.string().nullable()),
   date_document: z.string().nullable(),
   type: z.enum(["devis", "facture", "bon_commande", "bon_enlevement"]),
+  type_entreprise: z.preprocess(
+    (v) => (typeof v === "string" ? v : null),
+    z.enum(["devis_client", "facture_client", "commande_client"]).nullable(),
+  ),
   numero: z.string().nullable(),
   lignes: z.array(ligneSchema),
   total_ht: z.number(),
   tva: z.number(),
   total_ttc: z.number(),
   confiance: z.number(),
+  emetteur_est_negoce_materiaux: z.preprocess(
+    (v) => v !== false,
+    z.boolean(),
+  ),
   logo_zone: logoZoneSchema,
 });
 
@@ -60,9 +78,13 @@ const extractionSchema = z.object({
 const JSON_SCHEMA = {
   type: "object",
   properties: {
+    domaine: { type: "string", enum: ["distributeur", "entreprise"] },
     distributeur: { type: "string" },
+    client_nom: { type: ["string", "null"] },
+    client_adresse: { type: ["string", "null"] },
     date_document: { type: ["string", "null"] },
     type: { type: "string", enum: ["devis", "facture", "bon_commande", "bon_enlevement"] },
+    type_entreprise: { type: ["string", "null"] },
     numero: { type: ["string", "null"] },
     lignes: {
       type: "array",
@@ -77,6 +99,7 @@ const JSON_SCHEMA = {
           prix_unitaire_ht: { type: "number" },
           remise_pct: { type: "number" },
           total_ligne_ht: { type: "number" },
+          taux_tva: { type: "number" },
         },
         required: [
           "reference",
@@ -87,6 +110,7 @@ const JSON_SCHEMA = {
           "prix_unitaire_ht",
           "remise_pct",
           "total_ligne_ht",
+          "taux_tva",
         ],
         additionalProperties: false,
       },
@@ -95,6 +119,7 @@ const JSON_SCHEMA = {
     tva: { type: "number" },
     total_ttc: { type: "number" },
     confiance: { type: "number" },
+    emetteur_est_negoce_materiaux: { type: "boolean" },
     logo_zone: {
       type: ["object", "null"],
       properties: {
@@ -109,41 +134,65 @@ const JSON_SCHEMA = {
     },
   },
   required: [
+    "domaine",
     "distributeur",
+    "client_nom",
+    "client_adresse",
     "date_document",
     "type",
+    "type_entreprise",
     "numero",
     "lignes",
     "total_ht",
     "tva",
     "total_ttc",
     "confiance",
+    "emetteur_est_negoce_materiaux",
     "logo_zone",
   ],
   additionalProperties: false,
 } as const;
 
-const PROMPT = `Tu analyses un document commercial d'un distributeur de matériel du bâtiment :
-un devis, une facture, un bon de commande, ou un bon d'enlèvement (document remis lors du
-retrait de marchandise en agence, mentionnant souvent "Bon d'enlèvement n°", "Enlèvement",
-"Retrait marchandise").
+const PROMPT = `Tu analyses un document commercial scanné par un artisan du bâtiment.
 
-Enseignes fréquentes, à titre d'exemples uniquement : Cedeo, Envie de Salle de Bain, Point P,
+ÉTAPE 1 — domaine (obligatoire) :
+- "distributeur" (CAS PRINCIPAL) : document ÉMIS PAR un négoce / distributeur de matériaux À L'ARTISAN
+  (devis fournisseur, facture d'achat, bon de commande, bon d'enlèvement — Cedeo, Point P, Rexel…).
+  Tu DOIS renseigner distributeur (enseigne émettrice) et le type exact (devis, facture, bon_commande,
+  bon_enlevement). client_nom et type_entreprise = null.
+- "entreprise" : seulement si le document est ÉMIS PAR L'ARTISAN vers un client final (devis/facture client),
+  pas un achat chez un distributeur.
+
+ÉTAPE 2 — si domaine = "distributeur" :
+Le type (devis / facture / bon_commande / bon_enlevement) détermine la section de classement dans l'app.
+Bon d'enlèvement = document remis en agence ("Bon d'enlèvement", "Retrait marchandise").
+
+ÉTAPE 3 — si domaine = "entreprise" :
+type_entreprise : devis_client | facture_client | commande_client (commande client = bon de commande
+ou engagement client avant facture). client_nom = le client destinataire. distributeur = "".
+type peut rester "devis" si ambigu. Lignes = prestations/matériel facturés au client (pas codes négoce).
+
+Enseignes distributeur fréquentes (exemples, liste non limitative) : Cedeo, Envie de Salle de Bain, Point P,
 La Plateforme du Bâtiment, Dispart, PUM, Dispano, Rexel, Sonepar, France Bonhomme, France Air,
 Castorama, Brico Dépôt, Screwfix, Leroy Merlin, Tecnomat (ex-Bricoman), Aubade, Tereva,
 Bleu Rouge, Gedimat, BigMat, Bois & Matériaux, Brossette, Richardson.
-Cette liste n'est PAS limitative : si le document provient d'une autre enseigne, d'un négoce
-régional ou d'un artisan, relève le nom tel qu'il apparaît sur le document. Ne force jamais un
-nom de cette liste sur un document qui vient d'ailleurs.
+Cette liste n'est PAS limitative : si le document provient d'un autre négoce régional de
+matériaux, relève le nom tel qu'il apparaît. Ne confonds JAMAIS un client, un chantier, une
+société d'agencement/travaux (ex. "F Agencement", "EcoBat" comme client) ou un autre artisan
+avec un distributeur : dans ce cas emetteur_est_negoce_materiaux = false et domaine = "entreprise".
+
+- emetteur_est_negoce_materiaux : true UNIQUEMENT si l'émetteur est un point de vente / grossiste
+  de matériaux ou fournitures pro du bâtiment (négoce). false pour client, agencement, bureau d'études,
+  sous-traitant, nom de particulier, ou document que TU as classé côté "entreprise".
 
 - distributeur : le nom commercial de l'enseigne émettrice tel qu'imprimé sur le document
   (en-tête, logo, pied de page avec le SIRET). S'il s'agit d'une agence locale
   ("POINT P SAINT-PRIEST"), retiens l'enseigne sans la ville ("Point P").
 
 Extrais les informations dans le JSON demandé :
-- type : détermine le VRAI type du document à partir de son contenu (titre, mentions comme
-  "Devis n°", "Facture n°", "Bon de commande n°", "Commande n°", "Bon d'enlèvement n°",
-  "Enlèvement"...), sans te fier à une éventuelle indication externe qui pourrait être erronée.
+- type (distributeur uniquement) : détermine le VRAI type à partir du contenu ("Devis n°",
+  "Facture n°", "Bon de commande n°", "Bon d'enlèvement n°"...), sans te fier à une indication externe erronée.
+- taux_tva : pourcentage TVA par ligne (20 ou 10 typiquement côté client ; 0 si inconnu côté distributeur).
 - reference_normalisee : la référence produit en majuscules, sans espaces ni accents
 - reference_fabricant : la référence FABRICANT du produit si elle est identifiable, à distinguer
   du code interne du distributeur (souvent une colonne "Code" ou "Référence" dédiée, purement
@@ -240,6 +289,26 @@ export async function analyserDocument(documentId: string, userId: string): Prom
     }
 
     const extraction = extractionSchema.parse(JSON.parse(blocTexte.text));
+
+    if (extraction.domaine === "entreprise") {
+      return await analyserDocumentEntreprise(documentId, userId, extraction);
+    }
+
+    const emetteurNegoce =
+      extraction.emetteur_est_negoce_materiaux &&
+      !nomRessembleANonNegoce(extraction.distributeur);
+
+    if (!emetteurNegoce) {
+      return await analyserDocumentEntreprise(documentId, userId, {
+        ...extraction,
+        domaine: "entreprise",
+        client_nom: extraction.client_nom ?? extraction.distributeur,
+        type_entreprise:
+          extraction.type_entreprise ??
+          (extraction.type === "facture" ? "facture_client" : "devis_client"),
+        emetteur_est_negoce_materiaux: false,
+      });
+    }
 
     // Un total absent ou nul ne doit jamais partir en auto-validé, même avec une
     // confiance élevée : Claude peut être très sûr de tout le reste du document et
@@ -359,7 +428,7 @@ export async function analyserDocument(documentId: string, userId: string): Prom
         })),
       });
 
-      if (estAchatReel) {
+      if (estAchatReel && document.brouillonExpireAt === null) {
         for (const ligne of lignesAvecRef) {
           await prisma.priceHistory.create({
             data: {
@@ -389,6 +458,7 @@ export async function analyserDocument(documentId: string, userId: string): Prom
       });
     }
 
+    revaliderTableauDeBordApresClassification("distributeur", typeDocument);
     return true;
   } catch (erreur) {
     console.error("Échec de l'analyse Claude pour le document", documentId, ":", erreur);
@@ -399,4 +469,66 @@ export async function analyserDocument(documentId: string, userId: string): Prom
     });
     return false;
   }
+}
+
+async function analyserDocumentEntreprise(
+  documentId: string,
+  userId: string,
+  extraction: z.infer<typeof extractionSchema>,
+): Promise<boolean> {
+  const typeEntreprise =
+    extraction.type_entreprise === "facture_client"
+      ? "facture_client"
+      : extraction.type_entreprise === "commande_client"
+        ? "commande_client"
+        : "devis_client";
+
+  const donnees: DonneesImportEntreprise = {
+    typeEntreprise,
+    clientNom: extraction.client_nom?.trim() || "Client à identifier",
+    clientAdresse: extraction.client_adresse,
+    dateDocument: extraction.date_document,
+    numero: extraction.numero,
+    confiance: extraction.confiance,
+    totalHt: extraction.total_ht,
+    totalTva: extraction.tva,
+    totalTtc: extraction.total_ttc,
+    lignes: extraction.lignes.map((l) => ({
+      designation: l.designation || l.reference || "Ligne",
+      quantite: l.quantite,
+      prix_unitaire_ht: l.prix_unitaire_ht,
+      taux_tva: l.taux_tva ?? 20,
+      total_ligne_ht: l.total_ligne_ht,
+    })),
+  };
+
+  const importResult = await importerDocumentEntreprise(userId, donnees);
+  const confianceBasse = extraction.confiance < SEUIL_CONFIANCE;
+
+  const rawEnrichi = {
+    ...extraction,
+    domaine: "entreprise" as const,
+    type_entreprise: typeEntreprise,
+    cibleEntreprise: importResult.ok ? importResult.cible : null,
+    importEntreprise: importResult.ok ? "ok" : importResult.raison,
+  };
+
+  await prisma.document.update({
+    where: { id: documentId },
+    data: {
+      type: "DEVIS",
+      distributor: null,
+      distributorNorm: null,
+      documentDate: extraction.date_document ? new Date(extraction.date_document) : null,
+      totalHt: extraction.total_ht,
+      totalTtc: extraction.total_ttc,
+      rawExtraction: rawEnrichi,
+      status:
+        importResult.ok && !confianceBasse ? "NEEDS_REVIEW" : "NEEDS_REVIEW",
+      possibleDoublon: false,
+    },
+  });
+
+  revaliderTableauDeBordApresClassification("entreprise");
+  return importResult.ok;
 }

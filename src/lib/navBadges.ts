@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
 
 export type NavBadges = {
   aVerifier: number;
@@ -8,7 +9,9 @@ export type NavBadges = {
 
 async function chargerBadgesNavBrut(userId: string): Promise<NavBadges> {
   const [aVerifier, hausses] = await Promise.all([
-    prisma.document.count({ where: { userId, status: "NEEDS_REVIEW" } }),
+    prisma.document.count({
+      where: { userId, status: "NEEDS_REVIEW", ...filtreDocumentsDistributeur },
+    }),
     prisma.alert.count({ where: { userId, type: "PRICE_INCREASE", seenAt: null } }),
   ]);
   return { aVerifier, hausses };

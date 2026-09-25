@@ -59,7 +59,7 @@ export default async function VeillePage() {
 
   return (
     <div>
-      <MobilePageHeader title="Veille prix" subtitle="Hausse silencieuse" backHref="/plus" />
+      <MobilePageHeader title="Veille prix" subtitle="Hausse silencieuse" backHref="/fournisseurs" />
       <div className="mb-4 lg:hidden">
         <BtnPrimary href="/documents" className="w-full justify-center rounded-full">Importer un document</BtnPrimary>
       </div>

@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { debutMoisUTC } from "@/lib/quota";
 import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
+import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
+import { filtreDocumentHorsBrouillon } from "@/lib/filtreBrouillonDocument";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { normaliserDistributeur } from "@/lib/normalisation";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
@@ -99,6 +101,8 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
       prisma.document.findMany({
         where: {
           userId,
+          ...filtreDocumentsDistributeur,
+          ...filtreDocumentHorsBrouillon,
           type: { in: [...TYPES_ACHAT_REEL] },
           status: "VALIDATED",
           documentDate: { gte: ajouterMoisUTC(maintenant, -5) },
@@ -106,7 +110,12 @@ export async function chargerDonneesDashboardAccueil(userId: string): Promise<Do
         select: { documentDate: true, totalHt: true },
       }),
       prisma.document.findMany({
-        where: { userId, createdAt: { gte: debutSemaine } },
+        where: {
+          userId,
+          ...filtreDocumentsDistributeur,
+          ...filtreDocumentHorsBrouillon,
+          createdAt: { gte: debutSemaine },
+        },
         orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
         take: 6,
         select: { id: true, distributor: true, distributorNorm: true, documentDate: true, totalHt: true },

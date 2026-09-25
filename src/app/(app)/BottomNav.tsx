@@ -8,18 +8,27 @@ import { BoutonImporterNav } from "@/components/tarineo/BoutonImporterNav";
 import { MOBILE_GRADIENT_ACCENT, MOBILE_GRADIENT_HERO, MOBILE_NAV_SHADOW, MOBILE_TEXT_MUTED } from "@/components/tarineo/mobile/mobileTokens";
 import { cn } from "@/lib/utils";
 
+// Ventes clients et réglages avancés : hub /plus (pas un 6e onglet). Compte = profil uniquement.
 const ONGLETS = [
   {
     href: "/accueil",
     label: "Accueil",
-    estActif: (pathname: string) => pathname === "/accueil",
+    estActif: (pathname: string) => pathname === "/accueil" || pathname === "/analyses",
     icone: Home,
   },
   {
     href: "/documents",
     label: "Documents",
-    estActif: (pathname: string, scannerActif: boolean) =>
-      (pathname === "/documents" || pathname.startsWith("/documents/")) && !scannerActif,
+    estActif: (pathname: string, scannerActif: boolean) => {
+      if (scannerActif) return false;
+      return (
+        pathname === "/documents" ||
+        pathname.startsWith("/documents/") ||
+        pathname === "/coffre" ||
+        pathname.startsWith("/bons-de-commande") ||
+        pathname.startsWith("/bons-enlevement")
+      );
+    },
     icone: History,
   },
   {
@@ -36,19 +45,15 @@ const ONGLETS = [
     icone: IconCardSend,
   },
   {
-    href: "/compte",
-    label: "Compte",
+    href: "/plus",
+    label: "Menu",
     estActif: (pathname: string) =>
-      pathname === "/compte" ||
       pathname === "/plus" ||
+      pathname === "/compte" ||
       pathname.startsWith("/parametres") ||
       pathname.startsWith("/devis-clients") ||
       pathname.startsWith("/factures-clients") ||
-      pathname.startsWith("/clients") ||
-      pathname.startsWith("/coffre") ||
-      pathname.startsWith("/veille") ||
-      pathname.startsWith("/analyses") ||
-      pathname.startsWith("/chantiers"),
+      pathname.startsWith("/clients"),
     icone: User,
   },
 ];

@@ -10,7 +10,7 @@ import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 export default function FacturationClientsPage() {
   return (
     <div>
-      <MobilePageHeader title="Facturation électronique" subtitle="Bientôt disponible" backHref="/plus" />
+      <MobilePageHeader title="Facturation électronique" subtitle="Bientôt disponible" backHref="/devis-clients" />
       <div className="mb-4 lg:hidden">
         <BtnPrimary href="/factures-clients" className="w-full justify-center rounded-full">
           Voir mes factures clients

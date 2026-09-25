@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { UploadIcon } from "lucide-react";
+import { filtreDocumentsDistributeur, filtreDocumentsSuiviFournisseur } from "@/lib/filtreDocumentsDistributeur";
+import { documentComptePourSuiviFournisseur } from "@/lib/heuristiqueNonNegoce";
 
 const formaterEuros = (valeur: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(valeur);
@@ -70,12 +72,18 @@ export default async function FournisseursPage() {
   const [depenses, documents, alertes, utilisateur, enseignesPerso] = await Promise.all([
     calculerDepensesParDistributeur(userId),
     prisma.document.findMany({
-      where: { userId, distributorNorm: { not: null } },
+      where: {
+        userId,
+        distributorNorm: { not: null },
+        ...filtreDocumentsDistributeur,
+        ...filtreDocumentsSuiviFournisseur,
+      },
       select: {
         distributor: true,
         distributorNorm: true,
         documentDate: true,
         createdAt: true,
+        rawExtraction: true,
       },
       orderBy: [{ documentDate: "desc" }, { createdAt: "desc" }],
     }),
@@ -93,7 +101,7 @@ export default async function FournisseursPage() {
 
   const metaParNorm = new Map<string, { distributor: string; count: number; dernier: Date | null }>();
   for (const doc of documents) {
-    if (!doc.distributorNorm) continue;
+    if (!doc.distributorNorm || !documentComptePourSuiviFournisseur(doc.rawExtraction)) continue;
     const existant = metaParNorm.get(doc.distributorNorm);
     if (existant) {
       existant.count += 1;

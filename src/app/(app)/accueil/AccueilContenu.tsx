@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { chargerDonneesDashboardAccueil } from "@/lib/dashboardAccueil";
+import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
 import type { EtatOnboarding } from "@/lib/onboarding";
 import { ObjectifDistributeur } from "../depenses/ObjectifDistributeur";
 import { ExportBouton } from "../depenses/ExportBouton";
@@ -62,8 +63,12 @@ export async function AccueilContenu({ userId, etatOnboarding }: Props) {
   try {
     [donnees, aVerifier, documentsEnCours, utilisateur, etatQuota] = await Promise.all([
       chargerDonneesDashboardAccueil(userId),
-      prisma.document.count({ where: { userId, status: "NEEDS_REVIEW" } }),
-      prisma.document.count({ where: { userId, status: "PROCESSING" } }),
+      prisma.document.count({
+        where: { userId, status: "NEEDS_REVIEW", ...filtreDocumentsDistributeur },
+      }),
+      prisma.document.count({
+        where: { userId, status: "PROCESSING", ...filtreDocumentsDistributeur },
+      }),
       prisma.user.findUnique({
         where: { id: userId },
         select: { plan: true, subscriptionStatus: true },

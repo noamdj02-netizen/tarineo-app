@@ -8,6 +8,7 @@ import { MobilePageHeader } from "@/components/tarineo/mobile/MobilePageHeader";
 import { LABELS_TYPE } from "@/lib/documentLabels";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { ImportDocument } from "../documents/ImportDocument";
+import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
 
 function cleMois(date: Date): string {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -25,7 +26,7 @@ export default async function CoffrePage() {
 
   const donneesUserId = await idDonneesUtilisateur(session.user.id);
   const documents = await prisma.document.findMany({
-    where: { userId: donneesUserId },
+    where: { userId: donneesUserId, ...filtreDocumentsDistributeur },
     orderBy: [{ documentDate: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
     select: {
       id: true,
@@ -51,7 +52,7 @@ export default async function CoffrePage() {
 
   return (
     <div>
-      <MobilePageHeader title="Mon coffre" subtitle="Archives par mois" backHref="/plus" />
+      <MobilePageHeader title="Mon coffre" subtitle="Archives par mois" backHref="/documents" />
       <div className="mb-4 lg:hidden">
         <ImportDocument label="Ajouter un document" className="w-full justify-center rounded-full" />
       </div>

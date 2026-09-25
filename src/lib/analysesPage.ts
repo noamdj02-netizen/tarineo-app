@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
 import { TYPES_ACHAT_REEL } from "@/lib/documentLabels";
+import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
+import { filtreDocumentHorsBrouillon } from "@/lib/filtreBrouillonDocument";
 import { listerFournisseursUtilisateur, couleurDonutFournisseur } from "@/lib/fournisseursPage";
 
 export type PeriodeAnalyses = 3 | 6 | 12;
@@ -54,6 +56,19 @@ function cleMois(date: Date): string {
 function labelMoisCourt(cle: string): string {
   const [, m] = cle.split("-").map(Number);
   return MOIS_COURTS[m - 1] ?? cle;
+}
+
+function impactEurosSurPeriode(
+  alertes: { payload: import("@prisma/client").Prisma.JsonValue }[],
+  lignes: { documentId: string; reference: string; quantity: unknown }[],
+): number {
+  const payloads = parserPayloadsAlertesHausse(alertes);
+  const quantiteParCle = new Map(lignes.map((l) => [`${l.documentId}::${l.reference}`, Number(l.quantity)]));
+  const total = payloads.reduce((somme, p) => {
+    const quantite = quantiteParCle.get(`${p.documentId}::${p.reference}`) ?? 1;
+    return somme + (p.ecartEuros ?? 0) * quantite;
+  }, 0);
+  return Math.round(total * 100) / 100;
 }
 
 /** Catégorie approximative à partir de la désignation produit. */
@@ -206,7 +221,8 @@ async function chargerProduitsRecents(userId: string, debut: Date): Promise<Prod
 export async function chargerDonneesAnalyses(userId: string, periodeMois: PeriodeAnalyses = 6) {
   const debut = debutPeriode(periodeMois);
 
-  const [fournisseurs, alertes, historiquePrix, produitsRecents] = await Promise.all([
+  const [fournisseurs, alertes, historiquePrix, produitsRecents, nbHaussesActives, nbAVerifier] =
+    await Promise.all([
     listerFournisseursUtilisateur(userId),
     prisma.alert.findMany({
       where: {
@@ -229,7 +245,30 @@ export async function chargerDonneesAnalyses(userId: string, periodeMois: Period
       orderBy: { documentDate: "asc" },
     }),
     chargerProduitsRecents(userId, debut),
+    prisma.alert.count({
+      where: { userId, type: "PRICE_INCREASE", seenAt: null },
+    }),
+    prisma.document.count({
+      where: {
+        userId,
+        status: "NEEDS_REVIEW",
+        ...filtreDocumentsDistributeur,
+        ...filtreDocumentHorsBrouillon,
+      },
+    }),
   ]);
+
+  const alertesParseesPeriode = parserPayloadsAlertesHausse(alertes);
+  const documentIdsAlertes = [...new Set(alertesParseesPeriode.map((p) => p.documentId))];
+  const lignesAlertes =
+    documentIdsAlertes.length > 0
+      ? await prisma.lineItem.findMany({
+          where: { documentId: { in: documentIdsAlertes } },
+          select: { documentId: true, reference: true, quantity: true },
+        })
+      : [];
+  const impactHaussesEuros = impactEurosSurPeriode(alertes, lignesAlertes);
+  const nbHaussesPeriode = alertesParseesPeriode.filter((p) => (p.ecartPourcent ?? 0) > 0).length;
 
   const totalDepenses = fournisseurs.reduce((s, f) => s + f.depenses, 0);
 
@@ -276,6 +315,10 @@ export async function chargerDonneesAnalyses(userId: string, periodeMois: Period
     evolutionPrix,
     produitsRecents,
     periodeMois,
+    impactHaussesEuros,
+    nbHaussesPeriode,
+    nbHaussesActives,
+    nbAVerifier,
     aDesDonnees: totalDepenses > 0 || hausses.length > 0 || produitsRecents.length > 0,
   };
 }

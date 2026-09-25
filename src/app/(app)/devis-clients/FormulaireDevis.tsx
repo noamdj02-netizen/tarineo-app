@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { WizardSteps } from "@/components/tarineo/WizardSteps";
 import type { SuggestionPrix } from "@/lib/suggestionPrix";
 import { RechercheClient } from "./RechercheClient";
-import { PRESETS_CONDITIONS_PAIEMENT, PRESETS_VALIDITE_JOURS } from "@/lib/devisClients";
+import { PRESETS_CONDITIONS_PAIEMENT, PRESETS_VALIDITE_JOURS } from "@/lib/devisClientsConstants";
 
 // Étapes du wizard de création/modification. L'étape 1 (IA) reste facultative : on peut
 // la traverser sans rien écrire et saisir les lignes à la main à l'étape 3.

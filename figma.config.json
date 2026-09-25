@@ -1,0 +1,9 @@
+{
+  "codeConnect": {
+    "include": ["src/**/*.figma.ts", "src/components/**/*.figma.ts"],
+    "parser": "react"
+  },
+  "documentUrlSubstitutions": {
+    "FIGMA_FILE_TARINEO": "https://www.figma.com/design/TvO91gJNuCUY5YJ7X52FTY/Tarineo"
+  }
+}

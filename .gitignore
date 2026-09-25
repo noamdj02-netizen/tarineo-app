@@ -32,6 +32,9 @@ www.tarineo.com-audit/
 # figma capture (session navigateur locale)
 .figma-capture-profile/
 
+# projet Next de test local (hors produit Tarineo)
+/mon-app-test/
+
 # misc
 .DS_Store
 *.pem

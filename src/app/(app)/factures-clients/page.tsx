@@ -49,7 +49,7 @@ export default async function FacturesClientsPage() {
 
   return (
     <div>
-      <MobilePageHeader title="Factures clients" subtitle="Depuis vos devis acceptés" />
+      <MobilePageHeader title="Factures clients" subtitle="Ventes clients — émises depuis vos devis" />
       <div className="mb-4 lg:hidden">
         <BtnPrimary href="/devis-clients" className="w-full justify-center rounded-full">
           Voir les devis

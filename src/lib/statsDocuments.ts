@@ -1,6 +1,8 @@
 import type { DocumentType, Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
+import { filtreDocumentsDistributeur } from "@/lib/filtreDocumentsDistributeur";
+import { filtreDocumentHorsBrouillon } from "@/lib/filtreBrouillonDocument";
 
 export type RepartitionDistributeur = {
   norm: string;
@@ -35,7 +37,9 @@ export async function chargerStatsDocuments(
   }
 ): Promise<StatsDocuments> {
   const maintenant = options.maintenant ?? new Date();
-  const where: Prisma.DocumentWhereInput = options.type ? { userId, type: options.type } : { userId };
+  const where: Prisma.DocumentWhereInput = options.type
+    ? { userId, type: options.type, ...filtreDocumentsDistributeur, ...filtreDocumentHorsBrouillon }
+    : { userId, ...filtreDocumentsDistributeur, ...filtreDocumentHorsBrouillon };
 
   const total = await prisma.document.count({ where });
   if (total === 0) {

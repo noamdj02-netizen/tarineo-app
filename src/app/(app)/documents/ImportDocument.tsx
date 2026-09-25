@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UploadIcon } from "lucide-react";
 import { estAppareilMobile } from "@/lib/mobile";
+import { hrefApresImportDocuments } from "@/lib/importNavigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,6 +43,7 @@ export function ImportDocument({
 }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [importSession, setImportSession] = useState(0);
   const urlNettoyee = useRef(false);
 
   // Laisse la transition de page « import » se terminer avant d'ouvrir la modale.
@@ -66,13 +68,37 @@ export function ImportDocument({
     router.replace(suffixe ? `/documents?${suffixe}` : "/documents", { scroll: false });
   }, [autoOpen, router]);
 
-  function apresImport() {
-    onSucces?.();
+  function naviguerApresImport(destination: string) {
+    const depart = window.location.pathname + window.location.search;
+    router.push(destination);
+    router.refresh();
+    window.setTimeout(() => {
+      const actuel = window.location.pathname + window.location.search;
+      if (actuel === depart) {
+        window.location.assign(destination);
+      }
+    }, 350);
+  }
+
+  function apresImport(nbSucces: number, documentIds: string[]) {
+    if (nbSucces === 0 || documentIds.length === 0) return;
     setOpen(false);
+    onSucces?.();
+    naviguerApresImport(hrefApresImportDocuments(documentIds));
+  }
+
+  function ouvrirDocumentExistant(documentId: string) {
+    setOpen(false);
+    naviguerApresImport(`/documents/${documentId}`);
+  }
+
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) setImportSession((s) => s + 1);
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         nativeButton={true}
         render={
@@ -96,13 +122,15 @@ export function ImportDocument({
           </DialogDescription>
         </DialogHeader>
         <FormulaireUpload
+          key={importSession}
           quotaAtteint={quotaAtteint}
           maxFichiers={maxFichiers}
           variantCompact
           variantPc={!cameraActive}
           autoOuvrirCamera={cameraActive && open}
           autoEnvoiApresCapture={cameraActive}
-          onImportReussi={() => apresImport()}
+          onImportReussi={apresImport}
+          onVoirDocumentExistant={ouvrirDocumentExistant}
         />
       </DialogContent>
     </Dialog>

@@ -124,16 +124,7 @@ export function OnboardingWizard({
             <QuotaStrip etat={etatQuota} />
           </div>
           <div className="mt-5">
-            <FormulaireUpload
-              modeOnboarding
-              variantPc
-              variantCompact
-              maxFichiers={maxFichiersImport}
-              onImportReussi={(count) => {
-                setNbDocuments(count);
-                allerA("analyse");
-              }}
-            />
+            <FormulaireUpload modeOnboarding variantPc variantCompact maxFichiers={maxFichiersImport} />
           </div>
         </div>
       )}

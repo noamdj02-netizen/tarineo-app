@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { filtreDocumentsDistributeur, filtreDocumentsSuiviFournisseur } from "@/lib/filtreDocumentsDistributeur";
 import { calculerDepensesParDistributeur } from "@/lib/depenses";
 import { parserPayloadsAlertesHausse } from "@/lib/comparaisonPrix";
 import {
@@ -46,7 +47,13 @@ export async function listerFournisseursUtilisateur(userId: string): Promise<Fou
   const depenses = await calculerDepensesParDistributeur(userId);
   const comptesDocs = await prisma.document.groupBy({
     by: ["distributorNorm"],
-    where: { userId, distributorNorm: { not: null }, status: "VALIDATED" },
+    where: {
+      userId,
+      distributorNorm: { not: null },
+      status: "VALIDATED",
+      ...filtreDocumentsDistributeur,
+      ...filtreDocumentsSuiviFournisseur,
+    },
     _count: { _all: true },
     _max: { documentDate: true },
   });

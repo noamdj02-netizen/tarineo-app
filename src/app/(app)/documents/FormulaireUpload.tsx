@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileImportQueue } from "./FileImportQueue";
 import { IconeImportAnimee, OverlayImportAnime } from "./IconeImportAnimee";
 import { envoyerUnDocument } from "./actions";
 import type { ErreurEnregistrementDocument, DoublonPotentiel } from "@/lib/documents";
 import { MAX_FICHIERS_PAR_LOT } from "@/lib/quota";
+import { hrefApresImportDocuments, urlAnalysesEnCours } from "@/lib/importNavigation";
 
 const TAILLE_MAX_OCTETS = 20 * 1024 * 1024; // 20 Mo — doit rester synchronisé avec src/lib/documents.ts
 const ENVOIS_PARALLELES_MAX = 3;
@@ -68,6 +71,7 @@ export function FormulaireUpload({
   variantCompact = false,
   maxFichiers,
   onImportReussi,
+  onVoirDocumentExistant,
 }: {
   quotaAtteint?: boolean;
   /** Plafond de la file d'attente (défaut 150). Réduit si le quota utilisateur est plus bas. */
@@ -88,12 +92,16 @@ export function FormulaireUpload({
   /** Panneau latéral : pas de choix de type (l'IA reclasse après analyse). */
   variantCompact?: boolean;
   /** Wizard onboarding : callback au lieu d'une navigation vers /onboarding/analyse. */
-  onImportReussi?: (nbSucces: number, documentId?: string) => void;
+  /** Fourni par la modale Importer : fermeture + navigation côté parent (évite blocage Radix Dialog). */
+  onImportReussi?: (nbSucces: number, documentIds: string[]) => void;
+  /** Doublon : ouvrir le document déjà enregistré (ferme la modale côté parent). */
+  onVoirDocumentExistant?: (documentId: string) => void;
 }) {
   const router = useRouter();
   const inputPhotoRef = useRef<HTMLInputElement>(null);
   const inputFichierRef = useRef<HTMLInputElement>(null);
   const autoEnvoiDeclencheRef = useRef(false);
+  const idsEnvoyesRef = useRef<string[]>([]);
   const [type, setType] = useState<"DEVIS" | "FACTURE" | "BON_COMMANDE" | "BON_ENLEVEMENT">(typeInitial ?? "DEVIS");
   const typeEnvoi = variantCompact ? "DEVIS" : type;
   const [fichiers, setFichiers] = useState<FichierEnvoi[]>([]);
@@ -104,12 +112,13 @@ export function FormulaireUpload({
   // déclenche dragleave puis dragenter juste après, ce qui ferait clignoter
   // l'état actif avec un booléen naïf.
   const compteurGlisserRef = useRef(0);
+  const [apercuErreurId, setApercuErreurId] = useState<string | null>(null);
+  const [avertissementLimite, setAvertissementLimite] = useState<string | null>(null);
+  const [redirectionEnCours, setRedirectionEnCours] = useState(false);
   // Le formulaire est désactivé aussi bien pendant un envoi que lorsque le quota
   // du jour est déjà épuisé au chargement de la page (évite de laisser l'artisan
   // sélectionner des fichiers pour se les voir refuser un par un à l'envoi).
-  const enCoursOuBloque = enCours || quotaAtteint;
-  const [apercuErreurId, setApercuErreurId] = useState<string | null>(null);
-  const [avertissementLimite, setAvertissementLimite] = useState<string | null>(null);
+  const enCoursOuBloque = enCours || quotaAtteint || redirectionEnCours;
   const plafondFichiers = Math.max(
     1,
     Math.min(maxFichiers ?? MAX_FICHIERS_PAR_LOT, MAX_FICHIERS_PAR_LOT)
@@ -229,6 +238,7 @@ export function FormulaireUpload({
 
     if (resultat.succes) {
       majStatut(item.id, { statut: "succes", documentId: resultat.documentId });
+      idsEnvoyesRef.current.push(resultat.documentId);
       return resultat.documentId;
     }
     if (resultat.erreur === "doublon_detecte") {
@@ -246,18 +256,42 @@ export function FormulaireUpload({
     return null;
   }
 
+  function finaliserApresEnvoisReussis(ids: string[]) {
+    const idsUniques = [...new Set(ids.filter(Boolean))];
+    if (idsUniques.length === 0) return;
+
+    setFichiers((prev) => prev.filter((f) => f.statut !== "succes"));
+    setRedirectionEnCours(true);
+
+    if (onImportReussi) {
+      onImportReussi(idsUniques.length, idsUniques);
+      return;
+    }
+
+    const destination =
+      modeOnboarding || redirigerVersResume
+        ? urlAnalysesEnCours(idsUniques, "/onboarding/resume")
+        : hrefApresImportDocuments(idsUniques);
+    router.push(destination);
+  }
+
   // Retenté individuellement (pas via le bouton "Envoyer" principal, qui ne traite
   // que la file "en_attente") une fois que l'artisan a confirmé vouloir passer outre
   // l'avertissement de doublon.
   async function envoyerQuandMeme(id: string) {
     const item = fichiers.find((f) => f.id === id);
-    if (!item) return;
-    await envoyerFichier(item, { ignorerDoublon: true });
-    router.refresh();
+    if (!item || enCours) return;
+    setEnCours(true);
+    const documentId = await envoyerFichier(item, { ignorerDoublon: true });
+    setEnCours(false);
+    if (documentId) {
+      finaliserApresEnvoisReussis([documentId]);
+    }
   }
 
   async function lancerEnvoi() {
     setEnCours(true);
+    idsEnvoyesRef.current = [];
 
     const aEnvoyer = fichiers.filter((f) => f.statut === "en_attente");
     setProgression({ traites: 0, total: aEnvoyer.length });
@@ -278,28 +312,18 @@ export function FormulaireUpload({
 
     setEnCours(false);
     setProgression(null);
-    // On retire les envois réussis de la liste ; les échecs et doublons restent visibles.
-    setFichiers((prev) => prev.filter((f) => f.statut !== "succes"));
     if (inputPhotoRef.current) inputPhotoRef.current.value = "";
     if (inputFichierRef.current) inputFichierRef.current.value = "";
 
-    const succesCount = documentIdsEnvoyes.length;
-    const dernierDocumentId = documentIdsEnvoyes[documentIdsEnvoyes.length - 1];
+    const idsUniques = [...new Set([...documentIdsEnvoyes, ...idsEnvoyesRef.current])];
+    idsEnvoyesRef.current = [];
 
-    if ((modeOnboarding || redirigerVersResume) && succesCount > 0) {
-      onImportReussi?.(succesCount, dernierDocumentId);
-      if (!onImportReussi) {
-        router.push(`/onboarding/analyse?n=${succesCount}`);
-      }
+    if (idsUniques.length > 0) {
+      finaliserApresEnvoisReussis(idsUniques);
       return;
     }
 
-    if (succesCount > 0 && dernierDocumentId) {
-      onImportReussi?.(succesCount, dernierDocumentId);
-      router.push(`/documents/${dernierDocumentId}`);
-      return;
-    }
-
+    setFichiers((prev) => prev.filter((f) => f.statut !== "succes"));
     router.refresh();
   }
 
@@ -340,7 +364,8 @@ export function FormulaireUpload({
       {!variantCompact && (
         <fieldset>
           <legend className="mb-3 text-sm font-normal text-muted-foreground">
-            Type de document (l&apos;IA corrige automatiquement si besoin)
+            Indication seulement — l&apos;IA lit le document, détecte devis / facture / bon chez votre distributeur,
+            puis le range dans la section correspondante.
           </legend>
           <div className="flex flex-wrap gap-2">
             {OPTIONS_TYPE.map((option) => (
@@ -555,92 +580,23 @@ export function FormulaireUpload({
       )}
 
       {avertissementLimite && (
-        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          {avertissementLimite}
-        </p>
+        <Alert>
+          <AlertDescription>{avertissementLimite}</AlertDescription>
+        </Alert>
       )}
 
-      {fichiers.length > 0 && (
-        <p className="text-xs text-muted-foreground">
-          {fichiers.length} / {plafondFichiers} fichier{fichiers.length > 1 ? "s" : ""} sélectionné
-          {fichiers.length > 1 ? "s" : ""}.
-        </p>
-      )}
+      <FileImportQueue
+        fichiers={fichiers}
+        plafondFichiers={plafondFichiers}
+        enCours={enCours}
+        progression={progression}
+        onRetirer={retirerFichier}
+        onEnvoyerQuandMeme={envoyerQuandMeme}
+        onVoirDocumentExistant={onVoirDocumentExistant}
+      />
 
-      {fichiers.length > 0 && (
-        <ul className="space-y-1.5 text-sm">
-          {fichiers.map((f) => (
-            <li
-              key={f.id}
-              className={`rounded-md border px-3 py-2 ${
-                f.statut === "doublon" ? "border-amber-200 bg-amber-50" : "border-[var(--border)]"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-4">
-                <span className="truncate">{f.file.name}</span>
-                <span className="flex shrink-0 items-center gap-2">
-                  <span
-                    className={
-                      f.statut === "erreur"
-                        ? "text-xs text-red-400"
-                        : f.statut === "doublon"
-                          ? "text-xs text-amber-400"
-                          : f.statut === "succes"
-                            ? "text-xs text-green-400"
-                            : "text-xs text-muted-foreground"
-                    }
-                  >
-                    {f.statut === "en_attente" && "En attente"}
-                    {f.statut === "envoi" && "Envoi..."}
-                    {f.statut === "succes" && "Envoyé"}
-                    {f.statut === "erreur" && (f.message ?? "Erreur")}
-                    {f.statut === "doublon" && "⚠ Doublon ?"}
-                  </span>
-                  {!enCours && (
-                    <button
-                      type="button"
-                      onClick={() => retirerFichier(f.id)}
-                      className="text-muted-foreground hover:text-red-400"
-                      title="Retirer"
-                      aria-label={`Retirer ${f.file.name}`}
-                    >
-                      ✕
-                    </button>
-                  )}
-                </span>
-              </div>
-              {f.statut === "doublon" && (
-                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-amber-200 pt-2">
-                  <p className="text-xs text-amber-800">{f.message}</p>
-                  <button
-                    type="button"
-                    onClick={() => envoyerQuandMeme(f.id)}
-                    className="shrink-0 rounded-full border border-amber-400 bg-white px-3 py-1 text-xs font-medium text-amber-800 hover:bg-amber-50"
-                  >
-                    Envoyer quand même
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {progression && (
-        <div>
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>
-              {progression.traites}/{progression.total} document{progression.total > 1 ? "s" : ""} traité
-              {progression.traites > 1 ? "s" : ""}
-            </span>
-          </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E9EB]">
-            <div
-              className="h-full rounded-full bg-accent transition-all duration-300"
-              style={{ width: `${progression.total > 0 ? (progression.traites / progression.total) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
+      {redirectionEnCours && (
+        <p className="text-center text-sm font-medium text-primary">Ouverture de l&apos;analyse…</p>
       )}
 
       {variantCompact ? (
@@ -654,7 +610,11 @@ export function FormulaireUpload({
               : "bg-[#ec5821] text-white hover:bg-[#d44d1a]"
           }`}
         >
-          {enCours ? "Envoi en cours..." : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
+          {redirectionEnCours
+            ? "Redirection…"
+            : enCours
+              ? "Envoi en cours..."
+              : `Envoyer${enAttenteCount > 1 ? ` (${enAttenteCount} fichiers)` : ""}`}
         </button>
       ) : (
         <Button

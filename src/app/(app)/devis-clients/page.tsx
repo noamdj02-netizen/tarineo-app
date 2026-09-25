@@ -30,7 +30,7 @@ export default async function DevisClientsPage({ searchParams }: { searchParams:
   if (tousLesDevis.length === 0) {
     return (
       <div>
-        <MobilePageHeader title="Devis clients" subtitle="Créer, modifier, transformer" />
+        <MobilePageHeader title="Devis clients" subtitle="Ventes clients — propositions pour vos clients" />
         <div className="flex flex-col gap-3 lg:hidden">
           <MobileMenuRow href="/devis-clients/nouveau" title="Nouveau devis" description="Manuel ou assisté par IA" />
           <p className="px-1 text-center text-sm text-muted-foreground">
@@ -57,7 +57,7 @@ export default async function DevisClientsPage({ searchParams }: { searchParams:
 
   return (
     <div>
-      <MobilePageHeader title="Devis clients" subtitle="Créer, modifier, transformer" />
+      <MobilePageHeader title="Devis clients" subtitle="Ventes clients — propositions pour vos clients" />
       <div className="mb-4 lg:hidden">
         <BtnPrimary href="/devis-clients/nouveau" className="w-full justify-center rounded-full">
           <IconPlus /> Nouveau devis

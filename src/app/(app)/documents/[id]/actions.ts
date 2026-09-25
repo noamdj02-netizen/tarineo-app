@@ -258,6 +258,35 @@ export async function reouvrirDocumentPourCorrection(documentId: string): Promis
   return { succes: true };
 }
 
+export async function conserverBrouillonDocument(documentId: string): Promise<ResultatActionDocument> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return { succes: false, erreur: "Non authentifié." };
+  }
+
+  const document = await prisma.document.findFirst({
+    where: { id: documentId, userId: session.user.id },
+    select: { id: true, brouillonExpireAt: true },
+  });
+  if (!document) {
+    return { succes: false, erreur: "Document introuvable." };
+  }
+  if (!document.brouillonExpireAt) {
+    return { succes: true };
+  }
+
+  await prisma.document.update({
+    where: { id: documentId },
+    data: { brouillonExpireAt: null },
+  });
+
+  revalidatePath(`/documents/${documentId}`);
+  revalidatePath("/documents");
+  revalidatePath("/accueil");
+  revalidatePath("/analyses");
+  return { succes: true };
+}
+
 export async function supprimerDocument(documentId: string): Promise<ResultatActionDocument> {
   const session = await auth();
   if (!session?.user?.id) {
