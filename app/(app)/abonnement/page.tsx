@@ -12,6 +12,7 @@ import {
   type Limits,
   type PlanId,
 } from "@/lib/billing/plans";
+import { fulfillCheckoutSession } from "@/lib/billing/stripe-events";
 import { isStripeConfigured } from "@/lib/billing/stripe";
 import { getDb } from "@/lib/db";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const ERRORS: Record<string, string> = {
   config: "Le paiement n’est pas encore branché sur ce serveur (clés Stripe manquantes).",
   deja: "Tu as déjà un abonnement actif.",
   complet: "Les places Fondateur sont toutes prises. Les formules Création et Pro restent disponibles.",
+  prix: "Les tarifs Stripe ne sont pas encore créés. Réessaie dans un instant.",
   stripe: "Stripe n’a pas répondu. Réessaie dans un instant.",
 };
 
@@ -38,11 +40,18 @@ function priceLabel(plan: PlanId, interval: "month" | "year") {
 export default async function AbonnementPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string; interval?: string; ok?: string; erreur?: string }>;
+  searchParams: Promise<{
+    plan?: string;
+    interval?: string;
+    ok?: string;
+    erreur?: string;
+    session_id?: string;
+  }>;
 }) {
   const q = await searchParams;
   const db = await getDb();
   if (!db) return null;
+  if (q.ok && q.session_id) await fulfillCheckoutSession(q.session_id, db.user.id);
 
   const head = { count: "exact" as const, head: true };
   const [info, ai, projects, schemas, seats] = await Promise.all([

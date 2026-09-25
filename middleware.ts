@@ -29,6 +29,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // Tout sauf les fichiers statiques, les icônes, le manifest et le service worker.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|llms.txt|google0f1046d02ef1bfa1.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|html)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons/|manifest.webmanifest|sw.js|llms.txt|google0f1046d02ef1bfa1.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|html|mp4|webm|m4v|mp3)$).*)",
   ],
 };

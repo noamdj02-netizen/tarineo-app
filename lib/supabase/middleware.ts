@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/mentions-legales",
   "/cgv",
   "/confidentialite",
+  "/api/billing/webhook",
 ];
 /** Pages de connexion : un visiteur déjà connecté part directement dans l'app. */
 const AUTH_PAGES = ["/login", "/inscription"];
@@ -78,7 +79,10 @@ export async function updateSession(request: NextRequest) {
   const openAccessBypass = isOpenAccess() && !user && !requireLogin;
 
   if (openAccessBypass) {
-    if (AUTH_PAGES.includes(request.nextUrl.pathname)) {
+    const path = request.nextUrl.pathname;
+    const adminLogin = path === "/login" && request.nextUrl.searchParams.get("next") === "/admin";
+    if (adminLogin) return response;
+    if (AUTH_PAGES.includes(path)) {
       const url = new URL("/accueil", request.url);
       const q = request.nextUrl.searchParams.get("q");
       if (q) url.searchParams.set("ask", q.slice(0, 500));
@@ -128,7 +132,13 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && needsOnboarding && !pathname.startsWith("/onboarding") && !pathname.startsWith("/auth")) {
+  if (
+    user &&
+    needsOnboarding &&
+    pathname !== "/admin" &&
+    !pathname.startsWith("/onboarding") &&
+    !pathname.startsWith("/auth")
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/onboarding";
     url.search = "";

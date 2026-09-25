@@ -26,6 +26,7 @@ export default function robots(): MetadataRoute.Robots {
           "/composants-2",
           "/abonnement",
           "/automatisations",
+          "/admin",
         ],
       },
     ],

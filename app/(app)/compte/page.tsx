@@ -2,6 +2,7 @@ import { ArrowLeft, CreditCard, Languages, Shield } from "lucide-react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PageHead } from "@/components/shell/page-head";
+import { sessionIsOwner } from "@/lib/admin/guard";
 import { getPlan } from "@/lib/billing/plan";
 import { FOUNDER, PLAN_LABEL, PRO, STARTER } from "@/lib/billing/plans";
 import { getViewer } from "@/lib/session";
@@ -20,7 +21,7 @@ const TIPS = [
 ];
 
 export default async function ComptePage() {
-  const [viewer, plan] = await Promise.all([getViewer(), getPlan()]);
+  const [viewer, plan, owner] = await Promise.all([getViewer(), getPlan(), sessionIsOwner()]);
   if (!viewer) return null;
   const info = plan ?? {
     plan: "free" as const,
@@ -52,6 +53,15 @@ export default async function ComptePage() {
       </PageHead>
 
       <div className="flex flex-col gap-4">
+        {owner ? (
+          <Link
+            href="/admin"
+            className="card-soft flex min-h-14 items-center justify-between px-5 text-[15px] font-medium"
+          >
+            Analyses
+            <span className="text-[13px] font-normal text-muted-foreground">Comptes et abonnements</span>
+          </Link>
+        ) : null}
         <div id="configuration" className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-3">/ Configuration initiale ///</p>
           <p className="text-[14.5px] leading-relaxed text-muted-foreground">

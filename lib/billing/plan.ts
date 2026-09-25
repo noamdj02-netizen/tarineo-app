@@ -53,15 +53,16 @@ async function load(db: Db): Promise<PlanInfo> {
     .eq("user_id", db.user.id)
     .maybeSingle();
 
-  const hasPaidSubscription = Boolean(data?.stripe_subscription_id);
+  const hasStripeSub = Boolean(data?.stripe_subscription_id);
   const periodEndMs = data?.current_period_end ? Date.parse(data.current_period_end) : NaN;
   const trialLive =
     data?.status === "trialing" &&
-    !hasPaidSubscription &&
+    !hasStripeSub &&
     Number.isFinite(periodEndMs) &&
     periodEndMs > Date.now();
   const paidLive =
-    PAID_STATUSES.has(data?.status ?? "") || (data?.status === "trialing" && hasPaidSubscription);
+    PAID_STATUSES.has(data?.status ?? "") || (data?.status === "trialing" && hasStripeSub);
+  const hasPaidSubscription = paidLive;
   const paidStarter = data?.plan === "starter" && paidLive;
   const paidPro = data?.plan === "pro" && paidLive;
 

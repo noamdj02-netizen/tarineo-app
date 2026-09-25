@@ -4,6 +4,7 @@ export { AuthSignupEmail } from "./auth-signup";
 export { AuthResetPasswordEmail } from "./auth-reset-password";
 export { AuthEmailChangeEmail } from "./auth-email-change";
 export { BillingProWelcomeEmail } from "./billing-pro-welcome";
+export { BillingStarterWelcomeEmail } from "./billing-starter-welcome";
 export { BillingFounderEmail } from "./billing-founder";
 export { BillingLoyaltyEmail } from "./billing-loyalty";
 export { BillingPaymentFailedEmail } from "./billing-payment-failed";

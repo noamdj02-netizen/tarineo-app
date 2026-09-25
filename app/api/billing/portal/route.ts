@@ -14,7 +14,9 @@ export async function POST(request: NextRequest) {
     .select("stripe_customer_id")
     .eq("user_id", db.user.id)
     .maybeSingle();
-  if (!data?.stripe_customer_id) return NextResponse.redirect(`${origin}/prix`, 303);
+  if (!data?.stripe_customer_id) {
+    return NextResponse.redirect(`${origin}/abonnement?erreur=stripe`, 303);
+  }
 
   try {
     const session = await getStripe().billingPortal.sessions.create({

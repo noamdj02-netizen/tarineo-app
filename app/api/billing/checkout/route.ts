@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
           ? { customer }
           : { customer_email: db.user.email, customer_creation: "always" as const }),
         locale: "fr",
-        success_url: `${origin}/abonnement?ok=founder`,
+        success_url: `${origin}/abonnement?ok=founder&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/abonnement?plan=founder`,
       });
       return NextResponse.redirect(session.url!, 303);
@@ -74,12 +74,14 @@ export async function POST(request: NextRequest) {
       ...(customer ? { customer } : { customer_email: db.user.email }),
       allow_promotion_codes: true,
       locale: "fr",
-      success_url: `${origin}/abonnement?ok=${plan}`,
+      success_url: `${origin}/abonnement?ok=${plan}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/abonnement?plan=${plan}&interval=${interval}`,
     });
     return NextResponse.redirect(session.url!, 303);
   } catch (e) {
     console.error("[billing] checkout", e);
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("Prix Stripe introuvable")) return back("erreur=prix");
     return back("erreur=stripe");
   }
 }

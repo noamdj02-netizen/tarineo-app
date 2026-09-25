@@ -2,6 +2,7 @@
 // Tourne chez Supabase : la clé service role n'a pas besoin d'être sur Vercel.
 // Secrets : STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, RESEND_API_KEY (optionnel), EMAIL_FROM (optionnel).
 // Déployer sans vérification JWT : supabase functions deploy stripe-webhook --no-verify-jwt
+// En prod, le webhook Next.js `/api/billing/webhook` est la cible principale.
 
 import Stripe from "npm:stripe@22";
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -16,9 +17,14 @@ const admin = createClient(
 );
 
 // Mêmes paliers et clés que lib/billing/plans.ts et lib/billing/stripe.ts.
-const TIER_PRICE = { month: [15, 12, 9], year: [150, 120, 90] } as const;
+const LOYALTY = {
+  starter: { month: [15, 12, 9], year: [150, 120, 90] },
+  pro: { month: [30, 24, 18], year: [300, 240, 180] },
+} as const;
 type Interval = "month" | "year";
-const proLookupKey = (interval: Interval, tier: number) => `navpit_pro_${interval}_t${tier}`;
+type PaidPlan = "starter" | "pro";
+const planLookupKey = (plan: PaidPlan, interval: Interval, tier: number) =>
+  tier === 0 ? `navpit_${plan}_${interval}` : `navpit_${plan}_${interval}_t${tier}`;
 
 function tierFor(startedAt: Date, now = new Date()) {
   const months =
@@ -30,9 +36,45 @@ function tierFor(startedAt: Date, now = new Date()) {
 
 const iso = (s: number | null | undefined) => (s ? new Date(s * 1000).toISOString() : null);
 
+function customerId(ref: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null {
+  if (!ref) return null;
+  return typeof ref === "string" ? ref : ref.id;
+}
+
+function intervalOf(item: Stripe.SubscriptionItem | undefined): Interval {
+  return item?.price.recurring?.interval === "year" ? "year" : "month";
+}
+
+function planFromLookup(lookup: string, metaPlan?: string | null): PaidPlan {
+  if (lookup.startsWith("navpit_starter_") || metaPlan === "starter") return "starter";
+  return "pro";
+}
+
+function tierFromLookup(lookup: string) {
+  const m = lookup.match(/_t(\d)$/);
+  return m ? Number(m[1]) : 0;
+}
+
+function periodEnd(sub: Stripe.Subscription, item?: Stripe.SubscriptionItem) {
+  const fromItem = item?.current_period_end;
+  const fromSub = (sub as { current_period_end?: number }).current_period_end;
+  return iso(fromItem ?? fromSub);
+}
+
+function subscriptionRefFromInvoice(invoice: Stripe.Invoice): string | null {
+  const parent = invoice.parent;
+  const fromParent =
+    parent?.type === "subscription_details" ? parent.subscription_details?.subscription : null;
+  const legacy = (invoice as { subscription?: string | { id: string } | null }).subscription;
+  const ref = fromParent ?? legacy ?? null;
+  if (!ref) return null;
+  return typeof ref === "string" ? ref : ref.id;
+}
+
 async function userIdFor(sub: Stripe.Subscription): Promise<string | null> {
   if (sub.metadata?.user_id) return sub.metadata.user_id;
-  const customer = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+  const customer = customerId(sub.customer);
+  if (!customer) return null;
   const { data } = await admin
     .from("subscriptions")
     .select("user_id")
@@ -45,8 +87,7 @@ async function syncSubscription(sub: Stripe.Subscription) {
   const userId = await userIdFor(sub);
   if (!userId) return;
   const item = sub.items.data[0];
-  const interval = (item?.price.recurring?.interval === "year" ? "year" : "month") as Interval;
-  const tierMatch = item?.price.lookup_key?.match(/_t(\d)$/);
+  const lookup = item?.price.lookup_key ?? "";
 
   const { data: existing } = await admin
     .from("subscriptions")
@@ -57,42 +98,42 @@ async function syncSubscription(sub: Stripe.Subscription) {
   if (existing?.plan === "founder") return;
 
   const live = ["active", "trialing", "past_due"].includes(sub.status);
-  const lookup = item?.price.lookup_key ?? "";
-  const metaPlan = sub.metadata?.plan;
-  let plan: "free" | "starter" | "pro" = "free";
-  if (live) {
-    if (lookup.startsWith("navpit_starter_") || metaPlan === "starter") plan = "starter";
-    else plan = "pro";
-  }
+  const plan: "free" | PaidPlan = live ? planFromLookup(lookup, sub.metadata?.plan) : "free";
   await admin.from("subscriptions").upsert({
     user_id: userId,
-    stripe_customer_id: typeof sub.customer === "string" ? sub.customer : sub.customer.id,
+    stripe_customer_id: customerId(sub.customer),
     stripe_subscription_id: sub.id,
     plan,
     status: sub.status,
-    billing_interval: interval,
-    tier: tierMatch ? Number(tierMatch[1]) : 0,
+    billing_interval: intervalOf(item),
+    tier: tierFromLookup(lookup),
     started_at: iso(sub.start_date),
-    current_period_end: iso(item?.current_period_end),
+    current_period_end: periodEnd(sub, item),
     cancel_at_period_end: sub.cancel_at_period_end,
   });
 }
 
 /** À chaque facture payée : si l'anniversaire est passé, bascule sur le palier moins cher. */
 async function applyLoyalty(invoice: Stripe.Invoice) {
-  const ref = invoice.parent?.subscription_details?.subscription;
+  const ref = subscriptionRefFromInvoice(invoice);
   if (!ref) return;
-  const sub = await stripe.subscriptions.retrieve(typeof ref === "string" ? ref : ref.id);
+  const sub = await stripe.subscriptions.retrieve(ref);
   const item = sub.items.data[0];
-  if (!item?.price.lookup_key?.startsWith("navpit_pro_")) return;
+  const lookup = item?.price.lookup_key ?? "";
+  const plan: PaidPlan | null = lookup.startsWith("navpit_starter_")
+    ? "starter"
+    : lookup.startsWith("navpit_pro_")
+      ? "pro"
+      : null;
+  if (!plan || !item) return;
 
-  const interval = (item.price.recurring?.interval === "year" ? "year" : "month") as Interval;
-  const current = Number(item.price.lookup_key.match(/_t(\d)$/)?.[1] ?? 0);
+  const interval = intervalOf(item);
+  const current = tierFromLookup(lookup);
   const target = tierFor(new Date(sub.start_date * 1000));
   if (target <= current) return;
 
   const { data: prices } = await stripe.prices.list({
-    lookup_keys: [proLookupKey(interval, target)],
+    lookup_keys: [planLookupKey(plan, interval, target)],
     active: true,
     limit: 1,
   });
@@ -100,11 +141,10 @@ async function applyLoyalty(invoice: Stripe.Invoice) {
 
   const updated = await stripe.subscriptions.update(sub.id, {
     items: [{ id: item.id, price: prices[0].id }],
-    // la baisse s'applique à la prochaine facture, sans avoir ni prorata
     proration_behavior: "none",
   });
   await syncSubscription(updated);
-  await sendLoyaltyEmail(invoice.customer_email, interval, target);
+  await sendLoyaltyEmail(invoice.customer_email, plan, interval, target);
 }
 
 const APP_URL = Deno.env.get("APP_URL") ?? "https://www.navpit.com";
@@ -129,14 +169,19 @@ async function sendEmail(
   if (!res.ok) console.error("[stripe-webhook] email", subject, res.status);
 }
 
-async function sendLoyaltyEmail(to: string | null, interval: Interval, tier: number) {
-  const price = TIER_PRICE[interval][tier];
+async function sendLoyaltyEmail(
+  to: string | null,
+  plan: PaidPlan,
+  interval: Interval,
+  tier: number,
+) {
+  const price = LOYALTY[plan][interval][tier];
   const unit = interval === "month" ? "par mois" : "par an";
   const years = tier === 1 ? "un an" : "deux ans";
   await sendEmail(to, `Merci d’être là depuis ${years} : ton prix baisse`, {
     label: "Prix fidélité",
     title: `Ton prix passe à ${price} € ${unit}`,
-    body: `Tu es abonné à Navpit Pro depuis ${years}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien faire. Merci de ta confiance.`,
+    body: `Tu es abonné à Navpit depuis ${years}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien faire. Merci de ta confiance.`,
   });
 }
 
@@ -146,11 +191,12 @@ async function handle(event: Stripe.Event) {
       const s = event.data.object;
       const userId = s.client_reference_id ?? s.metadata?.user_id;
       if (!userId) return;
-      const customer = typeof s.customer === "string" ? s.customer : s.customer?.id ?? null;
+      const customer = customerId(s.customer);
       if (s.mode === "payment" && s.metadata?.plan === "founder" && s.payment_status === "paid") {
         await admin.from("subscriptions").upsert({
           user_id: userId,
           stripe_customer_id: customer,
+          stripe_subscription_id: null,
           plan: "founder",
           status: "lifetime",
           started_at: new Date().toISOString(),
@@ -175,13 +221,20 @@ async function handle(event: Stripe.Event) {
           typeof s.subscription === "string" ? s.subscription : s.subscription.id,
         );
         await syncSubscription(sub);
-        await sendEmail(s.customer_details?.email, "Bienvenue en Pro !", {
-          label: "Pro",
-          title: "Bienvenue en Pro",
-          body: "Projets illimités, 500 questions IA par mois, schémas illimités et agenda synchronisé. Et ton prix baissera à chaque anniversaire d’abonnement.",
-          ctaHref: `${APP_URL}/accueil`,
-          ctaLabel: "Ouvrir Navpit",
-        });
+        const starter = s.metadata?.plan === "starter";
+        await sendEmail(
+          s.customer_details?.email,
+          starter ? "Bienvenue en Création !" : "Bienvenue en Pro !",
+          {
+            label: starter ? "Création" : "Pro",
+            title: starter ? "Bienvenue en Création" : "Bienvenue en Pro",
+            body: starter
+              ? "6 projets, 300 questions IA par mois et 100 schémas. Ton prix baissera à chaque anniversaire d’abonnement."
+              : "Projets illimités, 500 questions IA par mois, schémas illimités et agenda synchronisé. Et ton prix baissera à chaque anniversaire d’abonnement.",
+            ctaHref: `${APP_URL}/accueil`,
+            ctaLabel: "Ouvrir Navpit",
+          },
+        );
       }
       return;
     }
@@ -190,7 +243,7 @@ async function handle(event: Stripe.Event) {
       await sendEmail(inv.customer_email, "Ton paiement Navpit n’est pas passé", {
         label: "Paiement",
         title: "Paiement refusé",
-        body: "Stripe va réessayer dans quelques jours. Pour garder Pro sans coupure, vérifie ta carte bancaire.",
+        body: "Stripe va réessayer dans quelques jours. Pour garder ton accès sans coupure, vérifie ta carte bancaire.",
         ctaHref: `${APP_URL}/abonnement`,
         ctaLabel: "Mettre à jour ma carte",
       });
@@ -198,6 +251,8 @@ async function handle(event: Stripe.Event) {
     }
     case "customer.subscription.created":
     case "customer.subscription.updated":
+      await syncSubscription(event.data.object);
+      return;
     case "customer.subscription.deleted":
       await syncSubscription(event.data.object);
       return;

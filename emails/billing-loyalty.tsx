@@ -10,7 +10,7 @@ export type BillingLoyaltyEmailProps = {
 export function BillingLoyaltyEmail({ appUrl, price, intervalLabel, yearsLabel }: BillingLoyaltyEmailProps) {
   return (
     <NavpitEmailShell
-      preview={`Ton prix Navpit Pro baisse à ${price} €`}
+      preview={`Ton prix Navpit baisse à ${price} €`}
       label="Prix fidélité"
       title={`Ton prix passe à ${price} € ${intervalLabel}`}
       appUrl={appUrl}

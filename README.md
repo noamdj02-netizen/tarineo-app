@@ -63,7 +63,7 @@ vercel --prod
 
 Sans ça, le lien magique reçu par email ne te connecte pas.
 
-4. **Stripe** (webhook Supabase) : `supabase secrets set APP_URL=https://www.navpit.com`
+4. **Stripe** : `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` sur Vercel, puis `npm run stripe:setup` (produits, portail, webhook `https://www.navpit.com/api/billing/webhook`).
 
 ## 5. Checklist mise en ligne (20 points)
 

@@ -14,7 +14,8 @@
     "design-data": "node scripts/build-design-data.mjs",
     "icons": "node scripts/build-icons.mjs",
     "email:auth": "node scripts/auth-emails.mjs",
-    "email:send-all": "tsx --env-file=.env.local scripts/send-test-emails.ts"
+    "email:send-all": "tsx --env-file=.env.local scripts/send-test-emails.ts",
+    "stripe:setup": "node --env-file=.env.local scripts/stripe-setup.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import {
   Instrument_Serif,
   Inter_Tight,
@@ -85,6 +86,9 @@ export default function RootLayout({
       className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
     >
       <body className="antialiased">
+        {process.env.NEXT_PUBLIC_FIGMA_CAPTURE === "1" ? (
+          <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" strategy="beforeInteractive" />
+        ) : null}
         <NavigationProgress />
         <PwaInstallBanner />
         {children}

@@ -286,7 +286,7 @@ export function ProductPreviewWelcome({ onStart }: ProductPreviewWelcomeProps) {
             className={cn(landingButtonVariants({ variant: "primary", fullWidth: true }), "sm:w-auto sm:min-w-[260px]")}
           >
             <ArrowRight data-icon="inline-start" aria-hidden />
-            Voir la démo du cockpit
+            Voir le film
           </button>
           <Button type="button" variant="ghost" onClick={onStart} className="min-h-10 rounded-pill text-[14px]">
             Passer l’intro
