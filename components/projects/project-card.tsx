@@ -18,7 +18,16 @@ export function askNextActionPrompt(name: string) {
   return `Pour ${name} : quelle est la meilleure prochaine action cette semaine, et pourquoi ? Donne 3 étapes concrètes.`;
 }
 
-export function ProjectCard({ project, index }: { project: ProjectSummary; index: number }) {
+export function ProjectCard({
+  project,
+  index,
+  preview = false,
+}: {
+  project: ProjectSummary;
+  index: number;
+  /** Landing : même carte, sans édition ni lien vers l’app. */
+  preview?: boolean;
+}) {
   const reduce = useReducedMotion();
   const [editing, setEditing] = useState(false);
   const [p, applyPatch] = useOptimistic(project, (cur, patch: ProjectPatch) => ({
@@ -43,7 +52,7 @@ export function ProjectCard({ project, index }: { project: ProjectSummary; index
               <h3 className="text-[22px] leading-tight font-semibold tracking-[-0.03em]">
                 {/* lien étiré : toute la carte ouvre la fiche */}
                 <Link
-                  href={`/projets/${p.slug}`}
+                  href={preview ? "/inscription" : `/projets/${p.slug}`}
                   className="outline-none after:absolute after:inset-0 after:rounded-card focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ink"
                 >
                   {p.name}
@@ -75,28 +84,40 @@ export function ProjectCard({ project, index }: { project: ProjectSummary; index
 
           <div className="relative z-10 mt-auto flex flex-wrap gap-2">
             <Link
-              href={`/projets/${p.slug}`}
+              href={preview ? "/inscription" : `/projets/${p.slug}`}
               className="btn-dark inline-flex min-h-10 items-center gap-2 rounded-xl px-3.5 text-[13.5px] font-semibold"
             >
               <Maximize2 className="size-4" aria-hidden />
               Voir le détail
             </Link>
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13.5px] font-semibold hover:bg-accent-soft"
-            >
-              <Pencil className="size-4" aria-hidden />
-              Modifier
-            </button>
-            <button
-              type="button"
-              onClick={() => openAssistant(askNextActionPrompt(p.name))}
-              className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13.5px] font-semibold hover:bg-accent-soft"
-            >
-              <Bot className="size-4" aria-hidden />
-              Demander à l’IA
-            </button>
+            {preview ? null : (
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13.5px] font-semibold hover:bg-accent-soft"
+              >
+                <Pencil className="size-4" aria-hidden />
+                Modifier
+              </button>
+            )}
+            {preview ? (
+              <Link
+                href="/inscription"
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13.5px] font-semibold hover:bg-accent-soft"
+              >
+                <Bot className="size-4" aria-hidden />
+                Demander à l’IA
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openAssistant(askNextActionPrompt(p.name))}
+                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-line bg-surface px-3.5 text-[13.5px] font-semibold hover:bg-accent-soft"
+              >
+                <Bot className="size-4" aria-hidden />
+                Demander à l’IA
+              </button>
+            )}
           </div>
         </>
       )}

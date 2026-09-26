@@ -1,9 +1,15 @@
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+import { Suspense } from "react";
+import { AdminShell } from "@/components/admin/shell";
+import { requireOwner } from "@/lib/admin/guard";
+
+export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: false, follow: false } };
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  await requireOwner();
   return (
-    <div className="min-h-dvh bg-bg">
-      <div className="mx-auto w-full max-w-[1100px] px-4 pt-6 pb-[calc(28px+env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
-        {children}
-      </div>
-    </div>
+    <AdminShell>
+      <Suspense>{children}</Suspense>
+    </AdminShell>
   );
 }

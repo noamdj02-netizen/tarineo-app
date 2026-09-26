@@ -9,6 +9,7 @@ import {
 import { NavigationProgress } from "@/components/motion/navigation-progress";
 import { PwaInstallBanner } from "@/components/shell/pwa-install-banner";
 import { ServiceWorker } from "@/components/shell/service-worker";
+import { ProductTracker } from "@/lib/analytics/client";
 import { SiteAnalytics } from "@/components/site/analytics";
 import { CookieConsentBanner } from "@/components/site/cookie-consent";
 import { BRAND } from "@/lib/brand";
@@ -92,6 +93,7 @@ export default function RootLayout({
         <NavigationProgress />
         <PwaInstallBanner />
         {children}
+        <ProductTracker />
         <CookieConsentBanner />
         <SiteAnalytics />
         <ServiceWorker />

@@ -32,6 +32,15 @@ export async function POST(request: NextRequest) {
 
   const current = await planFor(db);
   if (current.plan === "founder" || current.hasPaidSubscription) return back("erreur=deja");
+  const { track } = await import("@/lib/analytics/track");
+  await track({
+    name: "checkout_started",
+    userId: db.user.id,
+    feature: "pricing",
+    plan,
+    path: "/abonnement",
+    properties: { interval },
+  });
 
   const { data: sub } = await db.supabase
     .from("subscriptions")

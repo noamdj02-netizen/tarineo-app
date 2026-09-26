@@ -135,7 +135,7 @@ export async function updateSession(request: NextRequest) {
   if (
     user &&
     needsOnboarding &&
-    pathname !== "/admin" &&
+    !pathname.startsWith("/admin") &&
     !pathname.startsWith("/onboarding") &&
     !pathname.startsWith("/auth")
   ) {

@@ -35,10 +35,13 @@ export function AssistantPanel({
 
   const show = useCallback((question?: string, files?: AssistantFile[]) => {
     setOpen(true);
+    void import("@/lib/analytics/client").then(({ emitEvent }) =>
+      emitEvent("copilot_opened", { feature: "copilote", path: pathname }),
+    );
     if (question || files?.length) {
       setQueued((q) => ({ id: (q?.id ?? 0) + 1, text: question ?? "", files }));
     }
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open || data || loading.current) return;

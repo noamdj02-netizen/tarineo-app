@@ -57,8 +57,8 @@ export function LandingButton({
       prefetch={prefetch}
       className={cn(landingButtonVariants({ variant, fullWidth }), className)}
     >
-      {icon}
       {children}
+      {icon}
     </Link>
   );
 }

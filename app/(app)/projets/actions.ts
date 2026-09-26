@@ -84,6 +84,16 @@ export async function updateProject(projectId: string, patch: ProjectPatch): Pro
       .eq("id", projectId)
       .eq("user_id", db.user.id);
     if (error) return fail(error.message);
+    if (row.status === "focus") {
+      const { track } = await import("@/lib/analytics/track");
+      await track({
+        name: "project_focus_started",
+        userId: db.user.id,
+        projectId,
+        feature: "focus",
+        path: "/projets",
+      });
+    }
     refresh();
     return { ok: true };
   });
@@ -119,6 +129,8 @@ export async function createProject(
       sort_order: sortOrder,
     });
     if (error) return { ok: false, error: error.message };
+    const { track } = await import("@/lib/analytics/track");
+    await track({ name: "project_created", userId: db.user.id, feature: "projets", path: `/projets/${slug}` });
     refresh();
     return { ok: true, slug };
   } catch (e) {
@@ -194,6 +206,16 @@ export async function toggleTask(projectId: string, taskId: string, done: boolea
       .eq("id", taskId)
       .eq("project_id", projectId);
     if (error) return fail(error.message);
+    if (done) {
+      const { track } = await import("@/lib/analytics/track");
+      await track({
+        name: "task_completed",
+        userId: db.user.id,
+        projectId,
+        feature: "projets",
+        path: "/projets",
+      });
+    }
     refresh();
     return { ok: true };
   });
@@ -213,6 +235,14 @@ export async function addTask(projectId: string, title: string, id: string): Pro
       .from("project_tasks")
       .insert({ id, project_id: projectId, title: t, done: false, position: count ?? 0 });
     if (error) return fail(error.message);
+    const { track } = await import("@/lib/analytics/track");
+    await track({
+      name: "task_created",
+      userId: db.user.id,
+      projectId,
+      feature: "projets",
+      path: "/projets",
+    });
     refresh();
     return { ok: true };
   });

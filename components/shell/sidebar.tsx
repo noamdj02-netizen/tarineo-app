@@ -54,7 +54,7 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="mt-3 shrink-0 space-y-3 border-t border-side-line pt-3">
+      <div className="mt-3 flex shrink-0 flex-col gap-3 border-t border-side-line pt-3">
         <OnboardingCard steps={onboarding} />
 
         <div className="flex flex-col gap-1 px-1">

@@ -4,6 +4,8 @@ import { fileKind, MAX_FILE_BYTES, MAX_FILES } from "@/lib/assistant/files";
 import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 import { DEFAULT_MODEL, isModelId, type ModelId } from "@/lib/models";
+import { classifyAgent } from "@/lib/analytics/catalog";
+import { track } from "@/lib/analytics/track";
 import { getViewer } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -118,6 +120,15 @@ export async function POST(request: Request) {
 
   const client = new Anthropic();
   const encoder = new TextEncoder();
+  const startedAt = Date.now();
+  const agent = classifyAgent(question);
+  await track({
+    name: "copilot_prompt_sent",
+    userId: db.user.id,
+    feature: "copilote",
+    path: page || "/copilote",
+    properties: { agent, model },
+  });
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -167,12 +178,28 @@ export async function POST(request: Request) {
           console.error("[assistant]", e);
           const msg = friendlyError(e);
           push(`${text ? "\n\n" : ""}⚠️ ${msg}`);
+          await track({
+            name: "copilot_error",
+            userId: db.user.id,
+            feature: "copilote",
+            path: page || "/copilote",
+            durationMs: Date.now() - startedAt,
+            properties: { agent, model },
+          });
         }
       } finally {
         if (text && !failed) {
           await db.supabase
             .from("chat_messages")
             .insert({ user_id: db.user.id, role: "assistant", content: text });
+          await track({
+            name: "copilot_response_received",
+            userId: db.user.id,
+            feature: "copilote",
+            path: page || "/copilote",
+            durationMs: Date.now() - startedAt,
+            properties: { agent, model },
+          });
         } else {
           // pas de réponse utilisable : on retire la question pour garder un historique propre
           await db.supabase

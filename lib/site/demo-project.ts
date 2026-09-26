@@ -1,0 +1,81 @@
+import type { Feature, ProjectFull, ProjectSummary } from "@/lib/projects/types";
+
+const FEATURES: Feature[] = [
+  { id: "f1", title: "Calendrier éditorial", status: "fait", position: 0 },
+  { id: "f2", title: "Brief de marque + ton", status: "fait", position: 1 },
+  { id: "f3", title: "Génération de post LinkedIn", status: "encours", position: 2 },
+  { id: "f4", title: "Variantes de ton", status: "encours", position: 3 },
+  { id: "f5", title: "Newsletter hebdo", status: "verif", position: 4 },
+  { id: "f6", title: "Scripts vidéo courtes", status: "verif", position: 5 },
+  { id: "f7", title: "Banque d’idées", status: "verif", position: 6 },
+  { id: "f8", title: "File d’attente de publication", status: "verif", position: 7 },
+  { id: "f9", title: "Hooks et titres", status: "verif", position: 8 },
+  { id: "f10", title: "Réécriture d’un brouillon", status: "verif", position: 9 },
+  { id: "f11", title: "Analytics des posts", status: "verif", position: 10 },
+  { id: "f12", title: "Publication automatique", status: "afaire", position: 11 },
+];
+
+/** Relais — SaaS fictif de création de contenu, pour la landing. */
+export const DEMO_PROJECT: ProjectFull = {
+  id: "demo-relais",
+  slug: "relais",
+  name: "Relais",
+  description: "Calendrier éditorial, posts LinkedIn et newsletters. Un ton, le prochain contenu.",
+  status: "focus",
+  stage: 3,
+  next: "Rédiger le carrousel LinkedIn de lancement et le programmer pour mardi.",
+  site: "https://www.navpit.com",
+  github: "https://github.com",
+  figma: "https://www.figma.com",
+  notion: "",
+  theme: "papier",
+  partner: "",
+  pitch:
+    "Relais écrit et planifie le contenu des fondateurs : posts LinkedIn, newsletters et scripts. Un calendrier, un ton, la prochaine pièce — plus de page blanche le dimanche soir.",
+  target: "Fondateurs solo et studios de contenu",
+  problem:
+    "Ils publient au feeling, le ton change à chaque post, et le prochain contenu n’est jamais prêt.",
+  business: {
+    Pro: "29 € / mois · 80 pièces",
+    Offre: "14 jours offerts",
+    Starter: "15 € / mois · 30 pièces",
+    Équipe: "49 € / mois · 200 pièces",
+    Objectif: "1ère vente",
+    "Revenu actuel": "À renseigner",
+  },
+  stack: ["Next.js", "Supabase", "Resend"],
+  team: ["Toi"],
+  risks: [],
+  notes: "",
+  updated_at: "2026-09-26",
+  features: FEATURES,
+  tasks: [
+    { id: "t1", title: "Choisir le ton de marque", done: true, position: 0 },
+    { id: "t2", title: "Liste de 12 idées de posts", done: true, position: 1 },
+    { id: "t3", title: "Moodboard visuel", done: true, position: 2 },
+    { id: "t4", title: "Brief du carrousel de lancement", done: true, position: 3 },
+    { id: "t5", title: "3 variantes de hook", done: true, position: 4 },
+    { id: "t6", title: "Relecture du premier post", done: true, position: 5 },
+    { id: "t7", title: "Rédiger le carrousel de lancement", done: false, position: 6 },
+  ],
+  log: [],
+};
+
+export const DEMO_PROJECT_CARD: ProjectSummary = {
+  id: DEMO_PROJECT.id,
+  slug: DEMO_PROJECT.slug,
+  name: DEMO_PROJECT.name,
+  description: DEMO_PROJECT.description,
+  status: DEMO_PROJECT.status,
+  stage: DEMO_PROJECT.stage,
+  next: DEMO_PROJECT.next,
+  site: DEMO_PROJECT.site,
+  github: DEMO_PROJECT.github,
+  figma: DEMO_PROJECT.figma,
+  notion: DEMO_PROJECT.notion,
+  theme: DEMO_PROJECT.theme,
+  featuresDone: FEATURES.filter((f) => f.status === "fait").length,
+  featuresTotal: FEATURES.length,
+  tasksDone: 6,
+  tasksTotal: 58,
+};

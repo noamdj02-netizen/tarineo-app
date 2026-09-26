@@ -8,11 +8,16 @@ export function SiteLogo({
   className,
   imageClassName,
   showWordmark = true,
+  priority = true,
+  onDark = false,
 }: {
   href?: string;
   className?: string;
   imageClassName?: string;
   showWordmark?: boolean;
+  priority?: boolean;
+  /** Wordmark clair, pour les cartes noires. */
+  onDark?: boolean;
 }) {
   return (
     <Link
@@ -25,11 +30,16 @@ export function SiteLogo({
         alt=""
         width={40}
         height={40}
-        priority
+        priority={priority}
         className={cn("size-9 shrink-0 rounded-lg object-contain", imageClassName)}
       />
       {showWordmark ? (
-        <span className="font-grotesk text-[22px] leading-none font-bold tracking-[-0.04em]">
+        <span
+          className={cn(
+            "font-grotesk text-[22px] leading-none font-bold tracking-[-0.04em]",
+            onDark && "text-accent-ink",
+          )}
+        >
           {BRAND.name}
           <span className="text-brand-violet">.</span>
         </span>

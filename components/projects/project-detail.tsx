@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Bot,
   Code,
@@ -101,13 +102,24 @@ function todayIso() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-export function ProjectDetail({ project }: { project: ProjectFull }) {
+export function ProjectDetail({
+  project,
+  preview = false,
+}: {
+  project: ProjectFull;
+  /** Landing : même fiche, sans enregistrement. */
+  preview?: boolean;
+}) {
   const [p, apply] = useOptimistic(project, reduce);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
   /** Change l'écran tout de suite, puis enregistre. En cas d'échec, React remet l'état serveur. */
   function mutate(change: Change, save: () => Promise<{ ok: boolean }>) {
+    if (preview) {
+      apply(change);
+      return;
+    }
     setError(null);
     startTransition(async () => {
       apply(change);
@@ -143,14 +155,24 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
             )}
             <div className="flex flex-wrap items-center gap-1.5">
               <ProjectLinks site={p.site} github={p.github} figma={p.figma} notion={p.notion} />
-              <button
-                type="button"
-                onClick={() => openAssistant(bilanPrompt(p.name))}
-                className="btn-dark inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium"
-              >
-                <Bot className="size-3.5" aria-hidden />
-                Bilan IA
-              </button>
+              {preview ? (
+                <Link
+                  href="/inscription"
+                  className="btn-dark inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium"
+                >
+                  <Bot className="size-3.5" aria-hidden />
+                  Bilan IA
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => openAssistant(bilanPrompt(p.name))}
+                  className="btn-dark inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-medium"
+                >
+                  <Bot className="size-3.5" aria-hidden />
+                  Bilan IA
+                </button>
+              )}
             </div>
           </div>
         </Box>
@@ -226,30 +248,35 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
                 >
                   {FEATURE_LABELS[f.status]}
                 </button>
-                <ConfirmDelete
-                  label={`Supprimer ${f.title}`}
-                  onConfirm={() =>
-                    mutate({ type: "feature-del", id: f.id }, () => deleteFeature(p.id, f.id))
-                  }
-                />
+                {preview ? null : (
+                  <ConfirmDelete
+                    label={`Supprimer ${f.title}`}
+                    onConfirm={() =>
+                      mutate({ type: "feature-del", id: f.id }, () => deleteFeature(p.id, f.id))
+                    }
+                  />
+                )}
               </li>
             ))}
           </ul>
-          <AddRow
-            placeholder="Ajouter une fonctionnalité"
-            onAdd={(title) => {
-              const feature: Feature = {
-                id: crypto.randomUUID(),
-                title,
-                status: "afaire",
-                position: F.length,
-              };
-              mutate({ type: "feature-add", feature }, () => addFeature(p.id, title, feature.id));
-            }}
-          />
+          {preview ? null : (
+            <AddRow
+              placeholder="Ajouter une fonctionnalité"
+              onAdd={(title) => {
+                const feature: Feature = {
+                  id: crypto.randomUUID(),
+                  title,
+                  status: "afaire",
+                  position: F.length,
+                };
+                mutate({ type: "feature-add", feature }, () => addFeature(p.id, title, feature.id));
+              }}
+            />
+          )}
         </Box>
       </Reveal>
-
+      {preview ? null : (
+        <>
       <Reveal>
         <Box icon={ListChecks} title={`Tâches · ${T.filter((t) => t.done).length}/${T.length}`}>
           <ul>
@@ -373,6 +400,8 @@ export function ProjectDetail({ project }: { project: ProjectFull }) {
           />
         </Box>
       </Reveal>
+        </>
+      )}
 
       <p aria-live="polite" className={cn("text-[13px] text-destructive", !error && "sr-only")}>
         {error}

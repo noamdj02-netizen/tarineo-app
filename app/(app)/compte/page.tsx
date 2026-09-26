@@ -58,8 +58,8 @@ export default async function ComptePage() {
             href="/admin"
             className="card-soft flex min-h-14 items-center justify-between px-5 text-[15px] font-medium"
           >
-            Analyses
-            <span className="text-[13px] font-normal text-muted-foreground">Comptes et abonnements</span>
+            Admin
+            <span className="text-[13px] font-normal text-muted-foreground">Founder Analytics</span>
           </Link>
         ) : null}
         <div id="configuration" className="card-soft p-5 sm:p-6">

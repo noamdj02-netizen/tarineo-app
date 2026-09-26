@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { WelcomeEmail } from "@/emails/welcome";
+import { track } from "@/lib/analytics/track";
 import { signupSkipsProTrial, startProTrial } from "@/lib/billing/trial";
 import { sendEmail } from "@/lib/email/send";
 import { safeNext } from "@/lib/safe-next";
@@ -15,8 +16,14 @@ export async function settleAuthSession(supabase: Sb, origin: string, nextRaw: s
   } = await supabase.auth.getUser();
   const firstAuth = Boolean(beforeWelcome && !beforeWelcome.user_metadata?.welcomed);
   await welcomeOnce(supabase, origin);
+  if (firstAuth && beforeWelcome) {
+    await track({ name: "user_signed_up", userId: beforeWelcome.id, path: "/auth/callback" });
+  }
   if (firstAuth && !signupSkipsProTrial(next, origin)) {
     await startProTrial(supabase);
+    if (beforeWelcome) {
+      await track({ name: "trial_started", userId: beforeWelcome.id, plan: "pro", path: "/auth/callback" });
+    }
   }
   const {
     data: { user },

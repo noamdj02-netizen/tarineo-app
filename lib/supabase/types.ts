@@ -110,6 +110,20 @@ export type CalendarFeedRow = {
   updated_at: string;
 };
 
+export type AnalyticsEventRow = {
+  id: string;
+  name: string;
+  user_id: string | null;
+  session_id: string;
+  feature: string;
+  project_id: string | null;
+  plan: string;
+  path: string;
+  properties: Record<string, unknown>;
+  duration_ms: number | null;
+  created_at: string;
+};
+
 export type SubscriptionRow = {
   user_id: string;
   stripe_customer_id: string | null;
@@ -144,6 +158,7 @@ export type Database = {
       calendar_events: Table<CalendarEventRow, "title" | "starts_at">;
       calendar_feeds: Table<CalendarFeedRow, "url">;
       subscriptions: Table<SubscriptionRow, "user_id">;
+      analytics_events: Table<AnalyticsEventRow, "name" | "session_id">;
       user_dashboard: Table<
         { user_id: string; layout: Record<string, unknown>; updated_at: string },
         "user_id"
