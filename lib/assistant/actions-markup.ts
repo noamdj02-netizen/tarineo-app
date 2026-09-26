@@ -1,5 +1,5 @@
 export type CopilotAction = {
-  kind: "project" | "task" | "note" | "schema" | "component" | "landing" | "email";
+  kind: "project" | "task" | "note" | "schema" | "component" | "landing" | "email" | "studio";
   label: string;
   href: string;
 };

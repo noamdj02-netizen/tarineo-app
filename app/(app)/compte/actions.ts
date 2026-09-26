@@ -18,9 +18,13 @@ function refresh() {
   revalidatePath("/", "layout");
 }
 
-/** Rouvre le wizard (5 étapes) même si tu l’avais déjà terminé. */
+/** Rouvre le wizard même si tu l’avais déjà terminé. */
 export async function openOnboardingWizard(): Promise<Result> {
-  const res = await updateUserMeta({ onboarding_required: true, onboarding_done: false });
+  const res = await updateUserMeta({
+    onboarding_required: true,
+    onboarding_done: false,
+    dashboard_tour_done: false,
+  });
   if (!res.ok) return res;
   refresh();
   return { ok: true };
@@ -28,6 +32,7 @@ export async function openOnboardingWizard(): Promise<Result> {
 
 export async function updateProfile(input: {
   firstName?: string;
+  lastName?: string;
   locale?: string;
 }): Promise<Result> {
   const data: Record<string, string> = {};
@@ -35,6 +40,9 @@ export async function updateProfile(input: {
     const name = input.firstName.trim().slice(0, 60);
     if (!name) return { ok: false, error: "Indique un prénom." };
     data.first_name = name;
+  }
+  if (input.lastName !== undefined) {
+    data.last_name = input.lastName.trim().slice(0, 60);
   }
   if (input.locale !== undefined) {
     if (!isLocale(input.locale)) return { ok: false, error: "Langue inconnue." };

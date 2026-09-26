@@ -88,7 +88,15 @@ export function AvatarForm({
   );
 }
 
-export function NameForm({ firstName, email }: { firstName: string; email: string }) {
+export function NameForm({
+  firstName,
+  lastName,
+  email,
+}: {
+  firstName: string;
+  lastName?: string;
+  email: string;
+}) {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [ok, setOk] = useState(false);
@@ -98,11 +106,13 @@ export function NameForm({ firstName, email }: { firstName: string; email: strin
       className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault();
-        const first = String(new FormData(e.currentTarget).get("firstName") ?? "");
+        const data = new FormData(e.currentTarget);
+        const first = String(data.get("firstName") ?? "");
+        const last = String(data.get("lastName") ?? "");
         setMsg(null);
         setOk(false);
         start(async () => {
-          const res = await updateProfile({ firstName: first });
+          const res = await updateProfile({ firstName: first, lastName: last });
           if (res.ok) setOk(true);
           else setMsg(res.error);
         });
@@ -114,6 +124,15 @@ export function NameForm({ firstName, email }: { firstName: string; email: strin
           name="firstName"
           defaultValue={firstName}
           required
+          maxLength={60}
+          className="min-h-12 rounded-[14px] border border-line bg-surface-2 px-4 text-[15px] outline-none focus:border-ink/25 focus:bg-surface"
+        />
+      </label>
+      <label className="flex flex-col gap-1.5 text-[13.5px] font-medium">
+        Nom
+        <input
+          name="lastName"
+          defaultValue={lastName}
           maxLength={60}
           className="min-h-12 rounded-[14px] border border-line bg-surface-2 px-4 text-[15px] outline-none focus:border-ink/25 focus:bg-surface"
         />

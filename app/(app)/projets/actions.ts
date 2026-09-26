@@ -10,7 +10,14 @@ import {
   type ProjectMarketing,
 } from "@/lib/projects/marketing";
 import { mergeLaunch } from "@/lib/projects/launch-checks";
-import { isGaId, isGscProperty, mergeSeo, seoFromBusiness, type ProjectSeo } from "@/lib/projects/seo";
+import {
+  appendSeoHistory,
+  isGaId,
+  isGscProperty,
+  mergeSeo,
+  seoFromBusiness,
+  type ProjectSeo,
+} from "@/lib/projects/seo";
 import {
   FEATURE_ORDER,
   slugify,
@@ -154,6 +161,7 @@ export async function saveProjectMarketing(
         : EMPTY_MARKETING.channel,
       hook: clean(raw.hook, 400),
       cta: clean(raw.cta, 120),
+      post: clean(raw.post, 2000),
     };
     const { error } = await db.supabase
       .from("projects")
@@ -188,8 +196,14 @@ export async function saveProjectSeo(
     const gsc = raw.gsc !== undefined ? clean(raw.gsc, 200) : prev.gsc;
     if (gaId && !isGaId(gaId)) return fail("ID GA4 invalide (G-XXXXXXXX).");
     if (gsc && !isGscProperty(gsc)) return fail("Propriété Search Console invalide.");
+    const snapshot = raw.snapshot !== undefined ? raw.snapshot : prev.snapshot;
+    const history =
+      raw.snapshot && prev.snapshot && raw.snapshot.fetchedAt !== prev.snapshot.fetchedAt
+        ? appendSeoHistory(prev.history, prev.snapshot)
+        : prev.history;
     const next: ProjectSeo = {
-      snapshot: raw.snapshot !== undefined ? raw.snapshot : prev.snapshot,
+      snapshot,
+      history,
       gaId,
       gsc,
     };

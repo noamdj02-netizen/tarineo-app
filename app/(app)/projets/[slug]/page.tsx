@@ -88,6 +88,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
           <MarketingCard
             projectId={project.id}
             name={project.name}
+            pitch={project.pitch}
+            target={project.target}
+            problem={project.problem}
+            site={project.site}
+            figma={project.figma}
             initial={marketing}
           />
         </div>

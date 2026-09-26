@@ -4,7 +4,7 @@ import { motion, useReducedMotion, useSpring } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
-const SPRING = { stiffness: 120, damping: 20, mass: 0.6 };
+const SPRING = { stiffness: 280, damping: 34, mass: 0.85 };
 
 /** Halo pastel flou qui dérive lentement en bas de la carte. */
 function Glow({ soft }: { soft?: boolean }) {
@@ -16,9 +16,24 @@ function Glow({ soft }: { soft?: boolean }) {
         soft ? "opacity-45" : "opacity-100",
       )}
     >
-      <div className="absolute -bottom-[20%] left-[-18%] h-[95%] w-[70%] animate-[glow-drift_16s_ease-in-out_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-1)_20%,transparent)] blur-2xl" />
-      <div className="absolute -bottom-[10%] left-[18%] h-[100%] w-[64%] animate-[glow-drift_19s_ease-in-out_-6s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-2)_20%,transparent)] blur-2xl" />
-      <div className="absolute right-[-18%] -bottom-[20%] h-[95%] w-[62%] animate-[glow-drift_22s_ease-in-out_-11s_infinite] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_20%,transparent)] blur-2xl" />
+      <div
+        className={cn(
+          "absolute -bottom-[20%] left-[-18%] h-[95%] w-[70%] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-1)_20%,transparent)] blur-2xl",
+          !soft && "animate-[glow-drift_16s_ease-in-out_infinite]",
+        )}
+      />
+      <div
+        className={cn(
+          "absolute -bottom-[10%] left-[18%] h-[100%] w-[64%] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-2)_20%,transparent)] blur-2xl",
+          !soft && "animate-[glow-drift_19s_ease-in-out_-6s_infinite]",
+        )}
+      />
+      <div
+        className={cn(
+          "absolute right-[-18%] -bottom-[20%] h-[95%] w-[62%] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_20%,transparent)] blur-2xl",
+          !soft && "animate-[glow-drift_22s_ease-in-out_-11s_infinite]",
+        )}
+      />
     </div>
   );
 }

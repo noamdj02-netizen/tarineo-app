@@ -1,7 +1,13 @@
 import "server-only";
 import { cache } from "react";
 import { getDb, type Db } from "@/lib/db";
-import { LIMITS, type Interval, type Limits, type PlanId, type TierIndex } from "./plans";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isOpenAccess } from "@/lib/supabase/config";
+import { LIMITS, OWNER_LIMITS, type Interval, type Limits, type PlanId, type TierIndex } from "./plans";
+
+/** Comptes studio : aucune limite. */
+export const OWNER_EMAILS = ["noamdj02@gmail.com", "contact@ink-flow.me"] as const;
+export const OWNER_EMAIL = OWNER_EMAILS[0];
 
 export type PlanInfo = {
   plan: PlanId;
@@ -20,21 +26,32 @@ export type PlanInfo = {
 
 const PAID_STATUSES = new Set(["active", "past_due"]);
 
-/** Comptes du créateur (NAVPIT_OWNER_EMAILS, séparés par des virgules) : jamais limités. */
+/** Comptes du créateur : jamais limités. */
 export function isOwner(email: string | undefined) {
   if (!email) return false;
-  const list = (process.env.NAVPIT_OWNER_EMAILS ?? process.env.SEED_USER_EMAIL ?? "")
+  const extra = (process.env.NAVPIT_OWNER_EMAILS ?? process.env.SEED_USER_EMAIL ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
-  return list.includes(email.toLowerCase());
+  return extra.concat([...OWNER_EMAILS]).includes(email.toLowerCase());
+}
+
+function localStudio() {
+  return process.env.NODE_ENV !== "production" && isOpenAccess();
+}
+
+async function isOwnerDb(db: Db) {
+  if (localStudio() || isOwner(db.user.email)) return true;
+  if (!db.user.id) return false;
+  const { data } = await createAdminClient().auth.admin.getUserById(db.user.id);
+  return isOwner(data.user?.email);
 }
 
 async function load(db: Db): Promise<PlanInfo> {
-  if (isOwner(db.user.email)) {
+  if (await isOwnerDb(db)) {
     return {
       plan: "founder",
-      limits: LIMITS.founder,
+      limits: OWNER_LIMITS,
       status: "owner",
       interval: null,
       tier: 0,
@@ -119,12 +136,14 @@ export type LimitKind = "projects" | "ai" | "schemas" | "calendar";
 
 /** Renvoie le message à afficher si la limite du plan est atteinte, sinon null. */
 export async function limitReached(db: Db, kind: LimitKind): Promise<string | null> {
+  if (await isOwnerDb(db)) return null;
   const { limits } = await load(db);
   const head = { count: "exact" as const, head: true };
   switch (kind) {
     case "calendar":
       return limits.calendarSync ? null : LIMIT_MESSAGES.calendar;
     case "ai":
+      if (limits.aiPerMonth === null) return null;
       return (await aiUsedThisMonth(db)) >= limits.aiPerMonth ? LIMIT_MESSAGES.ai : null;
     case "projects": {
       if (limits.projects === null) return null;

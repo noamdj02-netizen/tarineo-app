@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 
 export type OnboardingStep = { label: string; href: string; done: boolean };
 
-/** Les 5 étapes de démarrage, calculées depuis les vraies données de l'utilisateur. */
+/** Checklist de démarrage, calculée depuis les vraies données de l'utilisateur. */
 export async function getOnboarding(): Promise<OnboardingStep[]> {
   const counts = { projects: 0, focus: 0, resources: 0, chats: 0 };
   const db = await getDb();
@@ -41,7 +41,7 @@ export async function getOnboarding(): Promise<OnboardingStep[]> {
   if (!wizardDone) {
     return [
       {
-        label: "Parcours guidé (prénom, projets, goût, cockpit…)",
+        label: "Parcours guidé (objectif, projet Focus, cockpit…)",
         href: "/onboarding",
         done: false,
       },

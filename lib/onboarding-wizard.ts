@@ -1,8 +1,14 @@
-/** Les 5 étapes du wizard /onboarding (texte affiché dans Compte et le wizard). */
+/** Étapes du wizard /onboarding (Compte + barre latérale). */
 export const WIZARD_STEPS = [
-  "Prénom + langue",
-  "Projets en cours (le 1er passe en Focus)",
-  "L’IA propose une prochaine action (tu peux passer)",
-  "Goût design + outils (Figma, Cursor, Claude…)",
-  "Cockpit : les blocs de ton accueil, à ta manière",
+  "Bienvenue",
+  "Prénom et nom",
+  "Ton objectif",
+  "Tes freins",
+  "Preuve",
+  "3 cartes",
+  "Comment Navpit répond",
+  "On prépare le cockpit",
+  "Projet existant ou idée tendance",
+  "Ton cockpit",
+  "Essai Pro, puis l’accueil guidé",
 ] as const;

@@ -42,8 +42,8 @@ export function AutomationChips({
               type="button"
               onClick={() => onPick(a)}
               className={cn(
-                "min-h-9 rounded-pill bg-surface px-3.5 text-[13px] text-ink/80 shadow-soft ring-1 ring-transparent transition-[transform,box-shadow,color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:text-ink hover:shadow-lift",
-                i === activeIndex && "-translate-y-0.5 text-ink shadow-lift ring-ink/10",
+                "pressable min-h-9 rounded-pill bg-surface px-3.5 text-[13px] text-ink/80 shadow-soft ring-1 ring-transparent hover:text-ink hover:shadow-lift",
+                i === activeIndex && "text-ink shadow-lift ring-ink/10",
               )}
             >
               {a.label}

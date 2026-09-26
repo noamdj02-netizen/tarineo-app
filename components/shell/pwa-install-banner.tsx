@@ -1,6 +1,7 @@
 "use client";
 
 import { Share, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ function isIos() {
 
 /** Bandeau haut d’écran : installer Navpit (PWA) sur mobile. */
 export function PwaInstallBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [ios, setIos] = useState(false);
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -73,7 +75,7 @@ export function PwaInstallBanner() {
     }
   }
 
-  if (!visible) return null;
+  if (!visible || pathname.startsWith("/onboarding")) return null;
 
   const spacer = "h-[calc(4.25rem+env(safe-area-inset-top,0px))] md:hidden";
 

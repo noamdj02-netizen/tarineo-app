@@ -185,6 +185,7 @@ export async function POST(request: Request) {
           { role: "user", content: toContent(question, files) },
         ];
         const actions = [];
+        const reveals: string[] = [];
 
         let finalText = "";
         for (let round = 0; round < TOOL_ROUNDS; round++) {
@@ -211,6 +212,7 @@ export async function POST(request: Request) {
                 signal: request.signal,
               });
               if (out.action) actions.push(out.action);
+              if (out.reveal) reveals.push(out.reveal);
               results.push({
                 type: "tool_result",
                 tool_use_id: use.id,
@@ -253,6 +255,11 @@ export async function POST(request: Request) {
           push(finalText);
         }
 
+        if (reveals.length) {
+          const shown = `\n\n${reveals.join("\n\n")}`;
+          finalText += shown;
+          push(shown);
+        }
         const suffix = encodeActions(actions);
         if (suffix) {
           finalText += suffix;

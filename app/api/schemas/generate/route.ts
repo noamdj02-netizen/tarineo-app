@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     projectId?: unknown;
     extra?: unknown;
     model?: unknown;
+    icons?: unknown;
   };
   try {
     body = await request.json();
@@ -74,9 +75,16 @@ export async function POST(request: Request) {
       kind: agent.kind,
       extra,
       model,
+      icons: body.icons === true,
       signal: request.signal,
     });
-    return json(200, { mermaid: generated.mermaid, title: generated.title });
+    return json(200, {
+      mermaid: generated.mermaid,
+      title: generated.title,
+      projectName: generated.projectName,
+      stickies: generated.stickies,
+      icons: generated.icons ?? {},
+    });
   } catch (e) {
     console.error("[schemas/generate]", e);
     return json(502, { error: friendlyError(e) });

@@ -12,6 +12,7 @@ export type ProjectMarketing = {
   channel: MarketChannel;
   hook: string;
   cta: string;
+  post: string;
 };
 
 export const EMPTY_MARKETING: ProjectMarketing = {
@@ -19,6 +20,7 @@ export const EMPTY_MARKETING: ProjectMarketing = {
   channel: "linkedin",
   hook: "",
   cta: "",
+  post: "",
 };
 
 const KEYS = {
@@ -26,6 +28,7 @@ const KEYS = {
   channel: "__canal",
   hook: "__hook",
   cta: "__cta",
+  post: "__post",
 } as const;
 
 function isChannel(v: string): v is MarketChannel {
@@ -40,6 +43,7 @@ export function marketingFromBusiness(business: Record<string, string> | null | 
     channel: isChannel(channel) ? channel : "linkedin",
     hook: b[KEYS.hook] ?? "",
     cta: b[KEYS.cta] ?? "",
+    post: b[KEYS.post] ?? "",
   } satisfies ProjectMarketing;
 }
 
@@ -52,6 +56,7 @@ export function mergeMarketing(
   next[KEYS.channel] = m.channel;
   next[KEYS.hook] = m.hook.slice(0, 400);
   next[KEYS.cta] = m.cta.slice(0, 120);
+  next[KEYS.post] = m.post.slice(0, 2000);
   return next;
 }
 
@@ -80,9 +85,38 @@ export const MARKET_STUDIO = [
   },
 ] as const;
 
-export function marketingPrompt(name: string, m: ProjectMarketing) {
+export function marketingPrompt(p: { id: string; name: string; current: ProjectMarketing }) {
+  const m = p.current;
   const canal = MARKET_CHANNELS.find((c) => c.id === m.channel)?.n ?? m.channel;
-  return `Projet ${name}. Canal ${canal}. Offre : ${m.offer || "à préciser"}. CTA : ${m.cta || "à préciser"}. ${
-    m.hook ? `Hook déjà noté : ${m.hook}. ` : ""
-  }Écris 1 post prêt à coller, 8 lignes max, copy réelle, pas d’emoji, pas d’em-dash.`;
+  return [
+    `Projet ${p.name} (id ${p.id}). Canal ${canal}.`,
+    `Offre : ${m.offer || "à préciser"}. CTA : ${m.cta || "à préciser"}.`,
+    m.hook ? `Hook : ${m.hook}.` : "",
+    "Écris 1 post prêt à coller, 8 lignes max, copy réelle, pas d’emoji, pas d’em-dash.",
+    "Appelle save_marketing avec le champ post tout de suite. Sans cet appel, le post n’existe pas.",
+    "N’ouvre pas Canva tant que le post n’est pas enregistré.",
+    "Ensuite propose produce_asset (canva / schema / figma).",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+export function marketingIdeasPrompt(p: {
+  id: string;
+  name: string;
+  pitch: string;
+  target: string;
+  problem: string;
+  site: string;
+  current: ProjectMarketing;
+}) {
+  return [
+    `Projet ${p.name} (id ${p.id}).`,
+    p.pitch || p.problem || "Pas de pitch noté.",
+    `Cible : ${p.target || "—"}. Site : ${p.site || "—"}.`,
+    p.current.offer ? `Offre déjà notée : ${p.current.offer}.` : "Les 4 champs marketing sont vides ou à compléter.",
+    "Propose 1 offre (une phrase), 1 canal (linkedin|tiktok|instagram|email), 1 hook, 1 CTA.",
+    "Ancré à CE projet, copy réelle, pas de lorem, pas d’em-dash, pas de Relais générique.",
+    "Puis save_marketing avec les 4 champs. Résume en 4 lignes.",
+  ].join(" ");
 }

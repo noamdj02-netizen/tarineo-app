@@ -47,6 +47,7 @@ import {
 } from "@/lib/projects/types";
 import { openAssistant } from "@/lib/assistant/open";
 import { projectCoach } from "@/lib/projects/coach";
+import { featureProducePrompt } from "@/lib/projects/studio";
 import type { ProjectAssetItem, ProjectNoteItem, ProjectSchemaLink } from "@/lib/projects/types";
 import { SCHEMA_KIND_LABELS } from "@/lib/schemas/agents";
 import { cn } from "@/lib/utils";
@@ -260,6 +261,26 @@ export function ProjectDetail({
                 className="flex items-center gap-2 rounded-xl bg-surface-2 py-1.5 pr-1.5 pl-3 text-[14px]"
               >
                 <span className="min-w-0 flex-1">{f.title}</span>
+                {preview ? null : (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openAssistant(
+                        featureProducePrompt({
+                          id: p.id,
+                          name: p.name,
+                          feature: f.title,
+                          figma: p.figma,
+                        }),
+                      )
+                    }
+                    className="inline-flex size-9 items-center justify-center rounded-pill text-muted-foreground hover:bg-accent-soft hover:text-ink"
+                    aria-label={`Produire ${f.title}`}
+                    title="Produire (Canva, schéma, Figma)"
+                  >
+                    <Bot className="size-3.5" aria-hidden />
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

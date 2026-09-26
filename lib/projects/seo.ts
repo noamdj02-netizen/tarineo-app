@@ -11,13 +11,31 @@ export type SeoSnapshot = {
   checks: SeoCheck[];
 };
 
+export type SeoPoint = {
+  at: string;
+  seo: number;
+  performance: number;
+};
+
 export type ProjectSeo = {
   snapshot: SeoSnapshot | null;
+  history: SeoPoint[];
   gaId: string;
   gsc: string;
 };
 
-export const EMPTY_SEO: ProjectSeo = { snapshot: null, gaId: "", gsc: "" };
+export const EMPTY_SEO: ProjectSeo = { snapshot: null, history: [], gaId: "", gsc: "" };
+
+export function seoPoint(snap: SeoSnapshot): SeoPoint {
+  return { at: snap.fetchedAt, seo: snap.seo, performance: snap.performance };
+}
+
+export function appendSeoHistory(prev: SeoPoint[], snap: SeoSnapshot | null) {
+  if (!snap?.fetchedAt) return prev.slice(-8);
+  const last = prev[prev.length - 1];
+  if (last?.at === snap.fetchedAt) return prev.slice(-8);
+  return [...prev, seoPoint(snap)].slice(-8);
+}
 
 const KEY = "__seo";
 
@@ -69,6 +87,17 @@ export function seoFromBusiness(business: Record<string, string> | null | undefi
               : [],
           }
         : null,
+      history: Array.isArray(parsed.history)
+        ? parsed.history
+            .filter((p): p is SeoPoint => Boolean(p && typeof p === "object"))
+            .map((p) => ({
+              at: typeof p.at === "string" ? p.at : "",
+              seo: clamp100(p.seo),
+              performance: clamp100(p.performance),
+            }))
+            .filter((p) => p.at)
+            .slice(-8)
+        : [],
       gaId: typeof parsed.gaId === "string" ? parsed.gaId.slice(0, 24) : "",
       gsc: typeof parsed.gsc === "string" ? parsed.gsc.slice(0, 200) : "",
     };

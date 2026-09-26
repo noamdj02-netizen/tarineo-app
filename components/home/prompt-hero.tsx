@@ -39,26 +39,38 @@ export function PromptHero({
       <div className={cn((landscape || featured) && "min-w-0")}>
         <p
           className={cn(
-            "font-grotesk font-bold tracking-[0.14em] text-ink/75 uppercase",
-            featured ? "text-[11px] sm:text-[12px]" : "text-[10px]",
+            "font-mono font-medium tracking-[0.12em] text-muted-foreground uppercase",
+            featured ? "text-[11px]" : "text-[10px]",
           )}
         >
-          Bonjour{firstName ? ` ${firstName}` : ""} !
+          {new Date().toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          })}
         </p>
         <h1
           className={cn(
-            "mt-1 font-display font-semibold tracking-tightest text-balance",
+            "mt-1.5 font-display font-semibold tracking-tightest text-balance",
             featured
-              ? "max-w-[28ch] text-[clamp(24px,2.8vw,36px)] leading-[1.06] sm:max-w-none"
+              ? "max-w-[22ch] text-[clamp(28px,3.2vw,40px)] leading-[1.04] sm:max-w-none"
               : landscape
-                ? "text-[17px] leading-[1.15] xl:text-[19px]"
+                ? "text-[18px] leading-[1.15] xl:text-[20px]"
                 : compact
                   ? "max-w-[16ch] text-[clamp(22px,2.2vw,30px)] leading-[1.08]"
-                  : "max-w-[18ch] text-[clamp(26px,4.6vw,38px)] leading-[1.06]",
+                  : "max-w-[16ch] text-[clamp(28px,5vw,40px)] leading-[1.04]",
           )}
         >
-          Comment puis-je t’aider aujourd’hui ?
+          Bonjour{firstName ? `, ${firstName}` : ""}
         </h1>
+        <p
+          className={cn(
+            "mt-1.5 max-w-[36ch] text-muted-foreground",
+            featured ? "text-[15px] leading-snug sm:text-[16px]" : "text-[14.5px] leading-snug",
+          )}
+        >
+          Qu’est-ce qu’on avance aujourd’hui ?
+        </p>
       </div>
       <PromptBox
         band={band}

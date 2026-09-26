@@ -1,225 +1,182 @@
 "use server";
 
-import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
-import { isLocale } from "@/lib/i18n";
 import { getDb } from "@/lib/db";
-import { DEFAULT_MODEL } from "@/lib/models";
-import { slugify } from "@/lib/projects/types";
-import { saveDashboardLayout } from "@/app/(app)/accueil/dashboard-actions";
-import { THEMES } from "@/lib/design-data/themes";
+import { isLocale } from "@/lib/i18n";
+import {
+  isGoalId,
+  isPainId,
+  type OnboardingAnswers,
+} from "@/lib/onboarding/catalog";
+import { getTrendApp } from "@/lib/onboarding/trend-apps";
 import {
   DEFAULT_DASHBOARD_PREFS,
   normalizeDashboardPrefs,
   type WidgetKey,
 } from "@/lib/home/dashboard-prefs";
-import { updateUserMeta } from "@/lib/profile";
+import { slugify } from "@/lib/projects/types";
 
 type Result = { ok: true } | { ok: false; error: string };
 
-export type Analysis = {
-  pitch: string;
-  target: string;
-  problem: string;
-  next: string;
+export type OnboardProject = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
 };
 
-const TOOLS = [
-  "Figma",
-  "Notion",
-  "Cursor",
-  "Claude",
-  "ChatGPT",
-  "GitHub",
-  "Vercel",
-  "Supabase",
-  "Stripe",
-  "Gmail",
-  "Canva",
-  "LinkedIn",
-] as const;
-
-export async function saveWelcome(input: { firstName: string; locale: string }): Promise<Result> {
-  const name = input.firstName.trim().slice(0, 60);
-  if (!name) return { ok: false, error: "Indique un prénom." };
-  if (!isLocale(input.locale)) return { ok: false, error: "Langue inconnue." };
-  const res = await updateUserMeta({ first_name: name, locale: input.locale });
-  if (!res.ok) return res;
-  revalidatePath("/onboarding");
-  return { ok: true };
+function fail(error: string): Result {
+  return { ok: false, error };
 }
 
-export async function saveProjects(names: string[]): Promise<Result & { ids?: string[] }> {
+async function patchMeta(patch: Record<string, unknown>): Promise<Result> {
   const db = await getDb();
-  if (!db) return { ok: false, error: "Pas connecté." };
-  const titles = names.map((n) => n.trim().slice(0, 80)).filter(Boolean).slice(0, 3);
-  if (!titles.length) return { ok: false, error: "Ajoute au moins un projet." };
-
-  const { data: taken } = await db.supabase.from("projects").select("slug, sort_order").eq("user_id", db.user.id);
-  const slugs = new Set((taken ?? []).map((p) => p.slug));
-  let sort = Math.max(0, ...(taken ?? []).map((p) => p.sort_order));
-  const ids: string[] = [];
-
-  for (const [i, title] of titles.entries()) {
-    const base = slugify(title) || `projet-${i + 1}`;
-    let slug = base;
-    for (let n = 2; slugs.has(slug); n++) slug = `${base}-${n}`;
-    slugs.add(slug);
-    sort += 1;
-    const { data, error } = await db.supabase
-      .from("projects")
-      .insert({
-        user_id: db.user.id,
-        slug,
-        name: title,
-        status: i === 0 ? "focus" : "pause",
-        stage: 1,
-        sort_order: sort,
-      })
-      .select("id")
-      .single();
-    if (error || !data) return { ok: false, error: "Projet non créé. Réessaie." };
-    ids.push(data.id);
-  }
-  revalidatePath("/projets");
-  return { ok: true, ids };
-}
-
-export async function analyzeProjects(projectIds: string[]): Promise<
-  { ok: true; analyses: Record<string, Analysis> } | { ok: false; error: string }
-> {
-  const db = await getDb();
-  if (!db) return { ok: false, error: "Pas connecté." };
-  const { data: rows } = await db.supabase
-    .from("projects")
-    .select("id, name")
-    .eq("user_id", db.user.id)
-    .in("id", projectIds.slice(0, 3));
-  if (!rows?.length) return { ok: false, error: "Aucun projet à analyser." };
-
-  const analyses: Record<string, Analysis> = {};
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) {
-    for (const p of rows) {
-      const a = fallbackAnalysis(p.name);
-      analyses[p.id] = a;
-      await db.supabase
-        .from("projects")
-        .update({ pitch: a.pitch, target: a.target, problem: a.problem, next: a.next })
-        .eq("id", p.id)
-        .eq("user_id", db.user.id);
-    }
-    return { ok: true, analyses };
-  }
-
-  try {
-    const client = new Anthropic({ apiKey: key });
-    const list = rows.map((p) => `- ${p.name}`).join("\n");
-    const msg = await Promise.race([
-      client.messages.create({
-        model: DEFAULT_MODEL,
-        max_tokens: 800,
-        messages: [
-          {
-            role: "user",
-            content: `Pour chaque projet, donne un JSON { "items": [{ "name", "pitch", "target", "problem", "next" }] }.
-pitch = 1 phrase. target = qui paie. problem = le problème. next = 1 action cette semaine.
-Projets :
-${list}
-Réponds uniquement en JSON.`,
-          },
-        ],
-      }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), 9000),
-      ),
-    ]);
-    const text = msg.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-    const parsed = parseAnalyses(text, rows);
-    for (const p of rows) {
-      const a = parsed[p.name] ?? fallbackAnalysis(p.name);
-      analyses[p.id] = a;
-      await db.supabase
-        .from("projects")
-        .update({ pitch: a.pitch, target: a.target, problem: a.problem, next: a.next })
-        .eq("id", p.id)
-        .eq("user_id", db.user.id);
-    }
-    return { ok: true, analyses };
-  } catch {
-    for (const p of rows) {
-      const a = fallbackAnalysis(p.name);
-      analyses[p.id] = a;
-      await db.supabase
-        .from("projects")
-        .update({ pitch: a.pitch, target: a.target, problem: a.problem, next: a.next })
-        .eq("id", p.id)
-        .eq("user_id", db.user.id);
-    }
-    return { ok: true, analyses };
-  }
-}
-
-export async function saveTaste(theme: string, tools: string[]): Promise<Result> {
-  if (!THEMES.some((t) => t.id === theme)) return { ok: false, error: "Thème inconnu." };
-  const picked = tools.filter((t) => (TOOLS as readonly string[]).includes(t)).slice(0, 12);
-  const db = await getDb();
-  const res = await updateUserMeta({ theme, tools: picked });
-  if (!res.ok) return res;
-  if (db) {
-    await db.supabase
-      .from("projects")
-      .update({ theme })
-      .eq("user_id", db.user.id)
-      .eq("status", "focus");
-  }
-  return { ok: true };
-}
-
-export async function saveCockpit(widgets: Record<WidgetKey, boolean>): Promise<Result> {
-  const prefs = normalizeDashboardPrefs({
-    ...DEFAULT_DASHBOARD_PREFS,
-    widgets: { ...DEFAULT_DASHBOARD_PREFS.widgets, ...widgets },
+  if (!db) return fail("Pas connecté");
+  const { error } = await db.supabase.auth.updateUser({
+    data: { ...db.user.user_metadata, ...patch },
   });
-  const saved = await saveDashboardLayout(prefs);
-  if (!saved.ok) return saved;
+  if (error) return fail(error.message);
   return { ok: true };
+}
+
+export async function saveWelcome(
+  firstName: string,
+  locale: string,
+  lastName = "",
+): Promise<Result> {
+  const first = firstName.trim().slice(0, 40);
+  const last = lastName.trim().slice(0, 40);
+  if (first.length < 2) return fail("Prénom trop court");
+  if (!isLocale(locale)) return fail("Langue inconnue");
+  return patchMeta({
+    first_name: first,
+    last_name: last,
+    locale,
+    onboarding_step: "identite",
+  });
+}
+
+export async function saveOnboardingAnswers(raw: OnboardingAnswers): Promise<Result> {
+  const goal = raw.goal && isGoalId(raw.goal) ? raw.goal : undefined;
+  const pains = (raw.pains ?? []).filter(isPainId).slice(0, 6);
+  const swipes = Array.isArray(raw.swipes)
+    ? raw.swipes.slice(0, 3).map((v) => Boolean(v))
+    : [];
+  return patchMeta({
+    onboarding: { goal, pains, swipes },
+    onboarding_step: "answers",
+  });
+}
+
+export async function listMyProjects(): Promise<OnboardProject[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const { data } = await db.supabase
+    .from("projects")
+    .select("id, name, slug, status")
+    .eq("user_id", db.user.id)
+    .order("updated_at", { ascending: false })
+    .limit(20);
+  return (data ?? []) as OnboardProject[];
+}
+
+export async function chooseProject(id: string): Promise<Result> {
+  const db = await getDb();
+  if (!db) return fail("Pas connecté");
+  const { data } = await db.supabase
+    .from("projects")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", db.user.id)
+    .maybeSingle();
+  if (!data) return fail("Projet introuvable");
+  await db.supabase
+    .from("projects")
+    .update({ status: "pause" })
+    .eq("user_id", db.user.id)
+    .eq("status", "focus")
+    .neq("id", id);
+  const { error } = await db.supabase
+    .from("projects")
+    .update({ status: "focus" })
+    .eq("id", id)
+    .eq("user_id", db.user.id);
+  if (error) return fail(error.message);
+  return patchMeta({ onboarding_step: "projet" });
+}
+
+async function insertFocus(name: string): Promise<Result> {
+  const db = await getDb();
+  if (!db) return fail("Pas connecté");
+  const trimmed = name.trim().slice(0, 80);
+  if (trimmed.length < 2) return fail("Nom trop court");
+  await db.supabase
+    .from("projects")
+    .update({ status: "pause" })
+    .eq("user_id", db.user.id)
+    .eq("status", "focus");
+  const { error } = await db.supabase.from("projects").insert({
+    user_id: db.user.id,
+    name: trimmed,
+    slug: slugify(trimmed),
+    status: "focus",
+  });
+  if (error) return fail(error.message);
+  return patchMeta({ onboarding_step: "projet" });
+}
+
+export async function saveProjects(names: string[]): Promise<Result> {
+  const first = names.map((n) => n.trim()).find((n) => n.length >= 2);
+  if (!first) return fail("Donne au moins un nom");
+  return insertFocus(first);
+}
+
+export async function createProjectFromIdea(ideaId: string, customName?: string): Promise<Result> {
+  const custom = customName?.trim() ?? "";
+  if (custom.length >= 2) return insertFocus(custom);
+  const idea = getTrendApp(ideaId);
+  if (!idea) return fail("Idée inconnue");
+  return insertFocus(idea.n);
+}
+
+export async function saveCockpit(input: {
+  widgets: Record<string, boolean>;
+  avatar?: string | null;
+}): Promise<Result> {
+  const widgets = { ...DEFAULT_DASHBOARD_PREFS.widgets };
+  for (const [k, v] of Object.entries(input.widgets ?? {})) {
+    if (k in widgets && typeof v === "boolean") widgets[k as WidgetKey] = v;
+  }
+  const layout = normalizeDashboardPrefs({ ...DEFAULT_DASHBOARD_PREFS, widgets });
+  const db = await getDb();
+  if (!db) return fail("Pas connecté");
+  const { error: dashError } = await db.supabase.from("user_dashboard").upsert(
+    {
+      user_id: db.user.id,
+      layout,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" },
+  );
+  if (dashError) return fail(dashError.message);
+  const patch: Record<string, unknown> = {
+    dashboard: { widgets },
+    onboarding_step: "cockpit",
+  };
+  if (input.avatar) patch.avatar_url = input.avatar;
+  return patchMeta(patch);
 }
 
 export async function finishOnboarding(): Promise<Result> {
-  const res = await updateUserMeta({ onboarding_done: true });
-  if (!res.ok) return { ok: false, error: "Impossible de terminer. Réessaie." };
-  revalidatePath("/", "layout");
-  return { ok: true };
+  return patchMeta({
+    onboarding_done: true,
+    onboarding_required: false,
+    dashboard_tour_done: false,
+  });
 }
 
-function fallbackAnalysis(name: string): Analysis {
-  return {
-    pitch: `${name} aide un fondateur solo à vendre plus vite, sans se disperser.`,
-    target: "Les personnes qui ont ce problème aujourd’hui et peuvent payer.",
-    problem: "Trop d’outils, pas assez de focus jusqu’à la première vente.",
-    next: "Écrire la page d’accueil et parler à 3 clients cette semaine.",
-  };
-}
-
-function parseAnalyses(text: string, rows: { id: string; name: string }[]) {
-  const out: Record<string, Analysis> = {};
-  try {
-    const json = JSON.parse(text.replace(/```json|```/g, "").trim()) as {
-      items?: { name?: string; pitch?: string; target?: string; problem?: string; next?: string }[];
-    };
-    for (const item of json.items ?? []) {
-      const row = rows.find((r) => r.name === item.name) ?? rows[0];
-      if (!row) continue;
-      out[row.name] = {
-        pitch: String(item.pitch ?? "").slice(0, 280) || fallbackAnalysis(row.name).pitch,
-        target: String(item.target ?? "").slice(0, 200) || fallbackAnalysis(row.name).target,
-        problem: String(item.problem ?? "").slice(0, 200) || fallbackAnalysis(row.name).problem,
-        next: String(item.next ?? "").slice(0, 200) || fallbackAnalysis(row.name).next,
-      };
-    }
-  } catch {
-    /* fallback */
-  }
-  return out;
+export async function finishDashboardTour(): Promise<Result> {
+  const res = await patchMeta({ dashboard_tour_done: true });
+  if (res.ok) revalidatePath("/accueil");
+  return res;
 }

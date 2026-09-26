@@ -16,8 +16,8 @@ export function WizardStepBg({ step, className }: { step: number; className?: st
     <div
       aria-hidden
       className={cn(
-        "pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b transition-[background] duration-700 ease-out-soft lg:hidden",
-        SKY[step] ?? SKY[0],
+        "pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b transition-[background] duration-700 ease-out-soft",
+        SKY[step % SKY.length],
         className,
       )}
     />

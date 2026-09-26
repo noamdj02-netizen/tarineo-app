@@ -46,7 +46,7 @@ export function ActionCards({
             <Link
               key={href + n}
               href={href}
-              className="card-soft group flex min-h-[4.25rem] items-center gap-3 px-3.5 py-2.5 transition-shadow hover:shadow-lift"
+              className="card-soft pressable group flex min-h-[4.25rem] items-center gap-3 px-3.5 py-2.5 hover:shadow-lift"
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-soft text-ink">
                 <Icon className="size-4" aria-hidden />
@@ -74,13 +74,14 @@ export function ActionCards({
         return (
           <Reveal key={href + n}>
             <motion.div
-              whileHover={reduce ? undefined : { y: -4 }}
-              transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+              whileHover={reduce ? undefined : { y: -3 }}
+              whileTap={reduce ? undefined : { scale: 0.97 }}
+              transition={{ type: "spring", bounce: 0, duration: 0.35 }}
               className="h-full"
             >
               <Link
                 href={href}
-                className="card-soft group flex h-full flex-col gap-4 p-5 transition-shadow duration-300 ease-out-soft hover:shadow-lift"
+                className="card-soft group flex h-full flex-col gap-4 p-5 hover:shadow-lift"
               >
                 <div className="flex items-center justify-between">
                   <span className="grid size-10 place-items-center rounded-xl bg-accent-soft text-ink">

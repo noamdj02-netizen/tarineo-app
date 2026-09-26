@@ -25,7 +25,7 @@ export const ROLE_PROMPTS: Record<AgentRole, string> = {
   design:
     "Rôle Design : DESIGN.md + skill landing. attach_landing / attach_component, pas un descriptif.",
   launch:
-    "Rôle Launch : get_launch_checks d’abord (checks + Stripe/GA/Vercel). Envoie le mail (send_mail), enregistre le post (save_marketing), log le geste. Gmail connecté = reply-to. Resend envoie.",
+    "Rôle Launch : get_launch_checks d’abord. Marketing : rédige le post, save_marketing (champ post obligatoire), puis produce_asset. Canva sans post enregistré = interdit. Exécute, n’envoie pas l’user coller tout seul. Mail → send_mail.",
 };
 
 export function projectSlugFromPath(path: string) {

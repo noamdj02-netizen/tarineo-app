@@ -9,9 +9,9 @@ import { brandLogoUrl } from "@/lib/resources/logo";
 import { LANDING_TESTIMONIALS, type LandingTestimonial, type StackToolRef } from "@/lib/site/content";
 import { cn } from "@/lib/utils";
 
-function TestimonialStackLogos({ tools }: { tools: readonly StackToolRef[] }) {
+export function TestimonialStackLogos({ tools }: { tools: readonly StackToolRef[] }) {
   return (
-    <ul className="flex shrink-0 items-center gap-1.5" aria-label="Outils utilisés dans Navpit">
+    <ul className="flex shrink-0 items-center gap-1 sm:gap-1.5" aria-label="Outils utilisés dans Navpit">
       {tools.map((tool) => {
         const logo = brandLogoUrl(tool.domain, 64);
         return (

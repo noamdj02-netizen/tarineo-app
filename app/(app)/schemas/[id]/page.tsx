@@ -38,9 +38,9 @@ export default async function SchemaPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ agent?: string; extra?: string }>;
+  searchParams: Promise<{ agent?: string; extra?: string; icons?: string }>;
 }) {
-  const [{ id }, { agent, extra }] = await Promise.all([params, searchParams]);
+  const [{ id }, { agent, extra, icons }] = await Promise.all([params, searchParams]);
   const schema = await getSchema(id);
   if (!schema) notFound();
   // un agent ne dessine que sur un schéma encore vide
@@ -54,6 +54,7 @@ export default async function SchemaPage({
           kind: agent,
           projectId: schema.project_id,
           extra: extra?.slice(0, 800) ?? "",
+          icons: icons === "1",
         }
       : null;
 

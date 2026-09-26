@@ -16,6 +16,8 @@ import {
 import { PostItBoard } from "@/components/home/post-it-board";
 import { PromptHero } from "@/components/home/prompt-hero";
 import { WeekCard } from "@/components/home/week-card";
+import { DashboardTour } from "@/components/home/dashboard-tour";
+import { FocusProjectCard, type FocusProject } from "@/components/home/focus-project-card";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import type { WeekStats } from "@/lib/home/week";
 import {
@@ -36,6 +38,8 @@ export function HomeDashboard({
   initialLayout,
   projects,
   schemas,
+  focus = null,
+  showTour = false,
 }: {
   firstName?: string | null;
   cards: ActionCard[];
@@ -43,6 +47,8 @@ export function HomeDashboard({
   initialLayout: DashboardPrefs;
   projects: DashboardProjectRow[];
   schemas: DashboardSchemaRow[];
+  focus?: FocusProject | null;
+  showTour?: boolean;
 }) {
   const [prefs, setPrefs] = useState<DashboardPrefs>(() =>
     normalizeDashboardPrefs(initialLayout),
@@ -50,6 +56,7 @@ export function HomeDashboard({
   const [editMode, setEditMode] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipHydratePersist = useRef(true);
 
   useEffect(() => {
     const local = loadDashboardPrefsLocal();
@@ -81,6 +88,10 @@ export function HomeDashboard({
 
   useEffect(() => {
     if (!hydrated) return;
+    if (skipHydratePersist.current) {
+      skipHydratePersist.current = false;
+      return;
+    }
     persist(prefs);
   }, [prefs, hydrated, persist]);
 
@@ -88,7 +99,7 @@ export function HomeDashboard({
 
   const renderWidget = (key: WidgetKey, column: "left" | "right") => {
     if (!w[key]) return null;
-    const onDropWidget = (dragged: WidgetKey, _fromCol: "left" | "right") => {
+    const onDropWidget = (dragged: WidgetKey) => {
       setPrefs((p) => reorderWidget(p, dragged, key, column));
     };
 
@@ -109,16 +120,22 @@ export function HomeDashboard({
 
     switch (key) {
       case "prompt":
-        return shell(<PromptHero firstName={firstName} featured />);
+        return shell(
+          <div data-tour="prompt">
+            <PromptHero firstName={firstName} featured />
+          </div>,
+        );
       case "actions":
         return shell(
-          <div className="flex flex-col gap-2">
+          <div data-tour="actions" className="flex flex-col gap-2">
             <p className="mono-label px-0.5">{"/ Actions rapides ///"}</p>
             <ActionCards cards={cards} layout="strip" />
           </div>,
         );
       case "week":
         return week ? shell(<WeekCard stats={week} compact />) : null;
+      case "focus":
+        return shell(<FocusProjectCard project={focus} />);
       case "calendar":
         return shell(
           <CalendarCard
@@ -147,8 +164,9 @@ export function HomeDashboard({
 
   return (
     <>
-      <RevealGroup className="mx-auto flex max-w-[760px] flex-col gap-6 pt-[1vh] pb-4 sm:pt-[4vh] lg:hidden">
-        <div className="flex justify-end">
+      <DashboardTour open={showTour} />
+      <RevealGroup className="mx-auto flex max-w-[760px] flex-col gap-5 pt-[1vh] pb-4 sm:pt-[3vh] lg:hidden">
+        <div className="flex items-center justify-end" data-tour="compose">
           <DashboardCustomize
             prefs={prefs}
             editMode={editMode}
@@ -158,7 +176,9 @@ export function HomeDashboard({
         </div>
         {w.prompt ? (
           <Reveal>
-            <PromptHero firstName={firstName} />
+            <div data-tour="prompt">
+              <PromptHero firstName={firstName} />
+            </div>
           </Reveal>
         ) : null}
         <div className="flex flex-col gap-3">
@@ -172,9 +192,14 @@ export function HomeDashboard({
               <WeekCard stats={week} />
             </Reveal>
           ) : null}
+          {w.focus ? (
+            <Reveal>
+              <FocusProjectCard project={focus} />
+            </Reveal>
+          ) : null}
         </div>
         {w.actions ? (
-          <div className="flex flex-col gap-3">
+          <div data-tour="actions" className="flex flex-col gap-3">
             <p className="mono-label">{"/ Actions rapides ///"}</p>
             <ActionCards cards={cards} />
           </div>
@@ -190,26 +215,22 @@ export function HomeDashboard({
         {w.schemas ? <DashboardSchemasWidget schemas={schemas} /> : null}
       </RevealGroup>
 
-      <div className="mx-auto hidden w-full max-w-[1320px] flex-col gap-3 pb-5 lg:flex lg:pt-1">
-        <header className="flex flex-wrap items-end justify-between gap-2 px-0.5">
-          <div>
-            <p className="mono-label">{"/ Cockpit ///"}</p>
-            <h1 className="mt-0.5 font-display text-[22px] font-semibold tracking-tightest">
-              Tableau de bord
-            </h1>
+      <div className="mx-auto hidden w-full max-w-[1320px] flex-col gap-4 pb-5 lg:flex lg:pt-1">
+        <header className="flex flex-wrap items-center justify-between gap-2 px-0.5">
+          <p className="mono-label">{"/ Aujourd’hui ///"}</p>
+          <div data-tour="compose">
+            <DashboardCustomize
+              prefs={prefs}
+              editMode={editMode}
+              onEditMode={setEditMode}
+              onPrefs={setPrefs}
+            />
           </div>
-          <DashboardCustomize
-            prefs={prefs}
-            editMode={editMode}
-            onEditMode={setEditMode}
-            onPrefs={setPrefs}
-          />
         </header>
 
         {editMode ? (
-          <p className="text-[12.5px] text-muted-foreground">
-            Glisse les blocs pour les réordonner · Tire la barre entre les colonnes pour ajuster la
-            largeur
+          <p className="text-[13px] text-muted-foreground">
+            Attrape un bloc et déplace-le. La barre du milieu suit ton doigt.
           </p>
         ) : null}
 
@@ -227,7 +248,10 @@ export function HomeDashboard({
               .map((key) => renderWidget(key, "left"))}
           </div>
 
-          <ColumnResizer onChange={(columnSplit) => setPrefs((p) => ({ ...p, columnSplit }))} />
+          <ColumnResizer
+            onChange={(columnSplit) => setPrefs((p) => ({ ...p, columnSplit }))}
+            onCommit={(columnSplit) => setPrefs((p) => ({ ...p, columnSplit }))}
+          />
 
           <div className="flex min-w-0 flex-1 flex-col gap-2.5 xl:sticky xl:top-[4.75rem] xl:max-h-[calc(100dvh-6rem)] xl:self-start xl:overflow-y-auto xl:overscroll-contain">
             {activeWidgetsInColumn(prefs, "right")

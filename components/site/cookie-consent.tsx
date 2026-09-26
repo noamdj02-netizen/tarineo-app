@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -47,6 +48,7 @@ export function writeCookieConsent(value: CookieConsent) {
 
 /** Bandeau CNIL : analytics uniquement après consentement. */
 export function CookieConsentBanner() {
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function CookieConsentBanner() {
     if (!current) setVisible(true);
   }, []);
 
-  if (!visible) return null;
+  if (!visible || pathname.startsWith("/onboarding")) return null;
 
   function choose(value: CookieConsent) {
     writeCookieConsent(value);

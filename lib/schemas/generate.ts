@@ -5,6 +5,7 @@ import { DEFAULT_MODEL, isModelId, type ModelId } from "@/lib/models";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { SchemaKind } from "@/lib/supabase/types";
 import { extractMermaid, looksLikeMermaid, SCHEMA_AGENTS, SCHEMA_RULES } from "./agents";
+import { ICON_KEYS, mermaidNodes, parseIconMap, type IconKey } from "./excalidraw-libs";
 
 type ProjectCtx = {
   name: string;
@@ -12,6 +13,7 @@ type ProjectCtx = {
   pitch: string;
   target: string;
   problem: string;
+  next: string;
   stage: number;
   stack: string[];
   business: Record<string, string>;
@@ -26,14 +28,21 @@ export async function generateMermaidForProject(input: {
   extra?: string;
   model?: string;
   signal?: AbortSignal;
-}): Promise<{ mermaid: string; title: string; projectName: string }> {
+  icons?: boolean;
+}): Promise<{
+  mermaid: string;
+  title: string;
+  projectName: string;
+  stickies: string[];
+  icons?: Record<string, IconKey>;
+}> {
   const agent = SCHEMA_AGENTS.find((a) => a.kind === input.kind);
   if (!agent) throw new Error("Agent schéma inconnu.");
 
   const { data: row } = await createAdminClient()
     .from("projects")
     .select(
-      "name, description, pitch, target, problem, stage, stack, business, project_features(title, status, position), project_tasks(title, done, position)",
+      "name, description, pitch, target, problem, next, stage, stack, business, project_features(title, status, position), project_tasks(title, done, position)",
     )
     .eq("id", input.projectId)
     .eq("user_id", input.userId)
@@ -85,9 +94,41 @@ export async function generateMermaidForProject(input: {
   let mermaid = await ask();
   if (!mermaid || !looksLikeMermaid(mermaid)) {
     mermaid = await ask(
-      "Le rendu precedent etait invalide. Recommence. Un seul bloc mermaid. flowchart ou classDiagram. Libelles entre guillemets. Pas de caracteres speciaux.",
+      "Le rendu precedent etait invalide. Recommence. Un seul bloc mermaid. mindmap (indentation 2 espaces) ou classDiagram. Pas de caracteres speciaux.",
     );
   }
   if (!mermaid || !looksLikeMermaid(mermaid)) throw new Error("Réponse schéma vide.");
-  return { mermaid, title: `${agent.label} · ${p.name}`, projectName: p.name };
+
+  let icons: Record<string, IconKey> | undefined;
+  if (input.icons) {
+    const nodes = mermaidNodes(mermaid);
+    if (nodes.length) {
+      const res = await client.messages.create(
+        {
+          model,
+          max_tokens: 800,
+          system:
+            "Tu maps des nœuds mermaid vers une icône. Réponds UNIQUEMENT un JSON objet id→clé. Pas de texte autour.",
+          messages: [
+            {
+              role: "user",
+              content: `CLES: ${ICON_KEYS.join(", ")}\nNOEUDS: ${JSON.stringify(nodes)}\nUne clé par id. Si rien ne va, omets l’id.`,
+            },
+          ],
+          ...(model === "claude-haiku-4-5" ? {} : { output_config: { effort: "medium" as const } }),
+        },
+        { signal: input.signal },
+      );
+      const text = res.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
+      icons = parseIconMap(text);
+    }
+  }
+
+  const stickies = [p.pitch, p.next, p.problem]
+    .map((s) => (typeof s === "string" ? s.trim() : ""))
+    .filter(Boolean)
+    .map((s) => s.slice(0, 90))
+    .slice(0, 2);
+
+  return { mermaid, title: `${agent.label} · ${p.name}`, projectName: p.name, stickies, icons };
 }

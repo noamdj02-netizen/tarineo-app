@@ -66,8 +66,8 @@ export default async function ComptePage() {
         <div id="configuration" className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-3">/ Configuration initiale ///</p>
           <p className="text-[14.5px] leading-relaxed text-muted-foreground">
-            Le parcours en 5 étapes : prénom, projets, analyse IA, goût design, puis les blocs de
-            ton cockpit. Tu peux tout changer plus tard sur l’accueil.
+            Le parcours : objectif, freins, projet Focus (existant ou idée tendance), cockpit,
+            puis le guide sur l’accueil. Le thème se change ici, pas dans le wizard.
           </p>
           <ol className="mt-4 flex flex-col gap-2">
             {WIZARD_STEPS.map((step, i) => (
@@ -89,7 +89,7 @@ export default async function ComptePage() {
 
         <div className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-4">/ Identité ///</p>
-          <NameForm firstName={viewer.firstName} email={viewer.email} />
+          <NameForm firstName={viewer.firstName} lastName={viewer.lastName} email={viewer.email} />
         </div>
 
         <div className="card-soft p-5 sm:p-6">
@@ -114,16 +114,18 @@ export default async function ComptePage() {
             <span className="mono-label mb-0">/ Abonnement ///</span>
           </p>
           <p className="font-display text-[28px] font-semibold tracking-tightest">
-            {PLAN_LABEL[info.plan]} · {price}
+            {owner ? "Studio · illimité" : `${PLAN_LABEL[info.plan]} · ${price}`}
           </p>
           <p className="mt-1 text-[14px] text-muted-foreground">
-            {info.plan === "free"
-              ? "Gratuit : 2 projets, 30 IA / mois, 3 schémas. Essai Pro 14 jours sans carte à l’inscription."
-              : info.plan === "founder"
-                ? "Pro à vie, un seul paiement."
-                : info.plan === "starter"
-                  ? "Création : jusqu’à 6 projets, 300 IA et 100 schémas par mois."
-                  : "Pro : projets et schémas illimités, agenda synchronisé."}
+            {owner
+              ? "Compte noamdj02 : projets, schémas, IA et agenda sans plafond."
+              : info.plan === "free"
+                ? "Gratuit : 2 projets, 30 IA / mois, 3 schémas. Essai Pro 14 jours sans carte à l’inscription."
+                : info.plan === "founder"
+                  ? "Pro à vie, un seul paiement."
+                  : info.plan === "starter"
+                    ? "Création : jusqu’à 6 projets, 300 IA et 100 schémas par mois."
+                    : "Pro : projets et schémas illimités, agenda synchronisé."}
           </p>
           <Link
             href="/abonnement"

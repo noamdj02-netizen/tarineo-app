@@ -26,7 +26,7 @@ const FORMATION_FIELDS: SchemaField[] = [
 
 /**
  * Agents qui dessinent un schéma à partir de la fiche projet.
- * flowchart et classDiagram seulement : le parseur Excalidraw les tient.
+ * mindmap = tableau type Excalidraw / GitMind. classDiagram = modèle.
  */
 export const SCHEMA_AGENTS: SchemaAgent[] = [
   {
@@ -35,7 +35,7 @@ export const SCHEMA_AGENTS: SchemaAgent[] = [
     hint: "Front, back, base, services",
     icon: "layers",
     brief:
-      "Dessine l'architecture en `flowchart LR`. Nœuds : navigateur, front, API, base, auth, paiement, 2 services max. subgraph par couche (Client, App, Data). Losange seulement pour une vraie décision.",
+      "Dessine une mindmap. Racine = nom du projet. 4 branches : Client, App, Data, Services. Feuilles = vrais outils de la stack (navigateur, Next, API, Postgres, auth, Stripe). 12 nœuds max. 5 mots max par nœud.",
   },
   {
     kind: "parcours",
@@ -43,7 +43,7 @@ export const SCHEMA_AGENTS: SchemaAgent[] = [
     hint: "Découverte → premier résultat",
     icon: "route",
     brief:
-      "Dessine le parcours cible en `flowchart LR` : découverte, landing, inscription, première action utile, résultat, paiement. Losanges pour les frictions. 10 à 14 nœuds.",
+      "Dessine une mindmap. Racine = la cible. Branches : Decouverte, Landing, Action, Resultat, Paiement. 2 ou 3 feuilles par branche, frictions incluses. 12 nœuds max.",
   },
   {
     kind: "tunnel",
@@ -51,7 +51,7 @@ export const SCHEMA_AGENTS: SchemaAgent[] = [
     hint: "Les 12 frames adaptées au projet",
     icon: "gallery-vertical-end",
     brief:
-      "Dessine le tunnel landing en `flowchart TD`, une case par frame (Navbar, Hero, Preuve, Probleme, Marche, Fonctions, Demo, Temoignages, Resultats, Tarifs, FAQ, CTA). Message concret du projet, 6 mots max par case. 4 subgraph : Attention, Interet, Desir, Action.",
+      "Dessine une mindmap. Racine = nom du projet. 4 branches : Attention, Interet, Desir, Action. Feuilles = frames (Hero, Preuve, Probleme, Fonctions, Tarifs, FAQ, CTA) avec le message concret, 5 mots max.",
   },
   {
     kind: "roadmap",
@@ -59,7 +59,7 @@ export const SCHEMA_AGENTS: SchemaAgent[] = [
     hint: "Fait, en cours, à faire, 1ère vente",
     icon: "map",
     brief:
-      "Dessine la roadmap en `flowchart TD` avec 4 subgraph reliés : Fait, En cours, A faire, Premiere vente. Tâches réelles du projet, 5 max par groupe.",
+      "Dessine une mindmap. Racine = nom du projet. 4 branches : Fait, En cours, A faire, Premiere vente. Tâches réelles, 4 max par branche.",
   },
   {
     kind: "donnees",
@@ -76,7 +76,7 @@ export const SCHEMA_AGENTS: SchemaAgent[] = [
     icon: "graduation-cap",
     fields: FORMATION_FIELDS,
     brief:
-      "Tu es l'agent Formation. Dessine le tunnel de vente d'une formation en `flowchart TD`. subgraph obligatoires dans cet ordre : Promesse, Parcours eleve (5 modules max), Preuves, Offre et prix, Apres achat (onboarding). Chaque nœud = verbe + objet, 5 mots max. Utilise des formes : rectangle = etape, losange = objection, stadium (( )) = resultat. Si audience / promesse / prix sont fournis, ne les invente pas. Pas de chiffres inventés.",
+      "Tu es l'agent Formation. Dessine une mindmap. Racine = la promesse. Branches : Audience, Modules (5 max), Preuves, Offre, Apres achat. Si audience / promesse / prix sont fournis, ne les invente pas. Pas de chiffres inventés.",
   },
   {
     kind: "offre",
@@ -85,26 +85,25 @@ export const SCHEMA_AGENTS: SchemaAgent[] = [
     icon: "badge-euro",
     fields: FORMATION_FIELDS.filter((f) => f.key !== "duree"),
     brief:
-      "Tu es l'agent Offre. Dessine l'offre en `flowchart TD`. subgraph : Promesse, 3 piliers, Objections (losanges), Prix (3 offres si possible), Garantie. Libellés concrets du projet, 5 mots max. Stadium pour le CTA final. N'invente pas de prix si aucun n'est donné : écris Prix a definir.",
+      "Tu es l'agent Offre. Dessine une mindmap. Racine = la promesse. Branches : 3 piliers, Objections, Prix, Garantie, CTA. Libellés concrets, 5 mots max. N'invente pas de prix : écris Prix a definir.",
   },
 ];
 
 export const SCHEMA_RULES = `Tu dessines des schémas pour un fondateur solo (SaaS ou formation, France).
 Réponds UNIQUEMENT avec un bloc \`\`\`mermaid, rien avant ni après.
 
-Mermaid strict (sinon le dessin casse) :
-- flowchart TD, flowchart LR ou classDiagram uniquement.
-- Pas de style, classDef, linkStyle, click, emoji, HTML, ni fa: icônes.
-- Identifiants ASCII courts : a1, hero, pay, m1.
-- Chaque libellé entre guillemets doubles. 6 mots max. Pas de parenthèses, pas de :, pas de /.
-- 8 à 16 nœuds. Lisibles sur téléphone.
-- subgraph Noms sans accents ni ponctuation (Attention, Interet, Desir).
-- N'invente pas de chiffres. Si une info manque, reste générique.
+Si l'agent demande une mindmap :
+- Première ligne : mindmap
+- Ligne suivante : la racine, texte simple (pas de formes).
+- Indentation 2 espaces par niveau. 2 niveaux de branches max.
+- 8 à 16 nœuds. 5 mots max. Pas d'emoji, pas de :, pas de /, pas de parenthèses.
+- Pas de style, classDef, click, HTML.
 
-Formes :
-- rectangle id["Texte"] = étape
-- losange id{"Texte"} = décision ou objection
-- stadium id(["Texte"]) = résultat ou CTA`;
+Si l'agent demande un classDiagram :
+- classDiagram uniquement.
+- Identifiants ASCII. Pas de style.
+
+N'invente pas de chiffres. Si une info manque, reste générique.`;
 
 export const SCHEMA_KIND_LABELS: Record<SchemaKind, string> = {
   libre: "Libre",
@@ -121,5 +120,5 @@ export function extractMermaid(text: string) {
 }
 
 export function looksLikeMermaid(src: string) {
-  return /^(flowchart|graph|classDiagram)\b/m.test(src);
+  return /^(flowchart|graph|classDiagram|mindmap)\b/m.test(src);
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { useReducedMotion } from "framer-motion";
 import { ArrowUp, Mic, MicOff, Paperclip, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -59,7 +58,6 @@ export function PromptBox({
   large?: boolean;
 }) {
   const router = useRouter();
-  const reduce = useReducedMotion();
   const [value, setValue] = useState("");
   const [model, setModel] = useModel();
   const [listening, setListening] = useState(false);
@@ -109,18 +107,16 @@ export function PromptBox({
     if ((!q && !files.length) || sending) return;
     setSending(true);
     const attached = files;
-    setTimeout(() => {
-      stashCopilotDraft({
-        question: q,
-        files: attached.length ? attached : undefined,
-      });
-      const sp = new URLSearchParams({ send: "1" });
-      if (!attached.length && q) sp.set("q", q.slice(0, 500));
-      router.push(`/copilote?${sp}`);
-      setValue("");
-      setFiles([]);
-      setSending(false);
-    }, reduce ? 0 : 280);
+    stashCopilotDraft({
+      question: q,
+      files: attached.length ? attached : undefined,
+    });
+    const sp = new URLSearchParams({ send: "1" });
+    if (!attached.length && q) sp.set("q", q.slice(0, 500));
+    router.push(`/copilote?${sp}`);
+    setValue("");
+    setFiles([]);
+    setSending(false);
   }
 
   function toggleDictation() {
@@ -272,7 +268,7 @@ export function PromptBox({
                 onClick={() => fileRef.current?.click()}
                 aria-label="Joindre un fichier"
                 className={cn(
-                  "grid flex-none place-items-center rounded-pill bg-surface-2 text-ink hover:bg-accent-soft",
+                  "pressable grid flex-none place-items-center rounded-pill bg-surface-2 text-ink hover:bg-accent-soft",
                   large ? "size-12" : "size-11",
                 )}
               >
@@ -285,7 +281,7 @@ export function PromptBox({
                   aria-pressed={listening}
                   aria-label={listening ? "Arrêter la dictée" : "Dicter ma question"}
                   className={cn(
-                    "grid flex-none place-items-center rounded-pill transition-colors duration-300",
+                    "pressable grid flex-none place-items-center rounded-pill transition-colors duration-300",
                     large ? "size-12" : "size-11",
                     listening
                       ? "bg-ink text-accent-ink"
@@ -304,7 +300,7 @@ export function PromptBox({
                 disabled={!canSend}
                 aria-label="Envoyer"
                 className={cn(
-                  "btn-dark grid flex-none place-items-center rounded-pill disabled:translate-y-0 disabled:opacity-35",
+                  "btn-dark pressable grid flex-none place-items-center rounded-pill disabled:translate-y-0 disabled:opacity-35",
                   large ? "size-12" : "size-11",
                 )}
               >

@@ -2,6 +2,7 @@ export type WidgetKey =
   | "prompt"
   | "calendar"
   | "week"
+  | "focus"
   | "actions"
   | "postits"
   | "projects"
@@ -31,13 +32,14 @@ export const WIDGET_LABELS: Record<WidgetKey, string> = {
   prompt: "Question au copilote",
   calendar: "Planning",
   week: "Ma semaine",
+  focus: "Projet favori",
   actions: "Actions rapides",
   postits: "Post-its",
   projects: "Mes projets",
   schemas: "Schémas récents",
 };
 
-export const DEFAULT_LEFT_COLUMN: WidgetKey[] = ["prompt", "actions", "week"];
+export const DEFAULT_LEFT_COLUMN: WidgetKey[] = ["prompt", "actions", "week", "focus"];
 export const DEFAULT_RIGHT_COLUMN: WidgetKey[] = ["calendar", "postits"];
 
 const DEFAULT_POSTITS: PostIt[] = [
@@ -53,6 +55,7 @@ export const DEFAULT_DASHBOARD_PREFS: DashboardPrefs = {
     prompt: true,
     calendar: true,
     week: true,
+    focus: true,
     actions: true,
     postits: true,
     projects: false,
@@ -68,6 +71,7 @@ const ALL_WIDGETS: WidgetKey[] = [
   "prompt",
   "calendar",
   "week",
+  "focus",
   "actions",
   "postits",
   "projects",
@@ -78,6 +82,7 @@ const DEFAULT_COLUMN: Record<WidgetKey, "left" | "right"> = {
   prompt: "left",
   calendar: "right",
   week: "left",
+  focus: "left",
   actions: "left",
   postits: "right",
   projects: "left",

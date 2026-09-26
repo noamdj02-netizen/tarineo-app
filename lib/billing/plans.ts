@@ -8,9 +8,17 @@ export type Interval = "month" | "year";
 export type Limits = {
   /** null = illimité */
   projects: number | null;
-  aiPerMonth: number;
+  aiPerMonth: number | null;
   schemas: number | null;
   calendarSync: boolean;
+};
+
+/** Compte studio : aucun plafond. */
+export const OWNER_LIMITS: Limits = {
+  projects: null,
+  aiPerMonth: null,
+  schemas: null,
+  calendarSync: true,
 };
 
 export const LIMITS: Record<PlanId, Limits> = {

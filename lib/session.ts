@@ -6,6 +6,7 @@ import { isOpenAccess } from "@/lib/supabase/config";
 export type Viewer = {
   /** Prénom affiché (« Bon retour, Noam ») */
   firstName: string;
+  lastName: string;
   email: string;
   initial: string;
   avatarUrl: string | null;
@@ -14,6 +15,8 @@ export type Viewer = {
   canSignOut: boolean;
   /** Inscription récente : le wizard d’accueil n’est pas encore fini. */
   needsOnboarding: boolean;
+  /** Accueil : overlay 3 spots après le wizard. */
+  needsTour: boolean;
   theme: string | null;
 };
 
@@ -36,14 +39,17 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     [meta.avatar_url, meta.picture].find(
       (v): v is string => typeof v === "string" && v.startsWith("http"),
     ) ?? null;
+  const lastRaw = typeof meta.last_name === "string" ? meta.last_name.trim() : "";
   return {
     firstName,
+    lastName: lastRaw,
     email,
     initial: (firstName || email).charAt(0).toUpperCase(),
     avatarUrl: avatar,
     locale: meta.locale === "en" ? "en" : "fr",
     canSignOut: !isOpenAccess(),
     needsOnboarding: meta.onboarding_required === true && meta.onboarding_done !== true,
+    needsTour: meta.onboarding_done === true && meta.dashboard_tour_done !== true,
     theme: typeof meta.theme === "string" ? meta.theme : null,
   };
 });

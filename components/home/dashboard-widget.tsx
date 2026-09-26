@@ -54,7 +54,7 @@ export function DashboardWidget({
     >
       {editMode ? (
         <div
-          className="mb-1 flex cursor-grab items-center gap-1 px-1 text-[11px] text-muted-foreground active:cursor-grabbing"
+          className="mb-1.5 flex cursor-grab items-center gap-1 px-1 text-[11px] text-muted-foreground active:cursor-grabbing"
           aria-hidden
         >
           <GripVertical className="size-3.5" />

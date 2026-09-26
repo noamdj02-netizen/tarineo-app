@@ -98,6 +98,8 @@ export default async function AccueilPage() {
       initialLayout={dashboardLayout}
       projects={projects}
       schemas={schemas}
+      focus={focus}
+      showTour={viewer?.needsTour === true}
     />
   );
 }

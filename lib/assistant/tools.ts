@@ -1,11 +1,14 @@
 import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
+import { revalidatePath } from "next/cache";
 import { COMPONENTS } from "@/lib/design-data/components";
 import { sendPlainEmail } from "@/lib/email/send";
 import { defaultValues, landingBrief } from "@/lib/heroes/apply";
 import { HEROES, getHero } from "@/lib/heroes/catalog";
 import { launchFromBusiness, liveTips, remainingChecks } from "@/lib/projects/launch-checks";
-import { mergeMarketing, type MarketChannel } from "@/lib/projects/marketing";
+import { marketingFromBusiness, mergeMarketing, type MarketChannel } from "@/lib/projects/marketing";
+import { writeMarketingPost } from "@/lib/projects/write-post";
+import { isStudioTarget, studioHref } from "@/lib/projects/studio";
 import { seoFromBusiness } from "@/lib/projects/seo";
 import { data } from "@/lib/mcp/data";
 import { generateMermaidForProject } from "@/lib/schemas/generate";
@@ -235,8 +238,30 @@ export const COPILOT_TOOLS: Anthropic.Tool[] = [
         channel: { type: "string", enum: ["linkedin", "tiktok", "instagram", "email"] },
         hook: { type: "string" },
         cta: { type: "string" },
+        post: { type: "string", description: "Post rédigé, prêt à coller" },
       },
       required: ["projectId"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "produce_asset",
+    description:
+      "Crée le livrable. Canva/Figma : si le post n’existe pas, le rédige et l’enregistre d’abord. Schéma Navpit. Exécute, ne décris pas.",
+    input_schema: {
+      type: "object",
+      properties: {
+        projectId: idProp,
+        target: { type: "string", enum: ["canva", "schema", "figma"] },
+        kind: {
+          type: "string",
+          enum: SCHEMA_AGENTS.map((a) => a.kind),
+          description: "Kind du schéma si target=schema",
+        },
+        title: { type: "string" },
+        brief: { type: "string" },
+      },
+      required: ["projectId", "target"],
       additionalProperties: false,
     },
   },
@@ -281,12 +306,17 @@ function projectHref(slug?: string | null, id?: string) {
   return slug ? `/projets/${slug}` : id ? `/projets` : "/projets";
 }
 
+function touchProject(slug?: string | null) {
+  revalidatePath("/projets");
+  if (slug) revalidatePath(`/projets/${slug}`);
+}
+
 export async function runCopilotTool(
   userId: string,
   name: string,
   raw: unknown,
   opts?: { model?: string; signal?: AbortSignal },
-): Promise<{ text: string; action?: CopilotAction }> {
+): Promise<{ text: string; action?: CopilotAction; reveal?: string }> {
   const input = asRecord(raw);
   try {
     switch (name) {
@@ -538,22 +568,139 @@ export async function runCopilotTool(
           card.business && typeof card.business === "object"
             ? (card.business as Record<string, string>)
             : {};
+        const prev = marketingFromBusiness(current);
         const business = mergeMarketing(current, {
-          offer: str(input.offer),
+          offer: str(input.offer) || prev.offer,
           channel: ["linkedin", "tiktok", "instagram", "email"].includes(channel)
             ? channel
-            : "linkedin",
-          hook: str(input.hook),
-          cta: str(input.cta),
+            : prev.channel,
+          hook: str(input.hook) || prev.hook,
+          cta: str(input.cta) || prev.cta,
+          post: str(input.post) || prev.post,
         });
         await data.updateBusiness(userId, projectId, business);
+        const savedPost = str(input.post) || prev.post;
+        if (str(input.post)) {
+          await data.addNote(userId, {
+            projectId,
+            title: `Post · ${marketingFromBusiness(business).channel}`,
+            content: str(input.post),
+            source: "marketing",
+          });
+        }
+        touchProject(card.slug);
         return {
-          text: "Marketing enregistré.",
+          text: savedPost
+            ? `Post enregistré. Propose ensuite produce_asset (canva / schema / figma).`
+            : "Marketing enregistré. Il manque le post : rédige-le et rappelle save_marketing avec le champ post.",
           action: {
             kind: "note",
-            label: "Marketing à jour",
+            label: "Voir le post",
             href: projectHref(card.slug, projectId),
           },
+          reveal: savedPost ? `Post enregistré :\n${savedPost}` : undefined,
+        };
+      }
+      case "produce_asset": {
+        const projectId = str(input.projectId);
+        if (!UUID.test(projectId)) return { text: "projectId invalide." };
+        const target = str(input.target);
+        if (!isStudioTarget(target)) return { text: "Cible invalide (canva, schema, figma)." };
+        const project = await data.getProjectCard(userId, projectId);
+        if (!project) return { text: "Projet introuvable." };
+        const title = (str(input.title) || project.name).slice(0, 80);
+        const business =
+          project.business && typeof project.business === "object"
+            ? (project.business as Record<string, string>)
+            : {};
+        let marketing = marketingFromBusiness(business);
+        let wrotePost = false;
+        if (target !== "schema" && !marketing.post.trim()) {
+          let post = "";
+          try {
+            post = await writeMarketingPost({
+              name: project.name,
+              pitch: project.pitch,
+              target: project.target,
+              problem: project.problem,
+              offer: marketing.offer,
+              hook: marketing.hook,
+              cta: marketing.cta,
+              channel: marketing.channel,
+              model: opts?.model,
+              signal: opts?.signal,
+            });
+          } catch {
+            post = [marketing.hook, marketing.offer, marketing.cta, project.pitch, project.name]
+              .filter(Boolean)
+              .join("\n\n")
+              .slice(0, 2000);
+          }
+          if (post.trim()) {
+            marketing = { ...marketing, post };
+            await data.updateBusiness(userId, projectId, mergeMarketing(business, marketing));
+            await data.addNote(userId, {
+              projectId,
+              title: `Post · ${marketing.channel}`,
+              content: post,
+              source: "marketing",
+            });
+            wrotePost = true;
+          }
+        }
+        const brief =
+          str(input.brief).trim() ||
+          [marketing.post, marketing.offer, marketing.hook, marketing.cta].filter(Boolean).join("\n\n") ||
+          project.pitch ||
+          project.description ||
+          title;
+
+        if (target === "schema") {
+          const kind = isSchemaKind(input.kind) && input.kind !== "libre" ? input.kind : "parcours";
+          const generated = await generateMermaidForProject({
+            userId,
+            projectId,
+            kind,
+            extra: brief,
+            model: opts?.model,
+            signal: opts?.signal,
+          });
+          const row = await data.createSchemaRow(userId, {
+            projectId,
+            title: generated.title,
+            kind,
+            mermaid: generated.mermaid,
+          });
+          await data.addNote(userId, {
+            projectId,
+            title: generated.title,
+            content: `\`\`\`mermaid\n${generated.mermaid}\n\`\`\``,
+            source: "schema",
+          });
+          return {
+            text: JSON.stringify({ id: row.id, title: row.title, href: `/schemas/${row.id}` }),
+            action: { kind: "schema", label: "Schéma créé", href: `/schemas/${row.id}` },
+          };
+        }
+
+        const href = studioHref(target, project.figma);
+        await data.addNote(userId, {
+          projectId,
+          title: target === "canva" ? `Brief Canva · ${title}` : `Brief Figma · ${title}`,
+          content: brief.slice(0, 4000),
+          source: target,
+        });
+        touchProject(project.slug);
+        return {
+          text: marketing.post
+            ? `Post ${wrotePost ? "rédigé et " : ""}enregistré. ${target === "canva" ? "Brief Canva" : "Brief Figma"} prêt. ${href}`
+            : `${target === "canva" ? "Brief Canva" : "Brief Figma"} prêt. ${href}`,
+          action: {
+            kind: "studio",
+            label: target === "canva" ? "Ouvrir Canva" : "Ouvrir Figma",
+            href,
+          },
+          reveal: marketing.post ? `Post enregistré :\n${marketing.post}` : undefined,
         };
       }
       case "send_mail": {

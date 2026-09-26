@@ -1,12 +1,11 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
+import { OWNER_EMAIL } from "@/lib/billing/plan";
 import { isOpenAccess } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-const ADMIN_EMAIL = "noamdj02@gmail.com";
-
 function isAdmin(email: string | undefined) {
-  return email?.trim().toLowerCase() === ADMIN_EMAIL;
+  return email?.trim().toLowerCase() === OWNER_EMAIL;
 }
 
 /**

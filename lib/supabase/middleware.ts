@@ -151,6 +151,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && !needsOnboarding && pathname.startsWith("/onboarding")) {
+    // En local : on relit le wizard sans resetter le compte.
+    if (process.env.NODE_ENV !== "production") return response;
     const url = request.nextUrl.clone();
     url.pathname = "/accueil";
     url.search = "";

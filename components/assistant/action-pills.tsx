@@ -11,6 +11,8 @@ export function ActionPills({ actions }: { actions: CopilotAction[] }) {
         <li key={`${a.kind}-${i}`}>
           <Link
             href={a.href}
+            target={a.href.startsWith("http") ? "_blank" : undefined}
+            rel={a.href.startsWith("http") ? "noreferrer" : undefined}
             className="inline-flex min-h-8 items-center rounded-pill border border-ink/15 bg-accent-soft px-2.5 font-mono text-[11px] tracking-[0.04em] text-ink hover:border-ink/35"
           >
             {a.label}

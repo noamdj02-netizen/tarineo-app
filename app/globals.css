@@ -183,6 +183,17 @@
   .card-soft {
     @apply rounded-card border border-line bg-surface shadow-soft;
   }
+  /* Feedback au doigt (Apple : highlight on press, pas au relâchement) */
+  .pressable {
+    transition: transform 100ms ease-out;
+  }
+  .pressable:active {
+    transform: scale(0.97);
+  }
+  /* Chrome flottant de l’accueil */
+  .dash-chip {
+    @apply inline-flex min-h-9 items-center gap-1.5 rounded-pill border border-line/80 bg-surface/70 px-3 text-[13px] font-medium backdrop-blur-xl hover:bg-surface;
+  }
   /* Bouton noir avec reflet interne */
   .btn-dark {
     @apply bg-accent text-accent-ink shadow-dark transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];

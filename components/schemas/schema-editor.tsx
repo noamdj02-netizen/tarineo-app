@@ -4,6 +4,7 @@ import "@excalidraw/excalidraw/index.css";
 import {
   convertToExcalidrawElements,
   Excalidraw,
+  useHandleLibrary,
 } from "@excalidraw/excalidraw";
 import type {
   BinaryFiles,
@@ -14,6 +15,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { renameSchema, saveSchemaScene } from "@/app/(app)/schemas/actions";
 import { Illustration } from "@/components/illustration";
+import { mermaidNodes, type IconKey } from "@/lib/schemas/excalidraw-libs";
+import { isMindmap, mindmapSkeletons } from "@/lib/schemas/mindmap";
+import { paperColor, sketchify } from "@/lib/schemas/sketch";
+import { loadNavpitLibraries, stampIcons } from "@/lib/schemas/stamp-icons";
 import type { SchemaKind, SchemaRow } from "@/lib/supabase/types";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +31,7 @@ export type SchemaEditorProps = {
     kind: Exclude<SchemaKind, "libre">;
     projectId: string;
     extra: string;
+    icons?: boolean;
   } | null;
 };
 
@@ -59,6 +65,19 @@ export function SchemaEditor({
   const version = useRef(versionOf(scene.elements as SceneElements));
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const started = useRef(false);
+  const returnUrl =
+    typeof window !== "undefined" ? `${window.location.origin}/schemas/${id}` : `/schemas/${id}`;
+
+  useHandleLibrary({
+    excalidrawAPI: api,
+    validateLibraryUrl: (url) =>
+      /excalidraw\.com|jsdelivr\.net|githubusercontent\.com|github\.com\/excalidraw/i.test(url),
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!window.name) window.name = "navpitSchemas";
+  }, []);
 
   const flush = useCallback(async () => {
     if (timer.current) clearTimeout(timer.current);
@@ -107,6 +126,59 @@ export function SchemaEditor({
     };
   }, [flush]);
 
+  const paintMermaid = useCallback(
+    async (
+      mermaid: string,
+      extras?: { icons?: Record<string, IconKey>; stickies?: string[]; projectName?: string },
+    ) => {
+      let elements;
+      if (isMindmap(mermaid)) {
+        const skeletons = mindmapSkeletons(mermaid, {
+          title: extras?.projectName || project || undefined,
+          stickies: extras?.stickies,
+        });
+        if (!skeletons.length) throw new Error("Mindmap illisible. Relance-le.");
+        elements = convertToExcalidrawElements(
+          skeletons as Parameters<typeof convertToExcalidrawElements>[0],
+          { regenerateIds: false },
+        );
+      } else {
+        const { parseMermaidToExcalidraw } =
+          await import("@excalidraw/mermaid-to-excalidraw");
+        let parsed;
+        try {
+          parsed = await parseMermaidToExcalidraw(mermaid, {
+            flowchart: { curve: "basis" },
+            themeVariables: { fontSize: "20px" },
+          });
+        } catch {
+          throw new Error("L’agent a rendu un schéma illisible. Relance-le.");
+        }
+        elements = sketchify(
+          convertToExcalidrawElements(parsed.elements, { regenerateIds: true }),
+        );
+        if (parsed.files) api?.addFiles(Object.values(parsed.files));
+      }
+      if (extras?.icons && Object.keys(extras.icons).length && api) {
+        const libs = await loadNavpitLibraries();
+        await api.updateLibrary({
+          libraryItems: libs,
+          merge: true,
+          openLibraryMenu: true,
+          defaultStatus: "published",
+        });
+        elements = stampIcons(elements, extras.icons, mermaidNodes(mermaid), libs);
+      }
+      if (!api) return;
+      api.updateScene({
+        elements,
+        appState: { viewBackgroundColor: paperColor() },
+      });
+      api.scrollToContent(elements, { fitToContent: true, animate: true });
+    },
+    [api, project],
+  );
+
   const runAgent = useCallback(async () => {
     if (!api || !generate) return;
     setAgent("running");
@@ -117,26 +189,20 @@ export function SchemaEditor({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(generate),
       });
-      const data = (await res.json()) as { mermaid?: string; error?: string };
+      const data = (await res.json()) as {
+        mermaid?: string;
+        error?: string;
+        icons?: Record<string, IconKey>;
+        projectName?: string;
+        stickies?: string[];
+      };
       if (!res.ok || !data.mermaid)
         throw new Error(data.error || "Le schéma n’a pas pu être généré.");
-      const { parseMermaidToExcalidraw } =
-        await import("@excalidraw/mermaid-to-excalidraw");
-      let parsed;
-      try {
-        parsed = await parseMermaidToExcalidraw(data.mermaid, {
-          themeVariables: { fontSize: "18px" },
-        });
-      } catch {
-        throw new Error("L’agent a rendu un schéma illisible. Relance-le.");
-      }
-      const elements = convertToExcalidrawElements(parsed.elements, {
-        regenerateIds: true,
+      await paintMermaid(data.mermaid, {
+        icons: generate.icons ? data.icons : undefined,
+        stickies: data.stickies,
+        projectName: data.projectName,
       });
-      // les fichiers d'abord : le onChange déclenché par updateScene les enregistre avec
-      if (parsed.files) api.addFiles(Object.values(parsed.files));
-      api.updateScene({ elements });
-      api.scrollToContent(elements, { fitToContent: true, animate: true });
       setAgent("idle");
       window.history.replaceState(null, "", `/schemas/${id}`);
     } catch (e) {
@@ -145,13 +211,23 @@ export function SchemaEditor({
         e instanceof Error ? e.message : "Le schéma n’a pas pu être généré.",
       );
     }
-  }, [api, generate, id]);
+  }, [api, generate, id, paintMermaid]);
 
   useEffect(() => {
-    if (!api || !generate || started.current) return;
-    started.current = true;
-    void runAgent();
-  }, [api, generate, runAgent]);
+    if (!api || started.current) return;
+    if (generate) {
+      started.current = true;
+      void runAgent();
+      return;
+    }
+    const stored = scene.appState?.navpitMermaid;
+    if (typeof stored === "string" && stored && !(scene.elements as unknown[]).length) {
+      started.current = true;
+      void paintMermaid(stored).catch(() => {
+        started.current = false;
+      });
+    }
+  }, [api, generate, paintMermaid, runAgent, scene]);
 
   return (
     <section className="flex flex-col gap-3">
@@ -204,10 +280,11 @@ export function SchemaEditor({
           excalidrawAPI={setApi}
           initialData={{
             elements: scene.elements as SceneElements,
-            appState: { viewBackgroundColor: "#ffffff", ...scene.appState },
+            appState: { viewBackgroundColor: paperColor(), ...scene.appState },
             files: (scene.files ?? {}) as BinaryFiles,
             scrollToContent: true,
           }}
+          libraryReturnUrl={returnUrl}
           onChange={onChange}
           langCode="fr-FR"
           UIOptions={{

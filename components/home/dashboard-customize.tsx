@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Shapes,
   Sparkles,
+  Star,
   StickyNote,
   TrendingUp,
   Zap,
@@ -42,7 +43,7 @@ type CatalogItem = {
   title: string;
   description: string;
   icon: LucideIcon;
-  group: "cockpit" | "library";
+    group: "board" | "library";
 };
 
 const CATALOG: CatalogItem[] = [
@@ -51,35 +52,42 @@ const CATALOG: CatalogItem[] = [
     title: "Copilote",
     description: "Question du jour + envoi vers le chat",
     icon: MessageSquare,
-    group: "cockpit",
+    group: "board",
   },
   {
     key: "calendar",
     title: "Planning",
     description: "Calendrier et agenda du jour",
     icon: Calendar,
-    group: "cockpit",
+    group: "board",
   },
   {
     key: "week",
     title: "Ma semaine",
     description: "Activité des 7 derniers jours",
     icon: TrendingUp,
-    group: "cockpit",
+    group: "board",
+  },
+  {
+    key: "focus",
+    title: "Projet favori",
+    description: "Le projet Focus, au centre du tableau",
+    icon: Star,
+    group: "board",
   },
   {
     key: "actions",
     title: "Actions rapides",
-    description: "Raccourcis focus, anatomie, thèmes",
+    description: "Raccourcis focus, landing, thèmes",
     icon: Zap,
-    group: "cockpit",
+    group: "board",
   },
   {
     key: "postits",
     title: "Post-its",
     description: "Notes libres sur ton tableau",
     icon: StickyNote,
-    group: "cockpit",
+    group: "board",
   },
   {
     key: "projects",
@@ -118,25 +126,25 @@ export function DashboardCustomize({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Button
+      <button
         type="button"
-        variant={editMode ? "default" : "outline"}
-        size="sm"
-        className="rounded-full"
         onClick={() => onEditMode(!editMode)}
+        className={
+          editMode
+            ? "pressable btn-dark rounded-pill px-3.5 text-[13px] font-medium"
+            : "dash-chip pressable"
+        }
       >
-        <LayoutGrid data-icon="inline-start" aria-hidden />
-        {editMode ? "Terminer" : "Personnaliser"}
-      </Button>
+        <LayoutGrid className="size-3.5" aria-hidden />
+        {editMode ? "Terminer" : "Composer"}
+      </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger
-          render={
-            <Button type="button" variant="outline" size="sm" className="rounded-full" />
-          }
+          render={<button type="button" className="dash-chip pressable" />}
         >
-          <Sparkles data-icon="inline-start" aria-hidden />
-          Ajouter des blocs
+          <Sparkles className="size-3.5" aria-hidden />
+          Ajouter
         </DialogTrigger>
         <DialogContent className="flex max-h-[min(88vh,640px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
           <DialogHeader className="border-b border-line px-5 pt-5 pb-4">
@@ -151,10 +159,10 @@ export function DashboardCustomize({
 
           <ScrollArea className="max-h-[min(52vh,420px)] flex-1">
             <div className="flex flex-col gap-6 px-5 py-4">
-              {(["cockpit", "library"] as const).map((group) => (
+              {(["board", "library"] as const).map((group) => (
                 <div key={group}>
                   <p className="mono-label mb-3">
-                    {group === "cockpit" ? "/ Cockpit ///" : "/ Bibliothèque ///"}
+                    {group === "board" ? "/ Tableau ///" : "/ Bibliothèque ///"}
                   </p>
                   <ul className="grid gap-2 sm:grid-cols-2">
                     {CATALOG.filter((c) => c.group === group).map((item) => {

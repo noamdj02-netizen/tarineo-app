@@ -6,6 +6,7 @@ import {
   Database,
   GalleryVerticalEnd,
   GraduationCap,
+  Image,
   Layers,
   Loader2,
   Map as MapIcon,
@@ -224,6 +225,7 @@ function NewSchemaDialog({
   const [extra, setExtra] = useState("");
   const [vars, setVars] = useState<Record<string, string>>({});
   const [title, setTitle] = useState("");
+  const [icons, setIcons] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -258,7 +260,11 @@ function NewSchemaDialog({
       }
       const q =
         mode === "agent"
-          ? `?${new URLSearchParams({ agent: kind, ...(packed ? { extra: packed } : {}) })}`
+          ? `?${new URLSearchParams({
+              agent: kind,
+              ...(packed ? { extra: packed } : {}),
+              ...(icons ? { icons: "1" } : {}),
+            })}`
           : "";
       router.push(`/schemas/${res.id}${q}`);
     });
@@ -419,6 +425,39 @@ function NewSchemaDialog({
                 className="mt-1.5 min-h-12 w-full rounded-xl border border-line bg-surface-2 px-3 text-[15px] outline-none focus:border-ink/30"
               />
             </label>
+            <div className="mt-4 rounded-xl border border-line px-3 py-3">
+              <button
+                type="button"
+                role="switch"
+                aria-checked={icons}
+                onClick={() => setIcons((v) => !v)}
+                className="flex w-full items-start gap-3 text-left"
+              >
+                <span
+                  className={cn(
+                    "mt-0.5 grid size-10 flex-none place-items-center rounded-pill border",
+                    icons ? "border-ink bg-ink text-accent-ink" : "border-line bg-surface-2",
+                  )}
+                >
+                  <Image className="size-4" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <b className="block text-[14px] font-semibold">Icônes et images</b>
+                  <small className="mt-0.5 block text-[12.5px] leading-snug text-muted-foreground">
+                    Plus de tokens Claude. Mind map + pictos, bibliothèque
+                    Excalidraw préchargée.
+                  </small>
+                </span>
+              </button>
+              <a
+                href="https://libraries.excalidraw.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-block font-mono text-[11px] tracking-[0.04em] text-muted-foreground underline underline-offset-2 hover:text-ink"
+              >
+                libraries.excalidraw.com
+              </a>
+            </div>
           </>
         ) : (
           <label className="mt-4 block">
