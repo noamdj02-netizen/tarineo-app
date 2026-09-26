@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default function OnboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative isolate flex h-dvh max-h-dvh flex-col overflow-hidden bg-bg px-4 pb-[env(safe-area-inset-bottom)]">
+    <div className="relative isolate grid h-dvh max-h-dvh grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-bg px-4 pb-[env(safe-area-inset-bottom)]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 hidden h-[50%] lg:block"
@@ -27,9 +27,7 @@ export default function OnboardLayout({ children }: { children: React.ReactNode 
           <span className="text-accent-2">.</span>
         </Link>
       </header>
-      <main
-        className="mx-auto flex w-full max-w-[560px] min-h-0 flex-1 flex-col pb-2 lg:pb-4"
-      >
+      <main className="mx-auto flex h-full min-h-0 w-full max-w-[560px] flex-col overflow-hidden pb-2 lg:pb-4">
         <VerifiedNotice />
         {children}
       </main>

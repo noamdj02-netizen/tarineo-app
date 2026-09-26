@@ -26,11 +26,13 @@ export function PageEnter({
   const reduce = useReducedMotion();
   const p = presets[variant];
 
-  if (reduce) return <div className="min-h-0">{children}</div>;
+  const box = variant === "onboard" ? "flex h-full min-h-0 flex-col" : "min-h-0";
+
+  if (reduce) return <div className={box}>{children}</div>;
 
   return (
     <motion.div
-      className="min-h-0"
+      className={box}
       initial={{ opacity: 0, y: p.opacityOnly ? 0 : p.y }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: p.duration, ease: EASE }}

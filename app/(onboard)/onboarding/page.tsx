@@ -8,10 +8,15 @@ export const metadata = { title: "Bienvenue" };
 export default async function OnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; ask?: string }>;
+  searchParams: Promise<{ next?: string; ask?: string; step?: string }>;
 }) {
   const [viewer, q, projects] = await Promise.all([getViewer(), searchParams, listMyProjects()]);
   if (!viewer) redirect("/login?next=/onboarding");
+  const jump = Number(q.step);
+  const startStep =
+    process.env.NODE_ENV !== "production" && Number.isInteger(jump) && jump >= 0 && jump <= 10
+      ? jump
+      : 0;
   return (
     <Wizard
       firstName={viewer.firstName}
@@ -22,6 +27,7 @@ export default async function OnboardingPage({
       projects={projects}
       next={q.next}
       ask={q.ask}
+      startStep={startStep}
     />
   );
 }

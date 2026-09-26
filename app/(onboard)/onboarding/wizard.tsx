@@ -19,7 +19,7 @@ import { WizardStepBg } from "@/components/onboarding/wizard-step-bg";
 import { EASE } from "@/components/motion/reveal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import type { WidgetKey } from "@/lib/home/dashboard-prefs";
 import type { Locale } from "@/lib/i18n";
 import { ONBOARD_STEPS, ONBOARD_SWIPES, type OnboardGoalId, type OnboardPainId } from "@/lib/onboarding/catalog";
@@ -44,6 +44,7 @@ export function Wizard({
   projects,
   next,
   ask,
+  startStep = 0,
 }: {
   firstName: string;
   lastName: string;
@@ -53,10 +54,11 @@ export function Wizard({
   projects: OnboardProject[];
   next?: string;
   ask?: string;
+  startStep?: number;
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(startStep);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(firstName);
@@ -166,10 +168,10 @@ export function Wizard({
       };
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col">
+    <div className="relative grid h-full min-h-0 flex-1 grid-rows-[auto_auto_minmax(0,1fr)]">
       <WizardStepBg step={step} />
 
-      <div className="mb-3 flex shrink-0 items-center gap-3 px-0.5">
+      <div className="mb-3 flex items-center gap-3 px-0.5">
         <div
           className="flex min-w-0 flex-1 gap-1"
           aria-label={`Étape ${step + 1} sur ${ONBOARD_STEPS.length}`}
@@ -187,14 +189,14 @@ export function Wizard({
           {step + 1}/{ONBOARD_STEPS.length}
         </p>
       </div>
-      <p className="mono-label mb-3 shrink-0 px-0.5">{`/ ${ONBOARD_STEPS[step]?.label ?? ""} ///`}</p>
+      <p className="mono-label mb-3 px-0.5">{`/ ${ONBOARD_STEPS[step]?.label ?? ""} ///`}</p>
 
-      <Card className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden border-line bg-surface/90 py-0 shadow-soft ring-1 ring-line lg:rounded-card">
-        <CardContent className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-8">
+      <Card className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden border-line bg-surface/90 py-0 shadow-soft ring-1 ring-line lg:rounded-card">
+        <CardContent className="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
-              className="flex min-h-0 flex-1 flex-col"
+              className="flex min-h-full flex-col"
               initial={stepMotion.initial}
               animate={stepMotion.animate}
               exit={stepMotion.exit}
@@ -281,7 +283,7 @@ export function Wizard({
         </CardContent>
 
         {!hideFooter ? (
-          <div className="flex shrink-0 items-center gap-2 border-t border-line bg-surface/95 px-4 py-3 sm:px-6">
+          <CardFooter className="shrink-0 gap-2 border-line bg-surface/95 px-4 py-3 sm:px-6">
             <Button
               type="button"
               variant="ghost"
@@ -305,9 +307,9 @@ export function Wizard({
               Continuer
               {!pending ? <ArrowRight data-icon="inline-end" aria-hidden /> : null}
             </Button>
-          </div>
+          </CardFooter>
         ) : step > 0 ? (
-          <div className="shrink-0 border-t border-line px-4 py-2 sm:px-6">
+          <CardFooter className="shrink-0 justify-start border-line bg-transparent px-4 py-2 sm:px-6">
             <Button
               type="button"
               variant="ghost"
@@ -317,7 +319,7 @@ export function Wizard({
               <ArrowLeft data-icon="inline-start" aria-hidden />
               Retour
             </Button>
-          </div>
+          </CardFooter>
         ) : null}
       </Card>
     </div>
