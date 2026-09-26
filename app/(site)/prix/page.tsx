@@ -4,14 +4,17 @@ import { DeferredPricing } from "@/components/site/landing-deferred";
 import { JsonLd } from "@/components/site/json-ld";
 import { siteMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
+import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { FAQ } from "@/lib/site/content";
+
+const PRIX_DESCRIPTION = `${PRO_TRIAL_DAYS} jours à 0 €, puis Création 15 €, Pro 30 € ou Fondateur 149 €.`;
 
 export const metadata = {
   title: "Prix",
-  description: "7 jours d’essai Pro sans carte, puis Création 15 €, Pro 30 € ou Fondateur 149 €.",
+  description: PRIX_DESCRIPTION,
   ...siteMetadata({
     title: "Prix Navpit",
-    description: "7 jours d’essai Pro sans carte, puis Création 15 €, Pro 30 € ou Fondateur 149 €.",
+    description: PRIX_DESCRIPTION,
     path: "/prix",
   }),
 };

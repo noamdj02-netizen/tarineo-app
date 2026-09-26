@@ -17,6 +17,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field as UiField, FieldLabel } from "@/components/ui/field";
 import { HoneypotField } from "@/components/site/honeypot-field";
+import { FollowAuthTab } from "@/components/auth/follow-auth";
+import { continueAfterAuth } from "@/lib/auth/continue-after-auth";
+import { sendSignupCode } from "@/lib/email/auth-mail";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +46,9 @@ export function SignupForm({ next }: { next: string }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const [otpType, setOtpType] = useState<"signup" | "email">("signup");
+  const [code, setCode] = useState("");
+  const [already, setAlready] = useState(false);
   const score = strength(password);
 
   async function onSubmit(e: React.FormEvent) {
@@ -61,6 +67,25 @@ export function SignupForm({ next }: { next: string }) {
     }
     setBusy(true);
     setMsg(null);
+    const mailed = await sendSignupCode({
+      email: email.trim(),
+      password,
+      firstName: name.trim(),
+      next,
+      honeypot,
+    });
+    if (mailed.ok) {
+      setBusy(false);
+      setAlready(Boolean(mailed.already));
+      setOtpType(mailed.mode === "email" ? "email" : "signup");
+      setSentTo(email.trim());
+      return;
+    }
+    if (mailed.error !== "fallback") {
+      setBusy(false);
+      setMsg(mailed.error);
+      return;
+    }
     const { data, error } = await createClient().auth.signUp({
       email: email.trim(),
       password,
@@ -93,17 +118,65 @@ export function SignupForm({ next }: { next: string }) {
     setSentTo(email.trim());
   }
 
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    const { error } = await createClient().auth.verifyOtp({
+      email: sentTo ?? email.trim(),
+      token: code.trim(),
+      type: otpType,
+    });
+    if (error) {
+      setBusy(false);
+      setMsg("Code faux, déjà utilisé ou expiré. Regarde le dernier email.");
+      return;
+    }
+    const kind = already ? "login" : "signup";
+    const settled = await continueAfterAuth(next, kind);
+    if (!settled.ok) {
+      window.location.assign(
+        `/auth/callback?next=${encodeURIComponent(next)}&verified=${kind}`,
+      );
+      return;
+    }
+    router.replace(settled.path);
+    router.refresh();
+  }
+
   if (sentTo) {
     return (
       <Card className="border-0 bg-transparent shadow-none ring-0">
+        <FollowAuthTab />
         <CardHeader className="items-center px-0 text-center">
           <Illustration name="feedback-envoye" className="size-24" />
           <CardTitle className="text-[18px] tracking-[-0.02em]">Vérifie ta boîte mail</CardTitle>
           <CardDescription className="text-[14.5px] leading-relaxed">
-            On a envoyé un lien de confirmation à <b className="text-foreground">{sentTo}</b>. Clique
-            dessus pour activer ton compte.
+            {already
+              ? "Un compte existe déjà. On a envoyé un code pour te connecter à "
+              : "On a envoyé un code et un bouton à "}
+            <b className="text-foreground">{sentTo}</b>.
           </CardDescription>
         </CardHeader>
+        <CardContent className="px-0">
+          <form onSubmit={verifyCode} className="flex flex-col gap-4">
+            <Field
+              label="Code reçu"
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              required
+              placeholder="482913"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="text-center font-mono text-[20px] tracking-[0.28em]"
+            />
+            {msg ? <FormMessage>{msg}</FormMessage> : null}
+            <SubmitButton busy={busy}>Activer mon compte</SubmitButton>
+          </form>
+        </CardContent>
       </Card>
     );
   }

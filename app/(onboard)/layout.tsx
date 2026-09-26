@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { VerifiedNotice } from "@/components/auth/verified-notice";
 import { BRAND } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +31,7 @@ export default function OnboardLayout({ children }: { children: React.ReactNode 
         className="mx-auto flex w-full max-w-[720px] flex-1 flex-col pb-[max(0.5rem,env(safe-area-inset-bottom))] lg:pb-[max(2rem,env(safe-area-inset-bottom))]"
         style={{ perspective: "1200px" }}
       >
+        <VerifiedNotice />
         {children}
       </main>
     </div>

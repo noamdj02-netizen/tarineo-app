@@ -1,11 +1,14 @@
-import { EmailCta, EmailParagraph, NavpitEmailShell } from "./shell";
+import { EmailCode, EmailCta, EmailParagraph, NavpitEmailShell } from "./shell";
 
-export type AuthSignupEmailProps = { appUrl: string; confirmationUrl: string };
+export type AuthSignupEmailProps = { appUrl: string; confirmationUrl: string; token: string };
 
-export function AuthSignupEmail({ appUrl, confirmationUrl }: AuthSignupEmailProps) {
+export function AuthSignupEmail({ appUrl, confirmationUrl, token }: AuthSignupEmailProps) {
   return (
-    <NavpitEmailShell preview="Confirme ton compte Navpit" label="Inscription" title="Plus qu’un clic" appUrl={appUrl}>
-      <EmailParagraph>Confirme ton adresse email pour activer ton cockpit Navpit.</EmailParagraph>
+    <NavpitEmailShell preview="Ton code pour activer Navpit" label="Inscription" title="Active ton compte" appUrl={appUrl}>
+      <EmailParagraph>
+        Entre ce code sur la page d’inscription, ou clique le bouton. Il est valable une heure.
+      </EmailParagraph>
+      <EmailCode>{token}</EmailCode>
       <EmailCta href={confirmationUrl}>Confirmer mon email</EmailCta>
     </NavpitEmailShell>
   );
@@ -14,6 +17,7 @@ export function AuthSignupEmail({ appUrl, confirmationUrl }: AuthSignupEmailProp
 AuthSignupEmail.PreviewProps = {
   appUrl: "https://www.navpit.com",
   confirmationUrl: "https://www.navpit.com/auth/callback",
+  token: "482913",
 } satisfies AuthSignupEmailProps;
 
 export default AuthSignupEmail;

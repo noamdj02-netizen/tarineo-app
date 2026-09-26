@@ -87,6 +87,7 @@ export function Field({
   hint,
   id: idProp,
   invalid,
+  className,
   ...props
 }: React.ComponentProps<typeof Input> & {
   label: string;
@@ -101,7 +102,7 @@ export function Field({
       <Input
         id={id}
         aria-invalid={invalid || undefined}
-        className={inputClass}
+        className={cn(inputClass, className)}
         {...props}
       />
       {hint ? <FieldDescription>{hint}</FieldDescription> : null}

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { AssistantPanel } from "@/components/assistant/assistant-panel";
+import { VerifiedNotice } from "@/components/auth/verified-notice";
 import { AppMainScrollRestore } from "@/components/shell/app-main-chrome";
 import { MobileNav } from "@/components/shell/mobile-nav";
 import { Sidebar } from "@/components/shell/sidebar";
@@ -28,6 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             className="mx-auto w-full max-w-[1280px] flex-1 px-4 pt-6 pb-[calc(120px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:overflow-x-hidden lg:overflow-y-auto lg:pb-16 lg:overscroll-contain"
           >
             <AppMainScrollRestore />
+            <VerifiedNotice />
             {children}
           </main>
         </div>

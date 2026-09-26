@@ -29,14 +29,14 @@ async function main() {
     } = await import("@/emails/index");
     const list = [
       { subject: "[Navpit] Bienvenue", react: WelcomeEmail({ firstName: "Noam", appUrl }) },
-      { subject: "[Navpit] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback }) },
+      { subject: "[Navpit] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback, token: "482913" }) },
       {
         subject: "[Navpit] Ton lien de connexion",
         react: AuthMagicLinkEmail({ appUrl, confirmationUrl: callback, token: "12345678" }),
       },
       {
         subject: "[Navpit] Nouveau mot de passe",
-        react: AuthResetPasswordEmail({ appUrl, confirmationUrl: `${appUrl}/nouveau-mot-de-passe` }),
+        react: AuthResetPasswordEmail({ appUrl, confirmationUrl: `${appUrl}/nouveau-mot-de-passe`, token: "482913" }),
       },
       { subject: "[Navpit] Confirme ta nouvelle adresse", react: AuthEmailChangeEmail({ appUrl, confirmationUrl: callback }) },
       { subject: "[Navpit] Bienvenue en Pro", react: BillingProWelcomeEmail({ appUrl }) },
@@ -83,14 +83,14 @@ async function main() {
 
   const sends = [
     { subject: "[Navpit] Bienvenue", react: WelcomeEmail({ firstName: "Noam", appUrl }) },
-    { subject: "[Navpit] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback }) },
+    { subject: "[Navpit] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback, token: "482913" }) },
     {
       subject: "[Navpit] Ton lien de connexion",
       react: AuthMagicLinkEmail({ appUrl, confirmationUrl: callback, token: "12345678" }),
     },
     {
       subject: "[Navpit] Nouveau mot de passe",
-      react: AuthResetPasswordEmail({ appUrl, confirmationUrl: `${appUrl}/nouveau-mot-de-passe` }),
+      react: AuthResetPasswordEmail({ appUrl, confirmationUrl: `${appUrl}/nouveau-mot-de-passe`, token: "482913" }),
     },
     {
       subject: "[Navpit] Confirme ta nouvelle adresse",

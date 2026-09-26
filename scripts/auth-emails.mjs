@@ -11,7 +11,8 @@ const config = {
   mailer_templates_confirmation_content: navpitTransactionalHtml({
     label: "Inscription",
     title: "Plus qu’un clic",
-    body: "Confirme ton adresse email pour activer ton cockpit Navpit.",
+    body: "Entre ce code sur la page d’inscription, ou clique le bouton. Il est valable une heure.",
+    code: "{{ .Token }}",
     ctaHref: "{{ .ConfirmationURL }}",
     ctaLabel: "Confirmer mon email",
   }),
@@ -28,7 +29,8 @@ const config = {
   mailer_templates_recovery_content: navpitTransactionalHtml({
     label: "Mot de passe",
     title: "Nouveau mot de passe",
-    body: "Tu as demandé à changer ton mot de passe. Le lien est valable environ une heure.",
+    body: "Entre ce code sur la page « mot de passe oublié », ou clique le bouton. Il est valable une heure.",
+    code: "{{ .Token }}",
     ctaHref: "{{ .ConfirmationURL }}",
     ctaLabel: "Choisir mon mot de passe",
   }),

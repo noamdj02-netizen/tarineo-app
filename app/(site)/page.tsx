@@ -6,7 +6,12 @@ import { LandingCtaBand, LandingClosingCta } from "@/components/site/landing-cta
 import { LandingWorkspaceDepth } from "@/components/site/landing-folio-sections";
 import { LandingProductShowcase } from "@/components/site/landing-product-showcase";
 import { LandingFeatures } from "@/components/site/landing-features";
-import { DeferredFaqTabs, DeferredPricing, DeferredTestimonials } from "@/components/site/landing-deferred";
+import {
+  DeferredFaqTabs,
+  DeferredPricing,
+  DeferredProductFilm,
+  DeferredTestimonials,
+} from "@/components/site/landing-deferred";
 import { LandingMarquee } from "@/components/site/landing-marquee";
 import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
 import { HeroPrompt } from "@/components/site/hero-prompt";
@@ -113,6 +118,15 @@ export default function LandingPage() {
       <LandingCtaBand />
       <LandingProductShowcase />
       <LandingWorkspaceDepth />
+
+      <LandingSection id="film">
+        <LandingSectionHead
+          label="Téléphone"
+          title="Rapide. Sûr. À toi."
+          text="Le copilote, ton Focus et tes ressources — déjà dans ta poche."
+        />
+        <DeferredProductFilm />
+      </LandingSection>
 
       <LandingSection id="fonctions" tone="muted">
         <LandingSectionHead

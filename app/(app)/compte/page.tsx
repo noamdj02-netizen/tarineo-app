@@ -117,7 +117,7 @@ export default async function ComptePage() {
           </p>
           <p className="mt-1 text-[14px] text-muted-foreground">
             {info.plan === "free"
-              ? "Gratuit : 2 projets, 30 IA / mois, 3 schémas. Essai Pro 7 jours sans carte à l’inscription."
+              ? "Gratuit : 2 projets, 30 IA / mois, 3 schémas. Essai Pro 14 jours sans carte à l’inscription."
               : info.plan === "founder"
                 ? "Pro à vie, un seul paiement."
                 : info.plan === "starter"

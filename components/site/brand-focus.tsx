@@ -7,8 +7,14 @@ import { cn } from "@/lib/utils";
 const FOCUS_TINTS = ["#f7c6a3", "#cbbdf3", "#b3cbf6"] as const;
 const TINT_MS = 2000;
 
-/** Mot « Focus » surligné. Styles : `.brand-focus` dans globals.css */
-export function BrandFocus({ className }: { className?: string }) {
+/** Surlignage pêche → lavande → bleu. Styles : `.brand-focus` dans globals.css */
+export function BrandFocus({
+  className,
+  children = "Focus",
+}: {
+  className?: string;
+  children?: React.ReactNode;
+}) {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -25,7 +31,7 @@ export function BrandFocus({ className }: { className?: string }) {
       className={cn("brand-focus", className)}
       style={{ "--focus-glow": FOCUS_TINTS[index] } as CSSProperties}
     >
-      Focus
+      {children}
     </span>
   );
 }

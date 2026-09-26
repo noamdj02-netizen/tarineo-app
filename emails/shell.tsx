@@ -140,6 +140,14 @@ export function EmailParagraph({ children }: { children: ReactNode }) {
   return <Text className="m-0 mb-4 font-sans text-15 leading-relaxed text-ink-2">{children}</Text>;
 }
 
+export function EmailCode({ children }: { children: ReactNode }) {
+  return (
+    <Text className="m-0 mb-2 mt-2 rounded-2xl border border-solid border-line bg-white px-7 py-4 text-center font-display text-[32px] font-semibold tracking-[0.28em] text-ink">
+      {children}
+    </Text>
+  );
+}
+
 export function EmailCta({ href, children }: { href: string; children: ReactNode }) {
   return (
     <Link

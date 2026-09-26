@@ -1,9 +1,13 @@
 "use client";
 
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { KeyRound, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { FollowAuthTab } from "@/components/auth/follow-auth";
+import { continueAfterAuth } from "@/lib/auth/continue-after-auth";
+import { kindFromEmailType } from "@/lib/auth/verified";
 import {
   AuthFieldGroup,
   Divider,
@@ -16,15 +20,34 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Illustration } from "@/components/illustration";
 import { Button } from "@/components/ui/button";
+import { sendLoginCode } from "@/lib/email/auth-mail";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/client";
 
 type Mode = "password" | "link" | "code";
 
-/** Jeton du lien magique collé depuis l'email (`…/verify?token=…`), sinon null (code tapé). */
-function linkToken(input: string) {
-  const match = input.trim().match(/[?&]token=([^&\s]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
+/** Lien collé depuis l'email, sinon null (code tapé). */
+function pastedLink(input: string) {
+  const raw = input.trim();
+  let url: URL | null = null;
+  try {
+    if (raw.startsWith("http")) url = new URL(raw);
+    else if (raw.startsWith("/")) url = new URL(raw, "http://local");
+  } catch {
+    url = null;
+  }
+  if (url) {
+    const tokenHash = url.searchParams.get("token_hash") || url.searchParams.get("token");
+    if (!tokenHash) return null;
+    return {
+      tokenHash,
+      type: (url.searchParams.get("type") || "email") as EmailOtpType,
+      next: url.searchParams.get("next"),
+    };
+  }
+  const legacy = raw.match(/[?&]token=([^&\s]+)/);
+  if (!legacy) return null;
+  return { tokenHash: decodeURIComponent(legacy[1]), type: "email" as const, next: null };
 }
 
 export function LoginForm({
@@ -77,6 +100,17 @@ export function LoginForm({
     e.preventDefault();
     setBusy(true);
     setMsg(null);
+    const mailed = await sendLoginCode(email.trim(), target);
+    if (mailed.ok) {
+      setBusy(false);
+      setMode("code");
+      return;
+    }
+    if (mailed.error !== "fallback") {
+      setBusy(false);
+      setMsg(mailed.error);
+      return;
+    }
     const { error } = await createClient().auth.signInWithOtp({
       email: email.trim(),
       options: {
@@ -102,30 +136,40 @@ export function LoginForm({
     setBusy(true);
     setMsg(null);
     const supabase = createClient();
-    const tokenHash = linkToken(code);
-    let { error } = tokenHash
-      ? await supabase.auth.verifyOtp({ token_hash: tokenHash, type: "email" })
+    const pasted = pastedLink(code);
+    const otpType = pasted?.type ?? "email";
+    let { error } = pasted
+      ? await supabase.auth.verifyOtp({ token_hash: pasted.tokenHash, type: otpType })
       : await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
-    if (error && tokenHash?.startsWith("pkce_")) {
-      ({ error } = await supabase.auth.verifyOtp({ token_hash: tokenHash.slice(5), type: "email" }));
+    if (error && pasted?.tokenHash.startsWith("pkce_")) {
+      ({ error } = await supabase.auth.verifyOtp({ token_hash: pasted.tokenHash.slice(5), type: otpType }));
     }
-    setBusy(false);
     if (error) {
+      setBusy(false);
       setMsg("Lien ou code faux, déjà utilisé ou expiré. Demande un nouvel email.");
       return;
     }
-    router.replace(target);
+    const dest = pasted?.type === "recovery" ? "/nouveau-mot-de-passe" : safeNext(pasted?.next, target);
+    const kind = pasted?.type === "recovery" ? null : (kindFromEmailType(pasted?.type) ?? "login");
+    const settled = await continueAfterAuth(dest, kind);
+    if (!settled.ok) {
+      const verified = kind ? `&verified=${kind}` : "";
+      window.location.assign(`/auth/callback?next=${encodeURIComponent(dest)}${verified}`);
+      return;
+    }
+    router.replace(settled.path);
     router.refresh();
   }
 
   if (mode === "code") {
     return (
       <form onSubmit={verifyCode} className="flex flex-col gap-4">
+        <FollowAuthTab />
         <Alert className="border-line bg-surface-2">
           <Illustration name="feedback-envoye" className="size-12" />
           <AlertDescription className="text-[14px] leading-relaxed">
-            Email envoyé à <b>{email}</b>. Clique sur le lien. Dans l’app iPhone : appui long sur le
-            lien, « Copier », puis colle-le ici.
+            Email envoyé à <b>{email}</b>. Entre le code à 6 chiffres, ou colle le lien. Dans l’app
+            iPhone : appui long sur le lien, « Copier ».
           </AlertDescription>
         </Alert>
         <Field
@@ -135,7 +179,7 @@ export function LoginForm({
           autoCorrect="off"
           spellCheck={false}
           required
-          placeholder="Colle le lien de l’email"
+          placeholder="Code ou lien"
           value={code}
           onChange={(e) => setCode(e.target.value)}
           className="font-mono"

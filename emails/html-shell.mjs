@@ -23,8 +23,11 @@ export function navpitTransactionalHtml(opts) {
       ? `<a href="${opts.ctaHref}" style="display:inline-block;margin-top:16px;background:#111;color:#fff;border-radius:999px;padding:14px 28px;font-size:15px;font-weight:500;text-decoration:none">${opts.ctaLabel}</a>`
       : "";
   const codeBlock = opts.code
-    ? `<p style="font:600 32px/1.1 'Space Grotesk',Helvetica,sans-serif;letter-spacing:.2em;color:#111;margin:20px 0 8px">${opts.code}</p>
-       <p style="font-size:13px;line-height:1.5;color:#8c8c8c;margin:0 0 12px">Colle ce code sur la page de connexion Navpit.</p>`
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr>
+         <td style="background:#fff;border:1px solid #ececeb;border-radius:16px;padding:18px 28px;text-align:center">
+           <p style="margin:0;font:600 32px/1 'Space Grotesk',Helvetica,Arial,sans-serif;letter-spacing:.28em;color:#111">${opts.code}</p>
+         </td></tr></table>
+       <p style="font-size:13px;line-height:1.5;color:#8c8c8c;margin:0 0 12px">Entre ce code sur Navpit, ou clique le bouton. Valable une heure.</p>`
     : "";
 
   return `<!DOCTYPE html>

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 export type FeatureGlowTint = "glow-1" | "glow-2" | "glow-3";
 
-const GLOW_HALO: Record<FeatureGlowTint, string> = {
+export const GLOW_HALO: Record<FeatureGlowTint, string> = {
   "glow-1":
     "bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-glow-1)_44%,transparent)_0%,transparent_72%)]",
   "glow-2":

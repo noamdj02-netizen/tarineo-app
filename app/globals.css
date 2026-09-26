@@ -219,6 +219,10 @@
     transform: rotate(-2.25deg);
     background: color-mix(in srgb, var(--focus-glow) 38%, transparent);
   }
+  /* Sur fond sombre : le texte garde la couleur de la carte. */
+  .brand-focus-inherit {
+    color: inherit;
+  }
 }
 
 @property --focus-glow {

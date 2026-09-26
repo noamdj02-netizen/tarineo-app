@@ -1,5 +1,4 @@
-import { Text } from "@react-email/components";
-import { EmailCta, EmailParagraph, NavpitEmailShell } from "./shell";
+import { EmailCode, EmailCta, EmailParagraph, NavpitEmailShell } from "./shell";
 
 export type AuthMagicLinkEmailProps = {
   appUrl: string;
@@ -16,8 +15,10 @@ export function AuthMagicLinkEmail({ appUrl, confirmationUrl, token }: AuthMagic
       title="Ton lien de connexion"
       appUrl={appUrl}
     >
-      <EmailParagraph>Colle ce code sur la page de connexion, ou utilise le bouton (lien à usage unique, ~1 h).</EmailParagraph>
-      <Text className="m-0 font-display text-[32px] font-semibold tracking-[0.2em] text-ink">{token}</Text>
+      <EmailParagraph>
+        Entre ce code sur la page de connexion, ou clique le bouton. Lien à usage unique, valable une heure.
+      </EmailParagraph>
+      <EmailCode>{token}</EmailCode>
       <EmailCta href={confirmationUrl}>Me connecter</EmailCta>
     </NavpitEmailShell>
   );

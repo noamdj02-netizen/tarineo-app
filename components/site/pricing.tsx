@@ -4,7 +4,9 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { Illustration } from "@/components/illustration";
+import { BrandFocus } from "@/components/site/brand-focus";
 import { LandingButton } from "@/components/site/landing-button";
+import { GLOW_HALO, type FeatureGlowTint } from "@/components/site/landing-feature-card";
 import { EASE } from "@/components/motion/reveal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,10 +167,12 @@ export function Pricing() {
       <div className="mx-auto grid w-full max-w-[1080px] items-stretch gap-5 lg:grid-cols-3">
         <PlanCard
           art="landing-idee"
+          glow="glow-1"
           name="Création"
-          price={euro(interval === "month" ? STARTER.month : STARTER.year)}
-          unit={unit}
-          trialNote={`${PRO_TRIAL_DAYS} jours Pro offerts à l’inscription`}
+          price="0 €"
+          unit={`pendant ${PRO_TRIAL_DAYS} jours`}
+          thenPrice={euro(interval === "month" ? STARTER.month : STARTER.year)}
+          thenUnit={unit}
           loyaltyNote={loyaltyFootnote("starter", interval)}
           text="Pour lancer sans te disperser : assez de projets et d’IA pour un vrai side project."
           features={FEATURES.starter}
@@ -178,9 +182,12 @@ export function Pricing() {
         <PlanCard
           featured
           art="landing-progression"
+          glow="glow-2"
           name="Pro"
-          price={euro(interval === "month" ? PRO.month : PRO.year)}
-          unit={unit}
+          price="0 €"
+          unit={`pendant ${PRO_TRIAL_DAYS} jours`}
+          thenPrice={euro(interval === "month" ? PRO.month : PRO.year)}
+          thenUnit={unit}
           text="Tout Navpit : illimité, agenda branché, copilote sans plafond schéma."
           features={FEATURES.pro}
           cta="Essayer puis passer Pro"
@@ -190,6 +197,7 @@ export function Pricing() {
         />
         <PlanCard
           art="landing-victoire"
+          glow="glow-3"
           name="Fondateur"
           price={euro(FOUNDER.price)}
           unit="une fois"
@@ -205,9 +213,12 @@ export function Pricing() {
 
 function PlanCard({
   art,
+  glow = "glow-2",
   name,
   price,
   unit,
+  thenPrice,
+  thenUnit,
   trialNote,
   loyaltyNote,
   text,
@@ -218,9 +229,12 @@ function PlanCard({
   featured,
 }: {
   art: IllustrationName;
+  glow?: FeatureGlowTint;
   name: string;
   price: string;
   unit: string;
+  thenPrice?: string;
+  thenUnit?: string;
   trialNote?: string;
   loyaltyNote?: string;
   text: string;
@@ -245,6 +259,14 @@ function PlanCard({
           aria-hidden
         />
       ) : null}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -top-10 right-[-6%] h-44 w-52 rounded-full blur-2xl",
+          featured ? "opacity-40" : "opacity-90",
+          GLOW_HALO[glow],
+        )}
+      />
 
       <CardHeader
         className={cn(
@@ -263,12 +285,18 @@ function PlanCard({
                 transition={{ duration: 0.3, ease: EASE }}
                 className="font-display text-[clamp(2rem,7vw,2.5rem)] leading-none font-semibold tracking-tightest"
               >
-                {price}
+                <BrandFocus className={cn(featured && "brand-focus-inherit")}>{price}</BrandFocus>
               </motion.span>
               <span className={cn("text-[14px]", featured ? "text-accent-ink/60" : "text-muted-foreground")}>
                 {unit}
               </span>
             </div>
+            {thenPrice ? (
+              <p className={cn("text-[13px]", featured ? "text-accent-ink/65" : "text-muted-foreground")}>
+                puis {thenPrice}
+                {thenUnit ? <span className="ml-1">{thenUnit}</span> : null}
+              </p>
+            ) : null}
             {trialNote ? (
               <p className={cn("text-[13px]", featured ? "text-accent-ink/65" : "text-muted-foreground")}>
                 {trialNote}

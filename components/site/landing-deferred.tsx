@@ -36,6 +36,11 @@ const LandingFaqTabs = dynamic(
   { loading: () => <BlockSkeleton className="min-h-[280px]" /> },
 );
 
+const LandingProductFilm = dynamic(
+  () => import("@/components/site/landing-product-film").then((m) => m.LandingProductFilm),
+  { loading: () => <BlockSkeleton className="mx-auto min-h-[220px] max-w-[880px]" /> },
+);
+
 export function DeferredPricing() {
   return (
     <DeferredMount minHeight="520px" className="mx-auto max-w-[1080px]">
@@ -72,6 +77,14 @@ export function DeferredFaqTabs({ groups }: { groups: import("@/lib/site/content
   return (
     <DeferredMount minHeight="280px">
       <LandingFaqTabs groups={groups} />
+    </DeferredMount>
+  );
+}
+
+export function DeferredProductFilm() {
+  return (
+    <DeferredMount minHeight="220px" className="mx-auto w-full max-w-[880px]">
+      <LandingProductFilm />
     </DeferredMount>
   );
 }

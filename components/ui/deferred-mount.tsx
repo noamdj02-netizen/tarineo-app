@@ -18,7 +18,9 @@ export function DeferredMount({
   className,
 }: DeferredMountProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(
+    () => process.env.NEXT_PUBLIC_FIGMA_CAPTURE === "1",
+  );
 
   useEffect(() => {
     const el = ref.current;
