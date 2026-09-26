@@ -11,9 +11,9 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
-  },
-  serverActions: {
-    bodySizeLimit: "3mb",
+    serverActions: {
+      bodySizeLimit: "3mb",
+    },
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "img.logo.dev", pathname: "/**" }],
