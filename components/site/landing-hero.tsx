@@ -105,10 +105,10 @@ export function LandingHero() {
           <Reveal className="w-full max-w-[680px]">
             <HeroPrompt onFilm />
           </Reveal>
-          <Reveal>
-            <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[12px] text-accent-ink/70 sm:gap-x-5 sm:gap-y-2 sm:text-[13.5px]">
+          <Reveal className="w-full">
+            <ul className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] leading-tight tracking-tight text-accent-ink/70 sm:gap-x-5 sm:gap-y-2 sm:text-[13.5px] sm:tracking-normal">
               {PROOF.map((p) => (
-                <li key={p} className="flex items-center gap-1.5">
+                <li key={p} className="flex items-center gap-1 whitespace-nowrap">
                   <Check className="size-3.5 shrink-0 text-st-focus" aria-hidden />
                   {p}
                 </li>
