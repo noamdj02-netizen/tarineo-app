@@ -29,7 +29,7 @@ export function useHeroCanvas(draw: HeroDraw, deps: unknown[] = []) {
     let my = 0.5;
     let visible = true;
     let raf = 0;
-    let start = performance.now();
+    const start = performance.now();
 
     const io = new IntersectionObserver(
       ([e]) => {
