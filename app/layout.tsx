@@ -87,10 +87,10 @@ export default function RootLayout({
       data-theme="light"
       className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: GTM_HEAD_SCRIPT }} />
-      </head>
       <body className="antialiased">
+        <Script id="navpit-gtm" strategy="beforeInteractive">
+          {GTM_HEAD_SCRIPT}
+        </Script>
         <noscript>
           <iframe
             src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
