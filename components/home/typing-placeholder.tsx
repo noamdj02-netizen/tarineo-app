@@ -81,8 +81,8 @@ export function TypingPlaceholder({
   }
 
   return (
-    <span className="flex min-w-0 items-center">
-      <span className={cn("truncate", className ?? "text-ink/55")}>{text.slice(0, count)}</span>
+    <span className="flex min-w-0 max-w-full items-center overflow-hidden">
+      <span className={cn("min-w-0 truncate", className ?? "text-ink/55")}>{text.slice(0, count)}</span>
       <motion.span
         layout="position"
         transition={{ type: "spring", stiffness: 520, damping: 38, mass: 0.6 }}

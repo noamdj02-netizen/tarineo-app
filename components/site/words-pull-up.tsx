@@ -24,7 +24,7 @@ export function WordsPullUp({
   return (
     <span ref={ref} className={cn("inline", className)}>
       {words.map((word, i) => (
-        <span key={`${word}-${i}`} className="inline-block overflow-hidden align-bottom">
+        <span key={`${word}-${i}`} className="inline-block overflow-hidden align-bottom whitespace-nowrap">
           <motion.span
             className="inline-block"
             initial={reduce ? false : { y: 20, opacity: 0 }}

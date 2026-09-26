@@ -32,14 +32,14 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-4">
+    <div className="flex w-full flex-col items-center gap-2.5 sm:gap-4">
       <form
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
         className={cn(
-          "relative flex w-full max-w-[680px] items-end gap-1.5 rounded-[22px] p-2 pl-3.5 text-left backdrop-blur-xl transition-shadow duration-500 ease-out-soft sm:gap-2 sm:rounded-[28px] sm:p-2.5 sm:pl-5",
+          "relative flex w-full max-w-[680px] items-center gap-1.5 rounded-[22px] p-1.5 pl-3.5 text-left backdrop-blur-xl transition-shadow duration-500 ease-out-soft sm:items-end sm:gap-2 sm:rounded-[28px] sm:p-2.5 sm:pl-5",
           onFilm
             ? "border border-accent-ink/20 bg-accent-ink/10 shadow-none focus-within:shadow-[0_0_0_6px_rgba(255,255,255,0.08)]"
             : "border border-line bg-surface/95 shadow-lift focus-within:shadow-[0_0_0_6px_rgba(17,17,17,0.05),var(--shadow-lift)]",
@@ -48,12 +48,12 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
         <label htmlFor="hero-prompt" className="sr-only">
           Ce que tu veux faire avec Navpit
         </label>
-        <div className="relative min-h-[76px] min-w-0 flex-1 pt-1.5 sm:min-h-[88px] sm:pt-2">
+        <div className="relative min-h-11 min-w-0 flex-1 py-1.5 sm:min-h-[88px] sm:py-0 sm:pt-2">
           {empty ? (
             <div
               aria-hidden
               className={cn(
-                "pointer-events-none absolute inset-x-0 top-1.5 flex items-center text-[15px] leading-6 sm:top-2 sm:text-[16.5px] sm:leading-7",
+                "pointer-events-none absolute inset-x-0 top-1.5 flex min-w-0 items-center overflow-hidden text-[14.5px] leading-6 sm:top-2 sm:text-[16.5px] sm:leading-7",
                 onFilm ? "text-white" : "text-muted-foreground",
               )}
             >
@@ -68,7 +68,7 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
           ) : null}
           <textarea
             id="hero-prompt"
-            rows={3}
+            rows={1}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onFocus={() => setFocused(true)}
@@ -85,7 +85,7 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
               }
             }}
             className={cn(
-              "block w-full resize-none bg-transparent text-[15px] leading-6 outline-none sm:text-[16.5px] sm:leading-7",
+              "block h-7 w-full resize-none bg-transparent text-[14.5px] leading-7 outline-none sm:h-auto sm:min-h-[72px] sm:text-[16.5px] sm:leading-7",
               empty && "caret-transparent",
               onFilm ? "text-white caret-white" : "text-ink",
             )}
@@ -95,7 +95,7 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
           type="submit"
           aria-label="Commencer"
           className={cn(
-            "grid size-11 flex-none place-items-center rounded-pill",
+            "grid size-10 flex-none place-items-center rounded-pill sm:size-11",
             onFilm ? "bg-white text-ink" : "btn-dark",
           )}
         >
@@ -103,7 +103,7 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
         </button>
       </form>
       <ul
-        className="flex w-full max-w-[680px] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+        className="hidden w-full max-w-[680px] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
         aria-label="Exemples"
       >
         {EXAMPLES.map((s, i) => (
