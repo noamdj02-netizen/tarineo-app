@@ -3,6 +3,7 @@
 import { ArrowRight, Check } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
 import Link from "next/link";
+import { useState } from "react";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { BrandFocus } from "@/components/site/brand-focus";
 import { HeroPrompt } from "@/components/site/hero-prompt";
@@ -12,6 +13,10 @@ import { BRAND } from "@/lib/brand";
 import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { cn } from "@/lib/utils";
 
+const HERO_FILM =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4";
+const HERO_POSTER = "/videos/hero-poster.jpg";
+
 const PROOF = [
   `${PRO_TRIAL_DAYS} jours d’essai sans carte`,
   "Prix qui baisse chaque année",
@@ -20,33 +25,44 @@ const PROOF = [
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
+/** Paysage du film. Jamais le carton blanc du promo Remotion. */
+function HeroBackdrop({ reduce }: { reduce: boolean }) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <>
+      <img
+        src={HERO_POSTER}
+        alt=""
+        aria-hidden
+        fetchPriority="high"
+        className="absolute inset-0 size-full object-cover"
+      />
+      {!reduce && !failed ? (
+        <video
+          className="absolute inset-0 size-full object-cover"
+          src={HERO_FILM}
+          poster={HERO_POSTER}
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="metadata"
+          aria-hidden
+          onError={() => setFailed(true)}
+        />
+      ) : null}
+    </>
+  );
+}
+
 /** Hero #commencer : cadre film + le bloc fondateur inchangé. */
 export function LandingHero() {
   const reduce = useReducedMotion();
 
   return (
     <div className="relative isolate min-h-dvh w-full overflow-hidden bg-ink">
-        {reduce ? (
-          <div
-            aria-hidden
-            className="absolute inset-0 bg-ink"
-          />
-        ) : (
-          <video
-            className="absolute inset-0 size-full min-h-dvh object-cover"
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4"
-            poster="/videos/launch-poster.jpg"
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="metadata"
-            aria-hidden
-            onError={(e) => {
-              e.currentTarget.src = "/videos/launch.mp4";
-            }}
-          />
-        )}
+        <HeroBackdrop reduce={!!reduce} />
         <div aria-hidden className="noise-overlay opacity-25 mix-blend-overlay" />
         <div
           aria-hidden
