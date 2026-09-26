@@ -51,7 +51,7 @@ export default function ConfidentialitePage() {
           h: "Cookies",
           p: [
             "Cookies essentiels : session de connexion (Supabase), préférences d’interface. Ils sont nécessaires au service et ne demandent pas de consentement.",
-            "Cookies de mesure (optionnels) : si tu cliques « Tout accepter » sur le bandeau, nous pouvons charger Google Analytics (audience anonymisée, IP masquée). Tu peux refuser via « Essentiels uniquement ».",
+            "Cookies de mesure (optionnels) : le conteneur Google Tag Manager est présent sur le site. Les balises (audience) ne partent qu’après « Tout accepter ». « Essentiels uniquement » les laisse bloquées.",
             "Tu peux retirer ton consentement en supprimant les données du site dans ton navigateur ou en nous contactant.",
           ],
         },

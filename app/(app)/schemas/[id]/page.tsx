@@ -53,7 +53,7 @@ export default async function SchemaPage({
       ? {
           kind: agent,
           projectId: schema.project_id,
-          extra: extra?.slice(0, 300) ?? "",
+          extra: extra?.slice(0, 800) ?? "",
         }
       : null;
 

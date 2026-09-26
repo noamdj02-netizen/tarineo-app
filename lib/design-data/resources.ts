@@ -69,6 +69,26 @@ export const CURATED_RESOURCES: CuratedResource[] = [
     "source": "curated"
   },
   {
+    "name": "Page Flows",
+    "url": "https://pageflows.com",
+    "cat": "Inspiration",
+    "note": "User flows complets : login, checkout, onboarding.",
+    "tags": [
+      "Flows"
+    ],
+    "source": "curated"
+  },
+  {
+    "name": "Material Design 3",
+    "url": "https://m3.material.io",
+    "cat": "Inspiration",
+    "note": "Guidelines de design system (composants, motion, couleur).",
+    "tags": [
+      "System"
+    ],
+    "source": "curated"
+  },
+  {
     "name": "Godly",
     "url": "https://godly.website",
     "cat": "Inspiration",
@@ -170,6 +190,27 @@ export const CURATED_RESOURCES: CuratedResource[] = [
     "cat": "Composants UI",
     "note": "Blocs Tailwind en HTML pur, à copier sans React.",
     "tags": [
+      "Tailwind"
+    ],
+    "source": "curated"
+  },
+  {
+    "name": "daisyUI",
+    "url": "https://daisyui.com",
+    "cat": "Composants UI",
+    "note": "Plugin Tailwind, classes sémantiques (btn, card). À piocher, pas à installer en global.",
+    "tags": [
+      "Tailwind"
+    ],
+    "source": "curated"
+  },
+  {
+    "name": "shadcn/ui",
+    "url": "https://ui.shadcn.com",
+    "cat": "Composants UI",
+    "note": "Base du cockpit Navpit. Tu copies le composant, tu le possèdes.",
+    "tags": [
+      "React",
       "Tailwind"
     ],
     "source": "curated"

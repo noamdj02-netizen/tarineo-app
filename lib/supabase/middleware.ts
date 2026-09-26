@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   "/cgv",
   "/confidentialite",
   "/api/billing/webhook",
+  "/api/mcp",
 ];
 /** Pages de connexion : un visiteur déjà connecté part directement dans l'app. */
 const AUTH_PAGES = ["/login", "/inscription"];
@@ -137,7 +138,8 @@ export async function updateSession(request: NextRequest) {
     needsOnboarding &&
     !pathname.startsWith("/admin") &&
     !pathname.startsWith("/onboarding") &&
-    !pathname.startsWith("/auth")
+    !pathname.startsWith("/auth") &&
+    !pathname.startsWith("/api/mcp")
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/onboarding";

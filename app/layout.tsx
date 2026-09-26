@@ -12,6 +12,7 @@ import { ServiceWorker } from "@/components/shell/service-worker";
 import { ProductTracker } from "@/lib/analytics/client";
 import { SiteAnalytics } from "@/components/site/analytics";
 import { CookieConsentBanner } from "@/components/site/cookie-consent";
+import { GTM_HEAD_SCRIPT, GTM_ID } from "@/lib/analytics/gtm";
 import { BRAND } from "@/lib/brand";
 import { siteMetadata } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/site-url";
@@ -86,7 +87,18 @@ export default function RootLayout({
       data-theme="light"
       className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: GTM_HEAD_SCRIPT }} />
+      </head>
       <body className="antialiased">
+        <noscript>
+          <iframe
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         {process.env.NEXT_PUBLIC_FIGMA_CAPTURE === "1" ? (
           <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" strategy="beforeInteractive" />
         ) : null}

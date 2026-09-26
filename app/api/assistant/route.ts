@@ -1,36 +1,38 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { STATIC_KNOWLEDGE, userContext } from "@/lib/assistant/context";
+import { encodeActions } from "@/lib/assistant/actions-markup";
+import { slimContext, wantsDesignKnowledge } from "@/lib/assistant/context";
 import { fileKind, MAX_FILE_BYTES, MAX_FILES } from "@/lib/assistant/files";
+import { isAgentRole, projectSlugFromPath, type AgentRole } from "@/lib/assistant/roles";
+import { COPILOT_TOOLS, runCopilotTool } from "@/lib/assistant/tools";
 import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
+import { data } from "@/lib/mcp/data";
 import { DEFAULT_MODEL, isModelId, type ModelId } from "@/lib/models";
 import { classifyAgent } from "@/lib/analytics/catalog";
 import { track } from "@/lib/analytics/track";
 import { getViewer } from "@/lib/session";
 
 export const runtime = "nodejs";
-// une réponse longue peut prendre du temps
 export const maxDuration = 120;
 
 const MAX_QUESTION = 4000;
-/** Nombre de messages d'historique renvoyés à Claude (comme l'original : 12). */
 const HISTORY = 12;
+const MAX_TOKENS = 1500;
+const TOOL_ROUNDS = 6;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function json(status: number, error: string) {
   return Response.json({ error }, { status });
 }
 
-/** Le modèle demandé s'il est autorisé, sinon ANTHROPIC_MODEL, sinon le défaut. */
 function pickModel(requested: unknown): ModelId {
   if (isModelId(requested)) return requested;
   const env = process.env.ANTHROPIC_MODEL;
   return isModelId(env) ? env : DEFAULT_MODEL;
 }
 
-/** Réglages par modèle : Haiku 4.5 n'accepte pas `effort`, les autres oui. */
 function modelOptions(model: ModelId): Pick<Anthropic.MessageCreateParams, "output_config"> {
   if (model === "claude-haiku-4-5") return {};
-  // réponses courtes pour un chat : effort moyen suffit et coûte moins
   return { output_config: { effort: "medium" } };
 }
 
@@ -46,7 +48,6 @@ function friendlyError(e: unknown) {
   return "Réponse interrompue. Tu peux renvoyer ta question.";
 }
 
-/** Refuse les appels venant d'un autre site (protège tes crédits Claude). */
 function sameOrigin(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return false;
@@ -55,6 +56,10 @@ function sameOrigin(request: Request) {
   } catch {
     return false;
   }
+}
+
+function textFrom(content: Anthropic.ContentBlock[]): string {
+  return content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
 }
 
 export async function POST(request: Request) {
@@ -66,7 +71,14 @@ export async function POST(request: Request) {
   const db = await getDb();
   if (!db) return json(401, "Connecte-toi pour utiliser l’assistant.");
 
-  let body: { question?: unknown; model?: unknown; page?: unknown; files?: unknown };
+  let body: {
+    question?: unknown;
+    model?: unknown;
+    page?: unknown;
+    files?: unknown;
+    projectId?: unknown;
+    role?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -77,6 +89,19 @@ export async function POST(request: Request) {
   if (!question && !files.length) return json(400, "Question vide.");
   if (question.length > MAX_QUESTION) return json(400, "Question trop longue.");
   const model = pickModel(body.model);
+  const role: AgentRole = isAgentRole(body.role) ? body.role : "general";
+  const page = typeof body.page === "string" ? body.page.slice(0, 120) : "";
+
+  let projectId = typeof body.projectId === "string" && UUID.test(body.projectId) ? body.projectId : null;
+  if (!projectId && /^\/[\w\-/]*$/.test(page)) {
+    const slug = projectSlugFromPath(page);
+    if (slug) projectId = await data.findProjectIdBySlug(db.user.id, slug);
+  }
+  if (projectId) {
+    const owned = await data.getProject(db.user.id, projectId);
+    if (!owned) projectId = null;
+  }
+
   const stored = [
     question || "Lis ce fichier et dis-moi quoi en faire.",
     ...files.map((f) => `📎 ${f.name}`),
@@ -84,37 +109,50 @@ export async function POST(request: Request) {
   const limit = await limitReached(db, "ai");
   if (limit) return json(402, limit);
 
-  // Historique lu côté serveur (le navigateur n'envoie que la nouvelle question)
-  const { data: past } = await db.supabase
+  let historyQuery = db.supabase
     .from("chat_messages")
     .select("role, content")
     .eq("user_id", db.user.id)
+    .eq("agent_role", role)
     .order("created_at", { ascending: false })
     .limit(HISTORY);
+  historyQuery = projectId ? historyQuery.eq("project_id", projectId) : historyQuery.is("project_id", null);
+
+  const { data: past } = await historyQuery;
   const history: Anthropic.MessageParam[] = (past ?? [])
     .reverse()
     .map((m) => ({ role: m.role, content: m.content }));
-  // L'API veut un premier message « user »
   while (history[0]?.role === "assistant") history.shift();
 
   const { data: saved, error: saveError } = await db.supabase
     .from("chat_messages")
-    .insert({ user_id: db.user.id, role: "user", content: stored })
+    .insert({
+      user_id: db.user.id,
+      role: "user",
+      content: stored,
+      project_id: projectId,
+      agent_role: role,
+    })
     .select("id")
     .single();
   if (saveError || !saved) return json(500, "Impossible d’enregistrer ta question.");
 
   const viewer = await getViewer();
-  // Le fixe d'abord, puis ce qui change : le début reste identique d'une question à l'autre.
   const system: Anthropic.TextBlockParam[] = [
-    { type: "text", text: STATIC_KNOWLEDGE },
-    { type: "text", text: await userContext(db, viewer?.firstName ?? "") },
+    {
+      type: "text",
+      text: await slimContext(db, viewer?.firstName ?? "", {
+        projectId,
+        role,
+        includeDesign: wantsDesignKnowledge(question, role),
+        question,
+      }),
+    },
   ];
-  const page = typeof body.page === "string" ? body.page.slice(0, 120) : "";
   if (/^\/[\w\-/]*$/.test(page)) {
     system.push({
       type: "text",
-      text: `L'utilisateur t'écrit depuis la page ${page} de Navpit (ex. /projets/<slug> = la fiche de ce projet). Sers-t'en si sa question est implicite (« ce projet », « cette page »).`,
+      text: `Page Navpit : ${page}.${projectId ? ` Fil du projet ${projectId}.` : ""} Rôle : ${role}.`,
     });
   }
 
@@ -127,7 +165,7 @@ export async function POST(request: Request) {
     userId: db.user.id,
     feature: "copilote",
     path: page || "/copilote",
-    properties: { agent, model },
+    properties: { agent, model, role },
   });
 
   const stream = new ReadableStream<Uint8Array>({
@@ -142,34 +180,85 @@ export async function POST(request: Request) {
         }
       };
       try {
-        const claude = client.messages.stream(
-          {
-            model,
-            max_tokens: 16000,
-            system,
-            messages: [...history, { role: "user", content: toContent(question, files) }],
-            // cache automatique : consignes + historique relus à ~10 % du prix au message suivant
-            cache_control: { type: "ephemeral" },
-            ...modelOptions(model),
-          },
-          { signal: request.signal },
-        );
-        claude.on("text", (delta) => {
-          text += delta;
-          push(delta);
-        });
-        const final = await claude.finalMessage();
+        const messages: Anthropic.MessageParam[] = [
+          ...history,
+          { role: "user", content: toContent(question, files) },
+        ];
+        const actions = [];
 
-        let suffix = "";
-        if (final.stop_reason === "max_tokens") {
-          suffix = "\n\n(Réponse coupée : demande moins à la fois.)";
-        } else if (final.stop_reason === "refusal") {
-          suffix = text ? "\n\n(Réponse arrêtée.)" : "Je ne peux pas répondre à cette demande.";
+        let finalText = "";
+        for (let round = 0; round < TOOL_ROUNDS; round++) {
+          const res = await client.messages.create(
+            {
+              model,
+              max_tokens: MAX_TOKENS,
+              system,
+              messages,
+              tools: COPILOT_TOOLS,
+              cache_control: { type: "ephemeral" },
+              ...modelOptions(model),
+            },
+            { signal: request.signal },
+          );
+
+          if (res.stop_reason === "tool_use") {
+            const uses = res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
+            messages.push({ role: "assistant", content: res.content });
+            const results: Anthropic.ToolResultBlockParam[] = [];
+            for (const use of uses) {
+              const out = await runCopilotTool(db.user.id, use.name, use.input, {
+                model,
+                signal: request.signal,
+              });
+              if (out.action) actions.push(out.action);
+              results.push({
+                type: "tool_result",
+                tool_use_id: use.id,
+                content: out.text,
+              });
+            }
+            messages.push({ role: "user", content: results });
+            continue;
+          }
+
+          finalText = textFrom(res.content);
+          if (res.stop_reason === "max_tokens") {
+            finalText += "\n\n(Réponse coupée : demande-moi le détail.)";
+          } else if (res.stop_reason === "refusal") {
+            finalText = finalText || "Je ne peux pas répondre à cette demande.";
+          }
+          break;
         }
+
+        if (!finalText) {
+          const claude = client.messages.stream(
+            {
+              model,
+              max_tokens: MAX_TOKENS,
+              system,
+              messages,
+              cache_control: { type: "ephemeral" },
+              ...modelOptions(model),
+            },
+            { signal: request.signal },
+          );
+          claude.on("text", (delta) => {
+            finalText += delta;
+            text = finalText;
+            push(delta);
+          });
+          await claude.finalMessage();
+        } else {
+          text = finalText;
+          push(finalText);
+        }
+
+        const suffix = encodeActions(actions);
         if (suffix) {
-          text += suffix;
+          finalText += suffix;
           push(suffix);
         }
+        text = finalText;
       } catch (e) {
         if (request.signal.aborted) {
           // arrêt demandé : on garde ce qui a déjà été écrit
@@ -189,9 +278,13 @@ export async function POST(request: Request) {
         }
       } finally {
         if (text && !failed) {
-          await db.supabase
-            .from("chat_messages")
-            .insert({ user_id: db.user.id, role: "assistant", content: text });
+          await db.supabase.from("chat_messages").insert({
+            user_id: db.user.id,
+            role: "assistant",
+            content: text,
+            project_id: projectId,
+            agent_role: role,
+          });
           await track({
             name: "copilot_response_received",
             userId: db.user.id,
@@ -201,7 +294,6 @@ export async function POST(request: Request) {
             properties: { agent, model },
           });
         } else {
-          // pas de réponse utilisable : on retire la question pour garder un historique propre
           await db.supabase
             .from("chat_messages")
             .delete()
@@ -211,7 +303,7 @@ export async function POST(request: Request) {
         try {
           controller.close();
         } catch {
-          // flux déjà fermé (le navigateur est parti)
+          // flux déjà fermé
         }
       }
     },
@@ -238,7 +330,6 @@ function parseFiles(raw: unknown): InFile[] {
     const mime = typeof o.mime === "string" ? o.mime : "";
     const data = typeof o.data === "string" ? o.data.replace(/\s/g, "") : "";
     if (!name || !data || !fileKind(mime)) continue;
-    // ~4/3 du binaire : on refuse au-delà de 2 Mo décodés
     if (data.length > Math.ceil((MAX_FILE_BYTES * 4) / 3) + 64) continue;
     out.push({ name, mime, data });
   }
@@ -254,7 +345,11 @@ function toContent(question: string, files: InFile[]): Anthropic.MessageParam["c
     if (kind === "image") {
       blocks.push({
         type: "image",
-        source: { type: "base64", media_type: f.mime as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: f.data },
+        source: {
+          type: "base64",
+          media_type: f.mime as "image/jpeg" | "image/png" | "image/gif" | "image/webp",
+          data: f.data,
+        },
       });
     } else if (kind === "pdf") {
       blocks.push({

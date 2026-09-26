@@ -1,40 +1,59 @@
 "use server";
 
+import { isAgentRole, projectSlugFromPath, type AgentRole } from "@/lib/assistant/roles";
 import { isOwner } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 import { PRESETS } from "@/lib/design-data/assistant";
+import { data } from "@/lib/mcp/data";
 
 export type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
-/** Questions prêtes pour les nouveaux comptes (PRESETS cite les projets du créateur). */
 const GENERIC_PRESETS = [
   "Quelle est ma priorité cette semaine ?",
-  "Rédige un mail de relance pour un client",
-  "Écris le prompt Cursor du hero de mon projet en Focus",
-  "5 titres de hero pour mon projet en Focus",
-  "Structure ma landing, frame par frame",
+  "Fais le débrief du Focus : note + 3 actions",
+  "Crée un projet en pause nommé Relais",
+  "Dessine le schéma « comment ça marche » du Focus",
 ];
 
-/** Chargé à la première ouverture du panneau : 50 derniers messages + questions prêtes. */
-export async function loadAssistant(): Promise<{ history: ChatMessage[]; presets: string[] }> {
+export async function loadAssistant(opts?: {
+  projectId?: string | null;
+  role?: AgentRole;
+  page?: string;
+}): Promise<{ history: ChatMessage[]; presets: string[]; projectId: string | null; role: AgentRole }> {
+  const role: AgentRole = isAgentRole(opts?.role) ? opts.role : "general";
   const db = await getDb();
-  if (!db) return { history: [], presets: GENERIC_PRESETS };
-  const { data } = await db.supabase
+  if (!db) return { history: [], presets: GENERIC_PRESETS, projectId: null, role };
+
+  let projectId = opts?.projectId ?? null;
+  if (!projectId && opts?.page) {
+    const slug = projectSlugFromPath(opts.page);
+    if (slug) projectId = await data.findProjectIdBySlug(db.user.id, slug);
+  }
+
+  let q = db.supabase
     .from("chat_messages")
     .select("id, role, content")
     .eq("user_id", db.user.id)
+    .eq("agent_role", role)
     .order("created_at", { ascending: false })
     .limit(50);
+  q = projectId ? q.eq("project_id", projectId) : q.is("project_id", null);
+
+  const { data: rows } = await q;
   return {
-    history: (data ?? []).reverse(),
+    history: (rows ?? []).reverse(),
     presets: isOwner(db.user.email) ? PRESETS : GENERIC_PRESETS,
+    projectId,
+    role,
   };
 }
 
-/** Efface tout l'historique du chat de l'utilisateur. */
-export async function clearChat(): Promise<{ ok: boolean }> {
+export async function clearChat(opts?: { projectId?: string | null; role?: AgentRole }) {
   const db = await getDb();
   if (!db) return { ok: false };
-  const { error } = await db.supabase.from("chat_messages").delete().eq("user_id", db.user.id);
+  const role: AgentRole = isAgentRole(opts?.role) ? opts.role : "general";
+  let q = db.supabase.from("chat_messages").delete().eq("user_id", db.user.id).eq("agent_role", role);
+  q = opts?.projectId ? q.eq("project_id", opts.projectId) : q.is("project_id", null);
+  const { error } = await q;
   return { ok: !error };
 }

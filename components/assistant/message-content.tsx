@@ -1,28 +1,72 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { parseActions } from "@/lib/assistant/actions-markup";
+import { ActionPills } from "./action-pills";
+
+const FOLD_LINES = 12;
 
 /**
  * Affiche une réponse de Claude : paragraphes, titres, listes, **gras**, `code`
- * et blocs ```code``` avec un bouton Copier. Pas de HTML injecté : tout est du texte React.
+ * et blocs ```code``` avec un bouton Copier. Pavés repliés au-delà de ~12 lignes.
  */
 export function MessageContent({ text }: { text: string }) {
-  const parts = splitFences(text);
+  const { body, actions } = parseActions(text);
+  const hasVerdict = Boolean(grab("Verdict", body) && grab("Preuve", body) && grab("Action", body));
+  const parts = splitFences(hasVerdict ? stripVerdict(body) : body);
+  const lineCount = body.split("\n").length;
+  const [open, setOpen] = useState(lineCount <= FOLD_LINES);
+  const shown = useMemo(() => {
+    if (open) return parts;
+    return foldParts(parts, FOLD_LINES);
+  }, [open, parts]);
+
   return (
-    <div className="flex flex-col gap-2.5">
-      {parts.map((p, i) =>
-        p.type === "code" ? (
-          <CodeBlock key={i} lang={p.lang} code={p.text} />
-        ) : (
-          <Prose key={i} text={p.text} />
-        ),
-      )}
+    <div className="flex flex-col gap-3">
+      <VerdictCard text={body} />
+      <div className="flex flex-col gap-2.5">
+        {shown.map((p, i) =>
+          p.type === "code" ? (
+            <CodeBlock key={i} lang={p.lang} code={p.text} />
+          ) : (
+            <Prose key={i} text={p.text} />
+          ),
+        )}
+      </div>
+      {lineCount > FOLD_LINES && !open ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="self-start font-mono text-[12px] tracking-[0.06em] text-muted-foreground uppercase hover:text-ink"
+        >
+          Voir la suite
+        </button>
+      ) : null}
+      <ActionPills actions={actions} />
     </div>
   );
 }
 
 type Part = { type: "text"; text: string } | { type: "code"; lang: string; text: string };
+
+function foldParts(parts: Part[], maxLines: number): Part[] {
+  let used = 0;
+  const out: Part[] = [];
+  for (const p of parts) {
+    const n = p.text.split("\n").length;
+    if (used + n <= maxLines) {
+      out.push(p);
+      used += n;
+      continue;
+    }
+    if (p.type === "text") {
+      out.push({ type: "text", text: p.text.split("\n").slice(0, Math.max(1, maxLines - used)).join("\n") });
+    }
+    break;
+  }
+  return out;
+}
 
 function splitFences(text: string): Part[] {
   const out: Part[] = [];
@@ -37,6 +81,43 @@ function splitFences(text: string): Part[] {
   return out.filter((p) => p.type === "code" || p.text.trim());
 }
 
+function stripVerdict(text: string) {
+  return text
+    .replace(/(?:^|\n)\s*(?:\*\*)?(?:Verdict|Preuve|Action)(?:\*\*)?\s*[:—-][\s\S]*?(?=\n\s*(?:\*\*)?(?:Verdict|Preuve|Action)(?:\*\*)?\s*[:—-]|$)/gi, "")
+    .trim();
+}
+
+function grab(label: string, text: string) {
+  const re = new RegExp(
+    `(?:\\*\\*)?${label}(?:\\*\\*)?\\s*[:—-]\\s*([\\s\\S]*?)(?=\\n\\s*(?:\\*\\*)?(?:Verdict|Preuve|Action)(?:\\*\\*)?\\s*[:—-]|$)`,
+    "i",
+  );
+  return re.exec(text)?.[1]?.trim() ?? "";
+}
+
+function VerdictCard({ text }: { text: string }) {
+  const verdict = grab("Verdict", text);
+  const preuve = grab("Preuve", text);
+  const action = grab("Action", text);
+  if (!verdict || !preuve || !action) return null;
+  return (
+    <div className="grid gap-2 rounded-xl border border-line bg-accent-soft/60 p-3 text-[15px] leading-[1.55] sm:grid-cols-3">
+      <div>
+        <p className="font-mono text-[10.5px] tracking-[0.1em] text-muted-foreground uppercase">Verdict</p>
+        <p className="mt-1 font-semibold">{verdict}</p>
+      </div>
+      <div>
+        <p className="font-mono text-[10.5px] tracking-[0.1em] text-muted-foreground uppercase">Preuve</p>
+        <p className="mt-1">{preuve}</p>
+      </div>
+      <div>
+        <p className="font-mono text-[10.5px] tracking-[0.1em] text-muted-foreground uppercase">Action</p>
+        <p className="mt-1">{action}</p>
+      </div>
+    </div>
+  );
+}
+
 function Prose({ text }: { text: string }) {
   const lines = text.replace(/^\n+|\n+$/g, "").split("\n");
   const blocks: React.ReactNode[] = [];
@@ -48,7 +129,7 @@ function Prose({ text }: { text: string }) {
     blocks.push(
       <Tag
         key={blocks.length}
-        className={`flex flex-col gap-1 pl-5 ${list.ordered ? "list-decimal" : "list-disc"} marker:text-accent-2`}
+        className={`flex flex-col gap-1.5 pl-5 ${list.ordered ? "list-decimal" : "list-disc"} marker:text-accent-2`}
       >
         {list.items.map((it, i) => (
           <li key={i}>
@@ -74,7 +155,7 @@ function Prose({ text }: { text: string }) {
     flush();
     if (heading) {
       blocks.push(
-        <p key={blocks.length} className="font-semibold tracking-[-0.01em]">
+        <p key={blocks.length} className="text-[18px] font-semibold tracking-[-0.02em]">
           <Inline text={heading[1]} />
         </p>,
       );
@@ -90,7 +171,6 @@ function Prose({ text }: { text: string }) {
   return <>{blocks}</>;
 }
 
-/** **gras** et `code` dans une ligne. */
 function Inline({ text }: { text: string }) {
   const tokens = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
   return (
@@ -120,7 +200,7 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1400);
     } catch {
-      // presse-papier refusé : l'utilisateur peut sélectionner le texte
+      // presse-papier refusé
     }
   }
   return (
@@ -134,17 +214,11 @@ function CodeBlock({ lang, code }: { lang: string; code: string }) {
           onClick={copy}
           className="inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 font-mono text-[11px] text-side-ink/80 hover:bg-white/10 hover:text-side-ink"
         >
-          {copied ? (
-            <Check className="size-3.5" aria-hidden />
-          ) : (
-            <Copy className="size-3.5" aria-hidden />
-          )}
+          {copied ? <Check className="size-3.5" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
           {copied ? "Copié" : "Copier"}
         </button>
       </div>
-      <pre className="overflow-x-auto p-3 font-mono text-[12.5px] leading-relaxed whitespace-pre">
-        {code}
-      </pre>
+      <pre className="overflow-x-auto p-3 font-mono text-[13px] leading-relaxed whitespace-pre">{code}</pre>
     </div>
   );
 }

@@ -18,12 +18,30 @@ export function readCookieConsent(): CookieConsent | null {
   }
 }
 
+function applyGtmConsent(value: CookieConsent | null) {
+  if (typeof window === "undefined") return;
+  const granted = value === "all";
+  const state = {
+    ad_storage: granted ? "granted" : "denied",
+    ad_user_data: granted ? "granted" : "denied",
+    ad_personalization: granted ? "granted" : "denied",
+    analytics_storage: granted ? "granted" : "denied",
+  };
+  window.dataLayer = window.dataLayer || [];
+  if (typeof window.gtag === "function") {
+    window.gtag("consent", "update", state);
+  } else {
+    window.dataLayer.push(["consent", "update", state]);
+  }
+}
+
 export function writeCookieConsent(value: CookieConsent) {
   try {
     localStorage.setItem(STORAGE_KEY, value);
   } catch {
     // quota
   }
+  applyGtmConsent(value);
   window.dispatchEvent(new CustomEvent("navpit:cookie-consent", { detail: value }));
 }
 
@@ -32,7 +50,9 @@ export function CookieConsentBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!readCookieConsent()) setVisible(true);
+    const current = readCookieConsent();
+    applyGtmConsent(current);
+    if (!current) setVisible(true);
   }, []);
 
   if (!visible) return null;

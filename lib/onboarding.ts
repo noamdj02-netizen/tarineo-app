@@ -41,7 +41,7 @@ export async function getOnboarding(): Promise<OnboardingStep[]> {
   if (!wizardDone) {
     return [
       {
-        label: "Parcours guidé (prénom, projets, IA, goût…)",
+        label: "Parcours guidé (prénom, projets, goût, cockpit…)",
         href: "/onboarding",
         done: false,
       },

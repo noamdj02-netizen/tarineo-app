@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bot,
   Code,
@@ -10,6 +11,8 @@ import {
   ListChecks,
   NotebookPen,
   Plus,
+  Shapes,
+  Sparkles,
   Target,
   TriangleAlert,
   Users,
@@ -30,6 +33,7 @@ import {
 import { Illustration } from "@/components/illustration";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import type { IllustrationName } from "@/lib/illustrations";
+import { publicBusiness } from "@/lib/projects/marketing";
 import {
   FEATURE_LABELS,
   FEATURE_ORDER,
@@ -42,7 +46,12 @@ import {
   type Task,
 } from "@/lib/projects/types";
 import { openAssistant } from "@/lib/assistant/open";
+import { projectCoach } from "@/lib/projects/coach";
+import type { ProjectAssetItem, ProjectNoteItem, ProjectSchemaLink } from "@/lib/projects/types";
+import { SCHEMA_KIND_LABELS } from "@/lib/schemas/agents";
 import { cn } from "@/lib/utils";
+import { deleteProjectAsset } from "@/app/(app)/composants/actions";
+import { CopilotCoach } from "./copilot-coach";
 import { NextAction } from "./next-action";
 import { ProjectLinks } from "./project-links";
 import { StageBar } from "./stage-bar";
@@ -105,11 +114,20 @@ function todayIso() {
 export function ProjectDetail({
   project,
   preview = false,
+  schemas = [],
+  assets = [],
+  notes = [],
+  focusCount = 1,
 }: {
   project: ProjectFull;
   /** Landing : même fiche, sans enregistrement. */
   preview?: boolean;
+  schemas?: ProjectSchemaLink[];
+  assets?: ProjectAssetItem[];
+  notes?: ProjectNoteItem[];
+  focusCount?: number;
 }) {
+  const router = useRouter();
   const [p, apply] = useOptimistic(project, reduce);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -132,10 +150,20 @@ export function ProjectDetail({
   const T = p.tasks;
   const count = (s: FeatureStatus) => F.filter((f) => f.status === s).length;
   const pct = F.length ? Math.round((count("fait") / F.length) * 100) : 0;
-  const business = Object.entries(p.business ?? {});
+  const business = publicBusiness(p.business);
+  const brief = projectCoach(p, {
+    landings: assets.filter((a) => a.kind === "landing" || Boolean(a.theme_id)).length,
+    schemas: schemas.length,
+    focusCount,
+  });
 
   return (
     <RevealGroup stagger={0.05} className="flex flex-col gap-3">
+      {preview ? null : (
+        <Reveal>
+          <CopilotCoach brief={brief} />
+        </Reveal>
+      )}
       <Reveal>
         <Box>
           <p className="mb-4 text-[15.5px] leading-relaxed">{p.pitch || p.description}</p>
@@ -327,6 +355,128 @@ export function ProjectDetail({
           />
         </Box>
       </Reveal>
+
+      <Reveal>
+        <Box icon={Shapes} title="Schémas">
+          {schemas.length ? (
+            <ul className="flex flex-col gap-1.5">
+              {schemas.map((s) => (
+                <li key={s.id}>
+                  <Link
+                    href={`/schemas/${s.id}`}
+                    className="flex min-h-11 items-center justify-between rounded-xl bg-surface-2 px-3 text-[14px] hover:bg-accent-soft"
+                  >
+                    <span>{s.title}</span>
+                    <span className="font-mono text-[11px] text-muted-foreground">
+                      {SCHEMA_KIND_LABELS[s.kind]}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[13.5px] text-muted-foreground">
+              Pas encore de schéma. Dessine le parcours ou l’offre avant de coder.
+            </p>
+          )}
+          <Link
+            href="/schemas"
+            className="mt-3 inline-flex min-h-10 items-center rounded-pill border border-line px-3.5 text-[13px]"
+          >
+            Nouveau schéma
+          </Link>
+        </Box>
+      </Reveal>
+
+      {assets.length ? (
+        <Reveal>
+          <Box icon={Sparkles} title="Landings du projet">
+            <ul className="flex flex-col gap-3">
+              {assets.map((a) => {
+                const isLanding = a.kind === "landing" || Boolean(a.theme_id);
+                return (
+                  <li key={a.id} className="rounded-xl border border-line bg-surface-2 p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[14px] font-semibold">
+                        {a.title}
+                        {a.theme_id ? (
+                          <span className="ml-2 font-mono text-[11px] font-normal text-muted-foreground">
+                            {a.theme_id}
+                          </span>
+                        ) : null}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {isLanding && a.theme_id ? (
+                          <Link
+                            href={`/bibliotheque/heros/${a.theme_id}`}
+                            className="copy"
+                          >
+                            Ouvrir
+                          </Link>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="copy"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(a.html);
+                          }}
+                        >
+                          Copier pour Cursor
+                        </button>
+                        <ConfirmDelete
+                          label={`Retirer ${a.title}`}
+                          onConfirm={() => {
+                            startTransition(async () => {
+                              const res = await deleteProjectAsset(a.id);
+                              if (!res.ok) setError("Pas retiré. Réessaie.");
+                              else router.refresh();
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <pre className="max-h-32 overflow-auto font-mono text-[11.5px] leading-relaxed text-muted-foreground">
+                      {a.html}
+                    </pre>
+                  </li>
+                );
+              })}
+            </ul>
+          </Box>
+        </Reveal>
+      ) : (
+        <Reveal>
+          <Box icon={Sparkles} title="Landings du projet">
+            <p className="text-[13.5px] text-muted-foreground">
+              Aucune landing collée. Choisis un hero, attache-le, envoie à Cursor.
+            </p>
+            <Link
+              href="/bibliotheque/heros"
+              className="btn-dark mt-3 inline-flex min-h-10 items-center rounded-pill px-3.5 text-[13px] font-medium"
+            >
+              Bibliothèque de landings
+            </Link>
+          </Box>
+        </Reveal>
+      )}
+
+      {notes.length ? (
+        <Reveal>
+          <Box icon={NotebookPen} title="Notes copilote">
+            <ul className="flex flex-col gap-3">
+              {notes.map((n) => (
+                <li key={n.id} className="border-b border-dashed border-line pb-3 last:border-b-0 last:pb-0">
+                  <p className="text-[14px] font-semibold">{n.title}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-[13.5px] leading-relaxed text-muted-foreground">
+                    {n.content.slice(0, 400)}
+                    {n.content.length > 400 ? "…" : ""}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </Box>
+        </Reveal>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Reveal>

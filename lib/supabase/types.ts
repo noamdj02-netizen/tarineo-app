@@ -30,6 +30,8 @@ export type ProjectRow = {
   notes: string;
   sort_order: number;
   updated_at: string;
+  audit_frames?: string[];
+  audit_critique?: Record<string, unknown>;
 };
 
 export type FeatureRow = {
@@ -46,6 +48,39 @@ export type TaskRow = {
   title: string;
   done: boolean;
   position: number;
+  notes: string;
+  due_date: string | null;
+};
+
+export type ApiKeyRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  prefix: string;
+  hash: string;
+  scopes: string[];
+  last_used_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+};
+
+export type ToolConnectionRow = {
+  user_id: string;
+  tool_id: string;
+  connected_at: string;
+  account_label?: string;
+  bind_kind?: string;
+  config?: Record<string, unknown>;
+};
+
+export type ProjectNoteRow = {
+  id: string;
+  user_id: string;
+  project_id: string;
+  title: string;
+  content: string;
+  source: string | null;
+  created_at: string;
 };
 
 export type LogRow = {
@@ -71,15 +106,38 @@ export type ResourceRow = {
   created_at: string;
 };
 
+export type AgentRole = "general" | "tech" | "produit" | "design" | "launch";
+
 export type ChatMessageRow = {
   id: string;
   user_id: string;
   role: "user" | "assistant";
   content: string;
+  project_id: string | null;
+  agent_role: AgentRole;
   created_at: string;
 };
 
-export type SchemaKind = "libre" | "architecture" | "parcours" | "tunnel" | "roadmap" | "donnees";
+export type ProjectAssetRow = {
+  id: string;
+  user_id: string;
+  project_id: string;
+  kind: "component" | "landing";
+  title: string;
+  html: string;
+  theme_id: string | null;
+  created_at: string;
+};
+
+export type SchemaKind =
+  | "libre"
+  | "architecture"
+  | "parcours"
+  | "tunnel"
+  | "roadmap"
+  | "donnees"
+  | "formation"
+  | "offre";
 
 export type SchemaRow = {
   id: string;
@@ -91,6 +149,23 @@ export type SchemaRow = {
   scene: { elements: unknown[]; appState: Record<string, unknown>; files?: Record<string, unknown> };
   created_at: string;
   updated_at: string;
+};
+
+export type HeroLibraryRow = {
+  id: string;
+  slug: string;
+  nom: string;
+  categorie: string;
+  tags: string[];
+  niveau: string;
+  stack: string[];
+  apercu_video_url: string | null;
+  apercu_poster_url: string | null;
+  prompt_template: string;
+  variables: unknown;
+  code_reference: string;
+  acces: "gratuit" | "pro";
+  created_at: string;
 };
 
 export type CalendarEventRow = {
@@ -151,9 +226,12 @@ export type Database = {
       projects: Table<ProjectRow, "slug" | "name">;
       project_features: Table<FeatureRow, "project_id" | "title">;
       project_tasks: Table<TaskRow, "project_id" | "title">;
+      api_keys: Table<ApiKeyRow, "user_id" | "name" | "prefix" | "hash">;
+      project_notes: Table<ProjectNoteRow, "user_id" | "project_id" | "title" | "content">;
       project_log: Table<LogRow, "project_id" | "text">;
       resources: Table<ResourceRow, "name">;
       chat_messages: Table<ChatMessageRow, "role" | "content">;
+      project_assets: Table<ProjectAssetRow, "user_id" | "project_id" | "title">;
       project_schemas: Table<SchemaRow, never>;
       calendar_events: Table<CalendarEventRow, "title" | "starts_at">;
       calendar_feeds: Table<CalendarFeedRow, "url">;
@@ -163,6 +241,8 @@ export type Database = {
         { user_id: string; layout: Record<string, unknown>; updated_at: string },
         "user_id"
       >;
+      tool_connections: Table<ToolConnectionRow, "user_id" | "tool_id">;
+      hero_library: Table<HeroLibraryRow, "slug" | "nom">;
     };
     Views: Record<string, never>;
     Functions: {

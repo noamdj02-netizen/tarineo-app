@@ -8,9 +8,8 @@ export default async function RessourcesPage() {
   const resources = await listResources();
   return (
     <section>
-      <PageHead art="dashboard-import" label="Ressources" title="Ressources design & dev," tail="au même endroit.">
-        Ta Bibliothèque Notion et les meilleurs sites d’inspiration, au même endroit. Ajoute un lien
-        dès que tu trouves une pépite, il est sauvegardé.
+      <PageHead art="dashboard-import" label="Ressources" title="Le tiroir design," tail="déjà rempli.">
+        Cinq librairies à copier avant de coder. Ensuite les références, tes liens, une recherche.
       </PageHead>
       <ResourceLibrary initial={resources} />
     </section>

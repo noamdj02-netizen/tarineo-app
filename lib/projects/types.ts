@@ -1,4 +1,27 @@
-import type { FeatureStatus, ProjectStatus } from "@/lib/supabase/types";
+import type { FeatureStatus, ProjectStatus, SchemaKind } from "@/lib/supabase/types";
+
+export type ProjectSchemaLink = {
+  id: string;
+  title: string;
+  kind: SchemaKind;
+};
+
+export type ProjectAssetItem = {
+  id: string;
+  title: string;
+  html: string;
+  theme_id: string | null;
+  kind?: "component" | "landing";
+  created_at: string;
+};
+
+export type ProjectNoteItem = {
+  id: string;
+  title: string;
+  content: string;
+  source: string | null;
+  created_at: string;
+};
 
 export type { FeatureStatus, ProjectStatus };
 

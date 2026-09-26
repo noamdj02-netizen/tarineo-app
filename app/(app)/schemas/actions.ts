@@ -45,16 +45,26 @@ export async function createSchema(input: {
   const limit = await limitReached(db, "schemas");
   if (limit) return { ok: false, error: limit };
   const kind = isSchemaKind(input.kind) ? input.kind : "libre";
-  const { data, error } = await db.supabase
+  const row = {
+    user_id: db.user.id,
+    project_id: projectId,
+    title: cleanTitle(input.title),
+    kind,
+  };
+  let { data, error } = await db.supabase
     .from("project_schemas")
-    .insert({
-      user_id: db.user.id,
-      project_id: projectId,
-      title: cleanTitle(input.title),
-      kind,
-    })
+    .insert(row)
     .select("id")
     .single();
+  if (error && (kind === "formation" || kind === "offre")) {
+    const retry = await db.supabase
+      .from("project_schemas")
+      .insert({ ...row, kind: "parcours" })
+      .select("id")
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
   if (error || !data)
     return { ok: false, error: "Création impossible. Réessaie." };
   revalidatePath("/schemas");

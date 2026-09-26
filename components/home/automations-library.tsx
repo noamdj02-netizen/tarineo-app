@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { runCopilotJob } from "@/app/(app)/copilote/jobs";
 import { stashCopilotDraft } from "@/lib/assistant/copilot-draft.client";
 import {
   AUTOMATION_CATEGORY_LABELS,
@@ -28,13 +30,32 @@ export function AutomationsLibrary() {
   const router = useRouter();
   const groups = groupByCategory(AUTOMATIONS);
 
-  function launch(a: Automation) {
+  const [jobMsg, setJobMsg] = useState<string | null>(null);
+
+  async function launch(a: Automation) {
+    if (a.job) {
+      const res = await runCopilotJob(a.job);
+      if (!res.ok) {
+        setJobMsg(res.error);
+        return;
+      }
+      stashCopilotDraft({
+        question: `Job « ${a.label} » terminé.\n\n${res.summary}\n\nLien : ${res.href}`,
+      });
+      router.push("/copilote?send=1");
+      return;
+    }
     stashCopilotDraft({ question: a.prompt });
     router.push("/copilote?send=1");
   }
 
   return (
     <div className="flex flex-col gap-12">
+      {jobMsg ? (
+        <p role="status" className="rounded-card border border-destructive/30 bg-surface p-3 text-[14px]">
+          {jobMsg}
+        </p>
+      ) : null}
       {groups.map(({ category, items }) => {
         const Icon = CATEGORY_ICONS[category];
         return (
@@ -59,7 +80,7 @@ export function AutomationsLibrary() {
                     <span className="text-[15px] font-semibold tracking-[-0.02em]">{a.label}</span>
                     <span className="text-[13.5px] leading-relaxed text-muted-foreground">{a.hint}</span>
                     <span className="mt-auto pt-1 font-mono text-[11px] text-muted-foreground">
-                      Lancer dans le copilote →
+                      {a.job ? "Job in-app →" : "Lancer dans le copilote →"}
                     </span>
                   </button>
                 </li>

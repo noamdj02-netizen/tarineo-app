@@ -7,7 +7,9 @@ import { useOptimistic, useState, useTransition } from "react";
 import { updateProject } from "@/app/(app)/projets/actions";
 import { EASE } from "@/components/motion/reveal";
 import { STAGES } from "@/lib/design-data/resources";
+import type { CardSignal } from "@/lib/projects/coach";
 import type { ProjectPatch, ProjectSummary } from "@/lib/projects/types";
+import { cn } from "@/lib/utils";
 import { NextAction } from "./next-action";
 import { openAssistant } from "@/lib/assistant/open";
 import { ProjectLinks } from "./project-links";
@@ -18,15 +20,24 @@ export function askNextActionPrompt(name: string) {
   return `Pour ${name} : quelle est la meilleure prochaine action cette semaine, et pourquoi ? Donne 3 étapes concrètes.`;
 }
 
+const RAIL: Record<CardSignal, string> = {
+  ok: "shadow-[inset_4px_0_0_var(--color-st-focus),inset_-4px_0_0_var(--color-st-focus)]",
+  alert: "shadow-[inset_4px_0_0_var(--color-st-fini),inset_-4px_0_0_var(--color-st-fini)]",
+  warn: "shadow-[inset_4px_0_0_var(--color-st-pause),inset_-4px_0_0_var(--color-st-pause)]",
+  mute: "",
+};
+
 export function ProjectCard({
   project,
   index,
   preview = false,
+  signal = "mute",
 }: {
   project: ProjectSummary;
   index: number;
   /** Landing : même carte, sans édition ni lien vers l’app. */
   preview?: boolean;
+  signal?: CardSignal;
 }) {
   const reduce = useReducedMotion();
   const [editing, setEditing] = useState(false);
@@ -41,7 +52,10 @@ export function ProjectCard({
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.6, ease: EASE, delay: index * 0.06 }}
       whileHover={editing || reduce ? undefined : { y: -3 }}
-      className="card-soft group relative flex flex-col gap-4 p-5 transition-shadow duration-300 ease-out-soft hover:shadow-lift"
+      className={cn(
+        "card-soft group relative flex flex-col gap-4 p-5 transition-shadow duration-300 ease-out-soft hover:shadow-lift",
+        RAIL[signal],
+      )}
     >
       {editing ? (
         <EditForm project={p} onDone={() => setEditing(false)} applyPatch={applyPatch} />
@@ -53,6 +67,7 @@ export function ProjectCard({
                 {/* lien étiré : toute la carte ouvre la fiche */}
                 <Link
                   href={preview ? "/inscription" : `/projets/${p.slug}`}
+                  prefetch={false}
                   className="outline-none after:absolute after:inset-0 after:rounded-card focus-visible:after:outline-2 focus-visible:after:outline-offset-2 focus-visible:after:outline-ink"
                 >
                   {p.name}
@@ -85,10 +100,11 @@ export function ProjectCard({
           <div className="relative z-10 mt-auto flex flex-wrap gap-2">
             <Link
               href={preview ? "/inscription" : `/projets/${p.slug}`}
+              prefetch={false}
               className="btn-dark inline-flex min-h-10 items-center gap-2 rounded-xl px-3.5 text-[13.5px] font-semibold"
             >
               <Maximize2 className="size-4" aria-hidden />
-              Voir le détail
+              Ouvrir la page
             </Link>
             {preview ? null : (
               <button

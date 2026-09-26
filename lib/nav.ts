@@ -1,6 +1,7 @@
 import {
   Blocks,
   Bot,
+  Clapperboard,
   House,
   LayoutDashboard,
   Layers,
@@ -51,6 +52,12 @@ const ressources: Tab = {
 const outils: Tab = { href: "/outils", label: "Outils", short: "Outils", icon: Wrench };
 const schemas: Tab = { href: "/schemas", label: "Schémas", short: "Schémas", icon: Shapes };
 const anatomie: Tab = { href: "/anatomie", label: "Anatomie", short: "Anatomie", icon: Layers };
+const heros: Tab = {
+  href: "/bibliotheque/heros",
+  label: "Heros",
+  short: "Heros",
+  icon: Clapperboard,
+};
 const composants: Tab = {
   href: "/composants",
   label: "Composants",
@@ -72,7 +79,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "library",
     label: "Bibliothèque",
-    items: [ressources, schemas, anatomie],
+    items: [ressources, schemas, anatomie, heros],
   },
   {
     id: "studio",

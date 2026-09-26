@@ -6,7 +6,13 @@ import { isLocale } from "@/lib/i18n";
 import { getDb } from "@/lib/db";
 import { DEFAULT_MODEL } from "@/lib/models";
 import { slugify } from "@/lib/projects/types";
+import { saveDashboardLayout } from "@/app/(app)/accueil/dashboard-actions";
 import { THEMES } from "@/lib/design-data/themes";
+import {
+  DEFAULT_DASHBOARD_PREFS,
+  normalizeDashboardPrefs,
+  type WidgetKey,
+} from "@/lib/home/dashboard-prefs";
 import { updateUserMeta } from "@/lib/profile";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -109,20 +115,25 @@ export async function analyzeProjects(projectIds: string[]): Promise<
   try {
     const client = new Anthropic({ apiKey: key });
     const list = rows.map((p) => `- ${p.name}`).join("\n");
-    const msg = await client.messages.create({
-      model: DEFAULT_MODEL,
-      max_tokens: 800,
-      messages: [
-        {
-          role: "user",
-          content: `Pour chaque projet, donne un JSON { "items": [{ "name", "pitch", "target", "problem", "next" }] }.
+    const msg = await Promise.race([
+      client.messages.create({
+        model: DEFAULT_MODEL,
+        max_tokens: 800,
+        messages: [
+          {
+            role: "user",
+            content: `Pour chaque projet, donne un JSON { "items": [{ "name", "pitch", "target", "problem", "next" }] }.
 pitch = 1 phrase. target = qui paie. problem = le problème. next = 1 action cette semaine.
 Projets :
 ${list}
 Réponds uniquement en JSON.`,
-        },
-      ],
-    });
+          },
+        ],
+      }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), 9000),
+      ),
+    ]);
     const text = msg.content.map((b) => (b.type === "text" ? b.text : "")).join("");
     const parsed = parseAnalyses(text, rows);
     for (const p of rows) {
@@ -136,7 +147,15 @@ Réponds uniquement en JSON.`,
     }
     return { ok: true, analyses };
   } catch {
-    for (const p of rows) analyses[p.id] = fallbackAnalysis(p.name);
+    for (const p of rows) {
+      const a = fallbackAnalysis(p.name);
+      analyses[p.id] = a;
+      await db.supabase
+        .from("projects")
+        .update({ pitch: a.pitch, target: a.target, problem: a.problem, next: a.next })
+        .eq("id", p.id)
+        .eq("user_id", db.user.id);
+    }
     return { ok: true, analyses };
   }
 }
@@ -154,6 +173,16 @@ export async function saveTaste(theme: string, tools: string[]): Promise<Result>
       .eq("user_id", db.user.id)
       .eq("status", "focus");
   }
+  return { ok: true };
+}
+
+export async function saveCockpit(widgets: Record<WidgetKey, boolean>): Promise<Result> {
+  const prefs = normalizeDashboardPrefs({
+    ...DEFAULT_DASHBOARD_PREFS,
+    widgets: { ...DEFAULT_DASHBOARD_PREFS.widgets, ...widgets },
+  });
+  const saved = await saveDashboardLayout(prefs);
+  if (!saved.ok) return saved;
   return { ok: true };
 }
 

@@ -4,6 +4,14 @@ import { revalidatePath } from "next/cache";
 import { limitReached } from "@/lib/billing/plan";
 import { getDb, type Db } from "@/lib/db";
 import {
+  EMPTY_MARKETING,
+  MARKET_CHANNELS,
+  mergeMarketing,
+  type ProjectMarketing,
+} from "@/lib/projects/marketing";
+import { mergeLaunch } from "@/lib/projects/launch-checks";
+import { isGaId, isGscProperty, mergeSeo, seoFromBusiness, type ProjectSeo } from "@/lib/projects/seo";
+import {
   FEATURE_ORDER,
   slugify,
   type FeatureStatus,
@@ -85,6 +93,12 @@ export async function updateProject(projectId: string, patch: ProjectPatch): Pro
       .eq("user_id", db.user.id);
     if (error) return fail(error.message);
     if (row.status === "focus") {
+      await db.supabase
+        .from("projects")
+        .update({ status: "pause" })
+        .eq("user_id", db.user.id)
+        .eq("status", "focus")
+        .neq("id", projectId);
       const { track } = await import("@/lib/analytics/track");
       await track({
         name: "project_focus_started",
@@ -94,6 +108,122 @@ export async function updateProject(projectId: string, patch: ProjectPatch): Pro
         path: "/projets",
       });
     }
+    refresh();
+    return { ok: true };
+  });
+}
+
+/** Met plusieurs Focus en pause (geste copilote, sans changer le gardé). */
+export async function pauseProjects(ids: string[]): Promise<Result> {
+  return run(async (db) => {
+    const clean = ids.filter((id) => isUuid(id));
+    if (!clean.length) return fail("Identifiant invalide");
+    const { error } = await db.supabase
+      .from("projects")
+      .update({ status: "pause" })
+      .eq("user_id", db.user.id)
+      .eq("status", "focus")
+      .in("id", clean);
+    if (error) return fail(error.message);
+    refresh();
+    return { ok: true };
+  });
+}
+
+export async function saveProjectMarketing(
+  projectId: string,
+  raw: ProjectMarketing,
+): Promise<Result> {
+  return run(async (db) => {
+    if (!isUuid(projectId)) return fail("Identifiant invalide");
+    if (!(await ownProject(db, projectId))) return fail("Projet introuvable");
+    const { data } = await db.supabase
+      .from("projects")
+      .select("business")
+      .eq("id", projectId)
+      .eq("user_id", db.user.id)
+      .maybeSingle();
+    const current =
+      data?.business && typeof data.business === "object"
+        ? (data.business as Record<string, string>)
+        : {};
+    const marketing: ProjectMarketing = {
+      offer: clean(raw.offer, 240),
+      channel: MARKET_CHANNELS.some((c) => c.id === raw.channel)
+        ? raw.channel
+        : EMPTY_MARKETING.channel,
+      hook: clean(raw.hook, 400),
+      cta: clean(raw.cta, 120),
+    };
+    const { error } = await db.supabase
+      .from("projects")
+      .update({ business: mergeMarketing(current, marketing) })
+      .eq("id", projectId)
+      .eq("user_id", db.user.id);
+    if (error) return fail(error.message);
+    refresh();
+    return { ok: true };
+  });
+}
+
+export async function saveProjectSeo(
+  projectId: string,
+  raw: Partial<Pick<ProjectSeo, "gaId" | "gsc" | "snapshot">>,
+): Promise<Result> {
+  return run(async (db) => {
+    if (!isUuid(projectId)) return fail("Identifiant invalide");
+    if (!(await ownProject(db, projectId))) return fail("Projet introuvable");
+    const { data } = await db.supabase
+      .from("projects")
+      .select("business")
+      .eq("id", projectId)
+      .eq("user_id", db.user.id)
+      .maybeSingle();
+    const current =
+      data?.business && typeof data.business === "object"
+        ? (data.business as Record<string, string>)
+        : {};
+    const prev = seoFromBusiness(current);
+    const gaId = raw.gaId !== undefined ? clean(raw.gaId, 24).toUpperCase() : prev.gaId;
+    const gsc = raw.gsc !== undefined ? clean(raw.gsc, 200) : prev.gsc;
+    if (gaId && !isGaId(gaId)) return fail("ID GA4 invalide (G-XXXXXXXX).");
+    if (gsc && !isGscProperty(gsc)) return fail("Propriété Search Console invalide.");
+    const next: ProjectSeo = {
+      snapshot: raw.snapshot !== undefined ? raw.snapshot : prev.snapshot,
+      gaId,
+      gsc,
+    };
+    const { error } = await db.supabase
+      .from("projects")
+      .update({ business: mergeSeo(current, next) })
+      .eq("id", projectId)
+      .eq("user_id", db.user.id);
+    if (error) return fail(error.message);
+    refresh();
+    return { ok: true };
+  });
+}
+
+export async function saveProjectLaunch(projectId: string, done: string[]): Promise<Result> {
+  return run(async (db) => {
+    if (!isUuid(projectId)) return fail("Identifiant invalide");
+    if (!(await ownProject(db, projectId))) return fail("Projet introuvable");
+    const { data } = await db.supabase
+      .from("projects")
+      .select("business")
+      .eq("id", projectId)
+      .eq("user_id", db.user.id)
+      .maybeSingle();
+    const current =
+      data?.business && typeof data.business === "object"
+        ? (data.business as Record<string, string>)
+        : {};
+    const { error } = await db.supabase
+      .from("projects")
+      .update({ business: mergeLaunch(current, { done }) })
+      .eq("id", projectId)
+      .eq("user_id", db.user.id);
+    if (error) return fail(error.message);
     refresh();
     return { ok: true };
   });

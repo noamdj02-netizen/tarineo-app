@@ -25,3 +25,39 @@ export async function sendEmail(
   if (error) console.error("[email]", subject, error);
   return { ok: !error, skipped: false as const };
 }
+
+/** Mail texte du copilote (Resend). Reply-To = l’user. */
+export async function sendPlainEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+  replyTo?: string;
+}) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return { ok: false as const, skipped: true as const, error: "RESEND_API_KEY manquant." };
+  client ??= new Resend(key);
+  const html = `<pre style="font:15px/1.45 ui-sans-serif,system-ui;white-space:pre-wrap">${escapeHtml(
+    input.text,
+  )}</pre>`;
+  const { data, error } = await client.emails.send({
+    from: process.env.EMAIL_FROM ?? "Navpit <bonjour@navpit.com>",
+    to: input.to,
+    subject: input.subject,
+    text: input.text,
+    html,
+    replyTo: input.replyTo,
+  });
+  if (error) {
+    console.error("[email]", input.subject, error);
+    return { ok: false as const, skipped: false as const, error: error.message };
+  }
+  return { ok: true as const, skipped: false as const, id: data?.id ?? null };
+}
+
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { AvatarForm } from "@/app/(app)/compte/forms";
 import { Field as AuthField } from "@/components/auth/auth-ui";
 import { WizardStepBg } from "@/components/onboarding/wizard-step-bg";
@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { THEMES, THEME_TOKENS } from "@/lib/design-data/themes";
+import { WIDGET_LABELS, type WidgetKey } from "@/lib/home/dashboard-prefs";
 import { LOCALE_LABEL, type Locale } from "@/lib/i18n";
 import type { IllustrationName } from "@/lib/illustrations";
 import { WIZARD_STEPS } from "@/lib/onboarding-wizard";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 import {
   analyzeProjects,
   finishOnboarding,
+  saveCockpit,
   saveProjects,
   saveTaste,
   saveWelcome,
@@ -33,8 +35,68 @@ const STEPS = [
   { label: "Projets", art: "onboarding-premier-pas" as IllustrationName },
   { label: "Analyse", art: "dashboard-analyse" as IllustrationName },
   { label: "Goût", art: "onboarding-configurer" as IllustrationName },
-  { label: "Prêt", art: "landing-commencer" as IllustrationName },
+  { label: "Cockpit", art: "landing-commencer" as IllustrationName },
 ] as const;
+
+const COCKPIT_PRESETS: {
+  id: string;
+  label: string;
+  text: string;
+  widgets: Record<WidgetKey, boolean>;
+}[] = [
+  {
+    id: "focus",
+    label: "Focus",
+    text: "Copilote, actions, semaine, projets",
+    widgets: {
+      prompt: true,
+      actions: true,
+      week: true,
+      projects: true,
+      calendar: false,
+      postits: false,
+      schemas: false,
+    },
+  },
+  {
+    id: "planning",
+    label: "Planning",
+    text: "Agenda, semaine, post-its",
+    widgets: {
+      prompt: false,
+      calendar: true,
+      week: true,
+      postits: true,
+      actions: true,
+      projects: false,
+      schemas: false,
+    },
+  },
+  {
+    id: "studio",
+    label: "Studio",
+    text: "Copilote, projets, schémas, landings",
+    widgets: {
+      prompt: true,
+      projects: true,
+      schemas: true,
+      actions: true,
+      calendar: false,
+      week: false,
+      postits: false,
+    },
+  },
+];
+
+const WIDGET_HINTS: Record<WidgetKey, string> = {
+  prompt: "Question du jour vers le copilote",
+  calendar: "Ton agenda du jour",
+  week: "Ce que tu as fait cette semaine",
+  actions: "Raccourcis focus, landing, thèmes",
+  postits: "Notes libres sur le tableau",
+  projects: "Tes projets, un clic",
+  schemas: "Derniers schémas",
+};
 
 const TOOLS = [
   "Figma",
@@ -78,6 +140,31 @@ export function Wizard({
   const [analyses, setAnalyses] = useState<Record<string, Analysis>>({});
   const [theme, setTheme] = useState(THEMES[0].id);
   const [tools, setTools] = useState<string[]>(["Figma", "Cursor", "Claude"]);
+  const [preset, setPreset] = useState("focus");
+  const [widgets, setWidgets] = useState<Record<WidgetKey, boolean>>(COCKPIT_PRESETS[0].widgets);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  useEffect(() => {
+    if (step !== 2 || !ids.length) return;
+    const t = window.setTimeout(() => {
+      setAnalyses((cur) => {
+        const next = { ...cur };
+        ids.forEach((id, i) => {
+          if (!next[id]) {
+            next[id] = {
+              pitch: `${names[i] || "Ce projet"} est en cours. On pose la prochaine action.`,
+              target: "Les personnes qui peuvent payer cette semaine.",
+              problem: "Trop d’outils, pas assez de focus.",
+              next: "Écrire la landing et parler à 3 personnes cette semaine.",
+            };
+          }
+        });
+        return next;
+      });
+      setAnalyzing(false);
+    }, 10000);
+    return () => window.clearTimeout(t);
+  }, [step, ids, names]);
 
   function go(fn: () => Promise<void>) {
     setError(null);
@@ -250,7 +337,7 @@ export function Wizard({
                         ) : (
                           <p className="mt-2 flex items-center gap-2 text-[14px] text-muted-foreground">
                             <Loader2 className="size-4 animate-spin" aria-hidden />
-                            Analyse en cours…
+                            Analyse en cours. Tu peux continuer.
                           </p>
                         )}
                         </CardContent>
@@ -317,14 +404,63 @@ export function Wizard({
               ) : null}
 
               {step === 4 ? (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-5">
                   <div className="flex justify-center lg:justify-start">
                     <AvatarForm avatarUrl={null} initial={(name || "?").charAt(0).toUpperCase()} />
                   </div>
-                  <ul className="flex flex-col gap-2 text-[14.5px] leading-relaxed text-ink/80">
-                    <li>Un seul projet en Focus jusqu’à la première vente.</li>
-                    <li>⌘J ouvre le copilote. Dépose un fichier dans la barre d’accueil.</li>
-                    <li>Les prix Pro : 15 €, puis 12 €, puis 9 € / mois.</li>
+                  <div className="grid grid-cols-3 gap-2">
+                    {COCKPIT_PRESETS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setPreset(p.id);
+                          setWidgets(p.widgets);
+                        }}
+                        className={cn(
+                          "rounded-[16px] border p-3 text-left transition-transform duration-200 active:scale-[0.98]",
+                          preset === p.id ? "border-ink bg-surface/90" : "border-line bg-surface/60",
+                        )}
+                      >
+                        <span className="block text-[14px] font-semibold">{p.label}</span>
+                        <span className="mt-1 block text-[12px] leading-snug text-muted-foreground">
+                          {p.text}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {(Object.keys(WIDGET_LABELS) as WidgetKey[]).map((key) => {
+                      const on = widgets[key];
+                      return (
+                        <li key={key}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreset("custom");
+                              setWidgets((cur) => ({ ...cur, [key]: !cur[key] }));
+                            }}
+                            className={cn(
+                              "flex min-h-14 w-full items-center justify-between gap-2 rounded-[14px] border px-3.5 text-left transition-transform duration-200 active:scale-[0.99]",
+                              on ? "border-ink bg-surface/90" : "border-line bg-surface/60",
+                            )}
+                          >
+                            <span>
+                              <span className="block text-[14px] font-semibold">{WIDGET_LABELS[key]}</span>
+                              <span className="block text-[12px] text-muted-foreground">{WIDGET_HINTS[key]}</span>
+                            </span>
+                            <span
+                              className={cn(
+                                "grid size-6 shrink-0 place-items-center rounded-full text-[11px] font-medium",
+                                on ? "bg-ink text-accent-ink" : "bg-surface-2 text-muted-foreground",
+                              )}
+                            >
+                              {on ? "on" : "off"}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               ) : null}
@@ -378,8 +514,11 @@ export function Wizard({
                       setIds(created);
                       setNames(projects.map((p) => p.trim()).filter(Boolean).slice(0, 3));
                       setStep(2);
-                      const ana = await analyzeProjects(created);
-                      if (ana.ok) setAnalyses(ana.analyses);
+                      setAnalyzing(true);
+                      void analyzeProjects(created).then((ana) => {
+                        if (ana.ok) setAnalyses(ana.analyses);
+                        setAnalyzing(false);
+                      });
                     } else setStep(2);
                     return;
                   }
@@ -393,6 +532,8 @@ export function Wizard({
                     setStep(4);
                     return;
                   }
+                  const cockpit = await saveCockpit(widgets);
+                  if (!cockpit.ok) throw new Error(cockpit.error);
                   const res = await finishOnboarding();
                   if (!res.ok) throw new Error(res.error);
                   const dest = ask
@@ -404,7 +545,7 @@ export function Wizard({
               }
             >
               {pending ? <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden /> : null}
-              {step === 4 ? "Entrer dans le cockpit" : "Continuer"}
+              {step === 4 ? "Entrer dans mon cockpit" : step === 2 && analyzing ? "Continuer quand même" : "Continuer"}
               {step < 4 && !pending ? <ArrowRight data-icon="inline-end" aria-hidden /> : null}
             </Button>
           </div>
@@ -423,7 +564,7 @@ const titles = [
   "Tes projets, maintenant.",
   "L’IA a regardé.",
   "Ton goût, tes outils.",
-  "C’est prêt.",
+  "Ton cockpit, à ta manière.",
 ];
 
 const mobileTitles = [
@@ -431,13 +572,13 @@ const mobileTitles = [
   "Tes projets",
   "L’IA analyse",
   "Ton goût",
-  "C’est prêt",
+  "Ton cockpit",
 ];
 
 const leads = [
-  "Une minute pour ton prénom et ta langue — ensuite on place tes projets.",
+  "Une minute pour ton prénom et ta langue. Ensuite on place tes projets.",
   "Qu’est-ce que tu construis en ce moment ? Le premier passe en Focus.",
-  "Le copilote propose une prochaine action pour chaque projet.",
+  "Le copilote propose une prochaine action. Tu n’es pas obligé d’attendre.",
   "Choisis un thème et les outils que tu utilises au quotidien.",
-  "Photo optionnelle, quelques conseils, puis tu entres dans le cockpit.",
+  "Photo optionnelle, puis les blocs de ton accueil. Tu pourras tout changer plus tard.",
 ];

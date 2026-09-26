@@ -12,12 +12,16 @@ import {
 
 export type AutomationCategory = "focus" | "communication" | "produit" | "design";
 
+export type AutomationJob = "debrief-focus" | "next-action" | "schema-parcours";
+
 export type Automation = {
   id: string;
   label: string;
   hint: string;
   prompt: string;
   category: AutomationCategory;
+  /** Job in-app (écrit dans Navpit). Sinon, simple prompt copilote. */
+  job?: AutomationJob;
 };
 
 export const AUTOMATION_CATEGORY_LABELS: Record<AutomationCategory, string> = {
@@ -29,6 +33,15 @@ export const AUTOMATION_CATEGORY_LABELS: Record<AutomationCategory, string> = {
 
 /** Consignes prêtes à lancer dans le copilote. */
 export const AUTOMATIONS: Automation[] = [
+  {
+    id: "debrief-focus",
+    label: "Débrief Focus",
+    hint: "Note du jour + 3 actions",
+    prompt:
+      "Fais le débrief du projet en Focus : lis les tâches et les notes des 24 h, écris une note « Débrief JJ/MM » et ajoute 3 actions cochables.",
+    category: "focus",
+    job: "debrief-focus",
+  },
   {
     id: "mail-relance",
     label: "Rédiger un mail",
@@ -50,8 +63,9 @@ export const AUTOMATIONS: Automation[] = [
     label: "Schéma du parcours",
     hint: "Dessine le parcours client…",
     prompt:
-      "Propose le parcours client de mon projet en Focus, en 5 étapes, prêt à coller dans un schéma.",
+      "Dessine le schéma parcours du projet en Focus et attache-le à la fiche.",
     category: "produit",
+    job: "schema-parcours",
   },
   {
     id: "post-linkedin",
@@ -68,6 +82,7 @@ export const AUTOMATIONS: Automation[] = [
     prompt:
       "À partir de mon projet en Focus, propose UNE prochaine action concrète pour les 24 prochaines heures, avec pourquoi et comment la valider.",
     category: "focus",
+    job: "next-action",
   },
   {
     id: "pitch-30s",
@@ -133,6 +148,12 @@ export const COPILOT_FEATURE_LINKS: CopilotFeatureLink[] = [
     label: "Anatomie landing",
     description: "Les 12 frames d’une page qui convertit.",
     icon: Layers,
+  },
+  {
+    href: "/bibliotheque/heros",
+    label: "Heros",
+    description: "Douze heros à copier dans Cursor.",
+    icon: Sparkles,
   },
   {
     href: "/projets",

@@ -1,0 +1,7 @@
+---
+description: Librairies UI à privilégier sur Composants et Ressources
+globs: app/(app)/composants/**/*.tsx,app/(app)/composants-2/**/*.tsx,app/(app)/ressources/**/*.tsx,components/kit/**/*.tsx,components/kit2/**/*.tsx,components/resources/**/*.tsx
+alwaysApply: false
+---
+
+Sur Composants, Composants 2 et Ressources : chercher d’abord dans Magic UI, Aceternity UI, HyperUI, daisyUI (copier un bloc) ou shadcn déjà installé. Ne pas installer daisyUI en plugin global. Inspiration seulement : Mobbin, Page Flows, Land-book, Dribbble, Material 3. Garder le DNA Navpit (`#f3f3f2`, ink `#111`, `shadow-soft`, Inter Tight). Pas de glass / néo-brutal sur ces pages.

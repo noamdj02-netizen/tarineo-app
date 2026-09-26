@@ -8,6 +8,7 @@ import { clearChat, type ChatMessage } from "@/app/(app)/assistant/actions";
 import { Mascot } from "@/components/home/mascot";
 import { EASE } from "@/components/motion/reveal";
 import type { AssistantFile } from "@/lib/assistant/files";
+import type { AgentRole } from "@/lib/assistant/roles";
 import { cn } from "@/lib/utils";
 import { MessageContent } from "./message-content";
 import { ModelSelect, useModel } from "./model-select";
@@ -24,12 +25,16 @@ export function Chat({
   keyMissing,
   firstName,
   queued,
+  projectId = null,
+  role = "general",
 }: {
   initial: ChatMessage[];
   presets: string[];
   keyMissing: boolean;
   firstName?: string | null;
   queued: Queued;
+  projectId?: string | null;
+  role?: AgentRole;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -40,12 +45,14 @@ export function Chat({
   const [focused, setFocused] = useState(false);
   const [model, setModel] = useModel(null);
   const abortRef = useRef<AbortController | null>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const lastQueued = useRef(0);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end", behavior: reduce ? "auto" : "smooth" });
+    const el = listRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: reduce ? "auto" : "smooth" });
   }, [messages, reduce]);
 
   useEffect(() => {
@@ -78,7 +85,14 @@ export function Chat({
         const res = await fetch("/api/assistant", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question: q, model, page: pathname, files: files ?? [] }),
+          body: JSON.stringify({
+            question: q,
+            model,
+            page: pathname,
+            files: files ?? [] ,
+            projectId,
+            role,
+          }),
           signal: ctl.signal,
         });
         if (!res.ok || !res.body) {
@@ -120,7 +134,7 @@ export function Chat({
         router.refresh(); // met à jour le bloc « Démarrage » et les données touchées par les outils
       }
     },
-    [busy, model, router, pathname],
+    [busy, model, router, pathname, projectId, role],
   );
 
   useEffect(() => {
@@ -134,6 +148,7 @@ export function Chat({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div
+        ref={listRef}
         className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-4"
         aria-live="polite"
         aria-busy={busy}
@@ -153,7 +168,7 @@ export function Chat({
               Comment puis-je t’aider ?
             </p>
             <p className="text-[13.5px] text-muted-foreground">
-              Un mail à rédiger, un prompt Cursor, ta prochaine action : je connais tes projets.
+              Je lis tout le projet et j’agis : mail, tâche, landing, schéma, journal.
             </p>
           </div>
         ) : null}
@@ -165,12 +180,12 @@ export function Chat({
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.4, ease: EASE }}
               className={cn(
-                "max-w-[92%] rounded-2xl px-3.5 py-2.5 text-[14px] leading-relaxed break-words",
+                "max-w-[40rem] rounded-2xl px-4 py-3 text-[16.5px] leading-[1.6] break-words",
                 m.role === "user"
-                  ? "self-end whitespace-pre-wrap bg-ink text-accent-ink"
+                  ? "self-end whitespace-pre-wrap bg-ink text-[16px] text-accent-ink"
                   : m.error
                     ? "self-start border border-destructive/40 bg-surface"
-                    : "self-start border border-line bg-surface",
+                    : "self-start w-full border border-line bg-surface",
               )}
             >
               {m.role === "user" ? (
@@ -186,11 +201,10 @@ export function Chat({
             </motion.div>
           ))}
         </AnimatePresence>
-        <div ref={endRef} />
       </div>
 
       {empty ? (
-        <ul className="flex flex-col gap-1.5 px-4 pb-3" aria-label="Questions toutes prêtes">
+        <ul className="flex shrink-0 flex-col gap-1.5 px-4 pb-3" aria-label="Questions toutes prêtes">
           {presets.slice(0, 4).map((p) => (
             <li key={p}>
               <button
@@ -211,7 +225,7 @@ export function Chat({
           e.preventDefault();
           void ask(input);
         }}
-        className="flex flex-col gap-1.5 border-t border-line px-3 pt-3 pb-3"
+        className="flex shrink-0 flex-col gap-1.5 border-t border-line px-3 pt-3 pb-3"
       >
         <label htmlFor="ask" className="sr-only">
           Ta question
@@ -261,14 +275,31 @@ export function Chat({
         </div>
         <div className="flex items-center justify-between gap-2 px-1">
           <ModelSelect value={model} onChange={setModel} />
-          {!empty ? <ClearButton disabled={busy} onCleared={() => setMessages([])} /> : null}
+          {!empty ? (
+            <ClearButton
+              disabled={busy}
+              projectId={projectId}
+              role={role}
+              onCleared={() => setMessages([])}
+            />
+          ) : null}
         </div>
       </form>
     </div>
   );
 }
 
-function ClearButton({ disabled, onCleared }: { disabled: boolean; onCleared: () => void }) {
+function ClearButton({
+  disabled,
+  onCleared,
+  projectId,
+  role,
+}: {
+  disabled: boolean;
+  onCleared: () => void;
+  projectId: string | null;
+  role: AgentRole;
+}) {
   const [armed, setArmed] = useState(false);
   const [pending, startTransition] = useTransition();
   useEffect(() => {
@@ -283,7 +314,7 @@ function ClearButton({ disabled, onCleared }: { disabled: boolean; onCleared: ()
       onClick={() => {
         if (!armed) return setArmed(true);
         startTransition(async () => {
-          const res = await clearChat();
+          const res = await clearChat({ projectId, role });
           if (res.ok) onCleared();
           setArmed(false);
         });

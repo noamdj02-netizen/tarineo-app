@@ -1,6 +1,15 @@
 import "server-only";
 import { getDb } from "@/lib/db";
-import type { Feature, LogEntry, ProjectFull, ProjectSummary, Task } from "./types";
+import type {
+  Feature,
+  LogEntry,
+  ProjectAssetItem,
+  ProjectFull,
+  ProjectNoteItem,
+  ProjectSchemaLink,
+  ProjectSummary,
+  Task,
+} from "./types";
 
 type CardRow = Omit<
   ProjectSummary,
@@ -71,5 +80,41 @@ export async function getProject(slug: string): Promise<ProjectFull | null> {
     log: [...(project_log ?? [])].sort(
       (a, b) => b.date.localeCompare(a.date) || b.created_at.localeCompare(a.created_at),
     ),
+  };
+}
+
+export async function listProjectMedia(projectId: string): Promise<{
+  schemas: ProjectSchemaLink[];
+  assets: ProjectAssetItem[];
+  notes: ProjectNoteItem[];
+}> {
+  const empty = { schemas: [], assets: [], notes: [] };
+  const db = await getDb();
+  if (!db) return empty;
+  const [schemas, assets, notes] = await Promise.all([
+    db.supabase
+      .from("project_schemas")
+      .select("id, title, kind")
+      .eq("user_id", db.user.id)
+      .eq("project_id", projectId)
+      .order("updated_at", { ascending: false }),
+    db.supabase
+      .from("project_assets")
+      .select("id, title, html, theme_id, kind, created_at")
+      .eq("user_id", db.user.id)
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+    db.supabase
+      .from("project_notes")
+      .select("id, title, content, source, created_at")
+      .eq("user_id", db.user.id)
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
+  return {
+    schemas: (schemas.data ?? []) as ProjectSchemaLink[],
+    assets: (assets.data ?? []) as ProjectAssetItem[],
+    notes: (notes.data ?? []) as ProjectNoteItem[],
   };
 }

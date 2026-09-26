@@ -7,6 +7,7 @@ import { getPlan } from "@/lib/billing/plan";
 import { FOUNDER, PLAN_LABEL, PRO, STARTER } from "@/lib/billing/plans";
 import { getViewer } from "@/lib/session";
 import { WIZARD_STEPS } from "@/lib/onboarding-wizard";
+import { ApiKeysCard } from "@/components/account/api-keys-card";
 import { AvatarForm, LocaleForm, NameForm, PasswordForm } from "./forms";
 import { OnboardingLaunch } from "./onboarding-launch";
 
@@ -65,8 +66,8 @@ export default async function ComptePage() {
         <div id="configuration" className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-3">/ Configuration initiale ///</p>
           <p className="text-[14.5px] leading-relaxed text-muted-foreground">
-            Le parcours en 5 étapes (inscription ou Google) : prénom, projets, analyse IA, goût
-            design, puis entrée dans le cockpit.
+            Le parcours en 5 étapes : prénom, projets, analyse IA, goût design, puis les blocs de
+            ton cockpit. Tu peux tout changer plus tard sur l’accueil.
           </p>
           <ol className="mt-4 flex flex-col gap-2">
             {WIZARD_STEPS.map((step, i) => (
@@ -131,6 +132,8 @@ export default async function ComptePage() {
             Voir l’utilisation et changer d’offre
           </Link>
         </div>
+
+        <ApiKeysCard />
 
         <div className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-3">/ Conseils ///</p>

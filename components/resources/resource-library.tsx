@@ -6,8 +6,12 @@ import { useDeferredValue, useEffect, useMemo, useState, useTransition } from "r
 import { addResource, deleteResource } from "@/app/(app)/ressources/actions";
 import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
-import { RESOURCE_CATEGORIES } from "@/lib/design-data/resources";
+import { Badge } from "@/components/ui/badge";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { ShineBorder } from "@/components/ui/shine-border";
+import { CATEGORY_COLORS, RESOURCE_CATEGORIES } from "@/lib/design-data/resources";
 import { safeUrl } from "@/lib/projects/types";
+import { COPY_FIRST_URLS } from "@/lib/resources/catalog";
 import { resourceLogoUrl } from "@/lib/resources/logo";
 import { isWarnTag, type Resource } from "@/lib/resources/types";
 import { cn } from "@/lib/utils";
@@ -21,13 +25,24 @@ function normalize(s: string) {
     .toLowerCase();
 }
 
+function hostOf(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+function isCopyFirst(r: Resource) {
+  return COPY_FIRST_URLS.has(r.url.replace(/\/$/, ""));
+}
+
 export function ResourceLibrary({ initial }: { initial: Resource[] }) {
   const [items, setItems] = useState(initial);
   const [query, setQuery] = useState("");
   const [cat, setCat] = useState(ALL);
   const q = useDeferredValue(query);
 
-  // si la page serveur renvoie une nouvelle liste (après ajout / suppression), on la reprend
   useEffect(() => setItems(initial), [initial]);
 
   const counts = useMemo(() => {
@@ -45,71 +60,97 @@ export function ResourceLibrary({ initial }: { initial: Resource[] }) {
     );
   }, [items, cat, q]);
 
+  const featured = list.filter(isCopyFirst);
+  const rest = list.filter((r) => !isCopyFirst(r));
   const filters = [ALL, ...RESOURCE_CATEGORIES.filter((c) => counts[c])];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <AddResource onAdded={(r) => setItems((cur) => [r, ...cur])} />
 
-      <label className="relative block">
-        <span className="sr-only">Rechercher</span>
-        <Search
-          className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher (ex : 3D, dark, pricing)…"
-          className="min-h-12 w-full rounded-pill border border-line bg-surface pr-4 pl-10 text-[15px] outline-none placeholder:text-muted-foreground focus:border-ink/30 focus:shadow-soft"
-        />
-      </label>
+      <div className="flex flex-col gap-3">
+        <InputGroup className="h-12 rounded-pill bg-surface">
+          <InputGroupAddon>
+            <Search aria-hidden />
+          </InputGroupAddon>
+          <InputGroupInput
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher (ex : 3D, dark, pricing)…"
+            aria-label="Rechercher"
+          />
+        </InputGroup>
 
-      <div
-        className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="group"
-        aria-label="Catégories"
-      >
-        {filters.map((c) => (
-          <button
-            key={c}
-            type="button"
-            aria-pressed={c === cat}
-            onClick={() => setCat(c)}
-            className={cn(
-              "min-h-10 flex-none rounded-pill border px-3.5 text-[13px] font-semibold whitespace-nowrap transition-colors",
-              c === cat
-                ? "border-ink bg-ink text-accent-ink"
-                : "border-line bg-surface text-ink/80 hover:bg-accent-soft",
-            )}
-          >
-            {c}
-            {c === ALL ? null : (
-              <span className="ml-1 font-mono text-[11px] opacity-60">{counts[c]}</span>
-            )}
-          </button>
-        ))}
+        <div className="picker !pb-0" role="group" aria-label="Catégories">
+          {filters.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className="chip"
+              aria-pressed={c === cat}
+              onClick={() => setCat(c)}
+            >
+              {c === ALL ? null : (
+                <span className="sw" style={{ background: CATEGORY_COLORS[c] ?? "#111" }} />
+              )}
+              {c}
+              {c === ALL ? (
+                <span className="font-mono text-[11px] opacity-55">{items.length}</span>
+              ) : (
+                <span className="font-mono text-[11px] opacity-55">{counts[c]}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {list.length ? (
-        <div className="grid gap-3 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
-          <AnimatePresence initial={false}>
-            {list.map((r, i) => (
-              <ResourceCard
-                key={r.id}
-                r={r}
-                index={i}
-                onDeleted={() => setItems((cur) => cur.filter((x) => x.id !== r.id))}
-              />
+      {featured.length ? (
+        <div>
+          <p className="mb-3 font-mono text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+            À copier d’abord
+          </p>
+          <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {featured.map((r, i) => (
+              <li key={r.id}>
+                <ResourceCard
+                  r={r}
+                  index={i}
+                  featured
+                  onDeleted={() => setItems((cur) => cur.filter((x) => x.id !== r.id))}
+                />
+              </li>
             ))}
-          </AnimatePresence>
+          </ul>
         </div>
-      ) : (
-        <div className="flex flex-col items-center gap-2 py-8 text-center text-[14px] text-muted-foreground">
+      ) : null}
+
+      {rest.length ? (
+        <div>
+          {featured.length ? (
+            <p className="mb-3 font-mono text-[11px] tracking-[0.12em] text-muted-foreground uppercase">
+              Le reste du tiroir
+            </p>
+          ) : null}
+          <ul className="grid gap-4 lg:grid-cols-2">
+            {rest.map((r, i) => (
+              <li key={r.id}>
+                <ResourceCard
+                  r={r}
+                  index={i + featured.length}
+                  onDeleted={() => setItems((cur) => cur.filter((x) => x.id !== r.id))}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {!list.length ? (
+        <div className="flex flex-col items-center gap-2 py-10 text-center text-[14px] text-muted-foreground">
           <Illustration name="empty-aucun-resultat" className="size-20" />
           Aucune ressource ne correspond.
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -117,16 +158,18 @@ export function ResourceLibrary({ initial }: { initial: Resource[] }) {
 function ResourceCard({
   r,
   index,
+  featured = false,
   onDeleted,
 }: {
   r: Resource;
   index: number;
+  featured?: boolean;
   onDeleted: () => void;
 }) {
   const reduce = useReducedMotion();
   const url = safeUrl(r.url);
   const notion = safeUrl(r.notion_url);
-  const origin = r.source === "notion" ? " · Notion" : r.source === "moi" ? " · Ajout perso" : "";
+  const origin = r.source === "notion" ? "Notion" : r.source === "moi" ? "Ajout perso" : "Catalogue";
 
   return (
     <motion.article
@@ -135,86 +178,139 @@ function ResourceCard({
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       exit={{ opacity: 0, scale: 0.97 }}
       transition={{ duration: 0.5, ease: EASE, delay: Math.min(index, 12) * 0.03 }}
-      className="card-soft flex flex-col gap-2.5 p-4 transition-shadow duration-300 ease-out-soft hover:shadow-lift"
+      className="comp !mb-0"
     >
-      <div className="flex items-center gap-3">
-        <ResourceLogo r={r} />
+      <div className="comp-h">
         <div className="min-w-0">
-          <h3 className="truncate text-[15.5px] font-semibold tracking-[-0.01em]">{r.name}</h3>
-          <p className="font-mono text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
+          <h3 className="min-w-0">
+            <ResourceLogo r={r} size={28} />
+            <span className="truncate">{r.name}</span>
+          </h3>
+          <p>
             {r.category}
-            {origin}
-            {r.verified ? " · testé ✓" : ""}
+            {r.verified ? " · testé" : ""}
+            {` · ${origin}`}
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {url ? (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="copy">
+              <ExternalLink className="size-3.5" aria-hidden />
+              Ouvrir
+            </a>
+          ) : null}
+          {notion ? (
+            <a href={notion} target="_blank" rel="noopener noreferrer" className="copy">
+              <NotebookText className="size-3.5" aria-hidden />
+              Fiche
+            </a>
+          ) : null}
+          {r.source === "moi" ? <DeleteButton id={r.id} name={r.name} onDeleted={onDeleted} /> : null}
+        </div>
       </div>
-      {r.note ? <p className="text-[13.5px] leading-snug text-muted-foreground">{r.note}</p> : null}
+      {url ? (
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="stage block p-3 no-underline"
+        >
+          <ResourcePreview r={r} featured={featured} />
+        </a>
+      ) : (
+        <div className="stage p-3">
+          <ResourcePreview r={r} featured={featured} />
+        </div>
+      )}
       {r.tags.length ? (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 px-4 pb-3">
           {r.tags.map((t) => (
-            <span
+            <Badge
               key={t}
-              className={cn(
-                "rounded-md border px-1.5 py-px font-mono text-[10.5px]",
-                isWarnTag(t)
-                  ? "border-ink/40 border-dashed text-ink"
-                  : "border-line bg-surface-2 text-muted-foreground",
-              )}
+              variant={isWarnTag(t) ? "outline" : "secondary"}
+              className="font-mono text-[10.5px]"
             >
               {t}
-            </span>
+            </Badge>
           ))}
         </div>
       ) : null}
-      <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
-        {url ? (
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 text-[13px] font-medium hover:bg-accent-soft"
-          >
-            <ExternalLink className="size-3.5" aria-hidden />
-            Ouvrir
-          </a>
-        ) : null}
-        {notion ? (
-          <a
-            href={notion}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-2.5 text-[13px] font-medium hover:bg-accent-soft"
-          >
-            <NotebookText className="size-3.5" aria-hidden />
-            Fiche
-          </a>
-        ) : null}
-        {r.source === "moi" ? <DeleteButton id={r.id} name={r.name} onDeleted={onDeleted} /> : null}
-      </div>
     </motion.article>
   );
 }
 
-/** Logo de la marque (logo.dev) ; l'initiale sur fond noir si pas de logo. */
-function ResourceLogo({ r }: { r: Resource }) {
+function ResourcePreview({ r, featured }: { r: Resource; featured?: boolean }) {
+  const color = CATEGORY_COLORS[r.category] ?? "#111111";
+  const host = hostOf(r.url);
+  return (
+    <div
+      className={cn(
+        "relative overflow-hidden rounded-[14px] border border-line bg-surface-2 transition-transform duration-300 ease-out-soft hover:-translate-y-0.5",
+        featured ? "min-h-[168px]" : "min-h-[132px]",
+      )}
+    >
+      {featured ? <ShineBorder shineColor={["#111111", color, "#111111"]} duration={18} /> : null}
+      <div className="flex h-8 items-center gap-2 border-b border-line bg-surface px-3">
+        <span className="flex gap-1" aria-hidden>
+          <i className="size-2 rounded-full bg-[#E8B4A0]" />
+          <i className="size-2 rounded-full bg-[#E2D48A]" />
+          <i className="size-2 rounded-full bg-[#A8C9A0]" />
+        </span>
+        <span className="truncate font-mono text-[10.5px] tracking-[0.04em] text-muted-foreground">
+          {host}
+        </span>
+      </div>
+      <div
+        className="relative flex min-h-[100px] flex-col justify-end px-4 py-4"
+        style={{
+          background: `linear-gradient(160deg, ${color}24 0%, #f6f6f5 55%, #ffffff 100%)`,
+        }}
+      >
+        <div className="mb-3">
+          <ResourceLogo r={r} size={featured ? 48 : 40} framed />
+        </div>
+        {r.note ? (
+          <p className="line-clamp-2 text-[13.5px] leading-snug text-ink/75">{r.note}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function ResourceLogo({
+  r,
+  size = 40,
+  framed = false,
+}: {
+  r: Resource;
+  size?: number;
+  framed?: boolean;
+}) {
   const src = resourceLogoUrl(r);
   const [failed, setFailed] = useState(false);
+  const box = framed
+    ? "rounded-xl border border-line bg-white shadow-soft"
+    : "rounded-lg border border-line bg-surface";
   if (src && !failed) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element -- petite image externe, pas besoin de next/image
+      // eslint-disable-next-line @next/next/no-img-element -- logo.dev
       <img
         src={src}
         alt=""
-        width={40}
-        height={40}
+        width={size}
+        height={size}
         loading="lazy"
         onError={() => setFailed(true)}
-        className="size-10 flex-none rounded-xl border border-line bg-surface object-contain"
+        className={cn("flex-none object-contain", box)}
+        style={{ width: size, height: size }}
       />
     );
   }
   return (
-    <span className="btn-dark grid size-10 flex-none place-items-center rounded-xl text-[15px] font-bold">
+    <span
+      className={cn("grid flex-none place-items-center font-bold", box, framed ? "btn-dark" : "bg-ink text-accent-ink")}
+      style={{ width: size, height: size, fontSize: size > 36 ? 18 : 13 }}
+    >
       {(r.name || "?").trim().charAt(0).toUpperCase()}
     </span>
   );
@@ -251,7 +347,7 @@ function DeleteButton({
         });
       }}
       className={cn(
-        "ml-auto inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 font-mono text-[11px] transition-colors",
+        "inline-flex min-h-8 items-center gap-1.5 rounded-lg px-2 font-mono text-[11px] transition-colors",
         armed || failed
           ? "bg-destructive text-accent-ink"
           : "text-muted-foreground hover:bg-accent-soft hover:text-ink",

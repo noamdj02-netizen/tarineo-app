@@ -2,9 +2,11 @@
 
 import { Copy } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ShineBorder } from "@/components/ui/shine-border";
 import { COMPONENTS } from "@/lib/design-data/components";
 import { swatches, THEMES } from "@/lib/design-data/themes";
 import { kitDoc } from "@/lib/kit";
+import { AttachToProject, type AttachTarget } from "./attach-to-project";
 import { CopyButton } from "./copy-button";
 import { FrameStage } from "./frame-stage";
 
@@ -14,10 +16,12 @@ const DOCS = COMPONENTS.map((c) => kitDoc(c.h, "chantier"));
 export function ComponentLibrary({
   icons,
   initialTheme,
+  projects = [],
 }: {
   /** icônes rendues côté serveur, dans l'ordre de COMPONENTS */
   icons: React.ReactNode[];
   initialTheme?: string;
+  projects?: AttachTarget[];
 }) {
   const [theme, setTheme] = useState(initialTheme ?? "chantier");
 
@@ -60,7 +64,8 @@ export function ComponentLibrary({
       </div>
       <div>
         {COMPONENTS.map((c, i) => (
-          <article key={c.n} className="comp">
+          <article key={c.n} className="comp relative overflow-hidden">
+            <ShineBorder shineColor={["#111111", "#cbbdf3"]} duration={18} />
             <div className="comp-h">
               <div>
                 <h3>
@@ -69,10 +74,13 @@ export function ComponentLibrary({
                 </h3>
                 <p>{c.w}</p>
               </div>
-              <CopyButton text={c.h}>
-                <Copy aria-hidden />
-                Copier HTML
-              </CopyButton>
+              <div className="flex flex-wrap gap-2">
+                <CopyButton text={c.h}>
+                  <Copy aria-hidden />
+                  Copier HTML
+                </CopyButton>
+                <AttachToProject name={c.n} themeId={theme} projects={projects} />
+              </div>
             </div>
             <div className="stage">
               <FrameStage doc={DOCS[i]} title={`Aperçu : ${c.n}`} kit={theme} />

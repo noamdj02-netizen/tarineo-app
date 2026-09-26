@@ -1,15 +1,4 @@
-/** La fiche projet s'ouvre en panneau (@modal) par-dessus la liste. */
-export default function ProjetsLayout({
-  children,
-  modal,
-}: {
-  children: React.ReactNode;
-  modal: React.ReactNode;
-}) {
-  return (
-    <>
-      {children}
-      {modal}
-    </>
-  );
+/** Liste et fiche : pages pleines, plus de slot modal. */
+export default function ProjetsLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }

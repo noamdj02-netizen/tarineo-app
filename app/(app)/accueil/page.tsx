@@ -74,10 +74,10 @@ export default async function AccueilPage() {
         },
     {
       n: "02",
-      label: "Anatomie",
-      title: "Checklist avant lancement",
-      text: "Les 12 frames d’une landing qui convertit, à cocher une par une.",
-      href: "/anatomie",
+      label: "Landing",
+      title: "Ta landing en 5 minutes",
+      text: "Choisis un hero, ajoute-le au projet, envoie-le à Cursor ou au copilote.",
+      href: "/bibliotheque/heros",
       icon: "check",
     },
     {

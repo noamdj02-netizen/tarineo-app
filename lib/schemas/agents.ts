@@ -3,63 +3,108 @@ import type { SchemaKind } from "@/lib/supabase/types";
 export type SchemaAgent = {
   kind: Exclude<SchemaKind, "libre">;
   label: string;
-  /** ce que l'agent dessine, affiché dans le choix */
   hint: string;
-  /** consigne donnée à Claude, en plus des règles communes */
   brief: string;
+  icon: string;
+  /** champs extra affichés dans le dialogue */
+  fields?: SchemaField[];
 };
+
+export type SchemaField = {
+  key: string;
+  label: string;
+  placeholder: string;
+};
+
+const FORMATION_FIELDS: SchemaField[] = [
+  { key: "audience", label: "Pour qui", placeholder: "Ex : artisans qui vendent en ligne" },
+  { key: "promesse", label: "Promesse", placeholder: "Ex : 1ère vente en 30 jours" },
+  { key: "format", label: "Format", placeholder: "Ex : cohorte 4 semaines, live + replay" },
+  { key: "prix", label: "Prix", placeholder: "Ex : 490 €" },
+  { key: "duree", label: "Durée", placeholder: "Ex : 6 modules, 8 h" },
+];
 
 /**
  * Agents qui dessinent un schéma à partir de la fiche projet.
- * Ils répondent en Mermaid : seuls flowchart et classDiagram deviennent des formes
- * Excalidraw modifiables, les autres types arriveraient en image figée.
+ * flowchart et classDiagram seulement : le parseur Excalidraw les tient.
  */
 export const SCHEMA_AGENTS: SchemaAgent[] = [
   {
     kind: "architecture",
     label: "Architecture technique",
-    hint: "Front, back, base de données, services externes",
+    hint: "Front, back, base, services",
+    icon: "layers",
     brief:
-      "Dessine l'architecture technique du projet en `flowchart LR` : navigateur, front, API, base de données, auth, paiement, services tiers. Base-toi sur la stack. Regroupe par couche avec des subgraph.",
+      "Dessine l'architecture en `flowchart LR`. Nœuds : navigateur, front, API, base, auth, paiement, 2 services max. subgraph par couche (Client, App, Data). Losange seulement pour une vraie décision.",
   },
   {
     kind: "parcours",
     label: "Parcours utilisateur",
-    hint: "De la découverte au premier résultat",
+    hint: "Découverte → premier résultat",
+    icon: "route",
     brief:
-      "Dessine le parcours de la cible en `flowchart LR` : découverte, landing, inscription, première action utile, moment « waouh », paiement. Ajoute les points de friction probables en losange (décision).",
+      "Dessine le parcours cible en `flowchart LR` : découverte, landing, inscription, première action utile, résultat, paiement. Losanges pour les frictions. 10 à 14 nœuds.",
   },
   {
     kind: "tunnel",
     label: "Tunnel de la landing",
     hint: "Les 12 frames adaptées au projet",
+    icon: "gallery-vertical-end",
     brief:
-      "Dessine le tunnel de la landing en `flowchart TD`, une case par frame (Navbar, Hero, Bande de preuve, Problème, Comment ça marche, Fonctionnalités, Démo, Témoignages, Résultats, Tarifs, FAQ, CTA final). Dans chaque case, le message concret pour CE projet en 8 mots max. Regroupe en 4 subgraph : Attention, Intérêt, Désir, Action.",
+      "Dessine le tunnel landing en `flowchart TD`, une case par frame (Navbar, Hero, Preuve, Probleme, Marche, Fonctions, Demo, Temoignages, Resultats, Tarifs, FAQ, CTA). Message concret du projet, 6 mots max par case. 4 subgraph : Attention, Interet, Desir, Action.",
   },
   {
     kind: "roadmap",
     label: "Roadmap",
-    hint: "Fait, en cours, à faire, jusqu'à la première vente",
+    hint: "Fait, en cours, à faire, 1ère vente",
+    icon: "map",
     brief:
-      "Dessine la roadmap en `flowchart TD` avec 4 subgraph dans l'ordre, reliés par des flèches : Fait, En cours, À faire, Première vente. Mets les fonctionnalités et tâches réelles du projet dans le bon groupe, 6 éléments max par groupe.",
+      "Dessine la roadmap en `flowchart TD` avec 4 subgraph reliés : Fait, En cours, A faire, Premiere vente. Tâches réelles du projet, 5 max par groupe.",
   },
   {
     kind: "donnees",
     label: "Modèle de données",
-    hint: "Tables, champs clés et relations",
+    hint: "Tables, champs, relations",
+    icon: "database",
     brief:
-      "Dessine le modèle de données en `classDiagram` : une classe par table avec ses 3 à 6 champs clés (nom et type simple), et les relations avec cardinalités. Déduis les tables des fonctionnalités.",
+      "Dessine le modèle en `classDiagram` : une classe par table, 3 à 6 champs (nom type), relations avec cardinalités. Tables déduites des fonctionnalités.",
+  },
+  {
+    kind: "formation",
+    label: "Tunnel de formation",
+    hint: "Vendre un cours : promesse, modules, checkout",
+    icon: "graduation-cap",
+    fields: FORMATION_FIELDS,
+    brief:
+      "Tu es l'agent Formation. Dessine le tunnel de vente d'une formation en `flowchart TD`. subgraph obligatoires dans cet ordre : Promesse, Parcours eleve (5 modules max), Preuves, Offre et prix, Apres achat (onboarding). Chaque nœud = verbe + objet, 5 mots max. Utilise des formes : rectangle = etape, losange = objection, stadium (( )) = resultat. Si audience / promesse / prix sont fournis, ne les invente pas. Pas de chiffres inventés.",
+  },
+  {
+    kind: "offre",
+    label: "Offre et pricing",
+    hint: "Promesse, piliers, objections, prix",
+    icon: "badge-euro",
+    fields: FORMATION_FIELDS.filter((f) => f.key !== "duree"),
+    brief:
+      "Tu es l'agent Offre. Dessine l'offre en `flowchart TD`. subgraph : Promesse, 3 piliers, Objections (losanges), Prix (3 offres si possible), Garantie. Libellés concrets du projet, 5 mots max. Stadium pour le CTA final. N'invente pas de prix si aucun n'est donné : écris Prix a definir.",
   },
 ];
 
-export const SCHEMA_RULES = `Tu es un agent qui dessine des schémas pour les projets d'un fondateur solo (SaaS, France).
-Réponds UNIQUEMENT avec un bloc \`\`\`mermaid, sans texte avant ni après.
-Règles Mermaid :
-- flowchart ou classDiagram uniquement, comme demandé.
-- Pas de style, classDef, linkStyle, click ni emoji.
-- Identifiants courts en ASCII (a1, api, db…), libellés en français entre guillemets doubles, 6 mots max.
-- 8 à 20 nœuds, lisible sur un écran de téléphone.
-- N'invente pas de chiffres. Si une info manque, reste générique.`;
+export const SCHEMA_RULES = `Tu dessines des schémas pour un fondateur solo (SaaS ou formation, France).
+Réponds UNIQUEMENT avec un bloc \`\`\`mermaid, rien avant ni après.
+
+Mermaid strict (sinon le dessin casse) :
+- flowchart TD, flowchart LR ou classDiagram uniquement.
+- Pas de style, classDef, linkStyle, click, emoji, HTML, ni fa: icônes.
+- Identifiants ASCII courts : a1, hero, pay, m1.
+- Chaque libellé entre guillemets doubles. 6 mots max. Pas de parenthèses, pas de :, pas de /.
+- 8 à 16 nœuds. Lisibles sur téléphone.
+- subgraph Noms sans accents ni ponctuation (Attention, Interet, Desir).
+- N'invente pas de chiffres. Si une info manque, reste générique.
+
+Formes :
+- rectangle id["Texte"] = étape
+- losange id{"Texte"} = décision ou objection
+- stadium id(["Texte"]) = résultat ou CTA`;
 
 export const SCHEMA_KIND_LABELS: Record<SchemaKind, string> = {
   libre: "Libre",
@@ -70,8 +115,11 @@ export function isSchemaKind(v: unknown): v is SchemaKind {
   return v === "libre" || SCHEMA_AGENTS.some((a) => a.kind === v);
 }
 
-/** Extrait le code Mermaid d'une réponse (bloc ```mermaid ou texte brut). */
 export function extractMermaid(text: string) {
   const block = text.match(/```(?:mermaid)?\s*\n([\s\S]*?)```/);
   return (block ? block[1] : text).trim();
+}
+
+export function looksLikeMermaid(src: string) {
+  return /^(flowchart|graph|classDiagram)\b/m.test(src);
 }

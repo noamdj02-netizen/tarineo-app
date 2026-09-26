@@ -2,7 +2,7 @@
 export const WIZARD_STEPS = [
   "Prénom + langue",
   "Projets en cours (le 1er passe en Focus)",
-  "L’IA analyse et propose la prochaine action",
-  "Goût design (6 thèmes) + outils (Figma, Cursor, Claude…)",
-  "Photo + conseils, puis le cockpit",
+  "L’IA propose une prochaine action (tu peux passer)",
+  "Goût design + outils (Figma, Cursor, Claude…)",
+  "Cockpit : les blocs de ton accueil, à ta manière",
 ] as const;

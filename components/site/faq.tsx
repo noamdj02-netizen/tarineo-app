@@ -2,21 +2,31 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { EASE } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
 
 export type FaqItem = { q: string; a: string };
 
+function panelId(question: string, index: number) {
+  const slug = question
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+  return `faq-${index}-${slug || "item"}`;
+}
+
 /** Accordéon : une seule réponse ouverte à la fois, hauteur animée. */
 export function Faq({ items }: { items: FaqItem[] }) {
   const [open, setOpen] = useState<number | null>(0);
-  const base = useId();
   return (
     <div className="flex flex-col gap-2">
       {items.map((it, i) => {
         const isOpen = open === i;
-        const id = `${base}-${i}`;
+        const id = panelId(it.q, i);
         return (
           <article key={it.q} className="rounded-[18px] border border-line bg-surface shadow-soft">
             <button

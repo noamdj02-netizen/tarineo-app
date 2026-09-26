@@ -42,9 +42,9 @@ export default async function SchemasPage() {
         title="Tes schémas,"
         tail="dessinés ou générés."
       >
-        Dessine à main levée avec Excalidraw, ou laisse un agent tracer
-        l’architecture, le parcours ou la roadmap d’un projet. Tout reste
-        modifiable et se sauvegarde tout seul.
+        Un agent pour l’archi, le parcours, le tunnel, la roadmap, les
+        données, la formation ou l’offre. Tu donnes les variables, il
+        dessine, tu corriges.
       </PageHead>
       <SchemaLibrary schemas={schemas} projects={projects} />
     </section>

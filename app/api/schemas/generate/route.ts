@@ -2,12 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 import { DEFAULT_MODEL, isModelId } from "@/lib/models";
-import { STAGES } from "@/lib/design-data/resources";
-import {
-  extractMermaid,
-  SCHEMA_AGENTS,
-  SCHEMA_RULES,
-} from "@/lib/schemas/agents";
+import { SCHEMA_AGENTS } from "@/lib/schemas/agents";
+import { generateMermaidForProject } from "@/lib/schemas/generate";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -40,19 +36,6 @@ function friendlyError(e: unknown) {
   return "Le schéma n’a pas pu être généré. Réessaie.";
 }
 
-type ProjectCtx = {
-  name: string;
-  description: string;
-  pitch: string;
-  target: string;
-  problem: string;
-  stage: number;
-  stack: string[];
-  business: Record<string, string>;
-  project_features: { title: string; status: string; position: number }[];
-  project_tasks: { title: string; done: boolean; position: number }[];
-};
-
 export async function POST(request: Request) {
   if (!sameOrigin(request)) return json(403, { error: "Origine refusée." });
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -84,65 +67,16 @@ export async function POST(request: Request) {
   const limit = await limitReached(db, "ai");
   if (limit) return json(402, { error: limit });
 
-  const { data } = await db.supabase
-    .from("projects")
-    .select(
-      "name, description, pitch, target, problem, stage, stack, business, project_features(title, status, position), project_tasks(title, done, position)",
-    )
-    .eq("id", projectId)
-    .eq("user_id", db.user.id)
-    .maybeSingle();
-  if (!data) return json(404, { error: "Projet introuvable." });
-  const p = data as unknown as ProjectCtx;
-  const byPos = <T extends { position: number }>(a: T, b: T) =>
-    a.position - b.position;
-  const fiche = {
-    nom: p.name,
-    description: p.description,
-    pitch: p.pitch,
-    cible: p.target,
-    probleme: p.problem,
-    etape: `${p.stage}/6 ${STAGES[(p.stage || 1) - 1]}`,
-    stack: p.stack,
-    business: p.business,
-    fonctions: [...(p.project_features ?? [])]
-      .sort(byPos)
-      .map((f) => `${f.title} [${f.status}]`),
-    taches: [...(p.project_tasks ?? [])]
-      .sort(byPos)
-      .map((t) => t.title + (t.done ? " [fait]" : "")),
-  };
-
   try {
-    const res = await new Anthropic().messages.create(
-      {
-        model,
-        max_tokens: 4000,
-        system: SCHEMA_RULES,
-        messages: [
-          {
-            role: "user",
-            content: [
-              agent.brief,
-              `FICHE PROJET: ${JSON.stringify(fiche)}`,
-              extra ? `PRÉCISION DE NOAM: ${extra}` : "",
-            ]
-              .filter(Boolean)
-              .join("\n\n"),
-          },
-        ],
-        ...(model === "claude-haiku-4-5"
-          ? {}
-          : { output_config: { effort: "medium" as const } }),
-      },
-      { signal: request.signal },
-    );
-    const text = res.content
-      .flatMap((b) => (b.type === "text" ? [b.text] : []))
-      .join("");
-    const mermaid = extractMermaid(text);
-    if (!mermaid) return json(502, { error: "Réponse vide. Réessaie." });
-    return json(200, { mermaid, title: `${agent.label} · ${p.name}` });
+    const generated = await generateMermaidForProject({
+      userId: db.user.id,
+      projectId,
+      kind: agent.kind,
+      extra,
+      model,
+      signal: request.signal,
+    });
+    return json(200, { mermaid: generated.mermaid, title: generated.title });
   } catch (e) {
     console.error("[schemas/generate]", e);
     return json(502, { error: friendlyError(e) });

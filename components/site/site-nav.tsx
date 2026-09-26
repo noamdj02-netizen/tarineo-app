@@ -51,6 +51,7 @@ export function SiteNav() {
               <Button
                 variant="ghost"
                 size="sm"
+                nativeButton={false}
                 render={<Link href={l.href} prefetch={l.href.startsWith("/") && !l.href.includes("#")} />}
                 className="rounded-pill px-3.5 text-muted-foreground hover:text-foreground"
               >
@@ -88,6 +89,7 @@ export function SiteNav() {
               key={l.href}
               variant="ghost"
               size="lg"
+              nativeButton={false}
               render={
                 <Link href={l.href} prefetch={l.href.startsWith("/") && !l.href.includes("#")} />
               }

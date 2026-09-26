@@ -29,7 +29,12 @@ export function AssistantPanel({
   const pathname = usePathname();
   const params = useSearchParams();
   const [open, setOpen] = useState(false);
-  const [data, setData] = useState<{ history: ChatMessage[]; presets: string[] } | null>(null);
+  const [data, setData] = useState<{
+    history: ChatMessage[];
+    presets: string[];
+    projectId: string | null;
+    role: "general" | "tech" | "produit" | "design" | "launch";
+  } | null>(null);
   const [queued, setQueued] = useState<Queued>(null);
   const loading = useRef(false);
 
@@ -44,13 +49,23 @@ export function AssistantPanel({
   }, [pathname]);
 
   useEffect(() => {
-    if (!open || data || loading.current) return;
+    if (!open) return;
+    let cancelled = false;
     loading.current = true;
-    loadAssistant()
-      .then(setData)
-      .catch(() => setData({ history: [], presets: [] }))
-      .finally(() => (loading.current = false));
-  }, [open, data]);
+    loadAssistant({ page: pathname })
+      .then((d) => {
+        if (!cancelled) setData(d);
+      })
+      .catch(() => {
+        if (!cancelled) setData({ history: [], presets: [], projectId: null, role: "general" });
+      })
+      .finally(() => {
+        loading.current = false;
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, pathname]);
 
   // à la fermeture, on relira l'historique enregistré (après l'animation de sortie)
   useEffect(() => {
@@ -151,11 +166,14 @@ export function AssistantPanel({
               </header>
               {data ? (
                 <Chat
+                  key={`${data.projectId ?? "all"}-${data.role}`}
                   initial={data.history}
                   presets={data.presets}
                   keyMissing={keyMissing}
                   firstName={firstName}
                   queued={queued}
+                  projectId={data.projectId}
+                  role={data.role}
                 />
               ) : (
                 <div className="grid flex-1 place-items-center">

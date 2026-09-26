@@ -5,43 +5,22 @@ import { Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createProject } from "@/app/(app)/projets/actions";
-import { Illustration } from "@/components/illustration";
 import { EASE } from "@/components/motion/reveal";
+import { boardCoach } from "@/lib/projects/coach";
 import type { ProjectSummary } from "@/lib/projects/types";
 import { ProjectCard } from "./project-card";
 
 export function ProjectGrid({ projects }: { projects: ProjectSummary[] }) {
-  const focus = projects.filter((p) => p.status === "focus");
+  const signals = boardCoach(projects).signals;
 
   return (
     <div className="flex flex-col gap-4">
-      {focus.length > 1 ? (
-        <FocusWarning names={focus.map((p) => p.name)} />
-      ) : null}
-
       <div className="grid gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(310px,1fr))]">
         {projects.map((p, i) => (
-          <ProjectCard key={p.id} project={p} index={i} />
+          <ProjectCard key={p.id} project={p} index={i} signal={signals[p.id]} />
         ))}
         <NewProject index={projects.length} />
       </div>
-    </div>
-  );
-}
-
-/** Rappel de la règle Mon Bureau quand plusieurs projets sont en Focus. */
-function FocusWarning({ names }: { names: string[] }) {
-  return (
-    <div
-      role="status"
-      className="flex items-center gap-3 rounded-card border border-ink/15 bg-accent-soft p-4 text-[14px] leading-snug"
-    >
-      <Illustration name="feedback-surcharge" className="-my-2 size-14" />
-      <p>
-        <b className="font-semibold">{names.length} projets en Focus</b> (
-        {names.join(", ")}). Ta règle : un seul, jusqu’à sa première vente.
-        Choisis-en un et passe les autres en pause.
-      </p>
     </div>
   );
 }

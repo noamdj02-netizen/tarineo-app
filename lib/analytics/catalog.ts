@@ -21,6 +21,7 @@ export const EVENT_NAMES = [
   "session_started",
   "session_ended",
   "page_viewed",
+  "hero_prompt_copied",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];
@@ -40,6 +41,7 @@ export const FEATURES = [
   "themes",
   "accueil",
   "pricing",
+  "heros",
 ] as const;
 
 export type FeatureKey = (typeof FEATURES)[number];
@@ -55,6 +57,7 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
   themes: "Thèmes",
   accueil: "Accueil",
   pricing: "Prix",
+  heros: "Heros",
 };
 
 export function featureFromPath(path: string): FeatureKey | "" {
@@ -66,6 +69,7 @@ export function featureFromPath(path: string): FeatureKey | "" {
   if (path.startsWith("/composants")) return "composants";
   if (path.startsWith("/themes")) return "themes";
   if (path.startsWith("/prix") || path.startsWith("/abonnement")) return "pricing";
+  if (path.startsWith("/bibliotheque/heros")) return "heros";
   if (path === "/" || path.startsWith("/accueil")) return "accueil";
   return "";
 }

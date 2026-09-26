@@ -1,7 +1,21 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Loader2, PenLine, Plus, Sparkles, X } from "lucide-react";
+import {
+  BadgeEuro,
+  Database,
+  GalleryVerticalEnd,
+  GraduationCap,
+  Layers,
+  Loader2,
+  Map as MapIcon,
+  PenLine,
+  Plus,
+  Route,
+  Sparkles,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -22,6 +36,16 @@ export type SchemaCard = {
 };
 
 type ProjectOption = { id: string; name: string; focus: boolean };
+
+const AGENT_ICONS: Record<string, LucideIcon> = {
+  layers: Layers,
+  route: Route,
+  "gallery-vertical-end": GalleryVerticalEnd,
+  map: MapIcon,
+  database: Database,
+  "graduation-cap": GraduationCap,
+  "badge-euro": BadgeEuro,
+};
 
 export function SchemaLibrary({
   schemas,
@@ -198,6 +222,7 @@ function NewSchemaDialog({
   );
   const [kind, setKind] = useState(SCHEMA_AGENTS[0].kind);
   const [extra, setExtra] = useState("");
+  const [vars, setVars] = useState<Record<string, string>>({});
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -214,6 +239,14 @@ function NewSchemaDialog({
     startTransition(async () => {
       const agent = SCHEMA_AGENTS.find((a) => a.kind === kind)!;
       const projectName = projects.find((p) => p.id === projectId)?.name;
+      const packed = [
+        ...Object.entries(vars)
+          .filter(([, v]) => v.trim())
+          .map(([k, v]) => `${k}: ${v.trim()}`),
+        extra.trim(),
+      ]
+        .filter(Boolean)
+        .join(" · ");
       const res = await createSchema(
         mode === "agent"
           ? { title: `${agent.label} · ${projectName ?? ""}`, projectId, kind }
@@ -225,7 +258,7 @@ function NewSchemaDialog({
       }
       const q =
         mode === "agent"
-          ? `?${new URLSearchParams({ agent: kind, ...(extra ? { extra } : {}) })}`
+          ? `?${new URLSearchParams({ agent: kind, ...(packed ? { extra: packed } : {}) })}`
           : "";
       router.push(`/schemas/${res.id}${q}`);
     });
@@ -249,7 +282,7 @@ function NewSchemaDialog({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 8, opacity: 0 }}
         transition={{ duration: 0.25, ease: EASE }}
-        className="max-h-[88dvh] w-full max-w-[480px] overflow-y-auto rounded-[22px] border border-line bg-surface p-5 shadow-lift sm:p-6"
+        className="max-h-[88dvh] w-full max-w-[560px] overflow-y-auto rounded-[22px] border border-line bg-surface p-5 shadow-lift sm:p-6"
       >
         <div className="flex items-start justify-between gap-3">
           <h2
@@ -320,37 +353,62 @@ function NewSchemaDialog({
           <>
             <fieldset className="mt-4">
               <legend className="mono-label">Agent</legend>
-              <div className="mt-1.5 flex flex-col gap-1.5">
-                {SCHEMA_AGENTS.map((a) => (
-                  <label
-                    key={a.kind}
-                    className={cn(
-                      "flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 transition-colors",
-                      kind === a.kind
-                        ? "border-ink bg-accent-soft"
-                        : "border-line hover:bg-accent-soft",
-                    )}
-                  >
+              <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
+                {SCHEMA_AGENTS.map((a) => {
+                  const Icon = AGENT_ICONS[a.icon] ?? Sparkles;
+                  return (
+                    <label
+                      key={a.kind}
+                      className={cn(
+                        "flex min-h-[72px] cursor-pointer items-start gap-2.5 rounded-xl border px-3 py-2.5 transition-colors",
+                        kind === a.kind
+                          ? "border-ink bg-accent-soft"
+                          : "border-line hover:bg-accent-soft",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="agent"
+                        value={a.kind}
+                        checked={kind === a.kind}
+                        onChange={() => {
+                          setKind(a.kind);
+                          setVars({});
+                        }}
+                        className="mt-1 accent-ink"
+                      />
+                      <Icon className="mt-0.5 size-4 flex-none" aria-hidden />
+                      <span>
+                        <b className="block text-[13.5px] font-semibold leading-tight">
+                          {a.label}
+                        </b>
+                        <small className="mt-0.5 block text-[12px] leading-snug text-muted-foreground">
+                          {a.hint}
+                        </small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+            {SCHEMA_AGENTS.find((a) => a.kind === kind)?.fields?.length ? (
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
+                {SCHEMA_AGENTS.find((a) => a.kind === kind)!.fields!.map((f) => (
+                  <label key={f.key} className="block">
+                    <span className="mono-label">{f.label}</span>
                     <input
-                      type="radio"
-                      name="agent"
-                      value={a.kind}
-                      checked={kind === a.kind}
-                      onChange={() => setKind(a.kind)}
-                      className="accent-ink"
+                      value={vars[f.key] ?? ""}
+                      onChange={(e) =>
+                        setVars((cur) => ({ ...cur, [f.key]: e.target.value }))
+                      }
+                      maxLength={80}
+                      placeholder={f.placeholder}
+                      className="mt-1.5 min-h-11 w-full rounded-xl border border-line bg-surface-2 px-3 text-[14px] outline-none focus:border-ink/30"
                     />
-                    <span>
-                      <b className="block text-[14.5px] font-semibold">
-                        {a.label}
-                      </b>
-                      <small className="block text-[12.5px] text-muted-foreground">
-                        {a.hint}
-                      </small>
-                    </span>
                   </label>
                 ))}
               </div>
-            </fieldset>
+            ) : null}
             <label className="mt-4 block">
               <span className="mono-label">Précision (optionnel)</span>
               <input

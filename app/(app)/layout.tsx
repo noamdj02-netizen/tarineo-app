@@ -26,7 +26,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Topbar viewer={viewer} planId={plan?.plan ?? "free"} />
           <main
             id="app-main"
-            className="mx-auto w-full max-w-[1280px] flex-1 px-4 pt-6 pb-[calc(120px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:overflow-x-hidden lg:overflow-y-auto lg:pb-16 lg:overscroll-contain"
+            className="mx-auto w-full max-w-[1280px] flex-1 px-4 pt-6 pb-[calc(120px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:min-h-0 lg:overflow-x-hidden lg:overflow-y-auto lg:pb-16 lg:overscroll-contain lg:has-[[data-fill-viewport]]:flex lg:has-[[data-fill-viewport]]:flex-col lg:has-[[data-fill-viewport]]:overflow-hidden lg:has-[[data-fill-viewport]]:pb-4"
           >
             <AppMainScrollRestore />
             <VerifiedNotice />

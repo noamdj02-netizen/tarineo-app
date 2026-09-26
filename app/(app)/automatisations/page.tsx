@@ -15,8 +15,8 @@ export default function AutomatisationsPage() {
         title="Automatisations"
         tail="et raccourcis."
       >
-        Un clic envoie la consigne au copilote avec le contexte de tes projets. Tu peux aussi ouvrir
-        schémas, anatomie ou ressources depuis la même page.
+        Débrief Focus, prochaine action et schéma parcours écrivent dans Navpit. Les autres lancent
+        le copilote. Schémas, anatomie et ressources restent à un clic.
       </PageHead>
       <AutomationsLibrary />
     </section>

@@ -2,32 +2,33 @@
 
 import Script from "next/script";
 import { useEffect, useState } from "react";
+import { GTM_ID } from "@/lib/analytics/gtm";
 import { readCookieConsent } from "@/components/site/cookie-consent";
 
-/** Google Analytics 4 — chargé seulement si consentement « tout accepter ». */
+/** GA4 seul si GTM n’est pas dans le layout. Après « Tout accepter ». */
 export function SiteAnalytics() {
-  const id = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+  const ga = GTM_ID ? undefined : process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!ga) return;
     const sync = () => setEnabled(readCookieConsent() === "all");
     sync();
     window.addEventListener("navpit:cookie-consent", sync);
     return () => window.removeEventListener("navpit:cookie-consent", sync);
-  }, [id]);
+  }, [ga]);
 
-  if (!id || !enabled) return null;
+  if (!ga || !enabled) return null;
 
   return (
     <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${id}`} strategy="afterInteractive" />
+      <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga}`} strategy="afterInteractive" />
       <Script id="navpit-ga" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${id}', { anonymize_ip: true });
+          gtag('config', '${ga}', { anonymize_ip: true });
         `}
       </Script>
     </>
