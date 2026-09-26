@@ -13,7 +13,7 @@ const landingButtonVariants = cva(
         secondary:
           "min-h-12 border border-border bg-card px-6 text-[15px] text-foreground shadow-soft hover:bg-muted",
         inverse:
-          "min-h-12 border border-transparent bg-accent-ink px-6 text-[15px] text-ink hover:-translate-y-0.5",
+          "min-h-12 border border-transparent bg-accent-ink px-6 text-[15px] text-ink shadow-lift hover:-translate-y-0.5",
         navPrimary: "btn-dark min-h-10 border border-transparent px-4 text-[14px]",
         navGhost:
           "min-h-10 border border-transparent bg-transparent px-4 text-[14px] text-muted-foreground shadow-none hover:bg-muted hover:text-foreground",

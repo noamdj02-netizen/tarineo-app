@@ -82,10 +82,10 @@ export function LandingHero() {
           >
             <Link
               href="/inscription?plan=pro"
-              className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill bg-accent-ink py-1.5 pr-1.5 pl-5 text-[15px] font-medium text-ink transition-[gap,transform] duration-300 ease-out-soft hover:gap-3 active:scale-[0.98] sm:w-auto"
+              className="group inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill bg-accent-ink py-1.5 pr-1.5 pl-5 text-[15px] font-medium text-ink shadow-lift transition-[gap,transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 hover:gap-3 active:translate-y-0 active:scale-[0.98] sm:w-auto"
             >
               Essai gratuit {PRO_TRIAL_DAYS} jours
-              <span className="grid size-9 place-items-center rounded-full bg-ink text-accent-ink transition-transform duration-300 ease-out-soft group-hover:scale-110 sm:size-10">
+              <span className="grid size-9 place-items-center rounded-full bg-ink text-accent-ink shadow-dark transition-transform duration-300 ease-out-soft group-hover:scale-110 sm:size-10">
                 <ArrowRight className="size-4" aria-hidden />
               </span>
             </Link>
