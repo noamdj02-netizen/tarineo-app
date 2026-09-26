@@ -3,6 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Mascot } from "@/components/home/mascot";
+import { cn } from "@/lib/utils";
 
 const TYPE_MS = 42;
 const DELETE_MS = 16;
@@ -19,10 +20,14 @@ export function TypingPlaceholder({
   examples,
   paused,
   onExample,
+  className,
+  onDark = false,
 }: {
   examples: string[];
   paused: boolean;
   onExample?: (index: number) => void;
+  className?: string;
+  onDark?: boolean;
 }) {
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
@@ -69,21 +74,21 @@ export function TypingPlaceholder({
   if (!animated) {
     return (
       <span className="flex min-w-0 items-center gap-1.5">
-        <Mascot mood={paused ? "focus" : "idle"} className="-my-1 size-9 flex-none" />
-        <span className="truncate">Demande à ton copilote…</span>
+        <Mascot mood={paused ? "focus" : "idle"} onDark={onDark} className="-my-1 size-9 flex-none" />
+        <span className={cn("truncate", className)}>Demande à ton copilote…</span>
       </span>
     );
   }
 
   return (
     <span className="flex min-w-0 items-center">
-      <span className="truncate text-ink/55">{text.slice(0, count)}</span>
+      <span className={cn("truncate", className ?? "text-ink/55")}>{text.slice(0, count)}</span>
       <motion.span
         layout="position"
         transition={{ type: "spring", stiffness: 520, damping: 38, mass: 0.6 }}
         className="-my-1 ml-0.5 flex-none"
       >
-        <Mascot mood={phase === "hold" ? "idle" : "typing"} className="size-9" />
+        <Mascot mood={phase === "hold" ? "idle" : "typing"} onDark={onDark} className="size-9" />
       </motion.span>
     </span>
   );

@@ -13,8 +13,8 @@ const EXAMPLES = [
   "Dessine le parcours client de mon app",
 ];
 
-/** Boîte de prompt du hero : la mascotte écrit les exemples, l'envoi mène à l'inscription. */
-export function HeroPrompt() {
+/** Boîte de prompt du hero : verre sur le film, envoi vers l'inscription. */
+export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
   const router = useRouter();
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
@@ -38,7 +38,12 @@ export function HeroPrompt() {
           e.preventDefault();
           submit();
         }}
-        className="relative flex w-full max-w-[680px] items-end gap-1.5 rounded-[22px] border border-line bg-surface/95 p-2 pl-3.5 text-left shadow-lift backdrop-blur-xl transition-shadow duration-500 ease-out-soft focus-within:shadow-[0_0_0_6px_rgba(17,17,17,0.05),var(--shadow-lift)] sm:gap-2 sm:rounded-[28px] sm:p-2.5 sm:pl-5"
+        className={cn(
+          "relative flex w-full max-w-[680px] items-end gap-1.5 rounded-[22px] p-2 pl-3.5 text-left backdrop-blur-xl transition-shadow duration-500 ease-out-soft sm:gap-2 sm:rounded-[28px] sm:p-2.5 sm:pl-5",
+          onFilm
+            ? "border border-accent-ink/20 bg-accent-ink/10 shadow-none focus-within:shadow-[0_0_0_6px_rgba(255,255,255,0.08)]"
+            : "border border-line bg-surface/95 shadow-lift focus-within:shadow-[0_0_0_6px_rgba(17,17,17,0.05),var(--shadow-lift)]",
+        )}
       >
         <label htmlFor="hero-prompt" className="sr-only">
           Ce que tu veux faire avec Navpit
@@ -47,9 +52,18 @@ export function HeroPrompt() {
           {empty ? (
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-1.5 flex items-center text-[15px] leading-6 text-muted-foreground sm:top-2 sm:text-[16.5px] sm:leading-7"
+              className={cn(
+                "pointer-events-none absolute inset-x-0 top-1.5 flex items-center text-[15px] leading-6 sm:top-2 sm:text-[16.5px] sm:leading-7",
+                onFilm ? "text-white" : "text-muted-foreground",
+              )}
             >
-              <TypingPlaceholder examples={EXAMPLES} paused={focused} onExample={onExample} />
+              <TypingPlaceholder
+                examples={EXAMPLES}
+                paused={focused}
+                onExample={onExample}
+                className={onFilm ? "text-white" : undefined}
+                onDark={onFilm}
+              />
             </div>
           ) : null}
           <textarea
@@ -71,15 +85,19 @@ export function HeroPrompt() {
               }
             }}
             className={cn(
-              "block w-full resize-none bg-transparent text-[15px] leading-6 text-ink outline-none sm:text-[16.5px] sm:leading-7",
+              "block w-full resize-none bg-transparent text-[15px] leading-6 outline-none sm:text-[16.5px] sm:leading-7",
               empty && "caret-transparent",
+              onFilm ? "text-white caret-white" : "text-ink",
             )}
           />
         </div>
         <button
           type="submit"
           aria-label="Commencer"
-          className="btn-dark grid size-11 flex-none place-items-center rounded-pill"
+          className={cn(
+            "grid size-11 flex-none place-items-center rounded-pill",
+            onFilm ? "bg-white text-ink" : "btn-dark",
+          )}
         >
           <ArrowUp className="size-[18px]" aria-hidden />
         </button>
@@ -94,8 +112,11 @@ export function HeroPrompt() {
               type="button"
               onClick={() => submit(s)}
               className={cn(
-                "min-h-9 max-w-[min(100%,280px)] rounded-pill border border-line bg-surface/80 px-3 text-left text-[12.5px] text-ink/75 backdrop-blur transition-[transform,box-shadow,color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:text-ink hover:shadow-soft sm:max-w-none sm:px-3.5 sm:text-[13px]",
-                i === active && "-translate-y-0.5 text-ink shadow-soft",
+                "min-h-9 max-w-[min(100%,280px)] rounded-pill border px-3 text-left text-[12.5px] backdrop-blur transition-[transform,box-shadow,color] duration-300 ease-out-soft hover:-translate-y-0.5 sm:max-w-none sm:px-3.5 sm:text-[13px]",
+                onFilm
+                  ? "border-accent-ink/20 bg-ink/25 text-accent-ink/75 hover:text-accent-ink hover:shadow-soft"
+                  : "border-line bg-surface/80 text-ink/75 hover:text-ink hover:shadow-soft",
+                i === active && (onFilm ? "-translate-y-0.5 text-accent-ink shadow-soft" : "-translate-y-0.5 text-ink shadow-soft"),
               )}
             >
               {s}

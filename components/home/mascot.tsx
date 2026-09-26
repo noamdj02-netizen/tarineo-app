@@ -19,7 +19,15 @@ const ART: Record<MascotMood, IllustrationName> = {
  * Petit bonhomme posé au-dessus du champ : immobile, il change de pose selon `mood`
  * par un fondu flou court (façon Framer). En mouvement réduit, simple fondu.
  */
-export function Mascot({ mood, className }: { mood: MascotMood; className?: string }) {
+export function Mascot({
+  mood,
+  className,
+  onDark = false,
+}: {
+  mood: MascotMood;
+  className?: string;
+  onDark?: boolean;
+}) {
   const reduce = useReducedMotion();
   const hidden = reduce
     ? { opacity: 0 }
@@ -37,7 +45,7 @@ export function Mascot({ mood, className }: { mood: MascotMood; className?: stri
           exit={hidden}
           transition={{ duration: 0.28, ease: EASE }}
         >
-          <Illustration name={ART[mood]} className="size-full" />
+          <Illustration name={ART[mood]} className="size-full" tone={onDark ? "on-dark" : "default"} />
         </motion.div>
       </AnimatePresence>
       </div>

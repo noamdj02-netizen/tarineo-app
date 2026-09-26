@@ -17,11 +17,12 @@ const LINKS = [
   { href: "/#faq", label: "FAQ" },
 ];
 
-/** Barre du site public : pilule centrée qui se détache au scroll. */
+/** Barre du site public : sur `/` elle flotte dans le film, puis se fige au scroll. */
 export function SiteNav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const onFilm = pathname === "/" && !scrolled && !open;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -33,17 +34,24 @@ export function SiteNav() {
   useEffect(() => setOpen(false), [pathname]);
 
   return (
-    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
+    <header
+      className={cn(
+        "z-40",
+        pathname === "/" ? "fixed inset-x-0 top-0 px-4 pt-4 md:px-6 md:pt-6" : "sticky top-0 px-3 pt-3 sm:px-6",
+      )}
+    >
       <nav
         aria-label="Site"
         className={cn(
-          "mx-auto flex max-w-[1120px] items-center justify-between gap-4 rounded-pill border px-3 py-2 pl-5 transition-[background-color,border-color,box-shadow] duration-300 ease-out-soft",
-          scrolled || open
-            ? "border-line bg-surface/85 shadow-soft backdrop-blur-xl"
-            : "border-transparent bg-transparent",
+          "mx-auto flex max-w-[1120px] items-center justify-between gap-4 rounded-pill border px-3 py-2 pl-5 transition-[background-color,border-color,box-shadow,color] duration-300 ease-out-soft",
+          onFilm
+            ? "border-transparent bg-transparent"
+            : scrolled || open
+              ? "border-line bg-surface/85 shadow-soft backdrop-blur-xl"
+              : "border-transparent bg-transparent",
         )}
       >
-        <SiteLogo className="shrink-0" />
+        <SiteLogo className="shrink-0" onDark={onFilm} />
 
         <ul className="hidden items-center gap-1 md:flex">
           {LINKS.map((l) => (
@@ -53,7 +61,12 @@ export function SiteNav() {
                 size="sm"
                 nativeButton={false}
                 render={<Link href={l.href} prefetch={l.href.startsWith("/") && !l.href.includes("#")} />}
-                className="rounded-pill px-3.5 text-muted-foreground hover:text-foreground"
+                className={cn(
+                  "rounded-pill px-3.5",
+                  onFilm
+                    ? "text-accent-ink/80 hover:bg-accent-ink/10 hover:text-accent-ink"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
                 {l.label}
               </Button>
@@ -62,10 +75,21 @@ export function SiteNav() {
         </ul>
 
         <div className="flex items-center gap-2">
-          <LandingButton href="/login" variant="navGhost" className="hidden sm:inline-flex">
+          <LandingButton
+            href="/login"
+            variant="navGhost"
+            className={cn(
+              "hidden sm:inline-flex",
+              onFilm && "text-accent-ink/80 hover:bg-accent-ink/10 hover:text-accent-ink",
+            )}
+          >
             Connexion
           </LandingButton>
-          <LandingButton href="/#commencer" variant="navPrimary" className="hidden sm:inline-flex">
+          <LandingButton
+            href="/#commencer"
+            variant={onFilm ? "inverse" : "navPrimary"}
+            className="hidden sm:inline-flex"
+          >
             Commencer
           </LandingButton>
           <Button
@@ -75,7 +99,10 @@ export function SiteNav() {
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
             aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-            className="rounded-pill md:hidden"
+            className={cn(
+              "rounded-pill md:hidden",
+              onFilm && "text-accent-ink hover:bg-accent-ink/10 hover:text-accent-ink",
+            )}
           >
             {open ? <X aria-hidden /> : <Menu aria-hidden />}
           </Button>
