@@ -112,6 +112,9 @@ export function LandingHero() {
           </div>
 
           <div className="flex w-full flex-col items-center gap-2.5 sm:gap-3">
+            <Reveal className="w-full max-w-[680px]">
+              <HeroPrompt onFilm />
+            </Reveal>
             <Reveal
               className="flex w-full max-w-[min(100%,360px)] flex-col gap-2 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3"
               transition={{ duration: 0.55, delay: 0.7, ease: EASE }}
@@ -133,9 +136,6 @@ export function LandingHero() {
               >
                 Voir le produit
               </LandingButton>
-            </Reveal>
-            <Reveal className="w-full max-w-[680px]">
-              <HeroPrompt onFilm />
             </Reveal>
             <Reveal className="w-full">
               <ul className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] leading-tight tracking-tight text-accent-ink/70 sm:gap-x-5 sm:gap-y-2 sm:text-[13.5px] sm:tracking-normal">
