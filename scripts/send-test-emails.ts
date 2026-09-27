@@ -25,6 +25,9 @@ async function main() {
       BillingLoyaltyEmail,
       BillingPaymentFailedEmail,
       BillingProWelcomeEmail,
+      CheckInEmail,
+      CheckInEmailShort,
+      CHECK_IN_SUBJECT,
       WelcomeEmail,
     } = await import("@/emails/index");
     const list = [
@@ -50,6 +53,14 @@ async function main() {
         subject: "[Navpit] Abonnement annulé",
         react: BillingCancelledEmail({ appUrl, endDate: "12 avril 2026" }),
       },
+      {
+        subject: `[Navpit] ${CHECK_IN_SUBJECT}`,
+        react: CheckInEmail({ firstName: "Noam", appUrl }),
+      },
+      {
+        subject: "[Navpit] Petit check de Noam (version courte)",
+        react: CheckInEmailShort({ firstName: "Noam", appUrl }),
+      },
     ];
     const out = [];
     for (const s of list) out.push({ subject: s.subject, html: await render(s.react) });
@@ -67,6 +78,9 @@ async function main() {
     BillingLoyaltyEmail,
     BillingPaymentFailedEmail,
     BillingProWelcomeEmail,
+    CheckInEmail,
+    CheckInEmailShort,
+    CHECK_IN_SUBJECT,
     WelcomeEmail,
   } = await import("@/emails/index");
 
@@ -111,6 +125,14 @@ async function main() {
     {
       subject: "[Navpit] Abonnement annulé",
       react: BillingCancelledEmail({ appUrl, endDate: "12 avril 2026" }),
+    },
+    {
+      subject: `[Navpit] ${CHECK_IN_SUBJECT}`,
+      react: CheckInEmail({ firstName: "Noam", appUrl }),
+    },
+    {
+      subject: "[Navpit] Petit check de Noam (version courte)",
+      react: CheckInEmailShort({ firstName: "Noam", appUrl }),
     },
   ];
 
