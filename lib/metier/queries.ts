@@ -31,7 +31,7 @@ function isMissingTable(error: { message?: string; code?: string } | null) {
   return /does not exist|schema cache|Could not find the table/i.test(m);
 }
 
-async function useRemote() {
+async function getRemote() {
   const db = await getDb();
   return db;
 }
@@ -74,7 +74,7 @@ function docCardsFromMem(
 }
 
 export async function ensureMetierSeed() {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) return;
   const { data, error } = await db.supabase
     .from("chantiers")
@@ -235,7 +235,7 @@ export async function ensureMetierSeed() {
 }
 
 export async function listChantiers(): Promise<ChantierCard[]> {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) return cardsFromMem("local");
   await ensureMetierSeed();
   const { data, error } = await db.supabase
@@ -273,7 +273,7 @@ export async function getChantier(slug: string): Promise<(ChantierCard & { docum
 }
 
 export async function listParties(kind?: Party["kind"]): Promise<Party[]> {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) {
     const u = hydrateCards("local");
     return kind ? u.parties.filter((p) => p.kind === kind) : u.parties;
@@ -294,7 +294,7 @@ export async function listDocuments(filter?: {
   chantierId?: string;
   kind?: DocumentRow["kind"];
 }): Promise<DocumentCard[]> {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) return docCardsFromMem("local", filter);
   await ensureMetierSeed();
   let q = db.supabase
@@ -348,7 +348,7 @@ export async function getDocument(id: string): Promise<DocumentCard | null> {
 }
 
 export async function listAlerts(): Promise<PriceAlert[]> {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) return hydrateCards("local").alerts;
   await ensureMetierSeed();
   const { data, error } = await db.supabase
@@ -435,7 +435,7 @@ export async function createParty(input: {
   const name = input.name.trim();
   if (!name) return { ok: false as const, error: "Nom manquant." };
   const address = [input.address?.trim(), input.website?.trim()].filter(Boolean).join(" · ");
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) {
     const u = seedMem("local");
     if (!u.parties.some((p) => p.name === name && p.kind === input.kind)) {
@@ -464,7 +464,7 @@ export async function createParty(input: {
 export async function recordPriceAlerts(doc: DocumentCard) {
   if (doc.direction !== "in") return;
   const others = (await listDocuments({ direction: "in" })).filter((d) => d.id !== doc.id);
-  const db = await useRemote();
+  const db = await getRemote();
   const ALERT_THRESHOLD = 3;
   for (const line of doc.lines) {
     const prev = others
@@ -504,7 +504,7 @@ export async function recordPriceAlerts(doc: DocumentCard) {
 }
 
 export async function createChantier(input: { name: string; address?: string; clientName?: string }) {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) return memCreateChantier("local", input);
   const slugBase = input.name
     .normalize("NFD")
@@ -553,7 +553,7 @@ export async function createChantier(input: { name: string; address?: string; cl
 }
 
 export async function setChantierStatus(id: string, status: ChantierStatus) {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) {
     memSetChantierStatus("local", id, status);
     return;
@@ -576,7 +576,7 @@ export async function saveExtractedDocument(input: {
   extract: Record<string, unknown>;
   lines: Array<{ label: string; qty: number; unit: string; buy_price: number; sell_price?: number }>;
 }): Promise<DocumentCard> {
-  const db = await useRemote();
+  const db = await getRemote();
   const now = demoNow();
   if (!db) {
     const u = seedMem("local");
@@ -742,7 +742,7 @@ export async function transformImportedDocument(
   clientId: string | null,
   kind: DocumentRow["kind"] = "devis",
 ) {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) {
     const out = memTransform("local", sourceId, markup, clientId, kind);
     return out ? getDocument(out.id) : null;
@@ -803,7 +803,7 @@ export function focusChantier(cards: ChantierCard[]) {
 }
 
 export async function addDocumentLine(documentId: string) {
-  const db = await useRemote();
+  const db = await getRemote();
   const blank = {
     label: "Nouvelle ligne",
     qty: 1,
@@ -869,7 +869,7 @@ export async function updateDocument(input: {
   partyName?: string;
   lines?: { id: string; label?: string; qty?: number; buy_price?: number; sell_price?: number }[];
 }) {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) {
     const row = memUpdateDocument("local", input.id, input);
     return row ? { ok: true as const } : { ok: false as const, error: "Pièce introuvable." };
@@ -898,7 +898,7 @@ export async function updateDocument(input: {
       .eq("id", input.id)
       .eq("user_id", db.user.id)
       .maybeSingle();
-    let partyId = input.partyId !== undefined ? input.partyId : (current?.party_id as string | null);
+    const partyId = input.partyId !== undefined ? input.partyId : (current?.party_id as string | null);
     if (partyId) {
       await db.supabase.from("parties").update({ name: input.partyName.trim() }).eq("id", partyId).eq("user_id", db.user.id);
     } else {
@@ -964,7 +964,7 @@ export function spendByMonth(docs: DocumentCard[]) {
 }
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) return memGetCompany("local");
   const { data, error } = await db.supabase.from("company_profiles").select("*").eq("user_id", db.user.id).maybeSingle();
   if (error || !data) return memGetCompany(db.user.id);
@@ -972,7 +972,7 @@ export async function getCompanyProfile(): Promise<CompanyProfile | null> {
 }
 
 export async function saveCompanyProfile(input: CompanyProfile) {
-  const db = await useRemote();
+  const db = await getRemote();
   if (!db) {
     memSetCompany("local", input);
     return input;
