@@ -116,51 +116,57 @@ function toSummary(row: CardRow): ProjectSummary {
 export async function listProjects(): Promise<ProjectSummary[]> {
   const db = await getDb();
   if (!db) return [];
-  let { data, error } = await db.supabase
+  const first = await db.supabase
     .from("projects")
     .select(CARD_COLUMNS)
     .eq("user_id", db.user.id)
     .order("sort_order")
     .order("name");
-  if (error && missingNextMeta(error.message)) {
-    const retry = await db.supabase
-      .from("projects")
-      .select(CARD_COLUMNS_FALLBACK)
-      .eq("user_id", db.user.id)
-      .order("sort_order")
-      .order("name");
-    data = retry.data;
-    error = retry.error;
+  if (!first.error) {
+    return ((first.data ?? []) as unknown as CardRow[]).map(toSummary);
   }
-  if (error) throw new Error(`Lecture des projets : ${error.message}`);
-
-  return ((data ?? []) as unknown as CardRow[]).map(toSummary);
+  if (!missingNextMeta(first.error.message)) {
+    throw new Error(`Lecture des projets : ${first.error.message}`);
+  }
+  const retry = await db.supabase
+    .from("projects")
+    .select(CARD_COLUMNS_FALLBACK)
+    .eq("user_id", db.user.id)
+    .order("sort_order")
+    .order("name");
+  if (retry.error) throw new Error(`Lecture des projets : ${retry.error.message}`);
+  return ((retry.data ?? []) as unknown as CardRow[]).map(toSummary);
 }
 
 /** Un projet complet (fiche détaillée), ou null s'il n'existe pas pour cet utilisateur. */
 export async function getProject(slug: string): Promise<ProjectFull | null> {
   const db = await getDb();
   if (!db) return null;
-  let { data, error } = await db.supabase
+  const first = await db.supabase
     .from("projects")
     .select(FULL_COLUMNS)
     .eq("user_id", db.user.id)
     .eq("slug", slug)
     .maybeSingle();
-  if (error && missingNextMeta(error.message)) {
-    const retry = await db.supabase
-      .from("projects")
-      .select(FULL_COLUMNS_FALLBACK)
-      .eq("user_id", db.user.id)
-      .eq("slug", slug)
-      .maybeSingle();
-    data = retry.data;
-    error = retry.error;
+  if (!first.error) {
+    if (!first.data) return null;
+    return toFull(first.data as unknown as FullRow);
   }
-  if (error) throw new Error(`Lecture du projet : ${error.message}`);
-  if (!data) return null;
+  if (!missingNextMeta(first.error.message)) {
+    throw new Error(`Lecture du projet : ${first.error.message}`);
+  }
+  const retry = await db.supabase
+    .from("projects")
+    .select(FULL_COLUMNS_FALLBACK)
+    .eq("user_id", db.user.id)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (retry.error) throw new Error(`Lecture du projet : ${retry.error.message}`);
+  if (!retry.data) return null;
+  return toFull(retry.data as unknown as FullRow);
+}
 
-  const row = data as unknown as FullRow;
+function toFull(row: FullRow): ProjectFull {
   const byPos = <T extends { position: number }>(a: T, b: T) => a.position - b.position;
   return {
     id: row.id,
