@@ -90,7 +90,7 @@ export function LandingHero() {
                   <WordsPullUp text="Lance-le." delay={0.2} />
                 </BrandFocus>
               </span>
-              <span className="mt-1.5 block text-[0.42em] font-medium tracking-tight text-accent-ink/70 sm:mt-2 sm:text-[0.38em]">
+              <span className="mt-1.5 block text-[0.72em] font-semibold tracking-tightest text-accent-ink/70 sm:mt-2 sm:text-[0.62em]">
                 <WordsPullUp text="Ne te disperse plus." delay={0.4} />
               </span>
             </h1>
