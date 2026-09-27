@@ -28,7 +28,7 @@ export function AutomationChips({
         <p className="mono-label text-[10px]">{"/ Automatisations ///"}</p>
         {showMoreLink ? (
           <Link
-            href="/automatisations"
+            href="/copilote"
             className="text-[12px] font-medium text-muted-foreground underline-offset-2 hover:text-ink hover:underline"
           >
             Tout voir

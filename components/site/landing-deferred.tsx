@@ -12,9 +12,24 @@ function BlockSkeleton({ className }: { className?: string }) {
   );
 }
 
-const Pricing = dynamic(() => import("@/components/site/pricing").then((m) => m.Pricing), {
+const Pricing = dynamic(() => import("@/components/site/landing-pricing").then((m) => m.LandingPricing), {
   loading: () => <BlockSkeleton className="mx-auto min-h-[520px] max-w-[1080px]" />,
 });
+
+const LandingDocument = dynamic(
+  () => import("@/components/site/landing-document").then((m) => m.LandingDocument),
+  { loading: () => <BlockSkeleton className="mx-auto min-h-[460px] max-w-[1080px]" /> },
+);
+
+const LandingDashboard = dynamic(
+  () => import("@/components/site/landing-dashboard").then((m) => m.LandingDashboard),
+  { loading: () => <BlockSkeleton className="mx-auto min-h-[560px] max-w-[1120px]" /> },
+);
+
+const LandingSuppliers = dynamic(
+  () => import("@/components/site/landing-suppliers").then((m) => m.LandingSuppliers),
+  { loading: () => <BlockSkeleton className="mx-auto min-h-[380px] max-w-[1080px]" /> },
+);
 
 const LandingTestimonials = dynamic(
   () => import("@/components/site/landing-testimonials").then((m) => m.LandingTestimonials),
@@ -49,6 +64,30 @@ export function DeferredPricing() {
   );
 }
 
+export function DeferredDocument() {
+  return (
+    <DeferredMount minHeight="460px">
+      <LandingDocument />
+    </DeferredMount>
+  );
+}
+
+export function DeferredDashboard() {
+  return (
+    <DeferredMount minHeight="560px">
+      <LandingDashboard />
+    </DeferredMount>
+  );
+}
+
+export function DeferredSuppliers() {
+  return (
+    <DeferredMount minHeight="380px">
+      <LandingSuppliers />
+    </DeferredMount>
+  );
+}
+
 export function DeferredTestimonials() {
   return (
     <DeferredMount minHeight="420px">
@@ -73,7 +112,7 @@ export function DeferredDiscoverStrip() {
   );
 }
 
-export function DeferredFaqTabs({ groups }: { groups: import("@/lib/site/content").FaqGroup[] }) {
+export function DeferredFaqTabs({ groups }: { groups: import("@/lib/site/tarineo").FaqGroup[] }) {
   return (
     <DeferredMount minHeight="420px">
       <LandingFaqTabs groups={groups} />

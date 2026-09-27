@@ -250,6 +250,120 @@ export type Database = {
       >;
       tool_connections: Table<ToolConnectionRow, "user_id" | "tool_id">;
       hero_library: Table<HeroLibraryRow, "slug" | "nom">;
+      parties: Table<
+        {
+          id: string;
+          user_id: string;
+          kind: "client" | "fournisseur" | "distributeur" | "atelier";
+          name: string;
+          address: string;
+          seed_key: string | null;
+          created_at: string;
+        },
+        "kind" | "name"
+      >;
+      chantiers: Table<
+        {
+          id: string;
+          user_id: string;
+          slug: string;
+          name: string;
+          address: string;
+          client_id: string | null;
+          project_id: string | null;
+          status: "focus" | "pause" | "fini";
+          seed_key: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        "slug" | "name"
+      >;
+      products: Table<
+        {
+          id: string;
+          user_id: string;
+          name: string;
+          family: string;
+          unit: string;
+          seed_key: string | null;
+        },
+        "name"
+      >;
+      documents: Table<
+        {
+          id: string;
+          user_id: string;
+          direction: "in" | "out";
+          kind: "devis" | "facture" | "bon_commande" | "bl" | "bon_enlevement" | "autre";
+          title: string;
+          party_id: string | null;
+          chantier_id: string | null;
+          source_document_id: string | null;
+          file_path: string;
+          extract: Record<string, unknown>;
+          status: "uploading" | "reading" | "ready" | "error";
+          error: string;
+          seed_key: string | null;
+          created_at: string;
+        },
+        "direction" | "kind"
+      >;
+      document_lines: Table<
+        {
+          id: string;
+          user_id: string;
+          document_id: string;
+          product_id: string | null;
+          supplier_party_id: string | null;
+          distributor_party_id: string | null;
+          label: string;
+          qty: number;
+          unit: string;
+          buy_price: number;
+          sell_price: number;
+          position: number;
+        },
+        "document_id" | "label"
+      >;
+      company_profiles: Table<
+        {
+          user_id: string;
+          raison_sociale: string;
+          siret: string;
+          forme_juridique: string;
+          adresse_rue: string;
+          adresse_code_postal: string;
+          adresse_ville: string;
+          telephone: string;
+          email_contact: string;
+          regime_tva: "NORMAL" | "FRANCHISE_293B";
+          registre_immatriculation: string;
+          assurance_nom: string;
+          assurance_adresse: string;
+          assurance_numero_contrat: string;
+          assurance_activites_garanties: string;
+          assurance_zone_geographique: string;
+          logo_path: string;
+          marge_par_defaut_pct: number;
+          updated_at: string;
+        },
+        "user_id"
+      >;
+      price_alerts: Table<
+        {
+          id: string;
+          user_id: string;
+          product_id: string | null;
+          document_id: string | null;
+          chantier_id: string | null;
+          label: string;
+          old_price: number;
+          new_price: number;
+          created_at: string;
+          seed_key: string | null;
+        },
+        "label" | "old_price" | "new_price"
+      >;
     };
     Views: Record<string, never>;
     Functions: {

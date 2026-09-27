@@ -12,7 +12,7 @@ import {
   PasswordField,
   SubmitButton,
 } from "@/components/auth/auth-ui";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field as UiField, FieldLabel } from "@/components/ui/field";
@@ -149,7 +149,7 @@ export function SignupForm({ next }: { next: string }) {
       <Card className="border-0 bg-transparent shadow-none ring-0">
         <FollowAuthTab />
         <CardHeader className="items-center px-0 text-center">
-          <Illustration name="feedback-envoye" className="size-24" />
+          <TarineoHdMascot name="14-bulle" className="h-24 w-28" label="" />
           <CardTitle className="text-[18px] tracking-[-0.02em]">Vérifie ta boîte mail</CardTitle>
           <CardDescription className="text-[14.5px] leading-relaxed">
             {already
@@ -235,13 +235,22 @@ export function SignupForm({ next }: { next: string }) {
             </div>
           ) : null}
         </div>
-        <UiField orientation="horizontal" data-invalid={!accepted && msg ? true : undefined}>
+        <UiField
+          orientation="horizontal"
+          className="items-start"
+          data-invalid={!accepted && msg ? true : undefined}
+        >
           <Checkbox
+            id="signup-terms"
             checked={accepted}
             onCheckedChange={(v) => setAccepted(v === true)}
             aria-invalid={!accepted && !!msg}
+            className="mt-0.5"
           />
-          <FieldLabel className="text-[13.5px] leading-snug font-normal text-muted-foreground">
+          <FieldLabel
+            htmlFor="signup-terms"
+            className="block min-w-0 flex-1 text-[13.5px] leading-relaxed font-normal text-muted-foreground"
+          >
             J’accepte les{" "}
             <Link href="/cgv" className="text-foreground underline underline-offset-2">
               conditions

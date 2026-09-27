@@ -20,25 +20,25 @@ export type Automation = {
   hint: string;
   prompt: string;
   category: AutomationCategory;
-  /** Job in-app (écrit dans Navpit). Sinon, simple prompt copilote. */
+  /** Job in-app. Sinon, simple prompt d’analyse. */
   job?: AutomationJob;
 };
 
 export const AUTOMATION_CATEGORY_LABELS: Record<AutomationCategory, string> = {
-  focus: "Focus & plan",
-  communication: "Communication",
-  produit: "Produit",
-  design: "Design",
+  focus: "Chantier",
+  communication: "Documents",
+  produit: "Prix",
+  design: "Devis",
 };
 
 /** Consignes prêtes à lancer dans le copilote. */
 export const AUTOMATIONS: Automation[] = [
   {
     id: "debrief-focus",
-    label: "Débrief Focus",
+    label: "Débrief chantier",
     hint: "Note du jour + 3 actions",
     prompt:
-      "Fais le débrief du projet en Focus : lis les tâches et les notes des 24 h, écris une note « Débrief JJ/MM » et ajoute 3 actions cochables.",
+      "Fais le débrief du chantier en cours : lis les documents et les notes des 24 h, écris une note « Débrief JJ/MM » et ajoute 3 actions cochables.",
     category: "focus",
     job: "debrief-focus",
   },
@@ -52,27 +52,27 @@ export const AUTOMATIONS: Automation[] = [
   },
   {
     id: "resume-fichier",
-    label: "Résumer un fichier",
-    hint: "Résume ce fichier…",
+    label: "Lire un document",
+    hint: "Lis ce devis ou cette facture…",
     prompt:
-      "Lis le fichier que je viens de déposer et donne-moi : 3 points clés, les décisions à prendre, les prochaines actions.",
+      "Lis le devis ou la facture que je viens de déposer : extraits les lignes, les prix, et signale ce qui a augmenté par rapport à mes derniers achats.",
     category: "focus",
   },
   {
     id: "parcours-client",
-    label: "Schéma du parcours",
-    hint: "Dessine le parcours client…",
+    label: "Lignes du document",
+    hint: "Extrais les lignes et les prix…",
     prompt:
-      "Dessine le schéma parcours du projet en Focus et attache-le à la fiche.",
+      "Extrais les lignes (référence, désignation, quantité, prix) du document et attache-les au chantier en cours.",
     category: "produit",
     job: "schema-parcours",
   },
   {
     id: "post-linkedin",
-    label: "Post LinkedIn",
-    hint: "Écris un post LinkedIn…",
+    label: "Prévenir d’une hausse",
+    hint: "Préviens d’une hausse de prix…",
     prompt:
-      "Écris un post LinkedIn de 8 lignes pour annoncer l’avancement de mon projet en Focus. Ton direct, sans emojis.",
+      "Rédige un message court pour prévenir mon client d’une hausse de prix détectée sur son chantier. Ton direct, sans emojis.",
     category: "communication",
   },
   {
@@ -80,48 +80,48 @@ export const AUTOMATIONS: Automation[] = [
     label: "Prochaine action",
     hint: "Quelle est ma prochaine action…",
     prompt:
-      "À partir de mon projet en Focus, propose UNE prochaine action concrète pour les 24 prochaines heures, avec pourquoi et comment la valider.",
+      "À partir du chantier en cours, propose UNE prochaine action concrète pour les 24 prochaines heures, avec pourquoi et comment la valider.",
     category: "focus",
     job: "next-action",
   },
   {
     id: "pitch-30s",
     label: "Pitch 30 secondes",
-    hint: "Pitch mon projet en 30 s…",
+    hint: "Explique Tarinéo en 30 s…",
     prompt:
-      "Écris un pitch oral de 30 secondes pour mon projet en Focus : problème, solution, pour qui, preuve d’avancement.",
+      "Écris un pitch oral de 30 secondes pour Tarinéo : hausses de prix, documents par chantier, marge protégée.",
     category: "communication",
   },
   {
     id: "user-stories",
     label: "User stories",
-    hint: "Liste 5 user stories…",
+    hint: "Compare ce prix à mon historique…",
     prompt:
-      "Génère 5 user stories au format « En tant que… je veux… afin de… » pour la prochaine fonctionnalité de mon projet en Focus.",
+      "Compare les prix de ce document à mon historique d’achats : dernier prix payé, écart en € et en %, alerte au-delà de +3 %.",
     category: "produit",
   },
   {
     id: "landing-hero",
-    label: "Hero landing",
-    hint: "Propose un titre hero…",
+    label: "Devis client",
+    hint: "Prépare un devis client…",
     prompt:
-      "Propose 3 titres hero + un sous-titre pour la landing de mon projet en Focus. Ton sobre, orienté bénéfice client.",
+      "À partir des achats du chantier en cours, prépare un devis client : matériel, main-d’œuvre, total HT.",
     category: "design",
   },
   {
     id: "checklist-lancement",
     label: "Checklist lancement",
-    hint: "Checklist avant lancement…",
+    hint: "Checklist avant de chiffrer…",
     prompt:
-      "Donne une checklist de 12 points à valider avant de lancer mon projet en Focus (légal, produit, marketing, technique).",
+      "Donne une checklist de 12 points à valider avant d’envoyer le devis client (prix à jour, marge, documents du chantier).",
     category: "focus",
   },
   {
     id: "email-bienvenue",
     label: "Email bienvenue",
-    hint: "Email de bienvenue utilisateur…",
+    hint: "Relance le client du chantier…",
     prompt:
-      "Rédige un email de bienvenue pour le premier utilisateur de mon SaaS : ton chaleureux, une action claire, signature courte.",
+      "Rédige un email de relance pour le client du chantier en cours : devis envoyé, une action claire, signature courte.",
     category: "communication",
   },
 ];
@@ -139,44 +139,44 @@ export type CopilotFeatureLink = {
 export const COPILOT_FEATURE_LINKS: CopilotFeatureLink[] = [
   {
     href: "/schemas",
-    label: "Schémas",
-    description: "Parcours, architecture et tunnels en un clic.",
+    label: "Alertes",
+    description: "Hausses relevées sur tes documents.",
     icon: Shapes,
   },
   {
     href: "/anatomie",
-    label: "Anatomie landing",
-    description: "Les 12 frames d’une page qui convertit.",
+    label: "Classement",
+    description: "Tes factures, rangées par mois et par enseigne.",
     icon: Layers,
   },
   {
-    href: "/bibliotheque/heros",
-    label: "Heros",
-    description: "Douze heros à copier dans Cursor.",
+    href: "/composants",
+    label: "Devis client",
+    description: "Matériel, main-d’œuvre, PDF à ton logo.",
     icon: Sparkles,
   },
   {
     href: "/projets",
-    label: "Projets",
-    description: "Focus, étapes et prochaine action.",
+    label: "Chantiers",
+    description: "Documents, étape en cours et marge.",
     icon: LayoutDashboard,
   },
   {
-    href: "/themes",
-    label: "Thèmes & pre-landing",
-    description: "Palettes et pages d’attente prêtes à copier.",
+    href: "/outils",
+    label: "Fournisseurs",
+    description: "Achats par enseigne et export comptable.",
     icon: Sparkles,
   },
   {
     href: "/ressources",
-    label: "Ressources",
-    description: "Bibliothèque design et liens utiles.",
+    label: "Documents",
+    description: "Devis, factures et bons à importer.",
     icon: FileText,
   },
   {
     href: "/audit",
-    label: "Mes sites",
-    description: "Audite tes URLs et repère les quick wins.",
+    label: "Comparateur",
+    description: "Le meilleur prix entre tes enseignes.",
     icon: Target,
   },
 ];

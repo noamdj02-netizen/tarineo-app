@@ -1,165 +1,77 @@
-import { OctagonAlert } from "lucide-react";
 import Link from "next/link";
-import { ConnectorsBoard } from "@/components/connectors/connectors-board";
-import { SitesBoard, type SiteCard } from "@/components/audit/sites-board";
-import { LucideByName } from "@/components/icons/lucide-by-name";
-import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { PageHead } from "@/components/shell/page-head";
-import { isOwner } from "@/lib/billing/plan";
-import { loadConnectorSignals } from "@/lib/connectors/signals";
-import { getDb } from "@/lib/db";
-import { EMPTY_CRITIQUE, normalizeCritique } from "@/lib/audit/critique";
-import { normalizeFrames } from "@/lib/audit/score";
-import { SITES, STATES } from "@/lib/design-data/audit";
-import { FRAMES } from "@/lib/design-data/frames";
+import { SupplierLogo } from "@/components/site/supplier-logo";
+import { compareProduct } from "@/lib/metier/queries";
+import { APP_PAGES } from "@/lib/site/app-pages";
+import { euro, signedPct, variation } from "@/lib/site/tarineo";
 
-export const metadata = { title: "Mes sites" };
+export const metadata = { title: "Comparateur" };
 
-export default async function AuditPage() {
-  const [db, signals] = await Promise.all([getDb(), loadConnectorSignals()]);
-  const owner = isOwner(db?.user.email);
-
-  let sites: SiteCard[] = [];
-  let drafts: { slug: string; name: string }[] = [];
-  if (db) {
-    const first = await db.supabase
-      .from("projects")
-      .select("id, slug, name, site, audit_frames, audit_critique")
-      .eq("user_id", db.user.id)
-      .order("sort_order");
-    const rows =
-      first.error
-        ? (
-            await db.supabase
-              .from("projects")
-              .select("id, slug, name, site")
-              .eq("user_id", db.user.id)
-              .order("sort_order")
-          ).data
-        : first.data;
-    const all = rows ?? [];
-    drafts = all.filter((p) => !p.site?.trim()).map((p) => ({ slug: p.slug, name: p.name }));
-    sites = all
-      .filter((p) => p.site?.trim())
-      .map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        site: p.site,
-        frames: normalizeFrames("audit_frames" in p ? p.audit_frames : []),
-        critique: normalizeCritique(
-          "audit_critique" in p ? p.audit_critique : EMPTY_CRITIQUE,
-        ),
-      }));
-  }
-
+export default async function ComparateurPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ article?: string }>;
+}) {
+  const { article } = await searchParams;
+  const cmp = await compareProduct(article);
+  const p = APP_PAGES.comparateur;
+  const min = cmp.rows.length ? Math.min(...cmp.rows.map((r) => r.price)) : 0;
   return (
-    <section>
-      <PageHead art="dashboard-analyse" label="Mes sites" title="Le score de tes landings," tail="page atelier.">
-        Critique 5 axes, 12 frames, film. Clique le nom pour ouvrir la page
-        projet (marketing, landing, schéma).
+    <section className="flex flex-col gap-8">
+      <PageHead mascot="06-loupe" label={p.label} title={p.title} tail={p.tail}>
+        {p.text}
       </PageHead>
-
-      {drafts.length ? (
-        <div className="mb-10">
-          <p className="mono-label mb-3">{`/ Sans landing ///`}</p>
-          <ul className="grid gap-2.5 sm:grid-cols-2">
-            {drafts.map((d) => (
-              <li key={d.slug} className="card-soft flex items-center justify-between gap-3 p-4">
-                <div>
-                  <p className="text-[15px] font-semibold">{d.name}</p>
-                  <p className="text-[13px] text-muted-foreground">Pas d’URL. Colle un hero d’abord.</p>
+      {cmp.labels.length ? (
+        <div className="flex flex-wrap gap-2">
+          {cmp.labels.map((label) => (
+            <Link
+              key={label}
+              href={`/audit?article=${encodeURIComponent(label)}`}
+              className={
+                label === cmp.label
+                  ? "rounded-full bg-ink px-3 py-1.5 text-[13px] text-accent-ink"
+                  : "rounded-full border border-line px-3 py-1.5 text-[13px]"
+              }
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+      <p className="font-display text-[22px] font-semibold">{cmp.label}</p>
+      {cmp.rows.length ? (
+        <ul className="grid gap-3">
+          {cmp.rows.map((r) => {
+            const yoy = r.yearAgo != null ? variation(r.yearAgo, r.price) : null;
+            return (
+              <li key={`${r.distributor}-${r.document}-${r.date}`} className="card-soft flex items-center justify-between gap-3 p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  <SupplierLogo name={r.distributor} size={36} />
+                  <div>
+                    <p className="font-medium">{r.distributor}</p>
+                    <p className="text-[13px] text-muted-foreground">
+                      {r.document} · {new Date(r.date).toLocaleDateString("fr-FR")}
+                    </p>
+                    {yoy != null ? (
+                      <p className="text-[12.5px] text-muted-foreground">vs N-1 : {signedPct(yoy)}</p>
+                    ) : null}
+                  </div>
                 </div>
-                <Link
-                  href={`/projets/${d.slug}`}
-                  className="btn-dark inline-flex min-h-10 items-center rounded-pill px-3.5 text-[13px] font-medium"
-                >
-                  Ouvrir
-                </Link>
+                <p className={r.price === min ? "font-semibold text-brand-orange tabular-nums" : "tabular-nums"}>
+                  {euro(r.price)}
+                </p>
               </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      <p className="mono-label mb-4">{`/ Tes sites ///`}</p>
-      <SitesBoard sites={sites} />
-
-      <div className="mt-10">
-        <p className="mono-label mb-4">{`/ Connecteurs ///`}</p>
-        <ConnectorsBoard initial={signals} compact />
-      </div>
-
-      {owner ? (
-        <div className="mt-12">
-          <p className="mono-label mb-4">{`/ Référence studio ///`}</p>
-          <RevealGroup className="sites" stagger={0.08}>
-            {SITES.map((s) => {
-              const ok = s.s.filter((x) => x === "ok").length;
-              return (
-                <Reveal key={s.n} className="site">
-                  <div className="site-h">
-                    <div>
-                      <h3>{s.n}</h3>
-                      <a href={s.u} target="_blank" rel="noopener noreferrer">
-                        {s.u.replace("https://", "")}
-                      </a>
-                    </div>
-                    <div className="score">
-                      {ok}
-                      <small>/ 12 frames OK</small>
-                    </div>
-                  </div>
-                  {s.alert ? (
-                    <div className="alert" role="alert">
-                      <OctagonAlert aria-hidden />
-                      <div>
-                        <b>Urgent</b>
-                        <br />
-                        {s.alert}
-                      </div>
-                    </div>
-                  ) : null}
-                  <div className="site-b">
-                    <div>
-                      <div className="eyebrow" style={{ marginBottom: 6 }}>
-                        Les 12 frames
-                      </div>
-                      {FRAMES.map((f, i) => {
-                        const [bg, color, icon, label] = STATES[s.s[i]];
-                        return (
-                          <div key={f.n} className="st">
-                            <span className="dot" style={{ background: bg, color }}>
-                              <LucideByName name={icon} />
-                            </span>
-                            {String(i + 1).padStart(2, "0")} {f.n}
-                            <span
-                              style={{ marginLeft: "auto", color, font: "500 12px var(--f-mono)" }}
-                            >
-                              {label}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div>
-                      <div className="eyebrow" style={{ marginBottom: 6 }}>
-                        4 actions, dans l’ordre
-                      </div>
-                      {s.fx.map((x, i) => (
-                        <div key={x} className="fix">
-                          <span className="n">{i + 1}</span>
-                          <span>{x}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </RevealGroup>
-        </div>
-      ) : null}
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="text-[14.5px] text-muted-foreground">
+          Déposez deux devis du même article pour comparer.{" "}
+          <Link href="/ressources" className="underline underline-offset-2">
+            Documents distributeur
+          </Link>
+        </p>
+      )}
     </section>
   );
 }

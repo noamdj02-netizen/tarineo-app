@@ -6,7 +6,8 @@ export type WidgetKey =
   | "actions"
   | "postits"
   | "projects"
-  | "schemas";
+  | "schemas"
+  | "metier";
 
 export type PostItColor = "peach" | "lavender" | "blue" | "white";
 
@@ -29,23 +30,24 @@ export type DashboardPrefs = {
 const STORAGE_KEY = "navpit:home-dashboard-v3";
 
 export const WIDGET_LABELS: Record<WidgetKey, string> = {
-  prompt: "Question au copilote",
+  prompt: "Analyser un document",
   calendar: "Planning",
-  week: "Ma semaine",
-  focus: "Projet favori",
+  week: "Cette semaine",
+  focus: "Chantier en cours",
   actions: "Actions rapides",
-  postits: "Post-its",
-  projects: "Mes projets",
-  schemas: "Schémas récents",
+  postits: "Notes",
+  projects: "Mes chantiers",
+  schemas: "Dernières analyses",
+  metier: "Sections métier",
 };
 
-export const DEFAULT_LEFT_COLUMN: WidgetKey[] = ["prompt", "actions", "week", "focus"];
-export const DEFAULT_RIGHT_COLUMN: WidgetKey[] = ["calendar", "postits"];
+export const DEFAULT_LEFT_COLUMN: WidgetKey[] = ["prompt", "focus", "actions", "projects"];
+export const DEFAULT_RIGHT_COLUMN: WidgetKey[] = ["schemas", "calendar"];
 
 const DEFAULT_POSTITS: PostIt[] = [
   {
     id: "welcome",
-    text: "Double-clique pour éditer · Ajoute tes idées ici",
+    text: "Dépose un devis pour voir les hausses",
     color: "lavender",
   },
 ];
@@ -54,12 +56,13 @@ export const DEFAULT_DASHBOARD_PREFS: DashboardPrefs = {
   widgets: {
     prompt: true,
     calendar: true,
-    week: true,
+    week: false,
     focus: true,
     actions: true,
-    postits: true,
-    projects: false,
-    schemas: false,
+    postits: false,
+    projects: true,
+    schemas: true,
+    metier: false,
   },
   postits: DEFAULT_POSTITS,
   leftColumn: DEFAULT_LEFT_COLUMN,
@@ -76,6 +79,7 @@ const ALL_WIDGETS: WidgetKey[] = [
   "postits",
   "projects",
   "schemas",
+  "metier",
 ];
 
 const DEFAULT_COLUMN: Record<WidgetKey, "left" | "right"> = {
@@ -87,6 +91,7 @@ const DEFAULT_COLUMN: Record<WidgetKey, "left" | "right"> = {
   postits: "right",
   projects: "left",
   schemas: "right",
+  metier: "left",
 };
 
 /** Chaque widget apparaît une seule fois : gauche ou droite. */

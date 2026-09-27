@@ -2,28 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { finishDashboardTour } from "@/app/(onboard)/onboarding/actions";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot, type TarineoHdMascotName } from "@/components/tarineo-hd-mascot";
 import { Button } from "@/components/ui/button";
-import type { IllustrationName } from "@/lib/illustrations";
 import { cn } from "@/lib/utils";
 
 const SPOTS = [
   {
     id: "prompt",
-    art: "onboarding-bienvenue" as IllustrationName,
-    title: "Pose une question ici",
-    text: "Le copilote part de ton projet Focus. Une phrase suffit.",
+    art: "03-salut" as TarineoHdMascotName,
+    title: "Analyse un document ici",
+    text: "Dépose un devis ou une facture. Tarinéo compare aux prix déjà payés.",
   },
   {
     id: "actions",
-    art: "dashboard-focus" as IllustrationName,
+    art: "07-ordinateur" as TarineoHdMascotName,
     title: "Ta prochaine action",
-    text: "Focus, landing, thème. Un geste, pas une liste de 20.",
+    text: "Chantier, document, fournisseur. Un geste, pas une liste de 20.",
   },
   {
     id: "compose",
-    art: "landing-commencer" as IllustrationName,
-    title: "Composer le cockpit",
+    art: "01-pouce-leve" as TarineoHdMascotName,
+    title: "Composer le tableau de bord",
     text: "Tu ajoutes ou retires des blocs. Rien n’est figé.",
   },
 ] as const;
@@ -95,7 +94,7 @@ export function DashboardTour({ open }: { open: boolean }) {
           !cardLow ? "top-[min(72vh,calc(100dvh-12rem))]" : "bottom-6",
         )}
       >
-        <Illustration name={spot.art} className="mb-2 size-14" />
+        <TarineoHdMascot name={spot.art} className="mb-2 h-14 w-16" label="" />
         <p className="mono-label mb-1">{`/ ${index + 1} · ${SPOTS.length} ///`}</p>
         <p className="font-serif text-[1.35rem] leading-tight tracking-[-0.02em]">{spot.title}</p>
         <p className="mt-1.5 text-[14px] leading-relaxed text-muted-foreground">{spot.text}</p>

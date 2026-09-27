@@ -1,133 +1,128 @@
-import Link from "next/link";
-import { LandingCtaBand } from "@/components/site/landing-cta";
-import { LandingWorkspaceDepth } from "@/components/site/landing-folio-sections";
-import { LandingProductShowcase } from "@/components/site/landing-product-showcase";
-import { LandingFeatures } from "@/components/site/landing-features";
+import { JsonLd } from "@/components/site/json-ld";
+import { LandingAudience } from "@/components/site/landing-audience";
+import { LandingChantiers } from "@/components/site/landing-chantiers";
+import { LandingFeatureGrid } from "@/components/site/landing-feature-grid";
+import { LandingClosingCta } from "@/components/site/landing-cta";
 import {
+  DeferredDashboard,
+  DeferredDocument,
   DeferredFaqTabs,
   DeferredPricing,
-  DeferredProductFilm,
-  DeferredTestimonials,
+  DeferredSuppliers,
 } from "@/components/site/landing-deferred";
+import { LandingFounder } from "@/components/site/landing-founder";
 import { LandingHero } from "@/components/site/landing-hero";
-import { LandingMarquee } from "@/components/site/landing-marquee";
+import { LandingHow } from "@/components/site/landing-how";
+import { LandingProblem } from "@/components/site/landing-problem";
 import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
-import { ProductPreview } from "@/components/site/product-preview";
-import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
-import { JsonLd } from "@/components/site/json-ld";
 import { BRAND } from "@/lib/brand";
 import { siteMetadata } from "@/lib/seo";
 import { faqPageJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
-import { LandingSteps } from "@/components/site/landing-steps";
-import { FAQ_GROUPS } from "@/lib/site/content";
+import { FAQ_GROUPS } from "@/lib/site/tarineo";
 
-const HOME_TITLE = `${BRAND.name} · Construis ton SaaS. Lance-le. Ne te disperse plus.`;
-const HOME_DESCRIPTION =
-  "Navpit regroupe tes side-projects et SaaS : un seul en Focus, la prochaine action, ressources design et copilote IA contextualisé.";
+const HOME_TITLE = `${BRAND.name} — L’assistant qui protège votre marge`;
 
 export const metadata = {
+  ...siteMetadata({ title: HOME_TITLE, description: BRAND.description, path: "/" }),
   title: { absolute: HOME_TITLE },
-  description: HOME_DESCRIPTION,
-  ...siteMetadata({ description: HOME_DESCRIPTION, path: "/" }),
+  description: BRAND.description,
 };
 
 export default function LandingPage() {
   return (
     <>
       <JsonLd data={[softwareApplicationJsonLd(), faqPageJsonLd()]} />
-      <section id="commencer" className="relative isolate scroll-mt-24 overflow-x-clip bg-ink">
-        <LandingHero />
 
-        <LandingMarquee className="relative z-10 mt-10 sm:mt-12" />
+      <LandingHero />
+      <LandingProblem />
+      <LandingHow />
 
-        <div className="mx-auto mt-6 w-full max-w-[1160px] sm:mt-10">
-          <ProductPreview />
-        </div>
-      </section>
-
-      <LandingCtaBand />
-      <LandingProductShowcase />
-      <LandingWorkspaceDepth />
-
-      <LandingSection id="film">
+      <LandingSection id="analyse" className="border-t border-line">
         <LandingSectionHead
-          label="Téléphone"
-          title="Rapide. Sûr. À toi."
-          text="Le copilote, ton Focus et tes ressources — déjà dans ta poche."
+          label="Analyse de document"
+          title="Chaque ligne,"
+          tail="comparée à ce que vous payiez avant."
+          text="Tarinéo lit le document, retrouve chaque produit dans votre historique et met en évidence ce qui a bougé."
         />
-        <DeferredProductFilm />
+        <DeferredDocument />
       </LandingSection>
 
-      <LandingSection id="fonctions" tone="muted">
+      <LandingSection id="tableau-de-bord" className="border-t border-line bg-[#070707]">
         <LandingSectionHead
-          label="Fonctions"
-          title="Tout ce qu’il faut pour lancer,"
-          tail="au même endroit."
-          text="Fini les onglets Notion, Figma, ChatGPT et agenda éparpillés : Navpit réunit tout autour de tes projets."
+          label="Tableau de bord"
+          title="Vos prix fournisseurs,"
+          tail="sur un seul tableau de bord."
+          text="Documents analysés, hausses détectées, impact estimé : l’essentiel en un coup d’œil, sans tableur."
         />
-        <LandingFeatures />
+        <DeferredDashboard />
       </LandingSection>
 
-      <LandingSection id="comment">
-        <LandingSectionHead label="Étapes" title="Trois étapes," tail="et tu avances." />
-        <LandingSteps />
-      </LandingSection>
-
-      <LandingSection id="temoignages" className="bg-bg">
+      <LandingSection id="chantiers" className="border-t border-line">
         <LandingSectionHead
-          align="start"
-          className="max-w-[1080px]"
-          label="Témoignages"
-          title="Fondateurs solo,"
-          tail="ils avancent avec Navpit."
-          text="Retours de créateurs qui ont remplacé le chaos d’onglets par un seul cockpit."
+          label="Chantiers"
+          title="Tous vos documents,"
+          tail="rangés par chantier."
+          text="Achats, devis client, facture : chaque document est rattaché à son chantier, avec l’étape en cours et votre marge."
         />
-        <DeferredTestimonials />
+        <LandingChantiers />
       </LandingSection>
 
-      <LandingSection id="prix">
+      <LandingSection id="fournisseurs" className="border-t border-line">
         <LandingSectionHead
-          label="Prix"
-          title="Essai Pro,"
-          tail="puis la formule qui te va."
-          text={`${PRO_TRIAL_DAYS} jours sans carte, puis Création à 15 € ou Pro à 30 € — ou Fondateur à 149 € une fois.`}
+          label="Fournisseurs"
+          title="Une vision claire"
+          tail="de vos achats."
+          text="Classez vos achats par fournisseur et repérez ceux dont les prix augmentent le plus."
+        />
+        <DeferredSuppliers />
+      </LandingSection>
+
+      <LandingSection id="fonctionnalites" className="border-t border-line">
+        <LandingSectionHead
+          label="Dans l’app"
+          title="Tout ce que fait Tarinéo,"
+          tail="déjà disponible."
+          text="Des achats fournisseurs jusqu’au devis de votre client : les outils livrés aujourd’hui dans l’application."
+        />
+        <LandingFeatureGrid />
+      </LandingSection>
+
+      <LandingSection id="pour-qui" tone="light">
+        <LandingSectionHead
+          label="Pour qui"
+          title="Pensé pour ceux"
+          tail="qui construisent."
+          text="Artisans et petites entreprises du bâtiment qui achètent chez plusieurs fournisseurs."
+        />
+        <LandingAudience />
+      </LandingSection>
+
+      <LandingSection id="qui" className="border-t border-line">
+        <LandingSectionHead label="Qui est derrière" title="Un ancien des chantiers," tail="pas une start-up hors-sol." />
+        <LandingFounder />
+      </LandingSection>
+
+      <LandingSection id="tarifs" className="border-t border-line">
+        <LandingSectionHead
+          label="Tarifs"
+          title="Le 1er mois est offert."
+          tail="Ensuite, dès 17 € par mois."
         />
         <DeferredPricing />
       </LandingSection>
 
-      <LandingSection id="faq" tone="muted">
-        <div className="mx-auto grid max-w-[1080px] gap-10 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.22fr)] lg:items-start lg:gap-14">
-          <div className="lg:sticky lg:top-28">
-            <LandingSectionHead
-              align="start"
-              className="mx-0 mb-6 max-w-none sm:mb-7"
-              label="FAQ"
-              title="Les questions qu’on te pose,"
-              tail="avant de commencer."
-              text="Essai, tarifs, données. Les retours fondateurs sont sur Avis."
-            />
-            <div className="flex flex-col items-start gap-3">
-              <Link
-                href="/avis"
-                className="text-[14.5px] text-foreground underline underline-offset-4 hover:text-muted-foreground"
-              >
-                Lire les avis fondateurs
-              </Link>
-              <Link
-                href="/prix"
-                className="text-[14.5px] text-foreground underline underline-offset-4 hover:text-muted-foreground"
-              >
-                Comparer Création, Pro et Fondateur
-              </Link>
-              <p className="max-w-[40ch] text-[13.5px] leading-relaxed text-muted-foreground">
-                Une autre question ? Écris-nous depuis ton compte une fois connecté.
-              </p>
-            </div>
-          </div>
+      <LandingSection id="faq" tone="light">
+        <LandingSectionHead
+          label="FAQ"
+          title="Questions fréquentes"
+          text={`Une autre question ? Écrivez-nous : ${BRAND.contactEmail}`}
+        />
+        <div className="mx-auto max-w-[760px]">
           <DeferredFaqTabs groups={FAQ_GROUPS} />
         </div>
       </LandingSection>
 
+      <LandingClosingCta />
     </>
   );
 }

@@ -25,7 +25,7 @@ import {
   removeCalendarFeed,
   saveCalendarFeed,
 } from "@/app/(app)/accueil/actions";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { EASE } from "@/components/motion/reveal";
 import type { CalEvent, CalendarFeedInfo } from "@/lib/calendar/types";
 import { cn } from "@/lib/utils";
@@ -218,9 +218,9 @@ export function CalendarCard({
                     className={cn(
                       "grid size-9 place-items-center rounded-full text-[13.5px] tabular-nums transition-colors duration-200",
                       isToday
-                        ? "bg-ink font-semibold text-accent-ink"
+                        ? "bg-brand-orange font-semibold text-white"
                         : isSel
-                          ? "bg-accent-soft font-semibold ring-1 ring-ink/20"
+                          ? "bg-[#fff0e9] font-semibold ring-1 ring-brand-orange/30"
                           : inMonth
                             ? "group-hover:bg-accent-soft"
                             : "text-muted-foreground/60 group-hover:bg-accent-soft",
@@ -331,7 +331,7 @@ export function CalendarCard({
                         ? data?.feed.connected
                           ? data.feed.provider
                           : "Agenda"
-                        : (e.project ?? "Navpit")}
+                        : (e.project ?? "Tarinéo")}
                     </span>
                   </span>
                   {e.source === "navpit" ? (
@@ -344,10 +344,7 @@ export function CalendarCard({
 
           {dayEvents.length === 0 && !adding ? (
             <div className="m-auto flex flex-col items-center gap-1 py-4 text-center text-[13px] text-muted-foreground">
-              <Illustration
-                name="dashboard-tache-validee"
-                className="size-16"
-              />
+              <TarineoHdMascot name="01-pouce-leve" className="h-16 w-20" label="" />
               Rien de prévu ce jour-là.
             </div>
           ) : null}

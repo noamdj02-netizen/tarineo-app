@@ -1,155 +1,114 @@
-"use client";
-
-import { ArrowRight, Check } from "lucide-react";
-import { useReducedMotion } from "framer-motion";
-import Link from "next/link";
-import { useState } from "react";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { ArrowDownRight, ArrowUpRight, HardHat } from "lucide-react";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
-import { BrandFocus } from "@/components/site/brand-focus";
-import { HeroPrompt } from "@/components/site/hero-prompt";
+import { HeroBackdrop } from "@/components/site/hero-backdrop";
+import { DeltaBadge } from "@/components/site/delta-badge";
 import { LandingButton } from "@/components/site/landing-button";
-import { WordsPullUp } from "@/components/site/words-pull-up";
-import { BRAND } from "@/lib/brand";
-import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
-import { cn } from "@/lib/utils";
+import { SupplierLogo } from "@/components/site/supplier-logo";
+import { DEMO_MARK, HERO, HERO_SAMPLE, euro, variation } from "@/lib/site/tarineo";
 
-const HERO_FILM =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4";
-const HERO_POSTER = "/videos/hero-poster.jpg";
-
-const PROOF = [
-  `${PRO_TRIAL_DAYS} jours d’essai sans carte`,
-  "Prix qui baisse chaque année",
-  "Tes données restent à toi",
-];
-
-const EASE = [0.16, 1, 0.3, 1] as const;
-
-/** Paysage du film. Cadré pour laisser le fondateur visible au centre. */
-function HeroBackdrop({ reduce }: { reduce: boolean }) {
-  const [failed, setFailed] = useState(false);
-  const mediaClass =
-    "absolute inset-0 size-full object-cover object-[center_52%] sm:object-[center_48%] lg:object-[center_42%]";
-
-  return (
-    <>
-      <img
-        src={HERO_POSTER}
-        alt=""
-        aria-hidden
-        fetchPriority="high"
-        className={mediaClass}
-      />
-      {!reduce && !failed ? (
-        <video
-          className={mediaClass}
-          src={HERO_FILM}
-          poster={HERO_POSTER}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-          aria-hidden
-          onError={() => setFailed(true)}
-        />
-      ) : null}
-    </>
-  );
+/** L'image n'est utilisée que si le fichier existe dans /public (sinon : scène de chantier vectorielle). */
+function publicFile(src: string | null) {
+  if (!src) return null;
+  return existsSync(join(process.cwd(), "public", src)) ? src : null;
 }
 
-/** Hero #commencer : titre en haut, bonhomme au milieu, CTA en bas. */
+/** Hero plein cadre : photo de chantier + voile 60 %, promesse, deux CTA, une ligne analysée en exemple. */
 export function LandingHero() {
-  const reduce = useReducedMotion();
+  const change = variation(HERO_SAMPLE.before, HERO_SAMPLE.after);
+  const image = publicFile(HERO.image);
 
   return (
-    <div className="relative isolate flex min-h-lvh min-h-[-webkit-fill-available] w-full flex-col overflow-hidden bg-ink">
-        <HeroBackdrop reduce={!!reduce} />
-        <div aria-hidden className="noise-overlay opacity-25 mix-blend-overlay" />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-[42%] bg-gradient-to-b from-ink/60 via-ink/25 to-transparent"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[28%] bg-gradient-to-t from-ink/65 via-ink/25 to-transparent"
-        />
+    <section
+      id="top"
+      className="relative isolate -mt-[72px] flex min-h-[min(100svh,980px)] scroll-mt-24 flex-col justify-center overflow-clip px-4 pt-[120px] pb-16 text-white sm:px-8 sm:pt-[140px] sm:pb-24"
+    >
+      <HeroBackdrop video={HERO.video} image={image} alt={HERO.imageAlt} />
 
-        <RevealGroup
-          className={cn(
-            "relative z-10 mx-auto flex w-full max-w-[860px] flex-1 flex-col",
-            "items-center justify-between gap-5 px-4",
-            "pt-[max(5.25rem,calc(env(safe-area-inset-top)+3.75rem))]",
-            "pb-[max(1.75rem,env(safe-area-inset-bottom))]",
-            "text-center sm:max-w-[920px] sm:justify-center sm:gap-6 sm:px-8 sm:pt-16 sm:pb-10",
-          )}
-        >
-          {/* Mobile : titre haut / prompt bas. Dès sm : bloc centré, titre plus bas, prompt au milieu. */}
-          <div className="flex w-full flex-col items-center gap-3 sm:gap-3">
-            <Reveal>
-              <p className="mono-label text-accent-ink/70">/ Cockpit fondateur ///</p>
-            </Reveal>
-            <Reveal>
-              <h1 className="font-display text-[clamp(32px,8.6vw,72px)] leading-[1.02] font-semibold tracking-tightest text-balance text-accent-ink sm:text-[clamp(44px,5vw,64px)]">
-                <span className="block">
-                  <WordsPullUp text="Construis ton SaaS." />
-                </span>
-                <span className="mt-0.5 block">
-                  <BrandFocus className="inline-block">
-                    <WordsPullUp text="Lance-le." delay={0.2} />
-                  </BrandFocus>
-                </span>
-                <span className="mt-1.5 block text-[0.72em] font-semibold tracking-tightest text-accent-ink/70 sm:mt-2 sm:text-[0.62em] lg:mt-1.5">
-                  <WordsPullUp text="Ne te disperse plus." delay={0.4} />
-                </span>
-              </h1>
-            </Reveal>
-            <Reveal
-              className="max-w-[38ch] text-[15px] leading-snug text-pretty text-accent-ink/70 sm:max-w-[52ch] sm:text-[17px] sm:leading-relaxed lg:max-w-[44ch] lg:text-[16px]"
-              transition={{ duration: 0.55, delay: 0.55, ease: EASE }}
-            >
-              <p>{BRAND.description}</p>
-            </Reveal>
-          </div>
+      <RevealGroup
+        stagger={0.1}
+        delay={0.1}
+        className="mx-auto flex w-full max-w-[1060px] flex-col items-center gap-5 text-center [text-shadow:0_1px_2px_rgba(0,0,0,0.35),0_2px_24px_rgba(0,0,0,0.45)] sm:gap-6"
+      >
+        <Reveal>
+          <p className="liquid-glass inline-flex items-center gap-2 rounded-pill py-1.5 pr-3.5 pl-2.5 font-mono text-[10.5px] font-medium tracking-[0.08em] text-white uppercase [text-shadow:none] sm:text-[11px] sm:tracking-[0.12em]">
+            <span className="relative flex size-2">
+              <span className="absolute inset-0 animate-[beacon_2.4s_ease-in-out_infinite] rounded-full bg-brand-orange/60 blur-[3px] motion-reduce:hidden" />
+              <span className="relative size-2 rounded-full bg-brand-orange" />
+            </span>
+            {HERO.badge}
+          </p>
+        </Reveal>
 
-          <div className="flex w-full flex-col items-center gap-2.5 sm:gap-3">
-            <Reveal className="w-full max-w-[640px]">
-              <HeroPrompt onFilm />
-            </Reveal>
-            <Reveal
-              className="flex w-full max-w-[min(100%,360px)] flex-col gap-2 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3"
-              transition={{ duration: 0.55, delay: 0.7, ease: EASE }}
-            >
-              <Link
-                href="/inscription?plan=pro"
-                className="group inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-pill bg-accent-ink py-1.5 pr-1.5 pl-5 text-[15px] font-medium text-ink shadow-lift transition-[gap,transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 hover:gap-3 active:translate-y-0 active:scale-[0.98] sm:min-h-12 sm:w-auto"
-              >
-                Essai gratuit {PRO_TRIAL_DAYS} jours
-                <span className="grid size-8 place-items-center rounded-full bg-ink text-accent-ink shadow-dark transition-transform duration-300 ease-out-soft group-hover:scale-110 sm:size-10">
-                  <ArrowRight className="size-4" aria-hidden />
-                </span>
-              </Link>
-              <LandingButton
-                href="/#solution"
-                variant="secondary"
-                fullWidth
-                className="min-h-11 border-accent-ink/20 bg-ink/30 text-accent-ink shadow-none hover:bg-ink/50 sm:min-h-12 sm:w-auto sm:max-w-none"
-              >
-                Voir le produit
-              </LandingButton>
-            </Reveal>
-            <Reveal className="w-full">
-              <ul className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] leading-tight tracking-tight text-accent-ink/70 sm:gap-x-5 sm:gap-y-2 sm:text-[13.5px] sm:tracking-normal">
-                {PROOF.map((p) => (
-                  <li key={p} className="flex items-center gap-1 whitespace-nowrap">
-                    <Check className="size-3.5 shrink-0 text-st-focus" aria-hidden />
-                    {p}
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-          </div>
-        </RevealGroup>
-    </div>
+        <Reveal>
+          <h1 className="font-display text-[clamp(36px,8.4vw,80px)] leading-[1.0] font-semibold tracking-tightest text-balance">
+            {HERO.title}
+            <br />
+            {HERO.titleTail}
+          </h1>
+        </Reveal>
+
+        <Reveal>
+          <p className="max-w-[58ch] text-[16px] leading-relaxed font-medium text-white sm:text-[19px]">{HERO.text}</p>
+        </Reveal>
+
+        <Reveal className="flex w-full max-w-[min(100%,360px)] flex-col gap-2.5 sm:max-w-none sm:flex-row sm:justify-center sm:gap-3">
+          <LandingButton
+            href={HERO.primary.href}
+            variant="orange"
+            icon={<ArrowUpRight aria-hidden />}
+            fullWidth
+            className="sm:w-auto"
+          >
+            {HERO.primary.label}
+          </LandingButton>
+          <LandingButton
+            href={HERO.secondary.href}
+            variant="glass"
+            icon={<ArrowDownRight aria-hidden />}
+            fullWidth
+            prefetch={false}
+            className="sm:w-auto"
+          >
+            {HERO.secondary.label}
+          </LandingButton>
+        </Reveal>
+
+        <Reveal>
+          <p className="flex items-center justify-center gap-2 text-[15px] font-medium text-white sm:text-base">
+            <HardHat className="size-4 text-brand-orange-light" aria-hidden />
+            {HERO.founderLine}
+          </p>
+        </Reveal>
+
+        {/* Exemple de ligne analysée : le produit compris en un coup d'œil */}
+        <Reveal className="mt-4 w-full max-w-[640px] sm:mt-8">
+          <figure className="liquid-glass rounded-[20px] border border-white/20 bg-black/55! p-2 text-left [text-shadow:none]">
+            <div className="flex items-center justify-between gap-3 px-3 pt-1.5 pb-2.5">
+              <p className="flex items-center gap-2 font-mono text-[10.5px] tracking-[0.12em] text-white/75 uppercase">
+                <SupplierLogo name={HERO_SAMPLE.supplier} size={22} priority className="rounded-md" />
+                {HERO_SAMPLE.supplier} · Devis analysé
+              </p>
+              <span className="rounded-pill border border-white/20 px-2 py-0.5 font-mono text-[9.5px] tracking-[0.12em] text-white/70 uppercase">
+                {DEMO_MARK}
+              </span>
+            </div>
+            <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 rounded-[14px] border border-white/10 bg-white/[0.06] px-4 py-3.5 sm:grid-cols-[1fr_auto_auto]">
+              <p className="text-[15px] font-medium text-white">{HERO_SAMPLE.product}</p>
+              <p className="order-3 col-span-2 flex items-center gap-2 font-mono text-[13px] text-white/70 tabular-nums sm:order-none sm:col-span-1">
+                <span className="line-through decoration-white/50">{euro(HERO_SAMPLE.before)}</span>
+                <span aria-hidden>→</span>
+                <span className="text-white">{euro(HERO_SAMPLE.after)}</span>
+              </p>
+              <DeltaBadge value={change} size="lg" solid />
+            </div>
+            <figcaption className="sr-only">
+              Exemple : {HERO_SAMPLE.product} passe de {euro(HERO_SAMPLE.before)} à {euro(HERO_SAMPLE.after)}.
+            </figcaption>
+          </figure>
+        </Reveal>
+      </RevealGroup>
+    </section>
   );
 }

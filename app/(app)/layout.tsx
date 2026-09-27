@@ -17,7 +17,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-dvh bg-bg">
-      <Sidebar onboarding={onboarding} viewer={viewer} />
+      <Suspense>
+        <Sidebar onboarding={onboarding} viewer={viewer} />
+      </Suspense>
       {/* Décalage = largeur sidebar fixe ; le scroll reste dans <main> sur desktop */}
       <div className="flex min-h-dvh min-w-0 flex-col lg:ml-[252px] lg:p-2">
         <div
@@ -34,7 +36,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </main>
         </div>
       </div>
-      <MobileNav />
+      <Suspense>
+        <MobileNav />
+      </Suspense>
       <Suspense>
         <AssistantPanel keyMissing={!process.env.ANTHROPIC_API_KEY} firstName={viewer?.firstName} />
       </Suspense>

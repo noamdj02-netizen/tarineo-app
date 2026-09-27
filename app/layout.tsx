@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import {
+  Barlow,
   Instrument_Serif,
   Inter_Tight,
   JetBrains_Mono,
@@ -20,6 +21,13 @@ import "./globals.css";
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+/** Typo de marque Tarinéo (site public) — même police que l'app Tarinéo. */
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -85,10 +93,10 @@ export default function RootLayout({
       lang="fr"
       // l'app est en clair : empêche studio.css de passer les couleurs d'état en mode sombre
       data-theme="light"
-      className={`${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
+      className={`${interTight.variable} ${barlow.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
     >
       <body className="antialiased">
-        <Script id="navpit-gtm" strategy="beforeInteractive">
+        <Script id="gtm" strategy="beforeInteractive">
           {GTM_HEAD_SCRIPT}
         </Script>
         <noscript>

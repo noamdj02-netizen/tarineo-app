@@ -84,7 +84,7 @@ export default async function AbonnementPage({
         <ArrowLeft className="size-4" aria-hidden />
         Retour au compte
       </Link>
-      <PageHead art="landing-revenus" label="Abonnement" title={headTitle} tail={headTail}>
+      <PageHead mascot="01-pouce-leve" label="Abonnement" title={headTitle} tail={headTail}>
         {info.plan === "free"
           ? `Essai Pro ${PRO_TRIAL_DAYS} jours sans carte, puis Création (${STARTER.month} €) ou Pro (${PRO.month} €).`
           : info.isFreeTrial
@@ -112,9 +112,9 @@ export default async function AbonnementPage({
         <Reveal className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-4">/ Utilisation ///</p>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Usage label="Projets" used={projects.count ?? 0} max={info.limits.projects} />
-            <Usage label="Questions IA ce mois" used={ai} max={info.limits.aiPerMonth} />
-            <Usage label="Schémas" used={schemas.count ?? 0} max={info.limits.schemas} />
+            <Usage label="Chantiers" used={projects.count ?? 0} max={info.limits.projects} />
+            <Usage label="Analyses ce mois" used={ai} max={info.limits.aiPerMonth} />
+            <Usage label="Alertes enregistrées" used={schemas.count ?? 0} max={info.limits.schemas} />
           </div>
         </Reveal>
 
@@ -131,7 +131,7 @@ export default async function AbonnementPage({
               {wanted === "founder"
                 ? "/ Fondateur ///"
                 : info.isFreeTrial
-                  ? "/ Garder Navpit après l’essai ///"
+                  ? "/ Garder Tarinéo après l’essai ///"
                   : "/ Passer en payant ///"}
             </p>
             {wanted !== "founder" ? (
@@ -165,7 +165,7 @@ export default async function AbonnementPage({
             <p className="font-display text-[26px] leading-tight font-semibold tracking-tightest">
               {wanted === "founder"
                 ? `${FOUNDER.price} € une fois, Pro à vie.`
-                : `${priceLabel(wanted, interval)} · ${wanted === "starter" ? "6 projets, 300 IA, 100 schémas" : "illimité + agenda"}.`}
+                : `${priceLabel(wanted, interval)} · ${wanted === "starter" ? "documents, historique, 3 enseignes" : "tous les distributeurs + devis client"}.`}
             </p>
             <p className="text-[14.5px] text-accent-ink/70">
               {wanted === "founder"

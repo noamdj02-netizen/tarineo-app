@@ -1,12 +1,12 @@
-import { EmailCta, EmailParagraph, NavpitEmailShell } from "./shell";
+import { EmailCta, EmailParagraph, TarineoEmailShell } from "./shell";
 
 export type BillingStarterWelcomeEmailProps = { appUrl: string };
 
 export function BillingStarterWelcomeEmail({ appUrl }: BillingStarterWelcomeEmailProps) {
   const base = appUrl.replace(/\/$/, "");
   return (
-    <NavpitEmailShell
-      preview="Bienvenue en Navpit Création"
+    <TarineoEmailShell
+      preview="Bienvenue en Tarinéo Création"
       label="Création"
       title="Bienvenue en Création"
       appUrl={appUrl}
@@ -14,12 +14,12 @@ export function BillingStarterWelcomeEmail({ appUrl }: BillingStarterWelcomeEmai
       <EmailParagraph>
         6 projets, 300 questions IA par mois et 100 schémas. Ton prix baissera à chaque anniversaire d’abonnement.
       </EmailParagraph>
-      <EmailCta href={`${base}/accueil`}>Ouvrir Navpit</EmailCta>
-    </NavpitEmailShell>
+      <EmailCta href={`${base}/accueil`}>Ouvrir Tarinéo</EmailCta>
+    </TarineoEmailShell>
   );
 }
 
 BillingStarterWelcomeEmail.PreviewProps = {
-  appUrl: "https://www.navpit.com",
+  appUrl: "https://www.tarineo.fr",
 } satisfies BillingStarterWelcomeEmailProps;
 export default BillingStarterWelcomeEmail;

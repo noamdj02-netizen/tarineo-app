@@ -14,7 +14,7 @@ export default async function OnboardingPage({
   if (!viewer) redirect("/login?next=/onboarding");
   const jump = Number(q.step);
   const startStep =
-    process.env.NODE_ENV !== "production" && Number.isInteger(jump) && jump >= 0 && jump <= 10
+    process.env.NODE_ENV !== "production" && Number.isInteger(jump) && jump >= 0 && jump <= 4
       ? jump
       : 0;
   return (

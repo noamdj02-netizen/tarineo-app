@@ -1,4 +1,4 @@
-import { EmailCode, EmailCta, EmailParagraph, NavpitEmailShell } from "./shell";
+import { EmailCode, EmailCta, EmailParagraph, TarineoEmailShell } from "./shell";
 
 export type AuthMagicLinkEmailProps = {
   appUrl: string;
@@ -9,8 +9,8 @@ export type AuthMagicLinkEmailProps = {
 /** Aperçu React Email — en prod Supabase envoie le HTML de scripts/auth-emails.mjs */
 export function AuthMagicLinkEmail({ appUrl, confirmationUrl, token }: AuthMagicLinkEmailProps) {
   return (
-    <NavpitEmailShell
-      preview="Ton code de connexion Navpit"
+    <TarineoEmailShell
+      preview="Ton code de connexion Tarinéo"
       label="Connexion"
       title="Ton lien de connexion"
       appUrl={appUrl}
@@ -20,13 +20,13 @@ export function AuthMagicLinkEmail({ appUrl, confirmationUrl, token }: AuthMagic
       </EmailParagraph>
       <EmailCode>{token}</EmailCode>
       <EmailCta href={confirmationUrl}>Me connecter</EmailCta>
-    </NavpitEmailShell>
+    </TarineoEmailShell>
   );
 }
 
 AuthMagicLinkEmail.PreviewProps = {
-  appUrl: "https://www.navpit.com",
-  confirmationUrl: "https://www.navpit.com/auth/callback",
+  appUrl: "https://www.tarineo.fr",
+  confirmationUrl: "https://www.tarineo.fr/auth/callback",
   token: "12345678",
 } satisfies AuthMagicLinkEmailProps;
 

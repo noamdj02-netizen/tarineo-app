@@ -1,47 +1,63 @@
 import { Suspense } from "react";
 import { loadAssistant } from "@/app/(app)/assistant/actions";
+import { DocumentDrop } from "@/components/metier/document-drop";
+import { DocumentList } from "@/components/metier/document-list";
+import { PageHead } from "@/components/shell/page-head";
 import { isAgentRole } from "@/lib/assistant/roles";
-import { listProjects } from "@/lib/projects/queries";
+import { listChantiers, listDocuments, listParties } from "@/lib/metier/queries";
 import { getViewer } from "@/lib/session";
+import { APP_PAGES } from "@/lib/site/app-pages";
 import { CopilotChatShell } from "./chat-shell";
 
-export const metadata = { title: "Copilote" };
+export const metadata = { title: "Analyse" };
 
-export default async function CopilotePage({
+export default async function AnalysePage({
   searchParams,
 }: {
-  searchParams: Promise<{ projet?: string; role?: string }>;
+  searchParams: Promise<{ chantier?: string; projet?: string; role?: string }>;
 }) {
-  const [{ projet, role: rawRole }, viewer, projects] = await Promise.all([
+  const [{ chantier: slug, projet, role: rawRole }, viewer, chantiers, docs, clients] = await Promise.all([
     searchParams,
     getViewer(),
-    listProjects(),
+    listChantiers(),
+    listDocuments({ direction: "in" }),
+    listParties("client"),
   ]);
   const role = isAgentRole(rawRole) ? rawRole : "general";
-  const selected = projects.find((p) => p.slug === projet) ?? null;
-  const data = await loadAssistant({ projectId: selected?.id ?? null, role });
+  const selected = chantiers.find((c) => c.slug === slug || c.slug === projet) ?? null;
+  const scoped = selected ? docs.filter((d) => d.chantier_slug === selected.slug) : docs;
+  const data = await loadAssistant({ projectId: null, role });
+  const p = APP_PAGES.analyse;
 
   return (
-    <div
-      data-fill-viewport
-      className="flex h-[min(70dvh,calc(100dvh-11rem))] min-h-0 flex-1 flex-col lg:h-full"
-    >
-      <Suspense>
-        <CopilotChatShell
-          initial={data.history}
-          presets={data.presets}
-          keyMissing={!process.env.ANTHROPIC_API_KEY}
-          firstName={viewer?.firstName}
-          projects={projects.map((p) => ({
-            id: p.id,
-            slug: p.slug,
-            name: p.name,
-            status: p.status,
-          }))}
-          projectId={selected?.id ?? null}
-          role={role}
-        />
-      </Suspense>
-    </div>
+    <section className="flex flex-col gap-8">
+      <PageHead mascot="06-loupe" label={p.label} title={p.title} tail={p.tail}>
+        {p.text}
+      </PageHead>
+      <DocumentDrop chantiers={chantiers} clients={clients} />
+      <DocumentList
+        docs={scoped.slice(0, 6)}
+        empty="Rien à analyser. Déposez un devis distributeur."
+        clients={clients}
+      />
+      <div className="flex min-h-[420px] flex-col">
+        <Suspense>
+          <CopilotChatShell
+            initial={data.history}
+            presets={data.presets}
+            keyMissing={!process.env.ANTHROPIC_API_KEY}
+            firstName={viewer?.firstName}
+            projects={chantiers.map((row) => ({
+              id: row.id,
+              slug: row.slug,
+              name: row.name,
+              status: row.status,
+            }))}
+            projectId={selected?.id ?? null}
+            role={role}
+          />
+        </Suspense>
+      </div>
+    </section>
   );
 }

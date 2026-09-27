@@ -5,7 +5,7 @@ import { CornerDownLeft, CreditCard, Search, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { EASE } from "@/components/motion/reveal";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,7 +57,8 @@ export function CommandPalette({
     () => [
       { href: "/compte#configuration", label: "Configuration initiale", icon: User },
       { href: "/compte", label: "Compte", icon: User },
-      { href: "/abonnement", label: "Abonnement", icon: CreditCard },
+      { href: "/entreprise", label: "Mon entreprise", icon: User },
+      { href: "/abonnement", label: "Tarifs", icon: CreditCard },
       { href: "/onboarding", label: "Onboarding guidé", icon: User },
     ],
     [],
@@ -153,10 +154,7 @@ export function CommandPalette({
             >
               {results.length === 0 ? (
                 <li className="flex flex-col items-center gap-1 px-3 py-5 text-center text-sm text-muted-foreground">
-                  <Illustration
-                    name="empty-aucun-resultat"
-                    className="size-16"
-                  />
+                  <TarineoHdMascot name="06-loupe" className="h-16 w-20" label="" />
                   Rien trouvé.
                 </li>
               ) : (

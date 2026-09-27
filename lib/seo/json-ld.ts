@@ -1,6 +1,5 @@
 import { BRAND } from "@/lib/brand";
-import { FOUNDER, PRO, STARTER } from "@/lib/billing/plans";
-import { FAQ_GROUPS } from "@/lib/site/content";
+import { FAQ_GROUPS, PRICING } from "@/lib/site/tarineo";
 import { getSiteUrl } from "@/lib/site-url";
 
 const site = () => getSiteUrl();
@@ -15,7 +14,7 @@ export function organizationJsonLd() {
     url: site(),
     logo: `${site()}${BRAND.logoSrc}`,
     description: BRAND.description,
-    email: "contact@navpit.com",
+    email: BRAND.contactEmail,
   };
 }
 
@@ -33,7 +32,7 @@ export function webSiteJsonLd() {
   };
 }
 
-/** Produit SaaS — fiche logiciel pour rich results & citations IA. */
+/** Logiciel — fiche produit pour rich results & citations IA. */
 export function softwareApplicationJsonLd() {
   return {
     "@context": "https://schema.org",
@@ -45,33 +44,17 @@ export function softwareApplicationJsonLd() {
     operatingSystem: "Web",
     inLanguage: "fr-FR",
     description: BRAND.description,
-    offers: [
-      {
-        "@type": "Offer",
-        name: "Création",
-        price: String(STARTER.month),
-        priceCurrency: "EUR",
-        description: "6 projets, 300 questions IA/mois, 100 schémas",
-      },
-      {
-        "@type": "Offer",
-        name: "Pro",
-        price: String(PRO.month),
-        priceCurrency: "EUR",
-        description: "Projets et schémas illimités, agenda, copilote IA",
-      },
-      {
-        "@type": "Offer",
-        name: "Fondateur",
-        price: String(FOUNDER.price),
-        priceCurrency: "EUR",
-        description: "Accès Pro à vie, places limitées",
-      },
-    ],
+    offers: PRICING.map((p) => ({
+      "@type": "Offer",
+      name: p.name,
+      price: String(p.month),
+      priceCurrency: "EUR",
+      description: p.text,
+    })),
     featureList: [
-      "Un seul projet en Focus jusqu’à la première vente",
-      "Copilote IA avec contexte projets et tâches",
-      "Schémas, ressources design et planning",
+      "Import de devis et factures fournisseurs en PDF ou photo",
+      "Extraction automatique des lignes et des prix",
+      "Comparaison avec l’historique de prix et détection des hausses",
     ],
     publisher: { "@id": `${site()}/#organization` },
   };

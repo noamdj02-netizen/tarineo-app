@@ -1,15 +1,18 @@
 /** Identité de la marque : un seul endroit à changer. */
 export const BRAND = {
-  name: "Navpit",
-  domain: "navpit.com",
+  name: "Tarinéo",
+  /** À confirmer : domaine définitif (sert au canonique si NEXT_PUBLIC_APP_URL est absent). */
+  domain: "tarineo.fr",
   /** Canonique SEO + emails (www). */
-  siteUrl: "https://www.navpit.com",
-  /** Logo statique (header site + app). */
-  logoSrc: "/icons/logoNavPit.png",
+  siteUrl: "https://www.tarineo.fr",
+  /** Logo statique (JSON-LD, emails). Le header utilise le composant <TarineoMark />. */
+  logoSrc: "/brand/tarineo-logo.png",
   /** Logo landing (nav + footer site public). */
-  logoLandingSrc: "/icons/logo-landing.png",
-  tagline: "The operating system for focused founders.",
+  logoLandingSrc: "/brand/tarineo-logo.png",
+  /** À confirmer : adresse de contact publique. */
+  contactEmail: "contact@tarineo.fr",
+  tagline: "L’assistant qui protège votre marge.",
   /** Description courte (français) : balise meta, écran de connexion. */
   description:
-    "Ton cockpit pour créer tes SaaS : un projet en focus, la prochaine action, tes ressources design et un copilote IA qui connaît tout ça.",
+    "Analysez vos devis et factures fournisseurs, détectez les hausses de prix et suivez l’évolution de vos achats avec Tarinéo.",
 } as const;

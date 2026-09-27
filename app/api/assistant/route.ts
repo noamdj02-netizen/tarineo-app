@@ -152,7 +152,7 @@ export async function POST(request: Request) {
   if (/^\/[\w\-/]*$/.test(page)) {
     system.push({
       type: "text",
-      text: `Page Navpit : ${page}.${projectId ? ` Fil du projet ${projectId}.` : ""} Rôle : ${role}.`,
+      text: `Page Tarinéo : ${page}.${projectId ? ` Fil du chantier ${projectId}.` : ""} Rôle : ${role}.`,
     });
   }
 

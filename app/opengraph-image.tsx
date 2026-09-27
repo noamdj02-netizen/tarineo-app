@@ -1,11 +1,16 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { BRAND } from "@/lib/brand";
 
-export const alt = `${BRAND.name} — cockpit des fondateurs solo`;
+export const alt = `${BRAND.name} — ${BRAND.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  const logo = await readFile(join(process.cwd(), "public/brand/tarineo-mark.png"));
+  const logoSrc = `data:image/png;base64,${logo.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -14,21 +19,26 @@ export default function OpenGraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          justifyContent: "space-between",
           padding: 72,
-          background: "linear-gradient(145deg, #f3f3f2 0%, #ebe4ff 45%, #dce8ff 100%)",
-          color: "#111111",
+          background: "radial-gradient(ellipse 60% 55% at 85% 100%, rgba(236,88,33,0.28) 0%, #050505 70%)",
+          backgroundColor: "#050505",
+          color: "#ffffff",
           fontFamily: "system-ui, sans-serif",
         }}
       >
-        <div style={{ fontSize: 28, letterSpacing: "0.14em", textTransform: "uppercase", opacity: 0.65 }}>
-          Cockpit fondateur
+        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+          <img src={logoSrc} width={64} height={64} alt="" />
+          <div style={{ fontSize: 40, fontWeight: 600, letterSpacing: "-0.03em" }}>{BRAND.name}</div>
         </div>
-        <div style={{ fontSize: 72, fontWeight: 600, letterSpacing: "-0.04em", lineHeight: 1.02, marginTop: 16 }}>
-          {BRAND.name}
-        </div>
-        <div style={{ fontSize: 32, lineHeight: 1.35, maxWidth: 720, marginTop: 24, opacity: 0.78 }}>
-          Un seul projet en Focus. Copilote IA, planning et ressources design au même endroit.
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ fontSize: 70, fontWeight: 600, letterSpacing: "-0.045em", lineHeight: 1.02, maxWidth: 980 }}>
+            Vos devis fournisseurs, comparés à votre historique.
+          </div>
+          <div style={{ display: "flex", fontSize: 28, marginTop: 28, color: "#a0a0a0" }}>
+            {BRAND.tagline}
+            <span style={{ color: "#ec5821", marginLeft: 16 }}>+14,5 %</span>
+          </div>
         </div>
       </div>
     ),

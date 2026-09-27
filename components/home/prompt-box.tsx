@@ -202,7 +202,7 @@ export function PromptBox({
 
             <div className={cn("flex items-end gap-2", large && "gap-2.5")}>
               <label htmlFor="prompt" className="sr-only">
-                Ta question au copilote
+                Analyser un document ou poser une question
               </label>
               <div
                 className={cn(

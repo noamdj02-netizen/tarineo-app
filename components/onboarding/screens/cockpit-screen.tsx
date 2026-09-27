@@ -21,6 +21,7 @@ export const COCKPIT_PRESETS: {
       calendar: false,
       postits: false,
       schemas: false,
+      metier: false,
     },
   },
   {
@@ -36,6 +37,7 @@ export const COCKPIT_PRESETS: {
       focus: false,
       projects: false,
       schemas: false,
+      metier: false,
     },
   },
   {
@@ -51,6 +53,7 @@ export const COCKPIT_PRESETS: {
       calendar: false,
       week: false,
       postits: false,
+      metier: false,
     },
   },
 ];
@@ -64,6 +67,7 @@ const WIDGET_HINTS: Record<WidgetKey, string> = {
   postits: "Notes libres sur le tableau",
   projects: "Tes projets, un clic",
   schemas: "Derniers schémas",
+  metier: "Cartes métier : hausses, devis, produits",
 };
 
 export function CockpitScreen({

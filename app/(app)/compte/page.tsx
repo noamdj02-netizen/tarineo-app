@@ -49,11 +49,18 @@ export default async function ComptePage() {
         <ArrowLeft className="size-4" aria-hidden />
         Retour à l’accueil
       </Link>
-      <PageHead art="onboarding-configurer" label="Compte" title="Ton profil," tail="tes réglages.">
+      <PageHead mascot="05-bras-croises" label="Compte" title="Ton profil," tail="tes réglages.">
         Photo, prénom, langue, mot de passe et abonnement. Tout est ici.
       </PageHead>
 
       <div className="flex flex-col gap-4">
+        <Link
+          href="/entreprise"
+          className="card-soft flex min-h-14 items-center justify-between px-5 text-[15px] font-medium"
+        >
+          Mon entreprise
+          <span className="text-[13px] font-normal text-muted-foreground">SIRET, TVA, logo sur les PDF</span>
+        </Link>
         {owner ? (
           <Link
             href="/admin"

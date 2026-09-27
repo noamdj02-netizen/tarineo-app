@@ -17,7 +17,7 @@ import { BRAND } from "@/lib/brand";
 import { NavpitFonts } from "./navpit-fonts";
 import { navpitEmailTailwindConfig } from "./theme";
 
-export type NavpitEmailShellProps = {
+export type TarineoEmailShellProps = {
   preview: string;
   label: string;
   title: string;
@@ -25,8 +25,6 @@ export type NavpitEmailShellProps = {
   children: ReactNode;
   steps?: { title: string; text: string; href: string; linkLabel: string }[];
   footerNote?: string;
-  /** Masque la grande image mascotte (mails perso / check-in). */
-  hideHeroImage?: boolean;
 };
 
 function logoUrl(appUrl: string) {
@@ -34,7 +32,7 @@ function logoUrl(appUrl: string) {
   return `${base}${BRAND.logoSrc}`;
 }
 
-export function NavpitEmailShell({
+export function TarineoEmailShell({
   preview,
   label,
   title,
@@ -42,8 +40,7 @@ export function NavpitEmailShell({
   children,
   steps,
   footerNote,
-  hideHeroImage = false,
-}: NavpitEmailShellProps) {
+}: TarineoEmailShellProps) {
   const mascot = logoUrl(appUrl);
   const helpUrl = `${appUrl.replace(/\/$/, "")}/#faq`;
 
@@ -80,17 +77,15 @@ export function NavpitEmailShell({
               <Section className="mt-8 max-w-copy">{children}</Section>
             </Section>
 
-            {!hideHeroImage ? (
-              <Section className="px-6 pb-10">
-                <Img
-                  src={mascot}
-                  alt=""
-                  width={592}
-                  height={592}
-                  className="block w-full max-w-[592px] rounded-[20px] border border-line bg-surface"
-                />
-              </Section>
-            ) : null}
+            <Section className="px-6 pb-10">
+              <Img
+                src={mascot}
+                alt=""
+                width={592}
+                height={592}
+                className="block w-full max-w-[592px] rounded-[20px] border border-line bg-surface"
+              />
+            </Section>
 
             {steps && steps.length > 0 ? (
               <Section className="px-6 pb-12">
@@ -112,7 +107,7 @@ export function NavpitEmailShell({
             <Section className="border-line border-t px-6 py-12">
               <Text className="m-0 max-w-[320px] font-sans text-13 text-ink-2">
                 {footerNote ??
-                  `${BRAND.name} : un seul projet en Focus, la prochaine action visible, et un copilote IA qui connaît tes projets.`}
+                  `${BRAND.name} : déposez un devis, rangez-le par chantier, renvoyez la pièce au client.`}
               </Text>
               <Text className="m-0 mt-6 font-sans text-13 text-ink-2">
                 Besoin d&apos;aide ?{" "}
@@ -152,6 +147,9 @@ export function EmailCode({ children }: { children: ReactNode }) {
     </Text>
   );
 }
+
+/** @deprecated alias */
+export const NavpitEmailShell = TarineoEmailShell;
 
 export function EmailCta({ href, children }: { href: string; children: ReactNode }) {
   return (

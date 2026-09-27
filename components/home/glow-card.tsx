@@ -18,19 +18,19 @@ function Glow({ soft }: { soft?: boolean }) {
     >
       <div
         className={cn(
-          "absolute -bottom-[20%] left-[-18%] h-[95%] w-[70%] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-1)_20%,transparent)] blur-2xl",
+          "absolute -bottom-[20%] left-[-18%] h-[95%] w-[70%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-brand-orange)_48%,white)_20%,transparent)] blur-2xl",
           !soft && "animate-[glow-drift_16s_ease-in-out_infinite]",
         )}
       />
       <div
         className={cn(
-          "absolute -bottom-[10%] left-[18%] h-[100%] w-[64%] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-2)_20%,transparent)] blur-2xl",
+          "absolute -bottom-[10%] left-[18%] h-[100%] w-[64%] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-orange-light)_18%,transparent)] blur-2xl",
           !soft && "animate-[glow-drift_19s_ease-in-out_-6s_infinite]",
         )}
       />
       <div
         className={cn(
-          "absolute right-[-18%] -bottom-[20%] h-[95%] w-[62%] rounded-full bg-[radial-gradient(closest-side,var(--color-glow-3)_20%,transparent)] blur-2xl",
+          "absolute right-[-18%] -bottom-[20%] h-[95%] w-[62%] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-orange)_16%,transparent)] blur-2xl",
           !soft && "animate-[glow-drift_22s_ease-in-out_-11s_infinite]",
         )}
       />

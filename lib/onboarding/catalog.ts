@@ -35,15 +35,9 @@ export type OnboardingAnswers = {
 export const ONBOARD_STEPS = [
   { id: "welcome", label: "Bienvenue", art: "onboarding-bienvenue" as IllustrationName },
   { id: "identite", label: "Toi", art: "onboarding-decouvrir" as IllustrationName },
-  { id: "goal", label: "But", art: "onboarding-objectif" as IllustrationName },
-  { id: "pain", label: "Freins", art: "feedback-question" as IllustrationName },
-  { id: "proof", label: "Preuve", art: "notif-like" as IllustrationName },
-  { id: "swipe", label: "Cartes", art: "onboarding-premier-pas" as IllustrationName },
-  { id: "solution", label: "Pont", art: "landing-progression" as IllustrationName },
-  { id: "process", label: "Pause", art: "dashboard-analyse" as IllustrationName },
-  { id: "projet", label: "Projet", art: "landing-idee" as IllustrationName },
-  { id: "cockpit", label: "Cockpit", art: "landing-commencer" as IllustrationName },
-  { id: "paywall", label: "Essai", art: "landing-victoire" as IllustrationName },
+  { id: "entreprise", label: "Entreprise", art: "onboarding-configurer" as IllustrationName },
+  { id: "chantier", label: "Chantier", art: "dashboard-devis" as IllustrationName },
+  { id: "go", label: "C’est parti", art: "landing-victoire" as IllustrationName },
 ] as const;
 
 export type OnboardStepId = (typeof ONBOARD_STEPS)[number]["id"];

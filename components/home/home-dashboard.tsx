@@ -2,24 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { saveDashboardLayout } from "@/app/(app)/accueil/dashboard-actions";
-import { ActionCards, type ActionCard } from "@/components/home/action-cards";
 import { CalendarCard } from "@/components/home/calendar-card";
 import { ColumnResizer } from "@/components/home/column-resizer";
 import { DashboardCustomize } from "@/components/home/dashboard-customize";
 import { DashboardWidget } from "@/components/home/dashboard-widget";
-import {
-  DashboardProjectsWidget,
-  DashboardSchemasWidget,
-  type DashboardProjectRow,
-  type DashboardSchemaRow,
-} from "@/components/home/dashboard-library-widgets";
-import { PostItBoard } from "@/components/home/post-it-board";
-import { PromptHero } from "@/components/home/prompt-hero";
-import { WeekCard } from "@/components/home/week-card";
 import { DashboardTour } from "@/components/home/dashboard-tour";
 import { FocusProjectCard, type FocusProject } from "@/components/home/focus-project-card";
+import { ChantiersWidget, HaussesWidget, PendingDocsWidget } from "@/components/home/dashboard-metier-widgets";
+import { DocumentDrop } from "@/components/metier/document-drop";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
-import type { WeekStats } from "@/lib/home/week";
+import type { ChantierCard, DocumentCard, Party, PriceAlert } from "@/lib/metier/types";
 import {
   activeWidgetsInColumn,
   DEFAULT_DASHBOARD_PREFS,
@@ -33,26 +25,24 @@ import {
 
 export function HomeDashboard({
   firstName,
-  cards,
-  week,
+  chantiers,
+  clients = [],
+  pendingDocs = [],
+  alerts = [],
   initialLayout,
-  projects,
-  schemas,
   focus = null,
   showTour = false,
 }: {
   firstName?: string | null;
-  cards: ActionCard[];
-  week: WeekStats | null;
+  chantiers: ChantierCard[];
+  clients?: Party[];
+  pendingDocs?: DocumentCard[];
+  alerts?: PriceAlert[];
   initialLayout: DashboardPrefs;
-  projects: DashboardProjectRow[];
-  schemas: DashboardSchemaRow[];
   focus?: FocusProject | null;
   showTour?: boolean;
 }) {
-  const [prefs, setPrefs] = useState<DashboardPrefs>(() =>
-    normalizeDashboardPrefs(initialLayout),
-  );
+  const [prefs, setPrefs] = useState<DashboardPrefs>(() => normalizeDashboardPrefs(initialLayout));
   const [editMode, setEditMode] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -60,20 +50,23 @@ export function HomeDashboard({
 
   useEffect(() => {
     const local = loadDashboardPrefsLocal();
-    const merged = normalizeDashboardPrefs({
-      ...local,
-      ...initialLayout,
-      leftColumn: initialLayout.leftColumn?.length ? initialLayout.leftColumn : local.leftColumn,
-      rightColumn: initialLayout.rightColumn?.length ? initialLayout.rightColumn : local.rightColumn,
-      postits:
-        initialLayout.postits.length > 0 &&
-        JSON.stringify(initialLayout.postits) !== JSON.stringify(DEFAULT_DASHBOARD_PREFS.postits)
-          ? initialLayout.postits
-          : local.postits,
-    });
-    setPrefs(merged);
+    setPrefs(
+      normalizeDashboardPrefs({
+        ...local,
+        ...initialLayout,
+        widgets: {
+          ...DEFAULT_DASHBOARD_PREFS.widgets,
+          ...local.widgets,
+          ...initialLayout.widgets,
+          week: false,
+          postits: false,
+          metier: false,
+        },
+        leftColumn: initialLayout.leftColumn?.length ? initialLayout.leftColumn : local.leftColumn,
+        rightColumn: initialLayout.rightColumn?.length ? initialLayout.rightColumn : local.rightColumn,
+      }),
+    );
     setHydrated(true);
-    // fusion locale une seule fois au montage
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -99,10 +92,12 @@ export function HomeDashboard({
 
   const renderWidget = (key: WidgetKey, column: "left" | "right") => {
     if (!w[key]) return null;
+    if (key === "week" || key === "postits" || key === "metier") {
+      return null;
+    }
     const onDropWidget = (dragged: WidgetKey) => {
       setPrefs((p) => reorderWidget(p, dragged, key, column));
     };
-
     const shell = (child: React.ReactNode) => (
       <DashboardWidget
         key={key}
@@ -117,25 +112,24 @@ export function HomeDashboard({
         {child}
       </DashboardWidget>
     );
-
     switch (key) {
       case "prompt":
         return shell(
-          <div data-tour="prompt">
-            <PromptHero firstName={firstName} featured />
+          <div data-tour="prompt" className="flex flex-col gap-2">
+            <p className="text-[13px] text-muted-foreground">
+              {firstName ? `${firstName}, ` : ""}déposez un devis ou une facture.
+            </p>
+            <DocumentDrop chantiers={chantiers} clients={clients} compact />
           </div>,
         );
-      case "actions":
-        return shell(
-          <div data-tour="actions" className="flex flex-col gap-2">
-            <p className="mono-label px-0.5">{"/ Actions rapides ///"}</p>
-            <ActionCards cards={cards} layout="strip" />
-          </div>,
-        );
-      case "week":
-        return week ? shell(<WeekCard stats={week} compact />) : null;
       case "focus":
         return shell(<FocusProjectCard project={focus} />);
+      case "actions":
+        return shell(<PendingDocsWidget docs={pendingDocs} />);
+      case "projects":
+        return shell(<ChantiersWidget chantiers={chantiers} />);
+      case "schemas":
+        return shell(<HaussesWidget alerts={alerts} />);
       case "calendar":
         return shell(
           <CalendarCard
@@ -144,19 +138,6 @@ export function HomeDashboard({
             className="xl:max-h-[min(72vh,640px)] xl:overflow-y-auto"
           />,
         );
-      case "postits":
-        return shell(
-          <PostItBoard
-            postits={prefs.postits}
-            editMode={editMode}
-            dense
-            onChange={(postits) => setPrefs((p) => ({ ...p, postits }))}
-          />,
-        );
-      case "projects":
-        return shell(<DashboardProjectsWidget projects={projects} />);
-      case "schemas":
-        return shell(<DashboardSchemasWidget schemas={schemas} />);
       default:
         return null;
     }
@@ -167,93 +148,59 @@ export function HomeDashboard({
       <DashboardTour open={showTour} />
       <RevealGroup className="mx-auto flex max-w-[760px] flex-col gap-5 pt-[1vh] pb-4 sm:pt-[3vh] lg:hidden">
         <div className="flex items-center justify-end" data-tour="compose">
-          <DashboardCustomize
-            prefs={prefs}
-            editMode={editMode}
-            onEditMode={setEditMode}
-            onPrefs={setPrefs}
-          />
+          <DashboardCustomize prefs={prefs} editMode={editMode} onEditMode={setEditMode} onPrefs={setPrefs} />
         </div>
         {w.prompt ? (
           <Reveal>
-            <div data-tour="prompt">
-              <PromptHero firstName={firstName} />
-            </div>
+            <DocumentDrop chantiers={chantiers} clients={clients} compact />
           </Reveal>
         ) : null}
-        <div className="flex flex-col gap-3">
-          {w.calendar ? (
-            <Reveal>
-              <CalendarCard />
-            </Reveal>
-          ) : null}
-          {w.week && week ? (
-            <Reveal>
-              <WeekCard stats={week} />
-            </Reveal>
-          ) : null}
-          {w.focus ? (
-            <Reveal>
-              <FocusProjectCard project={focus} />
-            </Reveal>
-          ) : null}
-        </div>
+        {w.calendar ? (
+          <Reveal>
+            <CalendarCard />
+          </Reveal>
+        ) : null}
+        {w.focus ? (
+          <Reveal>
+            <FocusProjectCard project={focus} />
+          </Reveal>
+        ) : null}
         {w.actions ? (
-          <div data-tour="actions" className="flex flex-col gap-3">
-            <p className="mono-label">{"/ Actions rapides ///"}</p>
-            <ActionCards cards={cards} />
-          </div>
+          <Reveal>
+            <PendingDocsWidget docs={pendingDocs} />
+          </Reveal>
         ) : null}
-        {w.postits ? (
-          <PostItBoard
-            postits={prefs.postits}
-            editMode={editMode}
-            onChange={(postits) => setPrefs((p) => ({ ...p, postits }))}
-          />
+        {w.projects ? (
+          <Reveal>
+            <ChantiersWidget chantiers={chantiers} />
+          </Reveal>
         ) : null}
-        {w.projects ? <DashboardProjectsWidget projects={projects} /> : null}
-        {w.schemas ? <DashboardSchemasWidget schemas={schemas} /> : null}
+        {w.schemas ? (
+          <Reveal>
+            <HaussesWidget alerts={alerts} />
+          </Reveal>
+        ) : null}
       </RevealGroup>
 
       <div className="mx-auto hidden w-full max-w-[1320px] flex-col gap-4 pb-5 lg:flex lg:pt-1">
         <header className="flex flex-wrap items-center justify-between gap-2 px-0.5">
-          <p className="mono-label">{"/ Aujourd’hui ///"}</p>
+          <p className="mono-label">{"/ Tableau de bord ///"}</p>
           <div data-tour="compose">
-            <DashboardCustomize
-              prefs={prefs}
-              editMode={editMode}
-              onEditMode={setEditMode}
-              onPrefs={setPrefs}
-            />
+            <DashboardCustomize prefs={prefs} editMode={editMode} onEditMode={setEditMode} onPrefs={setPrefs} />
           </div>
         </header>
-
-        {editMode ? (
-          <p className="text-[13px] text-muted-foreground">
-            Attrape un bloc et déplace-le. La barre du milieu suit ton doigt.
-          </p>
-        ) : null}
-
-        {w.prompt ? (
-          <div className="mb-1 w-full">{renderWidget("prompt", "left")}</div>
-        ) : null}
-
+        {w.prompt ? <div className="mb-1 w-full">{renderWidget("prompt", "left")}</div> : null}
         <div id="home-dashboard-columns" className="flex min-h-0 items-start gap-0 xl:gap-1">
-          <div
-            className="flex min-w-0 flex-col gap-2.5"
-            style={{ width: `${prefs.columnSplit}%` }}
-          >
+          <div className="flex min-w-0 flex-col gap-2.5" style={{ width: `${prefs.columnSplit}%` }}>
             {activeWidgetsInColumn(prefs, "left")
-              .filter((key) => key !== "prompt")
+              .filter((key) => key !== "prompt" && key !== "week")
               .map((key) => renderWidget(key, "left"))}
           </div>
-
           <ColumnResizer
             onChange={(columnSplit) => setPrefs((p) => ({ ...p, columnSplit }))}
             onCommit={(columnSplit) => setPrefs((p) => ({ ...p, columnSplit }))}
           />
-
-          <div className="flex min-w-0 flex-1 flex-col gap-2.5 xl:sticky xl:top-[4.75rem] xl:max-h-[calc(100dvh-6rem)] xl:self-start xl:overflow-y-auto xl:overscroll-contain">
+          <div className="flex min-w-0 flex-1 flex-col gap-2.5 xl:sticky xl:top-[4.75rem] xl:max-h-[calc(100dvh-6rem)] xl:self-start xl:overflow-y-auto">
             {activeWidgetsInColumn(prefs, "right")
               .filter((key) => key !== "prompt")
               .map((key) => renderWidget(key, "right"))}

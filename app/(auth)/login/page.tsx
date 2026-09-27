@@ -12,10 +12,10 @@ export default async function LoginPage({
   const { next, error, signed_out } = await searchParams;
   return (
     <AuthCard
-      art="onboarding-bienvenue"
+      mascot="15-coucou-bord"
       label="Connexion"
       title="Bon retour."
-      text="Connecte-toi pour retrouver tes projets."
+      text="Vos chantiers, devis et factures vous attendent."
       footer={
         <>
           Pas encore de compte ?{" "}

@@ -1,18 +1,17 @@
 import {
-  Blocks,
-  Bot,
-  Boxes,
-  Clapperboard,
+  ArrowLeftRight,
+  Bell,
+  Building2,
+  CreditCard,
+  FileSearch,
+  FileSpreadsheet,
+  FileText,
+  FolderTree,
+  HardHat,
   House,
-  LayoutDashboard,
-  Layers,
-  Library,
-  Palette,
-  ScanSearch,
-  Shapes,
-  Sparkles,
-  Wrench,
-  Zap,
+  Receipt,
+  Store,
+  Truck,
   type LucideIcon,
 } from "lucide-react";
 
@@ -24,85 +23,168 @@ export type Tab = {
   icon: LucideIcon;
 };
 
-export type NavSection = {
+export type NavDrawer = {
   id: string;
   label: string;
+  icon: LucideIcon;
   items: Tab[];
 };
 
-const accueil: Tab = { href: "/accueil", label: "Accueil", short: "Accueil", icon: House };
-const copilote: Tab = { href: "/copilote", label: "Copilote", short: "IA", icon: Bot };
-const automatisations: Tab = {
-  href: "/automatisations",
-  label: "Automatisations",
-  short: "Auto",
-  icon: Zap,
-};
-const projets: Tab = {
-  href: "/projets",
-  label: "Projets",
-  short: "Projets",
-  icon: LayoutDashboard,
-};
-const ressources: Tab = {
-  href: "/ressources",
-  label: "Ressources",
-  short: "Ressources",
-  icon: Library,
-};
-const outils: Tab = { href: "/outils", label: "Outils", short: "Outils", icon: Wrench };
-const schemas: Tab = { href: "/schemas", label: "Schémas", short: "Schémas", icon: Shapes };
-const anatomie: Tab = { href: "/anatomie", label: "Anatomie", short: "Anatomie", icon: Layers };
-const heros: Tab = {
-  href: "/bibliotheque/heros",
-  label: "Heros",
-  short: "Heros",
-  icon: Clapperboard,
-};
-const libs: Tab = {
-  href: "/bibliotheque/libs",
-  label: "Libs UI",
-  short: "Libs",
-  icon: Boxes,
-};
-const composants: Tab = {
-  href: "/composants",
-  label: "Composants",
-  short: "Compos",
-  icon: Blocks,
-};
-const composants2: Tab = {
-  href: "/composants-2",
-  label: "Composants 2",
-  short: "Compos 2",
-  icon: Sparkles,
-};
-const themes: Tab = { href: "/themes", label: "Thèmes", short: "Thèmes", icon: Palette };
-const audit: Tab = { href: "/audit", label: "Mes sites", short: "Sites", icon: ScanSearch };
+export type NavItem = Tab | NavDrawer;
 
-/** Sections de la barre latérale (desktop). */
+export type NavSection = {
+  id: string;
+  label: string;
+  items: NavItem[];
+};
+
+export function isNavDrawer(item: NavItem): item is NavDrawer {
+  return "items" in item && !("href" in item);
+}
+
+const accueil: Tab = {
+  href: "/accueil",
+  label: "Tableau de bord",
+  short: "Accueil",
+  icon: House,
+};
+const analyse: Tab = {
+  href: "/copilote",
+  label: "Analyse",
+  short: "Analyse",
+  icon: FileSearch,
+};
+const alertes: Tab = {
+  href: "/schemas",
+  label: "Hausses",
+  short: "Hausses",
+  icon: Bell,
+};
+const classement: Tab = {
+  href: "/anatomie",
+  label: "Achats",
+  short: "Achats",
+  icon: FolderTree,
+};
+const chantiers: Tab = {
+  href: "/projets",
+  label: "Chantiers",
+  short: "Chantiers",
+  icon: HardHat,
+};
+const fournisseurs: Tab = {
+  href: "/outils",
+  label: "Fournisseurs",
+  short: "Fournisseurs",
+  icon: Store,
+};
+const comparateur: Tab = {
+  href: "/audit",
+  label: "Comparateur",
+  short: "Compare",
+  icon: ArrowLeftRight,
+};
+const tarifs: Tab = {
+  href: "/abonnement",
+  label: "Tarifs",
+  short: "Tarifs",
+  icon: CreditCard,
+};
+
+const distDevis: Tab = {
+  href: "/ressources?kind=devis",
+  label: "Devis",
+  short: "Devis",
+  icon: FileText,
+};
+const distBc: Tab = {
+  href: "/ressources?kind=bon_commande",
+  label: "Bon de commande",
+  short: "BC",
+  icon: FileSpreadsheet,
+};
+const distBe: Tab = {
+  href: "/ressources?kind=bon_enlevement",
+  label: "Bon d’enlèvement",
+  short: "Enlèvement",
+  icon: Truck,
+};
+const distFacture: Tab = {
+  href: "/ressources?kind=facture",
+  label: "Facture",
+  short: "Facture",
+  icon: Receipt,
+};
+
+const entDevis: Tab = {
+  href: "/composants?kind=devis",
+  label: "Devis client",
+  short: "Devis",
+  icon: FileSpreadsheet,
+};
+const entBc: Tab = {
+  href: "/composants?kind=bon_commande",
+  label: "Bon de commande client",
+  short: "BC client",
+  icon: FileText,
+};
+const entFacture: Tab = {
+  href: "/composants?kind=facture",
+  label: "Facture client",
+  short: "Facture",
+  icon: Receipt,
+};
+
+const docsDistributeur: NavDrawer = {
+  id: "docs-distributeur",
+  label: "Documents distributeur",
+  icon: Truck,
+  items: [distDevis, distBc, distBe, distFacture],
+};
+
+const docsEntreprise: NavDrawer = {
+  id: "docs-entreprise",
+  label: "Documents entreprise",
+  icon: Building2,
+  items: [entDevis, entBc, entFacture],
+};
+
+/** Sections de la barre latérale — mêmes thèmes que la landing. */
 export const NAV_SECTIONS: NavSection[] = [
-  { id: "cockpit", label: "Cockpit", items: [accueil, copilote, automatisations, projets] },
-  {
-    id: "library",
-    label: "Bibliothèque",
-    items: [ressources, schemas, anatomie, heros, libs],
-  },
-  {
-    id: "studio",
-    label: "Studio design",
-    items: [composants, composants2, themes],
-  },
-  {
-    id: "stack",
-    label: "Stack & audit",
-    items: [outils, audit],
-  },
+  { id: "aujourd-hui", label: "Aujourd’hui", items: [accueil, analyse] },
+  { id: "documents", label: "Documents", items: [docsDistributeur, docsEntreprise] },
+  { id: "chantiers", label: "Chantiers", items: [chantiers] },
+  { id: "achats", label: "Achats", items: [fournisseurs, comparateur, alertes, classement, tarifs] },
 ];
 
 /** Liste plate (palette ⌘K, mobile, etc.). */
-export const TABS: Tab[] = NAV_SECTIONS.flatMap((s) => s.items);
+export const TABS: Tab[] = NAV_SECTIONS.flatMap((s) =>
+  s.items.flatMap((item) => (isNavDrawer(item) ? item.items : [item])),
+);
 
-export function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(href + "/");
+export function hrefPath(href: string) {
+  const q = href.indexOf("?");
+  return q < 0 ? href : href.slice(0, q);
+}
+
+export function hrefQuery(href: string) {
+  const q = href.indexOf("?");
+  return q < 0 ? "" : href.slice(q + 1);
+}
+
+export function isActive(pathname: string, href: string, search = "") {
+  const path = hrefPath(href);
+  const want = hrefQuery(href);
+  if (pathname !== path && !pathname.startsWith(`${path}/`)) return false;
+  if (!want) {
+    if (pathname !== path && pathname.startsWith(`${path}/`)) return true;
+    return pathname === path;
+  }
+  if (pathname !== path) return false;
+  const wantP = new URLSearchParams(want);
+  const haveP = new URLSearchParams(search);
+  for (const [k, v] of wantP) {
+    if (haveP.get(k) !== v) return false;
+  }
+  return true;
 }

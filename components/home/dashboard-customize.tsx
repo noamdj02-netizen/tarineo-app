@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  Calendar,
-  LayoutDashboard,
-  LayoutGrid,
-  MessageSquare,
-  RotateCcw,
-  Shapes,
-  Sparkles,
-  Star,
-  StickyNote,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
+import { Bell, Calendar, FolderKanban, Inbox, LayoutGrid, MessageSquare, RotateCcw, Sparkles, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -49,59 +37,45 @@ type CatalogItem = {
 const CATALOG: CatalogItem[] = [
   {
     key: "prompt",
-    title: "Copilote",
-    description: "Question du jour + envoi vers le chat",
+    title: "Dépôt",
+    description: "Glissez un devis ou une facture",
     icon: MessageSquare,
     group: "board",
   },
   {
     key: "calendar",
     title: "Planning",
-    description: "Calendrier et agenda du jour",
+    description: "RDV chantier et relances",
     icon: Calendar,
     group: "board",
   },
   {
-    key: "week",
-    title: "Ma semaine",
-    description: "Activité des 7 derniers jours",
-    icon: TrendingUp,
-    group: "board",
-  },
-  {
     key: "focus",
-    title: "Projet favori",
-    description: "Le projet Focus, au centre du tableau",
+    title: "Chantier en cours",
+    description: "Le chantier ouvert",
     icon: Star,
     group: "board",
   },
   {
     key: "actions",
-    title: "Actions rapides",
-    description: "Raccourcis focus, landing, thèmes",
-    icon: Zap,
-    group: "board",
-  },
-  {
-    key: "postits",
-    title: "Post-its",
-    description: "Notes libres sur ton tableau",
-    icon: StickyNote,
+    title: "À traiter",
+    description: "Devis importés à transformer",
+    icon: Inbox,
     group: "board",
   },
   {
     key: "projects",
-    title: "Mes projets",
-    description: "Liste tes projets à ouvrir en un clic",
-    icon: LayoutDashboard,
-    group: "library",
+    title: "Chantiers",
+    description: "Focus et affaires en pause",
+    icon: FolderKanban,
+    group: "board",
   },
   {
     key: "schemas",
-    title: "Schémas",
-    description: "Derniers schémas importés ou générés",
-    icon: Shapes,
-    group: "library",
+    title: "Hausses",
+    description: "Derniers écarts de prix",
+    icon: Bell,
+    group: "board",
   },
 ];
 
@@ -159,11 +133,9 @@ export function DashboardCustomize({
 
           <ScrollArea className="max-h-[min(52vh,420px)] flex-1">
             <div className="flex flex-col gap-6 px-5 py-4">
-              {(["board", "library"] as const).map((group) => (
+              {(["board"] as const).map((group) => (
                 <div key={group}>
-                  <p className="mono-label mb-3">
-                    {group === "board" ? "/ Tableau ///" : "/ Bibliothèque ///"}
-                  </p>
+                  <p className="mono-label mb-3">{"/ Tableau ///"}</p>
                   <ul className="grid gap-2 sm:grid-cols-2">
                     {CATALOG.filter((c) => c.group === group).map((item) => {
                       const active = prefs.widgets[item.key];

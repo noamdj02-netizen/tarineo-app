@@ -2,18 +2,18 @@ import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { Faq } from "@/components/site/faq";
 import { DeferredPricing } from "@/components/site/landing-deferred";
 import { JsonLd } from "@/components/site/json-ld";
+import { BRAND } from "@/lib/brand";
 import { siteMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
-import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
-import { FAQ } from "@/lib/site/content";
+import { FAQ, OFFER, PRICING, euroInt } from "@/lib/site/tarineo";
 
-const PRIX_DESCRIPTION = `${PRO_TRIAL_DAYS} jours à 0 €, puis Création 15 €, Pro 30 € ou Fondateur 149 €.`;
+const PRIX_DESCRIPTION = `${OFFER}. Puis ${PRICING.map((p) => `${p.name} à ${euroInt(p.month)}`).join(", ")} HT par mois. Sans engagement.`;
 
 export const metadata = {
-  title: "Prix",
+  title: "Tarifs",
   description: PRIX_DESCRIPTION,
   ...siteMetadata({
-    title: "Prix Navpit",
+    title: `Tarifs ${BRAND.name}`,
     description: PRIX_DESCRIPTION,
     path: "/prix",
   }),
@@ -21,27 +21,24 @@ export const metadata = {
 
 export default function PrixPage() {
   return (
-    <div className="px-4 pt-12 pb-16 sm:px-8 sm:pt-20 sm:pb-20">
+    <div className="px-4 pt-14 pb-16 sm:px-8 sm:pt-24 sm:pb-20">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Accueil", path: "/" },
-          { name: "Prix", path: "/prix" },
+          { name: "Tarifs", path: "/prix" },
         ])}
       />
       <RevealGroup className="mx-auto mb-12 flex max-w-[640px] flex-col items-center gap-3 text-center">
         <Reveal>
-          <p className="mono-label">/ Prix ///</p>
+          <p className="mono-label">/ Tarifs ///</p>
         </Reveal>
         <Reveal>
           <h1 className="font-display text-[clamp(34px,6vw,56px)] leading-[1.02] font-semibold tracking-tightest text-balance">
-            Création, Pro <span className="text-accent-2">ou Fondateur.</span>
+            Simple et <span className="text-muted-foreground">sans engagement.</span>
           </h1>
         </Reveal>
         <Reveal>
-          <p className="text-[16.5px] leading-relaxed text-muted-foreground">
-            Essai Pro gratuit sans carte, puis Création à 15 € ou Pro à 30 € par mois — avec un prix qui baisse chaque
-            année d’abonnement. Ou 149 € une fois pour Pro à vie.
-          </p>
+          <p className="text-[16.5px] leading-relaxed text-muted-foreground">{PRIX_DESCRIPTION}</p>
         </Reveal>
       </RevealGroup>
       <DeferredPricing />

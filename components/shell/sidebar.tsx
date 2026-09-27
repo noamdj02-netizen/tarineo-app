@@ -1,25 +1,28 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowUpRight,
+  Building2,
+  ChevronRight,
   LifeBuoy,
   Link2,
   LogIn,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { EASE } from "@/components/motion/reveal";
 import { BRAND } from "@/lib/brand";
 import type { OnboardingStep } from "@/lib/onboarding";
-import { NAV_SECTIONS, type Tab, isActive } from "@/lib/nav";
+import { NAV_SECTIONS, isNavDrawer, type NavDrawer, type Tab, isActive } from "@/lib/nav";
 import type { Viewer } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "./logo";
 
-const SUPPORT_MAIL = `hello@${BRAND.domain}`;
+const SUPPORT_MAIL = BRAND.contactEmail;
 
 /** Barre latérale noire (desktop). */
 export function Sidebar({
@@ -30,6 +33,7 @@ export function Sidebar({
   viewer: Viewer | null;
 }) {
   const pathname = usePathname();
+  const search = useSearchParams().toString();
 
   return (
     <aside
@@ -46,9 +50,13 @@ export function Sidebar({
           <div key={section.id} className={cn(si > 0 && "mt-5")}>
             <p className="mono-label mb-1.5 px-2 text-side-muted/90">{`/ ${section.label} ///`}</p>
             <ul className="flex flex-col gap-0.5">
-              {section.items.map((tab) => (
-                <SideNavItem key={tab.href} tab={tab} pathname={pathname} />
-              ))}
+              {section.items.map((item) =>
+                isNavDrawer(item) ? (
+                  <SideDrawer key={item.id} drawer={item} pathname={pathname} search={search} />
+                ) : (
+                  <SideNavItem key={item.href} tab={item} pathname={pathname} search={search} />
+                ),
+              )}
             </ul>
           </div>
         ))}
@@ -59,14 +67,21 @@ export function Sidebar({
 
         <div className="flex flex-col gap-1 px-1">
           <SideFooterButton
+            href="/entreprise"
+            icon={Building2}
+            label="Mon entreprise"
+            hint="SIRET, TVA, logo, PDF"
+            active={isActive(pathname, "/entreprise")}
+          />
+          <SideFooterButton
             href="/outils"
             icon={Link2}
-            label="Connexions"
-            hint="Gmail, Notion, GitHub…"
+            label="Fournisseurs"
+            hint="Enseignes, export comptable"
             active={isActive(pathname, "/outils")}
           />
           <SideFooterButton
-            href={`mailto:${SUPPORT_MAIL}?subject=Support%20Navpit`}
+            href={`mailto:${SUPPORT_MAIL}?subject=Support%20Tarin%C3%A9o`}
             icon={LifeBuoy}
             label="Support"
             hint={SUPPORT_MAIL}
@@ -94,8 +109,69 @@ export function Sidebar({
   );
 }
 
-function SideNavItem({ tab, pathname }: { tab: Tab; pathname: string }) {
-  const on = isActive(pathname, tab.href);
+function SideDrawer({
+  drawer,
+  pathname,
+  search,
+}: {
+  drawer: NavDrawer;
+  pathname: string;
+  search: string;
+}) {
+  const childOn = drawer.items.some((t) => isActive(pathname, t.href, search));
+  const [open, setOpen] = useState(childOn);
+  const shown = open || childOn;
+  const Icon = drawer.icon;
+
+  return (
+    <li>
+      <button
+        type="button"
+        aria-expanded={shown}
+        onClick={() => setOpen((v) => !v)}
+        className={cn(
+          "relative flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-left text-[13px] font-medium tracking-[-0.02em] transition-colors duration-300 ease-out-soft",
+          childOn ? "text-side-ink" : "text-side-muted hover:text-side-ink",
+        )}
+      >
+        <Icon className="size-[17px] shrink-0 opacity-90" aria-hidden />
+        <span className="min-w-0 flex-1 truncate">{drawer.label}</span>
+        <ChevronRight
+          className={cn("size-3.5 shrink-0 transition-transform duration-300", shown && "rotate-90")}
+          aria-hidden
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {shown ? (
+          <motion.ul
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: EASE }}
+            className="mt-0.5 ml-3 overflow-hidden border-l border-side-line pl-2"
+          >
+            {drawer.items.map((tab) => (
+              <SideNavItem key={tab.href} tab={tab} pathname={pathname} search={search} nested />
+            ))}
+          </motion.ul>
+        ) : null}
+      </AnimatePresence>
+    </li>
+  );
+}
+
+function SideNavItem({
+  tab,
+  pathname,
+  search = "",
+  nested,
+}: {
+  tab: Tab;
+  pathname: string;
+  search?: string;
+  nested?: boolean;
+}) {
+  const on = isActive(pathname, tab.href, search);
   const Icon = tab.icon;
   return (
     <li className="relative">
@@ -114,9 +190,10 @@ function SideNavItem({ tab, pathname }: { tab: Tab; pathname: string }) {
         className={cn(
           "relative flex min-h-9 items-center gap-2.5 rounded-xl px-2.5 text-[13px] font-medium tracking-[-0.02em] transition-colors duration-300 ease-out-soft",
           on ? "text-side-ink" : "text-side-muted hover:text-side-ink",
+          nested && "min-h-8 text-[12.5px]",
         )}
       >
-        <Icon className="size-[17px] shrink-0 opacity-90" aria-hidden />
+        <Icon className={cn("shrink-0 opacity-90", nested ? "size-3.5" : "size-[17px]")} aria-hidden />
         {tab.label}
       </Link>
     </li>

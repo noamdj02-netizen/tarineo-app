@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 
 export const metadata = { title: "Page introuvable" };
 
@@ -7,7 +7,7 @@ export default function NotFound() {
   return (
     <main className="grid min-h-[70dvh] place-items-center px-6 py-16 text-center">
       <div className="flex max-w-[40ch] flex-col items-center gap-3">
-        <Illustration name="feedback-erreur" className="size-28" label="Erreur 404" />
+        <TarineoHdMascot name="12-erreur-404" className="h-28 w-32" label="Erreur 404" />
         <p className="mono-label">{"/ 404 ///"}</p>
         <h1 className="font-display text-[clamp(26px,5vw,34px)] leading-[1.05] font-semibold tracking-tightest">
           Page introuvable.

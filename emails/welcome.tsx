@@ -1,4 +1,4 @@
-import { EmailCta, EmailParagraph, NavpitEmailShell } from "./shell";
+import { EmailCta, EmailParagraph, TarineoEmailShell } from "./shell";
 
 export type WelcomeEmailProps = { firstName: string; appUrl: string };
 
@@ -7,45 +7,44 @@ export function WelcomeEmail({ firstName, appUrl }: WelcomeEmailProps) {
   const greeting = firstName ? `, ${firstName}` : "";
 
   return (
-    <NavpitEmailShell
-      preview="Ton cockpit est prêt : ajoute ton premier projet."
+    <TarineoEmailShell
+      preview="Votre tableau de bord est prêt : entreprise, chantier, devis."
       label="Bienvenue"
       title={`Bienvenue${greeting}`}
       appUrl={appUrl}
       steps={[
         {
-          title: "Ajoute tes projets",
-          text: "Liens Figma, repo, staging : tout au même endroit.",
-          href: `${base}/projets#nouveau`,
-          linkLabel: "Créer un projet",
+          title: "Renseignez l’entreprise",
+          text: "SIRET et mentions légales : elles iront sur chaque PDF.",
+          href: `${base}/entreprise`,
+          linkLabel: "Mon entreprise",
         },
         {
-          title: "Choisis ton Focus",
-          text: "Un seul projet prioritaire jusqu’à la première vente.",
-          href: `${base}/accueil`,
-          linkLabel: "Voir l’accueil",
+          title: "Ouvrez un chantier",
+          text: "Rangez les devis Cedeo et les pièces client par affaire.",
+          href: `${base}/projets`,
+          linkLabel: "Chantiers",
         },
         {
-          title: "Parle au copilote",
-          text: "Il connaît tes projets et te propose la prochaine action.",
-          href: `${base}/copilote`,
-          linkLabel: "Ouvrir le copilote",
+          title: "Déposez un devis",
+          text: "On lit les lignes, vous transformez, vous renvoyez au client.",
+          href: `${base}/ressources`,
+          linkLabel: "Documents distributeur",
         },
       ]}
     >
       <EmailParagraph>
-        Ton cockpit Navpit est prêt. Tu peux explorer tout de suite, finir l’onboarding et inviter ton équipe si tu
-        travailles à plusieurs.
+        Tarinéo est prêt. Finissez l’accueil guidé, puis déposez le premier devis distributeur.
       </EmailParagraph>
-      <EmailCta href={`${base}/projets#nouveau`}>Ajouter mon premier projet</EmailCta>
-      <EmailParagraph>Une question ? Réponds à cet email, on lit tout.</EmailParagraph>
-    </NavpitEmailShell>
+      <EmailCta href={`${base}/onboarding`}>Continuer l’accueil</EmailCta>
+      <EmailParagraph>Une question ? Répondez à cet email.</EmailParagraph>
+    </TarineoEmailShell>
   );
 }
 
 WelcomeEmail.PreviewProps = {
   firstName: "Noam",
-  appUrl: "https://www.navpit.com",
+  appUrl: "https://www.tarineo.fr",
 } satisfies WelcomeEmailProps;
 
 export default WelcomeEmail;

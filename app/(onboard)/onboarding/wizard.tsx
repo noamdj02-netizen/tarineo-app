@@ -3,45 +3,27 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
-import { CockpitScreen, COCKPIT_PRESETS } from "@/components/onboarding/screens/cockpit-screen";
-import { GoalScreen } from "@/components/onboarding/screens/goal-screen";
+import { useState, useTransition } from "react";
+import { enregistrerEntreprise } from "@/app/(app)/entreprise/actions";
+import { createChantierAction } from "@/app/(app)/metier/actions";
 import { IdentiteScreen } from "@/components/onboarding/screens/identite-screen";
-import { PainScreen } from "@/components/onboarding/screens/pain-screen";
-import { PaywallScreen } from "@/components/onboarding/screens/paywall-screen";
-import { ProcessScreen } from "@/components/onboarding/screens/process-screen";
-import { ProjetScreen } from "@/components/onboarding/screens/projet-screen";
-import { ProofScreen } from "@/components/onboarding/screens/proof-screen";
-import { SolutionScreen } from "@/components/onboarding/screens/solution-screen";
-import { SwipeScreen } from "@/components/onboarding/screens/swipe-screen";
 import { WelcomeScreen } from "@/components/onboarding/screens/welcome-screen";
 import { WizardStepBg } from "@/components/onboarding/wizard-step-bg";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { EASE } from "@/components/motion/reveal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import type { WidgetKey } from "@/lib/home/dashboard-prefs";
+import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
-import { ONBOARD_STEPS, ONBOARD_SWIPES, type OnboardGoalId, type OnboardPainId } from "@/lib/onboarding/catalog";
-import type { TrendAppId } from "@/lib/onboarding/trend-apps";
+import { ONBOARD_STEPS } from "@/lib/onboarding/catalog";
 import { cn } from "@/lib/utils";
-import {
-  chooseProject,
-  createProjectFromIdea,
-  finishOnboarding,
-  saveCockpit,
-  saveOnboardingAnswers,
-  saveWelcome,
-  type OnboardProject,
-} from "./actions";
+import { finishOnboarding, saveWelcome } from "./actions";
 
 export function Wizard({
   firstName,
   lastName,
   locale,
-  avatarUrl,
-  initial,
-  projects,
   next,
   ask,
   startStep = 0,
@@ -51,32 +33,23 @@ export function Wizard({
   locale: Locale;
   avatarUrl: string | null;
   initial: string;
-  projects: OnboardProject[];
+  projects: { id: string; name: string; slug: string; status: string }[];
   next?: string;
   ask?: string;
   startStep?: number;
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
-  const [step, setStep] = useState(startStep);
+  const [step, setStep] = useState(Math.min(startStep, ONBOARD_STEPS.length - 1));
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [name, setName] = useState(firstName);
   const [family, setFamily] = useState(lastName);
   const [lang, setLang] = useState<Locale>(locale);
-  const [goal, setGoal] = useState<OnboardGoalId | undefined>();
-  const [pains, setPains] = useState<OnboardPainId[]>([]);
-  const [swipes, setSwipes] = useState<boolean[]>([]);
-  const [chosenId, setChosenId] = useState<string | null>(
-    projects.find((p) => p.status === "focus")?.id ?? null,
-  );
-  const [ideaId, setIdeaId] = useState<TrendAppId | null>(null);
-  const [customName, setCustomName] = useState("");
-  const [preset, setPreset] = useState("focus");
-  const [widgets, setWidgets] = useState<Record<WidgetKey, boolean>>(COCKPIT_PRESETS[0].widgets);
 
   const last = ONBOARD_STEPS.length - 1;
-  const hideFooter = step === 0 || step === 7 || step === last;
+  const hideFooter = step === 0 || step === last;
+  const dest = ask ? `/accueil?ask=${encodeURIComponent(ask)}` : (next ?? "/accueil");
 
   function go(fn: () => Promise<void>) {
     setError(null);
@@ -89,12 +62,6 @@ export function Wizard({
     });
   }
 
-  const onProcessDone = useCallback(() => {
-    setStep((s) => (s === 7 ? 8 : s));
-  }, []);
-
-  const dest = ask ? `/accueil?ask=${encodeURIComponent(ask)}` : (next ?? "/accueil");
-
   async function advance() {
     if (step === 1) {
       const res = await saveWelcome(name, lang, family);
@@ -103,84 +70,48 @@ export function Wizard({
       return;
     }
     if (step === 2) {
-      if (!goal) throw new Error("Choisis un objectif.");
+      const form = document.getElementById("onboard-entreprise") as HTMLFormElement | null;
+      if (!form) throw new Error("Formulaire entreprise introuvable.");
+      const res = await enregistrerEntreprise(new FormData(form));
+      if (!res.ok) throw new Error(res.error);
       setStep(3);
       return;
     }
     if (step === 3) {
-      if (!pains.length) throw new Error("Coche au moins un frein.");
+      const form = document.getElementById("onboard-chantier") as HTMLFormElement | null;
+      if (!form) throw new Error("Formulaire chantier introuvable.");
+      const res = await createChantierAction(new FormData(form));
+      if (!res.ok) throw new Error(res.error);
       setStep(4);
-      return;
-    }
-    if (step === 4) {
-      setStep(5);
-      return;
-    }
-    if (step === 5) {
-      if (swipes.length < ONBOARD_SWIPES.length) throw new Error("Réponds aux trois cartes.");
-      const res = await saveOnboardingAnswers({ goal, pains, swipes });
-      if (!res.ok) throw new Error(res.error);
-      setStep(6);
-      return;
-    }
-    if (step === 6) {
-      setStep(7);
-      return;
-    }
-    if (step === 8) {
-      const custom = customName.trim();
-      if (custom.length >= 2) {
-        const res = await createProjectFromIdea(ideaId ?? "sdr", custom);
-        if (!res.ok) throw new Error(res.error);
-      } else if (chosenId) {
-        const res = await chooseProject(chosenId);
-        if (!res.ok) throw new Error(res.error);
-      } else if (ideaId) {
-        const res = await createProjectFromIdea(ideaId);
-        if (!res.ok) throw new Error(res.error);
-      } else {
-        throw new Error("Choisis un projet, une idée, ou un nom.");
-      }
-      setStep(9);
-      return;
-    }
-    if (step === 9) {
-      const res = await saveCockpit({ widgets });
-      if (!res.ok) throw new Error(res.error);
-      setStep(10);
     }
   }
 
-  async function enterCockpit() {
+  async function enter() {
     const res = await finishOnboarding();
     if (!res.ok) throw new Error(res.error);
     router.replace(dest);
     router.refresh();
   }
 
-  const stepMotion = reduce
+  const motionProps = reduce
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
     : {
-        initial: { opacity: 0, y: 16, filter: "blur(6px)" },
-        animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-        exit: { opacity: 0, y: -10, filter: "blur(4px)" },
-        transition: { duration: 0.45, ease: EASE },
+        initial: { opacity: 0, y: 16 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -10 },
+        transition: { duration: 0.4, ease: EASE },
       };
 
   return (
     <div className="relative grid h-full min-h-0 flex-1 grid-rows-[auto_auto_minmax(0,1fr)]">
       <WizardStepBg step={step} />
-
       <div className="mb-3 flex items-center gap-3 px-0.5">
-        <div
-          className="flex min-w-0 flex-1 gap-1"
-          aria-label={`Étape ${step + 1} sur ${ONBOARD_STEPS.length}`}
-        >
+        <div className="flex min-w-0 flex-1 gap-1" aria-label={`Étape ${step + 1} sur ${ONBOARD_STEPS.length}`}>
           {ONBOARD_STEPS.map((s, i) => (
             <motion.i
               key={s.id}
               layout
-              className={cn("h-1 flex-1 rounded-pill", i <= step ? "bg-ink" : "bg-ink/12")}
+              className={cn("h-1 flex-1 rounded-pill", i <= step ? "bg-brand-orange" : "bg-ink/12")}
               transition={{ duration: 0.35, ease: EASE }}
             />
           ))}
@@ -194,134 +125,117 @@ export function Wizard({
       <Card className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden border-line bg-surface/90 py-0 shadow-soft ring-1 ring-line lg:rounded-card">
         <CardContent className="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-8">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              className="flex min-h-full flex-col"
-              initial={stepMotion.initial}
-              animate={stepMotion.animate}
-              exit={stepMotion.exit}
-              transition={stepMotion.transition}
-            >
+            <motion.div key={step} className="flex min-h-full flex-col" {...motionProps}>
               {step === 0 ? <WelcomeScreen onStart={() => setStep(1)} /> : null}
               {step === 1 ? (
-                <IdentiteScreen
-                  first={name}
-                  last={family}
-                  lang={lang}
-                  onFirst={setName}
-                  onLast={setFamily}
-                  onLang={setLang}
-                />
+                <IdentiteScreen first={name} last={family} lang={lang} onFirst={setName} onLast={setFamily} onLang={setLang} />
               ) : null}
-              {step === 2 ? <GoalScreen value={goal} onChange={setGoal} /> : null}
-              {step === 3 ? (
-                <PainScreen
-                  value={pains}
-                  onToggle={(id) =>
-                    setPains((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
-                  }
-                />
-              ) : null}
-              {step === 4 ? <ProofScreen /> : null}
-              {step === 5 ? (
-                <SwipeScreen
-                  answers={swipes}
-                  onAnswer={(_i, yes) => setSwipes((cur) => [...cur, yes])}
-                />
-              ) : null}
-              {step === 6 ? <SolutionScreen goal={goal} pains={pains} /> : null}
-              {step === 7 ? <ProcessScreen onDone={onProcessDone} /> : null}
-              {step === 8 ? (
-                <ProjetScreen
-                  existing={projects}
-                  chosenId={chosenId}
-                  ideaId={ideaId}
-                  customName={customName}
-                  onChooseExisting={(id) => {
-                    setChosenId(id);
-                    setIdeaId(null);
-                    setCustomName("");
-                  }}
-                  onIdea={(id) => {
-                    setIdeaId(id);
-                    setChosenId(null);
-                    setCustomName("");
-                  }}
-                  onCustom={(v) => {
-                    setCustomName(v);
-                    setChosenId(null);
-                    setIdeaId(null);
-                  }}
-                />
-              ) : null}
-              {step === 9 ? (
-                <CockpitScreen
-                  avatarUrl={avatarUrl}
-                  initial={initial}
-                  preset={preset}
-                  widgets={widgets}
-                  onPreset={(id, nextWidgets) => {
-                    setPreset(id);
-                    setWidgets(nextWidgets);
-                  }}
-                  onToggle={(key) =>
-                    setWidgets((w) => ({ ...w, [key]: !w[key] }))
-                  }
-                />
-              ) : null}
-              {step === 10 ? (
-                <PaywallScreen pending={pending} onEnter={() => go(enterCockpit)} />
+              {step === 2 ? <EntrepriseOnboard /> : null}
+              {step === 3 ? <ChantierOnboard /> : null}
+              {step === 4 ? (
+                <div className="flex flex-1 flex-col items-center justify-center text-center">
+                  <TarineoHdMascot name="01-pouce-leve" className="h-36 w-40" label="" priority />
+                  <h2 className="mt-4 font-display text-[28px] font-semibold tracking-tight">C’est prêt.</h2>
+                  <p className="mt-2 max-w-[36ch] text-[15px] text-muted-foreground">
+                    Déposez un devis Cedeo, transformez-le, envoyez-le au client. Le tableau de bord est le même : orange, noir, vos pièces.
+                  </p>
+                  <Button type="button" size="lg" className="mt-6 min-h-12 rounded-full" disabled={pending} onClick={() => go(enter)}>
+                    {pending ? <Loader2 className="animate-spin" /> : "Ouvrir le tableau de bord"}
+                  </Button>
+                </div>
               ) : null}
             </motion.div>
           </AnimatePresence>
-
           {error ? (
             <Alert variant="destructive" className="mt-4">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : null}
         </CardContent>
-
         {!hideFooter ? (
           <CardFooter className="shrink-0 gap-2 border-line bg-surface/95 px-4 py-3 sm:px-6">
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-11"
-              disabled={step === 0 || pending}
-              onClick={() => {
-                setError(null);
-                setStep((s) => Math.max(0, s - 1));
-              }}
-            >
+            <Button type="button" variant="ghost" className="min-h-11" disabled={pending} onClick={() => setStep((s) => Math.max(0, s - 1))}>
               <ArrowLeft data-icon="inline-start" aria-hidden />
               Retour
             </Button>
-            <Button
-              type="button"
-              className="ml-auto min-h-11"
-              disabled={pending}
-              onClick={() => go(advance)}
-            >
-              {pending ? <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden /> : null}
+            <Button type="button" className="ml-auto min-h-11 rounded-full" disabled={pending} onClick={() => go(advance)}>
+              {pending ? <Loader2 className="animate-spin" data-icon="inline-start" /> : null}
               Continuer
-              {!pending ? <ArrowRight data-icon="inline-end" aria-hidden /> : null}
-            </Button>
-          </CardFooter>
-        ) : step > 0 ? (
-          <CardFooter className="shrink-0 justify-start border-line bg-transparent px-4 py-2 sm:px-6">
-            <Button
-              type="button"
-              variant="ghost"
-              className="min-h-11 px-0"
-              onClick={() => setStep((s) => Math.max(0, s - 1))}
-            >
-              <ArrowLeft data-icon="inline-start" aria-hidden />
-              Retour
+              {!pending ? <ArrowRight data-icon="inline-end" /> : null}
             </Button>
           </CardFooter>
         ) : null}
       </Card>
     </div>
+  );
+}
+
+function EntrepriseOnboard() {
+  return (
+    <form id="onboard-entreprise" className="flex flex-col gap-3">
+      <TarineoHdMascot name="05-bras-croises" className="h-24 w-28 self-center" label="" />
+      <h2 className="font-display text-[24px] font-semibold tracking-tight">Votre entreprise</h2>
+      <p className="text-[14px] text-muted-foreground">Ces mentions iront sur chaque devis et facture PDF.</p>
+      <label className="text-[13px]">
+        Raison sociale
+        <Input name="raisonSociale" required className="mt-1 h-11 rounded-xl" />
+      </label>
+      <label className="text-[13px]">
+        SIRET (14 chiffres)
+        <Input name="siret" required inputMode="numeric" className="mt-1 h-11 rounded-xl" />
+      </label>
+      <label className="text-[13px]">
+        Adresse
+        <Input name="adresseRue" required className="mt-1 h-11 rounded-xl" />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="text-[13px]">
+          Code postal
+          <Input name="adresseCodePostal" required className="mt-1 h-11 rounded-xl" />
+        </label>
+        <label className="text-[13px]">
+          Ville
+          <Input name="adresseVille" required className="mt-1 h-11 rounded-xl" />
+        </label>
+      </div>
+      <label className="text-[13px]">
+        Email de contact
+        <Input name="emailContact" type="email" className="mt-1 h-11 rounded-xl" />
+      </label>
+      <fieldset className="text-[13px]">
+        <legend className="mb-1">TVA</legend>
+        <label className="flex gap-2">
+          <input type="radio" name="regimeTva" value="FRANCHISE_293B" defaultChecked />
+          Franchise 293 B
+        </label>
+        <label className="mt-1 flex gap-2">
+          <input type="radio" name="regimeTva" value="NORMAL" />
+          TVA 20 %
+        </label>
+      </fieldset>
+      <input type="hidden" name="margeParDefautPct" value="35" />
+    </form>
+  );
+}
+
+function ChantierOnboard() {
+  return (
+    <form id="onboard-chantier" className="flex flex-col gap-3">
+      <TarineoHdMascot name="11-equipe" className="h-24 w-28 self-center" label="" />
+      <h2 className="font-display text-[24px] font-semibold tracking-tight">Le chantier en cours</h2>
+      <p className="text-[14px] text-muted-foreground">Les devis Cedeo et les pièces client se rangeront ici.</p>
+      <label className="text-[13px]">
+        Nom du chantier
+        <Input name="name" required placeholder="Maison Dupont — Lyon 3" className="mt-1 h-11 rounded-xl" />
+      </label>
+      <label className="text-[13px]">
+        Adresse
+        <Input name="address" placeholder="12 rue des Acacias" className="mt-1 h-11 rounded-xl" />
+      </label>
+      <label className="text-[13px]">
+        Client
+        <Input name="client" placeholder="Madame Dupont" className="mt-1 h-11 rounded-xl" />
+      </label>
+    </form>
   );
 }

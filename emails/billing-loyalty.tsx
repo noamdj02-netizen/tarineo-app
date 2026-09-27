@@ -1,4 +1,4 @@
-import { EmailParagraph, NavpitEmailShell } from "./shell";
+import { EmailParagraph, TarineoEmailShell } from "./shell";
 
 export type BillingLoyaltyEmailProps = {
   appUrl: string;
@@ -9,22 +9,22 @@ export type BillingLoyaltyEmailProps = {
 
 export function BillingLoyaltyEmail({ appUrl, price, intervalLabel, yearsLabel }: BillingLoyaltyEmailProps) {
   return (
-    <NavpitEmailShell
-      preview={`Ton prix Navpit baisse à ${price} €`}
+    <TarineoEmailShell
+      preview={`Ton prix Tarinéo baisse à ${price} €`}
       label="Prix fidélité"
       title={`Ton prix passe à ${price} € ${intervalLabel}`}
       appUrl={appUrl}
     >
       <EmailParagraph>
-        Tu es abonné à Navpit Pro depuis {yearsLabel}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien
+        Tu es abonné à Tarinéo Pro depuis {yearsLabel}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien
         faire. Merci de ta confiance.
       </EmailParagraph>
-    </NavpitEmailShell>
+    </TarineoEmailShell>
   );
 }
 
 BillingLoyaltyEmail.PreviewProps = {
-  appUrl: "https://www.navpit.com",
+  appUrl: "https://www.tarineo.fr",
   price: 12,
   intervalLabel: "par mois",
   yearsLabel: "un an",

@@ -1,19 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import { BRAND } from "@/lib/brand";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const STORAGE_KEY = "navpit:cookie-consent-v1";
+const STORAGE_KEY = "tarineo:cookie-consent-v1";
+const LEGACY_STORAGE_KEY = "navpit:cookie-consent-v1";
+const CONSENT_EVENT = "tarineo:cookie-consent";
 
 export type CookieConsent = "all" | "essential";
 
 export function readCookieConsent(): CookieConsent | null {
   if (typeof window === "undefined") return null;
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
-    return v === "all" || v === "essential" ? v : null;
+    const current = localStorage.getItem(STORAGE_KEY);
+    if (current === "all" || current === "essential") return current;
+    const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (legacy === "all" || legacy === "essential") {
+      localStorage.setItem(STORAGE_KEY, legacy);
+      return legacy;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -43,7 +52,7 @@ export function writeCookieConsent(value: CookieConsent) {
     // quota
   }
   applyGtmConsent(value);
-  window.dispatchEvent(new CustomEvent("navpit:cookie-consent", { detail: value }));
+  window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: value }));
 }
 
 /** Bandeau CNIL : analytics uniquement après consentement. */
@@ -66,15 +75,15 @@ export function CookieConsentBanner() {
 
   return (
     <div
-      role="dialog"
+      role="region"
       aria-labelledby="cookie-title"
-      className="fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-surface/95 p-4 shadow-lift backdrop-blur-xl sm:px-6"
+      className="theme-tarineo fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-surface/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-ink shadow-lift backdrop-blur-xl sm:px-6"
     >
       <div className="mx-auto flex max-w-[1120px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 text-[13.5px] leading-relaxed text-ink/80">
           <p id="cookie-title" className="font-semibold text-ink">Cookies</p>
           <p className="mt-1">
-            Navpit utilise des cookies essentiels (connexion) et, si tu acceptes, des cookies de mesure
+            {BRAND.name} utilise des cookies essentiels (connexion) et, si vous acceptez, des cookies de mesure
             d’audience anonymes.{" "}
             <Link href="/confidentialite#cookies" className="underline underline-offset-2">
               En savoir plus

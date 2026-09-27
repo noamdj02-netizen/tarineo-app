@@ -18,7 +18,7 @@ import {
   SubmitButton,
 } from "@/components/auth/auth-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { Button } from "@/components/ui/button";
 import { sendLoginCode } from "@/lib/email/auth-mail";
 import { safeNext } from "@/lib/safe-next";
@@ -166,7 +166,7 @@ export function LoginForm({
       <form onSubmit={verifyCode} className="flex flex-col gap-4">
         <FollowAuthTab />
         <Alert className="border-line bg-surface-2">
-          <Illustration name="feedback-envoye" className="size-12" />
+          <TarineoHdMascot name="14-bulle" className="h-12 w-14" label="" />
           <AlertDescription className="text-[14px] leading-relaxed">
             Email envoyé à <b>{email}</b>. Entre le code à 6 chiffres, ou colle le lien. Dans l’app
             iPhone : appui long sur le lien, « Copier ».
@@ -238,7 +238,7 @@ export function LoginForm({
           setMsg(null);
           setMode(byLink ? "password" : "link");
         }}
-        className="h-auto gap-2 p-0 text-[14px]"
+        className="h-auto gap-2 p-0 text-[14px] font-medium text-ink"
       >
         {byLink ? <KeyRound aria-hidden /> : <Mail aria-hidden />}
         {byLink ? "Utiliser mon mot de passe" : "Recevoir un lien par email à la place"}

@@ -6,7 +6,7 @@ export const metadata = { title: "Nouveau mot de passe" };
 export default function ResetPage() {
   return (
     <AuthCard
-      art="onboarding-configurer"
+      mascot="07-ordinateur"
       label="Mot de passe"
       title="Choisis un nouveau mot de passe."
     >

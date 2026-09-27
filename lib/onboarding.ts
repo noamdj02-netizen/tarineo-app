@@ -1,53 +1,34 @@
 import "server-only";
 import { getDb } from "@/lib/db";
+import { getCompanyProfile, listChantiers, listDocuments } from "@/lib/metier/queries";
 
 export type OnboardingStep = { label: string; href: string; done: boolean };
 
-/** Checklist de démarrage, calculée depuis les vraies données de l'utilisateur. */
+/** Checklist de démarrage, calculée depuis les vraies données métier. */
 export async function getOnboarding(): Promise<OnboardingStep[]> {
-  const counts = { projects: 0, focus: 0, resources: 0, chats: 0 };
   const db = await getDb();
-
   const meta = db?.user.user_metadata ?? {};
   const wizardDone = meta.onboarding_done === true;
+  const [company, chantiers, docs] = await Promise.all([
+    getCompanyProfile(),
+    listChantiers(),
+    listDocuments(),
+  ]);
+  const out = docs.filter((d) => d.direction === "out");
 
-  if (db) {
-    const { supabase, user } = db;
-    const head = { count: "exact" as const, head: true };
-    const [projects, focus, resources, chats] = await Promise.all([
-      supabase.from("projects").select("id", head).eq("user_id", user.id),
-      supabase.from("projects").select("id", head).eq("user_id", user.id).eq("status", "focus"),
-      supabase
-        .from("resources")
-        .select("id", head)
-        .eq("user_id", user.id)
-        .in("source", ["moi", "notion"]),
-      supabase.from("chat_messages").select("id", head).eq("user_id", user.id).eq("role", "user"),
-    ]);
-    counts.projects = projects.count ?? 0;
-    counts.focus = focus.count ?? 0;
-    counts.resources = resources.count ?? 0;
-    counts.chats = chats.count ?? 0;
-  }
-
-  const checklist = [
+  const checklist: OnboardingStep[] = [
     { label: "Créer ton compte", href: "/accueil", done: db !== null },
-    { label: "Ajouter un projet", href: "/projets", done: counts.projects > 0 },
-    { label: "Mettre un projet en Focus", href: "/projets", done: counts.focus > 0 },
-    { label: "Sauver une ressource", href: "/ressources", done: counts.resources > 0 },
-    { label: "Poser une question au copilote", href: "/accueil?ask=1", done: counts.chats > 0 },
+    { label: "Renseigner l’entreprise", href: "/entreprise", done: Boolean(company?.raison_sociale && company.siret) },
+    { label: "Ouvrir un chantier", href: "/projets", done: chantiers.length > 0 },
+    { label: "Importer un devis distributeur", href: "/ressources?kind=devis", done: docs.some((d) => d.direction === "in") },
+    { label: "Envoyer une pièce client", href: "/composants?kind=devis", done: out.length > 0 },
   ];
 
   if (!wizardDone) {
     return [
-      {
-        label: "Parcours guidé (objectif, projet Focus, cockpit…)",
-        href: "/onboarding",
-        done: false,
-      },
+      { label: "Parcours guidé (entreprise, chantier, tableau)", href: "/onboarding", done: false },
       ...checklist,
     ];
   }
-
   return checklist;
 }

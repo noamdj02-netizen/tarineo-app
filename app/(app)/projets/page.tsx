@@ -1,18 +1,19 @@
-import { ProjectGrid } from "@/components/projects/project-grid";
+import { ChantierGrid } from "@/components/metier/chantier-grid";
 import { PageHead } from "@/components/shell/page-head";
-import { listProjects } from "@/lib/projects/queries";
+import { listChantiers } from "@/lib/metier/queries";
+import { APP_PAGES } from "@/lib/site/app-pages";
 
-export const metadata = { title: "Projets" };
+export const metadata = { title: "Chantiers" };
 
-export default async function ProjetsPage() {
-  const projects = await listProjects();
+export default async function ChantiersPage() {
+  const chantiers = await listChantiers();
+  const p = APP_PAGES.chantiers;
   return (
-    <section>
-      <PageHead art="dashboard-focus" label="Projets" title="Mes projets" tail="un seul en Focus.">
-        Règle Mon Bureau : un seul projet en Focus tant qu’il n’a pas fait sa première vente.
-        Chaque carte montre l’étape (1 à 6), la prochaine action et tous les liens.
+    <section className="flex flex-col gap-8">
+      <PageHead mascot="11-equipe" label={p.label} title={p.title} tail={p.tail}>
+        {p.text}
       </PageHead>
-      <ProjectGrid projects={projects} />
+      <ChantierGrid chantiers={chantiers} />
     </section>
   );
 }

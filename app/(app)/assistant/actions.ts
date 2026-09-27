@@ -9,10 +9,10 @@ import { data } from "@/lib/mcp/data";
 export type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
 const GENERIC_PRESETS = [
-  "Quelle est ma priorité cette semaine ?",
-  "Fais le débrief du Focus : note + 3 actions",
-  "Crée un projet en pause nommé Relais",
-  "Dessine le schéma « comment ça marche » du Focus",
+  "Quels devis restent à transformer ?",
+  "Résume le chantier en cours et la prochaine pièce à envoyer",
+  "Quelles hausses de prix cette semaine ?",
+  "Compare le dernier devis Cedeo au précédent",
 ];
 
 export async function loadAssistant(opts?: {

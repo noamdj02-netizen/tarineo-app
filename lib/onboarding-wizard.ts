@@ -2,13 +2,7 @@
 export const WIZARD_STEPS = [
   "Bienvenue",
   "Prénom et nom",
-  "Ton objectif",
-  "Tes freins",
-  "Preuve",
-  "3 cartes",
-  "Comment Navpit répond",
-  "On prépare le cockpit",
-  "Projet existant ou idée tendance",
-  "Ton cockpit",
-  "Essai Pro, puis l’accueil guidé",
+  "Mon entreprise (SIRET, TVA)",
+  "Premier chantier",
+  "Tableau de bord",
 ] as const;

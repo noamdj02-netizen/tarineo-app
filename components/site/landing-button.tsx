@@ -5,11 +5,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const landingButtonVariants = cva(
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-pill font-medium whitespace-nowrap outline-none select-none transition-[transform,box-shadow,background-color,border-color,color] duration-300 ease-out-soft focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:translate-y-0 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/cta inline-flex shrink-0 touch-manipulation items-center justify-center gap-2 rounded-pill font-medium whitespace-nowrap outline-none select-none transition-[transform,box-shadow,background-color,border-color,color] duration-300 ease-out-soft focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:translate-y-0 active:scale-[0.98] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         primary: "btn-dark min-h-12 border border-transparent px-6 text-[15px]",
+        orange: "btn-orange min-h-12 border border-transparent px-6 text-[15px] font-semibold",
+        navOrange: "btn-orange min-h-10 border border-transparent px-4 text-[14px] font-semibold",
+        glass:
+          "liquid-glass min-h-12 border border-white/20 px-6 text-[15px] text-white hover:bg-white hover:text-black",
         secondary:
           "min-h-12 border border-border bg-card px-6 text-[15px] text-foreground shadow-soft hover:bg-muted",
         inverse:
@@ -41,7 +45,7 @@ type LandingButtonProps = VariantProps<typeof landingButtonVariants> & {
   prefetch?: boolean;
 };
 
-/** CTA landing : focus ring shadcn + pilule Navpit. */
+/** CTA landing : Link + variantes, icône dans un disque (Figma). */
 export function LandingButton({
   href,
   children,
@@ -58,7 +62,11 @@ export function LandingButton({
       className={cn(landingButtonVariants({ variant, fullWidth }), className)}
     >
       {children}
-      {icon}
+      {icon ? (
+        <span className="grid size-7 place-items-center rounded-full bg-black/10 transition-transform duration-300 ease-out-soft group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-px">
+          {icon}
+        </span>
+      ) : null}
     </Link>
   );
 }

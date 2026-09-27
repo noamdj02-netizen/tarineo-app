@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 
 /** Fond pastel plein écran (réf. onboarding mobile). */
 const SKY = [
-  "from-[#dceef8]/90 via-bg to-[#f8f4e8]/80",
-  "from-[#f8f0d4]/85 via-bg to-[#e8f4fc]/75",
-  "from-[#ebe4fb]/80 via-bg to-[#f5efe8]/85",
-  "from-[#f5ebe4]/85 via-bg to-[#e4ecf8]/80",
-  "from-[#e8f2fa]/75 via-[#f6f0ff]/50 to-[#faf6ee]/90",
+  "from-[#fff0e9]/95 via-bg to-[#fff8e6]/80",
+  "from-[#fff8e6]/90 via-bg to-[#fff0e9]/85",
+  "from-[#1a1a1a]/[0.04] via-bg to-[#fff0e9]/70",
+  "from-[#fff0e9]/80 via-[#fffaf3] to-[#ffe8cc]/60",
+  "from-[#fff8e6]/85 via-bg to-[#fff0e9]/90",
 ] as const;
 
 export function WizardStepBg({ step, className }: { step: number; className?: string }) {

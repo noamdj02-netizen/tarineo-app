@@ -1,12 +1,13 @@
 import { LegalPage } from "@/components/site/legal-page";
-import { FOUNDER, PRO, STARTER } from "@/lib/billing/plans";
+import { BRAND } from "@/lib/brand";
+import { PRICING } from "@/lib/site/tarineo";
 import { siteMetadata } from "@/lib/seo";
 
 export const metadata = {
   title: "Conditions générales",
   ...siteMetadata({
     title: "Conditions générales de vente et d’utilisation",
-    description: "CGV et CGU Navpit : abonnements, droits et responsabilités.",
+    description: `CGV et CGU ${BRAND.name} : abonnements, droits et responsabilités.`,
     path: "/cgv",
   }),
 };
@@ -20,51 +21,50 @@ export default function CgvPage() {
         {
           h: "1. Objet",
           p: [
-            "Ces conditions encadrent l’utilisation de Navpit, un logiciel en ligne qui aide les fondateurs à organiser leurs projets, et la souscription aux offres payantes.",
+            `Ces conditions encadrent l’utilisation de ${BRAND.name}, un logiciel en ligne qui analyse les devis et factures fournisseurs des professionnels du bâtiment pour suivre l’évolution de leurs prix d’achat, et la souscription aux offres payantes.`,
           ],
         },
         {
           h: "2. Compte",
           p: [
-            "Tu crées un compte avec une adresse email valide ou un compte Google. Tu es responsable de la confidentialité de ton mot de passe et de l’usage de ton compte.",
+            "Vous créez un compte avec une adresse email valide ou un compte Google. Vous êtes responsable de la confidentialité de votre mot de passe et de l’usage de votre compte.",
           ],
         },
         {
           h: "3. Offres et prix",
           p: [
-            "Les offres Création, Pro et Fondateur sont détaillées sur la page Prix, avec les limites d’usage et les conditions de résiliation.",
-            `Création : ${STARTER.month} € par mois ou ${STARTER.year} € par an (6 projets, 300 questions IA/mois, 100 schémas). Pro : ${PRO.month} € par mois ou ${PRO.year} € par an (projets et schémas illimités, agenda synchronisé).`,
-            `L’offre Fondateur est un paiement unique de ${FOUNDER.price} € donnant accès au plan Pro pour la durée de vie du service, limitée aux ${FOUNDER.seats} premiers clients.`,
-            "Les prix sont indiqués en euros, [À compléter : TTC ou « TVA non applicable, art. 293 B du CGI » selon ton statut].",
+            `Les offres ${PRICING.map((p) => p.name).join(", ")} sont détaillées sur la page Tarifs. Tout changement de tarif est annoncé avant d’être appliqué.`,
+            PRICING.map((p) => `${p.name} : ${p.month} € HT par mois ou ${p.year} € HT par an`).join(" · ") + ". Le premier mois est offert.",
+            "Les prix sont indiqués en euros, [À compléter : TTC ou « TVA non applicable, art. 293 B du CGI » selon le statut de l’éditeur].",
           ],
         },
         {
           h: "4. Paiement et renouvellement",
           p: [
-            "Le paiement est traité par Stripe. L’abonnement se renouvelle automatiquement à chaque période. Tu peux résilier à tout moment depuis la page Abonnement : l’accès Pro reste actif jusqu’à la fin de la période payée.",
+            "Le paiement est traité par Stripe. L’abonnement se renouvelle automatiquement à chaque période. Vous pouvez résilier à tout moment depuis votre compte : l’accès reste actif jusqu’à la fin de la période payée.",
           ],
         },
         {
           h: "5. Droit de rétractation",
           p: [
-            "En accédant immédiatement au service payant, tu demandes expressément son exécution avant la fin du délai de rétractation de 14 jours et tu renonces à ce droit, conformément à l’article L221-28 du Code de la consommation.",
+            "Le service s’adresse à des professionnels. [À compléter : conditions de rétractation applicables selon la qualité du client].",
           ],
         },
         {
           h: "6. Usage acceptable et limites",
           p: [
-            "Le copilote IA est soumis à un quota mensuel. Tout usage abusif (automatisation, revente, contournement des limites) peut entraîner la suspension du compte.",
+            "Chaque offre comporte un volume d’analyses. Tout usage abusif (automatisation, revente, contournement des limites) peut entraîner la suspension du compte.",
           ],
         },
         {
           h: "7. Responsabilité",
           p: [
-            "Navpit est fourni en l’état. Les réponses de l’IA peuvent contenir des erreurs : vérifie-les avant de t’en servir. L’éditeur ne peut être tenu responsable des décisions prises sur leur base.",
+            `${BRAND.name} est fourni en l’état. La lecture automatique des documents peut contenir des erreurs : vérifiez les montants avant de vous en servir. L’éditeur ne peut être tenu responsable des décisions prises sur leur base.`,
           ],
         },
         {
           h: "8. Droit applicable",
-          p: ["Ces conditions sont soumises au droit français. Contact : [À compléter : email]."],
+          p: [`Ces conditions sont soumises au droit français. Contact : ${BRAND.contactEmail}.`],
         },
       ]}
     />

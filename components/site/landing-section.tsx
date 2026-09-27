@@ -7,8 +7,8 @@ type LandingSectionProps = {
   id?: string;
   children: ReactNode;
   className?: string;
-  /** Fond légèrement distinct (sections alternées). */
-  tone?: "default" | "muted";
+  /** Fond légèrement distinct (sections alternées) ; `light` = section claire (#F5F5F3, texte #111). */
+  tone?: "default" | "muted" | "light";
 };
 
 export function LandingSection({ id, children, className, tone = "default" }: LandingSectionProps) {
@@ -16,8 +16,9 @@ export function LandingSection({ id, children, className, tone = "default" }: La
     <section
       id={id}
       className={cn(
-        "scroll-mt-24 px-4 py-14 sm:px-8 sm:py-20",
+        "scroll-mt-24 px-4 py-16 sm:px-8 sm:py-24",
         tone === "muted" && "bg-background",
+        tone === "light" && "theme-light",
         className,
       )}
     >
@@ -66,7 +67,7 @@ export function LandingSectionHead({
       </Reveal>
       {text ? (
         <Reveal>
-          <p className="text-base leading-relaxed text-muted-foreground">{text}</p>
+          <p className="text-[15px] leading-relaxed text-muted-foreground sm:text-[17px]">{text}</p>
         </Reveal>
       ) : null}
     </InView>

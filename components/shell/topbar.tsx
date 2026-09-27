@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { PLAN_LABEL, type PlanId } from "@/lib/billing/plans";
 import type { Viewer } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -35,7 +35,7 @@ export function Topbar({ viewer, planId }: { viewer: Viewer | null; planId: Plan
           href="/onboarding"
           className="border-b border-line bg-accent-soft px-4 py-2.5 text-center text-[13px] font-medium text-ink sm:px-6"
         >
-          Finis ta configuration (prénom, projets, IA…) — continuer
+          Finis ta configuration (chantier, documents…) — continuer
         </Link>
       ) : null}
       <div className="flex min-h-15 w-full items-center gap-3 px-4 sm:px-6">
@@ -117,7 +117,7 @@ function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="flex items-center gap-3 py-2 font-normal">
-            <Illustration name="onboarding-configurer" className="-my-1 size-12" />
+            <TarineoHdMascot name="05-bras-croises" className="-my-1 h-12 w-14" label="" />
             <div className="min-w-0">
               <p className="mono-label">/ Compte</p>
               <p className="mt-1 truncate text-sm text-foreground">

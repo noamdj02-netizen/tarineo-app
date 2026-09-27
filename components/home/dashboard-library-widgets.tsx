@@ -21,18 +21,18 @@ export type DashboardSchemaRow = {
 export function DashboardProjectsWidget({ projects }: { projects: DashboardProjectRow[] }) {
   const list = projects.slice(0, 5);
   return (
-    <section className="card-soft flex flex-col gap-2 p-3.5 sm:p-4" aria-label="Mes projets">
+    <section className="card-soft flex flex-col gap-2 p-3.5 sm:p-4" aria-label="Mes chantiers">
       <header className="flex items-center justify-between gap-2">
-        <p className="mono-label">{"/ Projets ///"}</p>
+        <p className="mono-label">{"/ Chantiers ///"}</p>
         <Link href="/projets" className="text-[12px] font-medium text-muted-foreground hover:text-ink">
           Tout voir
         </Link>
       </header>
       {list.length === 0 ? (
         <p className="text-[13px] text-muted-foreground">
-          Aucun projet.{" "}
+          Aucun chantier.{" "}
           <Link href="/projets#nouveau" className="text-ink underline underline-offset-2">
-            Créer
+            Ouvrir
           </Link>
         </p>
       ) : (
@@ -47,7 +47,7 @@ export function DashboardProjectsWidget({ projects }: { projects: DashboardProje
                 <span className="min-w-0 flex-1 truncate text-[14px] font-medium">{p.name}</span>
                 {p.status === "focus" ? (
                   <Badge variant="secondary" className="shrink-0 rounded-full text-[10px]">
-                    Focus
+                    En cours
                   </Badge>
                 ) : null}
               </Link>
@@ -62,17 +62,17 @@ export function DashboardProjectsWidget({ projects }: { projects: DashboardProje
 export function DashboardSchemasWidget({ schemas }: { schemas: DashboardSchemaRow[] }) {
   const list = schemas.slice(0, 4);
   return (
-    <section className="card-soft flex flex-col gap-2 p-3.5 sm:p-4" aria-label="Schémas">
+    <section className="card-soft flex flex-col gap-2 p-3.5 sm:p-4" aria-label="Alertes">
       <header className="flex items-center justify-between gap-2">
-        <p className="mono-label">{"/ Schémas ///"}</p>
+        <p className="mono-label">{"/ Alertes ///"}</p>
         <Link href="/schemas" className="text-[12px] font-medium text-muted-foreground hover:text-ink">
-          Bibliothèque
+          Tout voir
         </Link>
       </header>
       {list.length === 0 ? (
         <p className="text-[13px] text-muted-foreground">
           <Link href="/schemas" className="text-ink underline underline-offset-2">
-            Importer ou créer un schéma
+            Importer un document pour voir les hausses
           </Link>
         </p>
       ) : (

@@ -14,8 +14,8 @@ export function SiteAnalytics() {
     if (!ga) return;
     const sync = () => setEnabled(readCookieConsent() === "all");
     sync();
-    window.addEventListener("navpit:cookie-consent", sync);
-    return () => window.removeEventListener("navpit:cookie-consent", sync);
+    window.addEventListener("tarineo:cookie-consent", sync);
+    return () => window.removeEventListener("tarineo:cookie-consent", sync);
   }, [ga]);
 
   if (!ga || !enabled) return null;

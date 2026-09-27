@@ -2,6 +2,7 @@
 
 import { GlowCard } from "@/components/home/glow-card";
 import { PromptBox } from "@/components/home/prompt-box";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { cn } from "@/lib/utils";
 
 /** Bloc « Comment puis-je t'aider » + barre de prompt. */
@@ -27,7 +28,7 @@ export function PromptHero({
       tilt={!band}
       soft={band}
       className={cn(
-        "flex flex-col px-5 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-6",
+        "relative flex flex-col px-5 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-6",
         compact && "min-h-0",
         landscape &&
           !featured &&
@@ -36,7 +37,14 @@ export function PromptHero({
         className,
       )}
     >
-      <div className={cn((landscape || featured) && "min-w-0")}>
+      {featured ? (
+        <TarineoHdMascot
+          name="15-coucou-bord"
+          priority
+          className="pointer-events-none absolute top-0 right-2 z-10 h-[140px] w-[120px] sm:right-4 sm:h-[163px] sm:w-[140px]"
+        />
+      ) : null}
+      <div className={cn((landscape || featured) && "min-w-0", featured && "pr-[7.5rem] sm:pr-[9.5rem]")}>
         <p
           className={cn(
             "font-mono font-medium tracking-[0.12em] text-muted-foreground uppercase",
@@ -69,7 +77,7 @@ export function PromptHero({
             featured ? "text-[15px] leading-snug sm:text-[16px]" : "text-[14.5px] leading-snug",
           )}
         >
-          Qu’est-ce qu’on avance aujourd’hui ?
+          Quels prix ont bougé aujourd’hui ?
         </p>
       </div>
       <PromptBox

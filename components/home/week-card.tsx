@@ -7,19 +7,19 @@ export function WeekCard({ stats, compact }: { stats: WeekStats; compact?: boole
   const max = Math.max(1, ...days.map((d) => d.ai + d.schemas + d.notes));
   const pct = tasks.total ? Math.round((tasks.done / tasks.total) * 100) : 0;
   const rows = [
-    { label: "Questions à l’IA", value: totals.ai, dot: "bg-glow-2" },
-    { label: "Schémas modifiés", value: totals.schemas, dot: "bg-glow-3" },
-    { label: "Notes de journal", value: totals.notes, dot: "bg-glow-1" },
+    { label: "Documents analysés", value: totals.ai, dot: "bg-brand-orange" },
+    { label: "Hausses relevées", value: totals.schemas, dot: "bg-brand-orange-light" },
+    { label: "Notes", value: totals.notes, dot: "bg-ink/40" },
   ];
 
   if (compact) {
     return (
       <section
         className="card-soft flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:gap-6 sm:p-4"
-        aria-label="Ma semaine"
+        aria-label="Cette semaine"
       >
         <div className="min-w-0 shrink-0 sm:w-[140px]">
-          <p className="mono-label">{"/ Ma semaine ///"}</p>
+          <p className="mono-label">{"/ Cette semaine ///"}</p>
           <p className="mt-0.5 font-display text-[18px] font-semibold leading-tight tracking-tight">
             {totals.ai + totals.schemas + totals.notes}
             <span className="text-muted-foreground"> / 7j</span>
@@ -58,11 +58,11 @@ export function WeekCard({ stats, compact }: { stats: WeekStats; compact?: boole
   return (
     <section
       className="card-soft grid gap-5 p-4 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] sm:p-5"
-      aria-label="Ma semaine"
+      aria-label="Cette semaine"
     >
       <div className="flex flex-col gap-4">
         <div>
-          <p className="mono-label">{"/ Ma semaine ///"}</p>
+          <p className="mono-label">{"/ Cette semaine ///"}</p>
           <h2 className="mt-1 font-display text-[22px] leading-none font-semibold tracking-tight">
             {totals.ai + totals.schemas + totals.notes} actions
             <span className="text-muted-foreground"> en 7 jours</span>
@@ -141,7 +141,7 @@ export function WeekCard({ stats, compact }: { stats: WeekStats; compact?: boole
 
         <div className="border-t border-line pt-3">
           <div className="flex items-baseline justify-between text-[13px]">
-            <span className="text-ink/80">Tâches faites, tous projets</span>
+            <span className="text-ink/80">Actions faites, tous chantiers</span>
             <span className="font-mono text-[12.5px] tabular-nums">
               {tasks.done}/{tasks.total}
             </span>

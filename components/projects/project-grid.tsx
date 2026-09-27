@@ -82,7 +82,7 @@ function NewProject({ index }: { index: number }) {
             className="flex flex-1 flex-col justify-center gap-3 p-5"
           >
             <div className="flex items-center justify-between">
-              <p className="mono-label">/ Nouveau projet</p>
+              <p className="mono-label">/ Nouveau chantier</p>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -96,8 +96,8 @@ function NewProject({ index }: { index: number }) {
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Nom du projet"
-              aria-label="Nom du projet"
+              placeholder="Nom du chantier"
+              aria-label="Nom du chantier"
               maxLength={80}
               className="min-h-11 rounded-xl border border-line bg-surface px-3 text-[15px] outline-none focus:border-ink/40"
             />
@@ -133,7 +133,7 @@ function NewProject({ index }: { index: number }) {
               <Plus className="size-5" aria-hidden />
             </span>
             <span className="font-mono text-[11px] font-medium tracking-[0.12em] uppercase">
-              Nouveau projet
+              Nouveau chantier
             </span>
           </motion.button>
         )}

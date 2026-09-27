@@ -7,7 +7,7 @@ export const metadata = { title: "Mot de passe oublié" };
 export default function ForgotPage() {
   return (
     <AuthCard
-      art="feedback-question"
+      mascot="06-loupe"
       label="Mot de passe"
       title="Mot de passe oublié ?"
       text="Donne ton email, on t’envoie un lien pour en choisir un nouveau."

@@ -95,7 +95,7 @@ export function AutomationsLibrary() {
           Aller plus loin
         </h2>
         <p className="mb-4 max-w-[52ch] text-[14.5px] text-muted-foreground">
-          Modules Navpit à ouvrir à côté du copilote : schémas, landing, projets et ressources.
+          Modules Tarinéo à ouvrir à côté de l’analyse : documents, chantiers, fournisseurs.
         </p>
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {COPILOT_FEATURE_LINKS.map((f) => {

@@ -25,13 +25,13 @@ export default async function SignupPage({
   const { plan, interval, q } = await searchParams;
   return (
     <AuthCard
-      art="onboarding-premier-pas"
+      mascot="15-coucou-bord"
       label="Inscription"
-      title="Crée ton cockpit."
+      title="Créez votre compte."
       text={
         plan === "pro" || plan === "starter" || plan === "founder"
-          ? "Crée ton compte : essai Pro sans carte, puis tu choisis ta formule."
-          : "Gratuit, sans carte bancaire. Une minute suffit."
+          ? "Essai gratuit sans carte, puis vous choisissez votre formule."
+          : "Essai sans carte. Une minute : entreprise, chantier, premier devis."
       }
       footer={
         <>

@@ -5,11 +5,11 @@ export type { AgentRole };
 export const AGENT_ROLES: AgentRole[] = ["general", "tech", "produit", "design", "launch"];
 
 export const AGENT_ROLE_LABELS: Record<AgentRole, string> = {
-  general: "Général",
-  tech: "Tech",
-  produit: "Produit",
-  design: "Design",
-  launch: "Launch",
+  general: "Lecture",
+  tech: "Achats",
+  produit: "Devis",
+  design: "Chantier",
+  launch: "Client",
 };
 
 export function isAgentRole(v: unknown): v is AgentRole {
@@ -17,15 +17,11 @@ export function isAgentRole(v: unknown): v is AgentRole {
 }
 
 export const ROLE_PROMPTS: Record<AgentRole, string> = {
-  general:
-    "Rôle Général : lis list_workspace, puis agis (tâche, note, next, mail). Pas de roman.",
-  tech: "Rôle Tech : stack, GitHub, schéma. Crée la tâche ou le schéma, n’invente pas un service hors stack.",
-  produit:
-    "Rôle Produit : cible, pitch, parcours. Génère le schéma ou la user story dans Navpit.",
-  design:
-    "Rôle Design : DESIGN.md + skill landing. attach_landing / attach_component, pas un descriptif.",
-  launch:
-    "Rôle Launch : get_launch_checks d’abord. Marketing : rédige le post, save_marketing (champ post obligatoire), puis produce_asset. Canva sans post enregistré = interdit. Exécute, n’envoie pas l’user coller tout seul. Mail → send_mail.",
+  general: "Tu lis les devis et factures déposés. Réponds court, en français, sans inventer de prix.",
+  tech: "Tu parles achats : distributeurs, prix d’achat, bons de commande.",
+  produit: "Tu prépares des devis client à partir des lignes d’achat. Distingue prix d’achat et prix de vente.",
+  design: "Tu restes sur le chantier ouvert : lieu, client, marchandises liées aux documents.",
+  launch: "Tu parles au client de l’artisan. Pas de jargon fournisseur.",
 };
 
 export function projectSlugFromPath(path: string) {

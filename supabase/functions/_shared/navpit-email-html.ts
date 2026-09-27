@@ -1,6 +1,6 @@
 /** HTML transactionnel Navpit (Edge Deno). Garder aligné avec emails/html-shell.mjs */
 
-const DEFAULT_APP = "https://www.navpit.com";
+const DEFAULT_APP = "https://www.tarineo.fr";
 
 export type NavpitHtmlOpts = {
   label: string;
@@ -15,14 +15,14 @@ export type NavpitHtmlOpts = {
 
 export function navpitTransactionalHtml(opts: NavpitHtmlOpts): string {
   const appUrl = (opts.appUrl ?? DEFAULT_APP).replace(/\/$/, "");
-  const mascot = `${appUrl}/icons/logoNavPit.png`;
+  const mascot = `${appUrl}/brand/tarineo-logo.png`;
   const button =
     opts.ctaHref && opts.ctaLabel
       ? `<a href="${opts.ctaHref}" style="display:inline-block;margin-top:16px;background:#111;color:#fff;border-radius:999px;padding:14px 28px;font-size:15px;font-weight:500;text-decoration:none">${opts.ctaLabel}</a>`
       : "";
   const codeBlock = opts.code
     ? `<p style="font:600 32px/1.1 'Space Grotesk',Helvetica,sans-serif;letter-spacing:.2em;color:#111;margin:20px 0 8px">${opts.code}</p>
-       <p style="font-size:13px;line-height:1.5;color:#8c8c8c;margin:0 0 12px">Colle ce code sur la page de connexion Navpit.</p>`
+       <p style="font-size:13px;line-height:1.5;color:#8c8c8c;margin:0 0 12px">Colle ce code sur la page de connexion Tarinéo.</p>`
     : "";
 
   return `<!DOCTYPE html>
@@ -34,7 +34,7 @@ export function navpitTransactionalHtml(opts: NavpitHtmlOpts): string {
         <tr><td style="padding:24px 24px 8px">
           <table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td style="padding-right:12px;vertical-align:middle"><img src="${mascot}" alt="" width="36" height="36" style="display:block;border-radius:8px" /></td>
-            <td style="vertical-align:middle;font-size:22px;font-weight:700;letter-spacing:-.04em;color:#111">Navpit<span style="color:#8c8c8c">.</span></td>
+            <td style="vertical-align:middle;font-size:22px;font-weight:700;letter-spacing:-.04em;color:#111">Tarinéo<span style="color:#8c8c8c">.</span></td>
           </tr></table>
         </td></tr>
         <tr><td style="padding:32px 24px 40px">

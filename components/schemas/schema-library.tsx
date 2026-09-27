@@ -73,7 +73,7 @@ export function SchemaLibrary({
           {[
             { id: "all", name: "Tous" },
             ...projects,
-            { id: "none", name: "Sans projet" },
+            { id: "none", name: "Sans chantier" },
           ].map((p) => (
             <button
               key={p.id}
@@ -97,7 +97,7 @@ export function SchemaLibrary({
           className="btn-dark inline-flex min-h-11 items-center gap-2 rounded-pill px-4 text-[14px] font-semibold"
         >
           <Plus className="size-4" aria-hidden />
-          Nouveau schéma
+          Nouvelle alerte
         </button>
       </div>
 
@@ -115,10 +115,10 @@ export function SchemaLibrary({
         <div className="flex flex-col items-center gap-2 rounded-card border border-dashed border-line px-6 py-12 text-center">
           <Illustration name="onboarding-premier-pas" className="size-24" />
           <p className="text-[16px] font-semibold tracking-[-0.02em]">
-            Aucun schéma ici
+            Aucune alerte ici
           </p>
           <p className="max-w-[40ch] text-[14px] text-muted-foreground">
-            Crée un schéma vide ou laisse un agent dessiner celui d’un projet.
+            Crée une fiche vide ou laisse l’analyse en générer une depuis un chantier.
           </p>
         </div>
       )}
@@ -295,7 +295,7 @@ function NewSchemaDialog({
             id="new-schema-title"
             className="text-[22px] leading-tight font-semibold tracking-[-0.035em]"
           >
-            Nouveau schéma
+            Nouvelle alerte
           </h2>
           <button
             type="button"
@@ -338,13 +338,13 @@ function NewSchemaDialog({
 
         {projects.length ? (
           <label className="mt-4 block">
-            <span className="mono-label">Projet</span>
+            <span className="mono-label">Chantier</span>
             <select
               value={projectId}
               onChange={(e) => setProjectId(e.target.value)}
               className="mt-1.5 min-h-12 w-full rounded-xl border border-line bg-surface-2 px-3 text-[15px] outline-none focus:border-ink/30"
             >
-              {mode === "blank" ? <option value="">Aucun projet</option> : null}
+              {mode === "blank" ? <option value="">Aucun chantier</option> : null}
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -490,7 +490,7 @@ function NewSchemaDialog({
           {pending ? (
             <Loader2 className="size-4 animate-spin" aria-hidden />
           ) : null}
-          {mode === "agent" ? "Générer le schéma" : "Créer et dessiner"}
+          {mode === "agent" ? "Générer l’alerte" : "Créer la fiche"}
         </button>
       </motion.form>
     </motion.div>

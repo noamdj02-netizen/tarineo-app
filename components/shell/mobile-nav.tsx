@@ -2,14 +2,14 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
-  Bot,
+  FileSearch,
+  HardHat,
   House,
-  LayoutDashboard,
   LayoutGrid,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { EASE } from "@/components/motion/reveal";
 import {
@@ -24,15 +24,15 @@ import { cn } from "@/lib/utils";
 
 const MAIN = [
   { href: "/accueil", label: "Accueil", icon: House },
-  { href: "/projets", label: "Projets", icon: LayoutDashboard },
+  { href: "/projets", label: "Chantiers", icon: HardHat },
 ] as const;
 
 const MORE = TABS.filter((t) => !MAIN.some((m) => m.href === t.href));
 
 const ACTIONS = [
-  { id: "plus", icon: "/figma/navbar/plus.svg", label: "Nouveau projet" },
+  { id: "plus", icon: "/figma/navbar/plus.svg", label: "Nouveau chantier" },
   { id: "scan", icon: "/figma/navbar/scan.svg", label: "Rechercher" },
-  { id: "send", icon: "/figma/navbar/send.svg", label: "Demander à l’IA" },
+  { id: "send", icon: "/figma/navbar/send.svg", label: "Analyser un document" },
 ] as const;
 
 type ActionId = (typeof ACTIONS)[number]["id"];
@@ -93,6 +93,7 @@ function NavItem({
 /** Mobile : barre sombre à encoche (Figma « Navbar 25 ») + bouton flottant qui déplie 3 raccourcis. */
 export function MobileNav() {
   const pathname = usePathname();
+  const search = useSearchParams().toString();
   const router = useRouter();
   const reduce = useReducedMotion();
   const [panel, setPanel] = useState<"none" | "actions" | "more">("none");
@@ -116,7 +117,7 @@ export function MobileNav() {
     else router.push("/copilote");
   }
 
-  const moreOn = MORE.some((t) => isActive(pathname, t.href));
+  const moreOn = MORE.some((t) => isActive(pathname, t.href, search));
 
   return (
     <>
@@ -154,15 +155,15 @@ export function MobileNav() {
             >
               <SheetHeader className="px-0 pb-2 text-left">
                 <SheetTitle className="font-grotesk text-lg tracking-[-0.03em]">
-                  Bibliothèque & studio
+                  Documents & achats
                 </SheetTitle>
                 <SheetDescription className="text-muted-foreground">
-                  Ressources, schémas, outils et audit.
+                  Analyse, fournisseurs, devis et tarifs.
                 </SheetDescription>
               </SheetHeader>
               <ul className="grid grid-cols-4 gap-2">
                 {MORE.map(({ href, short, icon: Icon, label }) => {
-                  const on = isActive(pathname, href);
+                  const on = isActive(pathname, href, search);
                   return (
                     <li key={href}>
                       <Link
@@ -206,8 +207,8 @@ export function MobileNav() {
               ))}
               <div className="h-[46px] min-w-px flex-1" aria-hidden />
               <NavItem
-                label="IA"
-                icon={Bot}
+                label="Analyse"
+                icon={FileSearch}
                 on={isActive(pathname, "/copilote")}
                 href="/copilote"
               />

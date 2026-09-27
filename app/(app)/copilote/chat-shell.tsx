@@ -58,9 +58,9 @@ export function CopilotChatShell({
 
   function go(next: { slug?: string | null; role?: AgentRole }) {
     const p = new URLSearchParams();
-    const slug = next.slug === undefined ? params.get("projet") : next.slug;
+    const slug = next.slug === undefined ? params.get("chantier") ?? params.get("projet") : next.slug;
     const nextRole = next.role ?? role;
-    if (slug) p.set("projet", slug);
+    if (slug) p.set("chantier", slug);
     if (nextRole !== "general") p.set("role", nextRole);
     router.push(p.size ? `/copilote?${p}` : "/copilote");
   }
@@ -76,7 +76,7 @@ export function CopilotChatShell({
           >
             <ArrowLeft className="size-4" aria-hidden />
           </Link>
-          <p className="text-[14px] font-semibold">Projets</p>
+          <p className="text-[14px] font-semibold">Chantiers</p>
         </div>
         <ul className="flex min-h-0 gap-1 overflow-x-auto p-2 lg:flex-1 lg:flex-col lg:overflow-y-auto">
           <li>
@@ -135,9 +135,9 @@ export function CopilotChatShell({
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
           <Mascot mood="idle" className="size-10 flex-none" />
           <div className="min-w-0 flex-1">
-            <p className="mono-label">/ Copilote ///</p>
+            <p className="mono-label">/ Analyse ///</p>
             <p className="truncate text-[15px] font-semibold tracking-[-0.02em]">
-              {projects.find((p) => p.id === projectId)?.name ?? "Focus par défaut"} ·{" "}
+              {projects.find((p) => p.id === projectId)?.name ?? "Tous les chantiers"} ·{" "}
               {AGENT_ROLE_LABELS[role]}
             </p>
           </div>
@@ -181,7 +181,7 @@ function ActionStrip({
             e.preventDefault();
             const n = name.trim();
             if (!n) return;
-            onAsk(`Crée le projet « ${n} » en pause (pas en Focus).`);
+            onAsk(`Crée le chantier « ${n} » en pause (pas en Focus).`);
             setName("");
           }}
         >
@@ -189,7 +189,7 @@ function ActionStrip({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Créer un projet"
+            placeholder="Créer un chantier"
             disabled={keyMissing || pending}
             className="min-h-9 min-w-0 flex-1 bg-transparent text-[13px] outline-none"
           />
@@ -208,27 +208,27 @@ function ActionStrip({
           className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line px-2.5 text-[12.5px] hover:bg-accent-soft disabled:opacity-50"
         >
           <NotebookPen className="size-3.5" aria-hidden />
-          Débrief Focus
+          Relire le Focus
         </button>
         <button
           type="button"
           disabled={keyMissing || pending}
           onClick={() =>
             onAsk(
-              "Dessine le schéma architecture « comment ça marche » du projet ouvert (ou du Focus) avec create_schema kind architecture.",
+              "Liste les hausses de prix du chantier ouvert (ou du Focus) à partir des derniers documents.",
             )
           }
           className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line px-2.5 text-[12.5px] hover:bg-accent-soft disabled:opacity-50"
         >
           <Layers className="size-3.5" aria-hidden />
-          Schéma
+          Hausses
         </button>
         <Link
           href="/composants"
           className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line px-2.5 text-[12.5px] hover:bg-accent-soft"
         >
           <Sparkles className="size-3.5" aria-hidden />
-          Coller un composant
+          Devis client
         </Link>
       </div>
       {jobMsg ? <p className="mt-1.5 px-1 text-[12.5px] text-muted-foreground">{jobMsg}</p> : null}

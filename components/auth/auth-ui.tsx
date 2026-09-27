@@ -2,7 +2,7 @@
 
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useId, useState } from "react";
-import { Illustration } from "@/components/illustration";
+import { TarineoHdMascot, type TarineoHdMascotName } from "@/components/tarineo-hd-mascot";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,21 +27,20 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import type { IllustrationName } from "@/lib/illustrations";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
-const inputClass = "h-11 rounded-xl text-[15px]";
+const inputClass = "h-11 rounded-[18px] text-[15px]";
 
 export function AuthCard({
-  art,
+  mascot,
   label,
   title,
   text,
   children,
   footer,
 }: {
-  art: IllustrationName;
+  mascot: TarineoHdMascotName;
   label: string;
   title: string;
   text?: React.ReactNode;
@@ -50,22 +49,22 @@ export function AuthCard({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <Card className="gap-0 rounded-[28px] border-line py-0 shadow-lift ring-1 ring-line">
-        <CardHeader className="gap-3 border-b border-line px-6 pt-6 pb-5 sm:px-8 sm:pt-8">
-          <p className="mono-label">{`/ ${label} ///`}</p>
-          <CardTitle
-            className="font-serif text-[clamp(1.75rem,6vw,1.9rem)] leading-[1.06] tracking-[-0.02em] sm:font-display sm:text-[30px] sm:font-semibold sm:tracking-tightest"
-          >
-            {title}
-          </CardTitle>
-          {text ? (
-            <CardDescription className="text-[14.5px] leading-relaxed">{text}</CardDescription>
-          ) : null}
-          <CardAction>
-            <Illustration name={art} className="-mt-1 size-16" />
+      <Card className="gap-0 overflow-hidden rounded-[28px] border-0 py-0 shadow-lift ring-1 ring-line">
+        <CardHeader className="relative grid-cols-1 gap-0 overflow-hidden rounded-t-[28px] border-b border-line px-8 pt-8 pb-4">
+          <div className="flex max-w-[240px] min-w-0 flex-col gap-3">
+            <p className="mono-label">{`/ ${label} ///`}</p>
+            <CardTitle className="font-display text-[30px] font-semibold leading-[1.06] tracking-[-0.045em]">
+              {title}
+            </CardTitle>
+            {text ? (
+              <CardDescription className="text-[14.5px] leading-[23.5px]">{text}</CardDescription>
+            ) : null}
+          </div>
+          <CardAction className="pointer-events-none absolute top-0 right-0 col-start-auto row-start-auto h-[163px] w-[140px] self-auto">
+            <TarineoHdMascot name={mascot} priority className="h-full w-full" />
           </CardAction>
         </CardHeader>
-        <CardContent className="px-6 py-6 sm:px-8 sm:pb-8">{children}</CardContent>
+        <CardContent className="flex flex-col gap-4 px-8 pt-6 pb-8">{children}</CardContent>
       </Card>
       {footer ? <p className="text-center text-[14px] text-muted-foreground">{footer}</p> : null}
     </div>
@@ -210,7 +209,7 @@ export function GoogleButton({ next }: { next: string }) {
         size="lg"
         disabled={busy}
         onClick={go}
-        className="h-12 w-full rounded-full text-[15px] font-medium shadow-soft"
+        className="h-12 w-full rounded-full bg-bg text-[15px] font-medium shadow-soft"
       >
         {busy ? (
           <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />
