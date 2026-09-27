@@ -66,7 +66,7 @@ export function LandingHero() {
         <div aria-hidden className="noise-overlay opacity-25 mix-blend-overlay" />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[42%] bg-gradient-to-t from-ink/55 to-transparent"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-[52%] bg-gradient-to-t from-ink/70 via-ink/35 to-transparent"
         />
 
         <RevealGroup
@@ -74,25 +74,30 @@ export function LandingHero() {
             "relative z-10 mx-auto flex min-h-dvh w-full max-w-[860px]",
             "flex-col items-center justify-end gap-3 px-4",
             "pt-[4.75rem] pb-[max(1.75rem,env(safe-area-inset-bottom))]",
-            "text-center sm:gap-6 sm:px-8 sm:pt-[5.5rem] sm:pb-12",
+            "text-center sm:gap-5 sm:px-8 sm:pt-[5.5rem] sm:pb-12",
           )}
         >
           <Reveal>
             <p className="mono-label text-accent-ink/70">/ Cockpit fondateur ///</p>
           </Reveal>
           <Reveal>
-            <h1 className="font-display text-[clamp(34px,9.2vw,76px)] leading-[1.06] font-semibold tracking-tightest text-accent-ink">
+            <h1 className="font-display text-[clamp(32px,8.6vw,72px)] leading-[1.02] font-semibold tracking-tightest text-balance text-accent-ink">
               <span className="block">
-                <WordsPullUp text="Tous tes projets." />
+                <WordsPullUp text="Construis ton SaaS." />
               </span>
-              <span className="mt-0.5 block text-accent-ink/60">
-                <WordsPullUp text="Un seul en" delay={0.24} /> <BrandFocus />.
+              <span className="mt-0.5 block">
+                <BrandFocus className="inline-block">
+                  <WordsPullUp text="Lance-le." delay={0.2} />
+                </BrandFocus>
+              </span>
+              <span className="mt-1.5 block text-[0.42em] font-medium tracking-tight text-accent-ink/70 sm:mt-2 sm:text-[0.38em]">
+                <WordsPullUp text="Ne te disperse plus." delay={0.4} />
               </span>
             </h1>
           </Reveal>
           <Reveal
-            className="max-w-[38ch] text-[15px] leading-snug text-pretty text-accent-ink/70 sm:max-w-[56ch] sm:text-[18px] sm:leading-relaxed"
-            transition={{ duration: 0.55, delay: 0.5, ease: EASE }}
+            className="max-w-[38ch] text-[15px] leading-snug text-pretty text-accent-ink/70 sm:max-w-[52ch] sm:text-[17px] sm:leading-relaxed"
+            transition={{ duration: 0.55, delay: 0.55, ease: EASE }}
           >
             <p>{BRAND.description}</p>
           </Reveal>

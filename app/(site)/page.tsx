@@ -21,7 +21,7 @@ import { faqPageJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
 import { LandingSteps } from "@/components/site/landing-steps";
 import { FAQ_GROUPS } from "@/lib/site/content";
 
-const HOME_TITLE = `${BRAND.name} · Cockpit fondateur solo, un projet en Focus & copilote IA`;
+const HOME_TITLE = `${BRAND.name} · Construis ton SaaS. Lance-le. Ne te disperse plus.`;
 const HOME_DESCRIPTION =
   "Navpit regroupe tes side-projects et SaaS : un seul en Focus, la prochaine action, ressources design et copilote IA contextualisé.";
 
