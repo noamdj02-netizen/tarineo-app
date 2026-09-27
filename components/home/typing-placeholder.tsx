@@ -19,10 +19,14 @@ export function TypingPlaceholder({
   examples,
   paused,
   onExample,
+  className,
+  onDark: _onDark,
 }: {
   examples: string[];
   paused: boolean;
   onExample?: (index: number) => void;
+  className?: string;
+  onDark?: boolean;
 }) {
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
@@ -70,7 +74,7 @@ export function TypingPlaceholder({
     return (
       <span className="flex min-w-0 items-center gap-1.5">
         <Mascot mood={paused ? "focus" : "idle"} className="-my-1 size-9 flex-none" />
-        <span className="truncate">Dépose un devis ou une question…</span>
+        <span className={className ? `truncate ${className}` : "truncate"}>Dépose un devis ou une question…</span>
       </span>
     );
   }

@@ -25,6 +25,7 @@ export type TarineoEmailShellProps = {
   children: ReactNode;
   steps?: { title: string; text: string; href: string; linkLabel: string }[];
   footerNote?: string;
+  hideHeroImage?: boolean;
 };
 
 function logoUrl(appUrl: string) {
@@ -40,6 +41,7 @@ export function TarineoEmailShell({
   children,
   steps,
   footerNote,
+  hideHeroImage = false,
 }: TarineoEmailShellProps) {
   const mascot = logoUrl(appUrl);
   const helpUrl = `${appUrl.replace(/\/$/, "")}/#faq`;
@@ -77,6 +79,7 @@ export function TarineoEmailShell({
               <Section className="mt-8 max-w-copy">{children}</Section>
             </Section>
 
+            {hideHeroImage ? null : (
             <Section className="px-6 pb-10">
               <Img
                 src={mascot}
@@ -86,6 +89,7 @@ export function TarineoEmailShell({
                 className="block w-full max-w-[592px] rounded-[20px] border border-line bg-surface"
               />
             </Section>
+            )}
 
             {steps && steps.length > 0 ? (
               <Section className="px-6 pb-12">
