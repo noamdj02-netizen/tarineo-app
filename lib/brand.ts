@@ -6,6 +6,8 @@ export const BRAND = {
   siteUrl: "https://www.navpit.com",
   /** Logo statique (header site + app). */
   logoSrc: "/icons/logoNavPit.png",
+  /** Logo landing (nav + footer site public). */
+  logoLandingSrc: "/icons/logo-landing.png",
   tagline: "The operating system for focused founders.",
   /** Description courte (français) : balise meta, écran de connexion. */
   description:

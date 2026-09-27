@@ -10,6 +10,7 @@ export function SiteLogo({
   showWordmark = true,
   priority = true,
   onDark = false,
+  variant = "default",
 }: {
   href?: string;
   className?: string;
@@ -18,7 +19,11 @@ export function SiteLogo({
   priority?: boolean;
   /** Wordmark clair, pour les cartes noires. */
   onDark?: boolean;
+  /** `landing` = illustration fondateur (site public). */
+  variant?: "default" | "landing";
 }) {
+  const src = variant === "landing" ? BRAND.logoLandingSrc : BRAND.logoSrc;
+
   return (
     <Link
       href={href}
@@ -26,12 +31,17 @@ export function SiteLogo({
       aria-label={`${BRAND.name}, page d'accueil`}
     >
       <Image
-        src={BRAND.logoSrc}
+        src={src}
         alt=""
         width={40}
         height={40}
         priority={priority}
-        className={cn("size-9 shrink-0 rounded-lg object-contain", imageClassName)}
+        className={cn(
+          "size-9 shrink-0 object-contain",
+          variant === "landing" ? "rounded-md" : "rounded-lg",
+          onDark && variant === "landing" && "brightness-0 invert",
+          imageClassName,
+        )}
       />
       {showWordmark ? (
         <span

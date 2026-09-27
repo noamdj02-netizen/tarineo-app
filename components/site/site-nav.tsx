@@ -53,7 +53,7 @@ export function SiteNav() {
               : "border-transparent bg-transparent",
         )}
       >
-        <SiteLogo className="shrink-0" onDark={onFilm} />
+        <SiteLogo className="shrink-0" onDark={onFilm} variant="landing" />
 
         <ul className="hidden items-center gap-1 md:flex">
           {LINKS.map((l) => (

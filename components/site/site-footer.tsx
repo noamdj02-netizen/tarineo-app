@@ -91,10 +91,10 @@ export function SiteFooter() {
 
             <div className="relative flex flex-1 flex-col gap-5">
               <SiteLogo
+                variant="landing"
                 priority={false}
                 onDark
                 className="relative z-[1] w-fit"
-                imageClassName="bg-surface"
               />
               <p className="max-w-[28ch] text-[17px] leading-snug font-medium tracking-[-0.03em] text-balance text-accent-ink/90 sm:text-[19px]">
                 Le cockpit des fondateurs solo. Un projet en Focus, la prochaine
