@@ -33,7 +33,7 @@ const LandingDiscoverStrip = dynamic(
 
 const LandingFaqTabs = dynamic(
   () => import("@/components/site/landing-faq-tabs").then((m) => m.LandingFaqTabs),
-  { loading: () => <BlockSkeleton className="min-h-[280px]" /> },
+  { loading: () => <BlockSkeleton className="min-h-[420px]" /> },
 );
 
 const LandingProductFilm = dynamic(
@@ -75,7 +75,7 @@ export function DeferredDiscoverStrip() {
 
 export function DeferredFaqTabs({ groups }: { groups: import("@/lib/site/content").FaqGroup[] }) {
   return (
-    <DeferredMount minHeight="280px">
+    <DeferredMount minHeight="420px">
       <LandingFaqTabs groups={groups} />
     </DeferredMount>
   );

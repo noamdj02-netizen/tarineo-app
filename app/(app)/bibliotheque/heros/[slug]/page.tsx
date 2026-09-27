@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { HeroStudio } from "@/components/heroes/hero-studio";
+import { HeroRelatedLibs } from "@/components/ui-libs/related-libs";
 import { PageHead } from "@/components/shell/page-head";
 import { getPlan } from "@/lib/billing/plan";
 import { getHeroWithMedia } from "@/lib/heroes/queries";
 import { listProjects } from "@/lib/projects/queries";
+import { libsForHero } from "@/lib/ui-libs/for-hero";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -45,6 +47,7 @@ export default async function HeroDetailPage({ params }: { params: Promise<{ slu
           status: p.status,
         }))}
       />
+      <HeroRelatedLibs libs={libsForHero(hero)} />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import {
   Blocks,
   Bot,
+  Boxes,
   Clapperboard,
   House,
   LayoutDashboard,
@@ -58,6 +59,12 @@ const heros: Tab = {
   short: "Heros",
   icon: Clapperboard,
 };
+const libs: Tab = {
+  href: "/bibliotheque/libs",
+  label: "Libs UI",
+  short: "Libs",
+  icon: Boxes,
+};
 const composants: Tab = {
   href: "/composants",
   label: "Composants",
@@ -79,7 +86,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "library",
     label: "Bibliothèque",
-    items: [ressources, schemas, anatomie, heros],
+    items: [ressources, schemas, anatomie, heros, libs],
   },
   {
     id: "studio",

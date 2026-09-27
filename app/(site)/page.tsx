@@ -1,4 +1,5 @@
-import { LandingCtaBand, LandingClosingCta } from "@/components/site/landing-cta";
+import Link from "next/link";
+import { LandingCtaBand } from "@/components/site/landing-cta";
 import { LandingWorkspaceDepth } from "@/components/site/landing-folio-sections";
 import { LandingProductShowcase } from "@/components/site/landing-product-showcase";
 import { LandingFeatures } from "@/components/site/landing-features";
@@ -12,7 +13,6 @@ import { LandingHero } from "@/components/site/landing-hero";
 import { LandingMarquee } from "@/components/site/landing-marquee";
 import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
 import { ProductPreview } from "@/components/site/product-preview";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { JsonLd } from "@/components/site/json-ld";
 import { BRAND } from "@/lib/brand";
@@ -96,25 +96,38 @@ export default function LandingPage() {
       </LandingSection>
 
       <LandingSection id="faq" tone="muted">
-        <LandingSectionHead
-          label="FAQ"
-          title="Questions fréquentes"
-          text="Tout ce qu’il faut savoir sur Navpit. Une autre question ? Écris-nous depuis ton compte."
-        />
-        <div className="mx-auto max-w-[720px]">
-          <Card className="gap-0 rounded-[24px] border-line py-0 shadow-soft ring-1 ring-line">
-            <CardHeader className="border-b border-line px-6 py-5 text-center">
-              <CardTitle className="text-base font-semibold">Par thème</CardTitle>
-              <CardDescription className="text-[14px]">Tarifs, confidentialité, annulation…</CardDescription>
-            </CardHeader>
-            <CardContent className="px-4 py-6 sm:px-6">
-              <DeferredFaqTabs groups={FAQ_GROUPS} />
-            </CardContent>
-          </Card>
+        <div className="mx-auto grid max-w-[1080px] gap-10 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.22fr)] lg:items-start lg:gap-14">
+          <div className="lg:sticky lg:top-28">
+            <LandingSectionHead
+              align="start"
+              className="mx-0 mb-6 max-w-none sm:mb-7"
+              label="FAQ"
+              title="Les questions qu’on te pose,"
+              tail="avant de commencer."
+              text="Essai, tarifs, données. Les retours fondateurs sont sur Avis."
+            />
+            <div className="flex flex-col items-start gap-3">
+              <Link
+                href="/avis"
+                className="text-[14.5px] text-foreground underline underline-offset-4 hover:text-muted-foreground"
+              >
+                Lire les avis fondateurs
+              </Link>
+              <Link
+                href="/prix"
+                className="text-[14.5px] text-foreground underline underline-offset-4 hover:text-muted-foreground"
+              >
+                Comparer Création, Pro et Fondateur
+              </Link>
+              <p className="max-w-[40ch] text-[13.5px] leading-relaxed text-muted-foreground">
+                Une autre question ? Écris-nous depuis ton compte une fois connecté.
+              </p>
+            </div>
+          </div>
+          <DeferredFaqTabs groups={FAQ_GROUPS} />
         </div>
       </LandingSection>
 
-      <LandingClosingCta />
     </>
   );
 }

@@ -14,6 +14,7 @@ const LINKS = [
   { href: "/#fonctions", label: "Fonctions" },
   { href: "/#comment", label: "Comment ça marche" },
   { href: "/prix", label: "Prix" },
+  { href: "/avis", label: "Avis" },
   { href: "/#faq", label: "FAQ" },
 ];
 

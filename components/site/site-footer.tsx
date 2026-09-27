@@ -3,9 +3,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, Mail } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { EASE } from "@/components/motion/reveal";
 import { InView } from "@/components/site/in-view";
 import { LandingButton } from "@/components/site/landing-button";
+import { LandingCloser } from "@/components/site/landing-closer";
 import { SiteLogo } from "@/components/site/site-logo";
 import { Separator } from "@/components/ui/separator";
 import { BRAND } from "@/lib/brand";
@@ -21,6 +23,7 @@ const COLS = [
       { href: "/#solution", label: "Solution" },
       { href: "/#fonctions", label: "Fonctions" },
       { href: "/prix", label: "Prix" },
+      { href: "/avis", label: "Avis" },
       { href: "/#faq", label: "FAQ" },
     ],
   },
@@ -66,6 +69,12 @@ const riseQuiet = {
 } as const;
 
 export function SiteFooter() {
+  const pathname = usePathname();
+  if (pathname === "/") return <LandingCloser />;
+  return <SiteFooterCards />;
+}
+
+function SiteFooterCards() {
   const reduce = useReducedMotion();
   const variants = reduce ? riseQuiet : rise;
   const year = new Date().getFullYear();

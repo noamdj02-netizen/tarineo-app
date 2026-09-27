@@ -42,6 +42,7 @@ export const FEATURES = [
   "accueil",
   "pricing",
   "heros",
+  "libs",
 ] as const;
 
 export type FeatureKey = (typeof FEATURES)[number];
@@ -58,6 +59,7 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
   accueil: "Accueil",
   pricing: "Prix",
   heros: "Heros",
+  libs: "Libs UI",
 };
 
 export function featureFromPath(path: string): FeatureKey | "" {
@@ -70,6 +72,7 @@ export function featureFromPath(path: string): FeatureKey | "" {
   if (path.startsWith("/themes")) return "themes";
   if (path.startsWith("/prix") || path.startsWith("/abonnement")) return "pricing";
   if (path.startsWith("/bibliotheque/heros")) return "heros";
+  if (path.startsWith("/bibliotheque/libs")) return "libs";
   if (path === "/" || path.startsWith("/accueil")) return "accueil";
   return "";
 }

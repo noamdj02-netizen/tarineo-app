@@ -292,26 +292,12 @@ export type FaqGroup = { id: string; label: string; items: { q: string; a: strin
 
 export const FAQ_GROUPS: FaqGroup[] = [
   {
-    id: "general",
-    label: "Général",
+    id: "essai",
+    label: "Essai",
     items: [
       {
-        q: "Mes données sont-elles privées ?",
-        a: "Oui. Chaque compte ne voit que ses propres données, protégées au niveau de la base. Ton agenda externe est lu en lecture seule.",
-      },
-    ],
-  },
-  {
-    id: "produit",
-    label: "Produit",
-    items: [
-      {
-        q: "C’est quoi l’offre Fondateur ?",
-        a: `Un seul paiement de ${FOUNDER.price} € pour Pro à vie. Réservée aux ${FOUNDER.seats} premiers soutiens.`,
-      },
-      {
-        q: "Je peux annuler quand je veux ?",
-        a: "Oui, depuis ton compte. Tu gardes Pro jusqu’à la fin de la période payée.",
+        q: "L’essai Pro est-il vraiment sans carte ?",
+        a: `Oui : ${PRO_TRIAL_DAYS} jours avec tout Pro, sans saisir de carte à l’inscription. Avant la fin, tu ajoutes un moyen de paiement depuis ton compte. Sans paiement, le compte et les données associées sont supprimés à l’issue de l’essai.`,
       },
     ],
   },
@@ -321,39 +307,32 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         q: "Quelle différence entre Création et Pro ?",
-        a: `Création : ${STARTER.month} €/mois (6 projets, 300 questions IA, 100 schémas). Pro : ${PRO.month} €/mois, projets et schémas illimités + agenda synchronisé.`,
+        a: `Création (${STARTER.month} €/mois) : 6 projets, 300 questions IA, 100 schémas. Pro (${PRO.month} €/mois) : projets et schémas illimités, plus l’agenda Google ou Apple.`,
       },
       {
         q: "Le prix baisse après un an d’abonnement ?",
-        a: `Oui, pour Création et Pro : tu paies le tarif affiché la 1re année, puis moins à chaque anniversaire — automatiquement, sur ta prochaine facture. Ex. Création : ${STARTER.month} € → 12 € → 9 €/mois (ou ${STARTER.year} → 120 → 90 €/an). Pro : ${PRO.month} € → 24 € → 18 €/mois (ou ${PRO.year} → 240 → 180 €/an).`,
+        a: `Oui, pour Création et Pro, à chaque anniversaire, sans code promo. Création : ${STARTER.month} € → 12 € → 9 €/mois. Pro : ${PRO.month} € → 24 € → 18 €/mois. Équivalent annuel : ${STARTER.year} / 120 / 90 € et ${PRO.year} / 240 / 180 €.`,
+      },
+      {
+        q: "C’est quoi l’offre Fondateur ?",
+        a: `Un seul paiement de ${FOUNDER.price} € pour Pro à vie. Réservée aux ${FOUNDER.seats} premiers soutiens.`,
+      },
+    ],
+  },
+  {
+    id: "compte",
+    label: "Compte",
+    items: [
+      {
+        q: "Mes données sont-elles privées ?",
+        a: "Oui. Chaque compte ne voit que ses propres données, protégées au niveau de la base. Ton agenda externe est lu en lecture seule et n’est jamais modifié.",
+      },
+      {
+        q: "Je peux annuler quand je veux ?",
+        a: "Oui, depuis ton compte. Tu gardes Pro jusqu’à la fin de la période payée.",
       },
     ],
   },
 ];
 
-export const FAQ: { q: string; a: string }[] = [
-  {
-    q: "L’essai Pro est-il vraiment sans carte ?",
-    a: `Oui : ${PRO_TRIAL_DAYS} jours avec tout Pro, sans saisir de carte à l’inscription. Avant la fin de l’essai, tu peux ajouter un moyen de paiement depuis ton compte. Sans paiement, le compte et les données associées sont supprimés automatiquement à l’issue de l’essai.`,
-  },
-  {
-    q: "Quelle différence entre Création et Pro ?",
-    a: `Création (${STARTER.month} €/mois) suffit pour un side project structuré : 6 projets, 300 questions IA et 100 schémas. Pro (${PRO.month} €/mois) enlève les plafonds et ajoute l’agenda Google ou Apple.`,
-  },
-  {
-    q: "Le prix baisse après un an d’abonnement ?",
-    a: `Oui. Création et Pro deviennent moins chers à chaque anniversaire d’abonnement, sans code promo : Création ${STARTER.month} € → 12 € → 9 €/mois ; Pro ${PRO.month} € → 24 € → 18 €/mois (équivalent annuel : ${STARTER.year}/120/90 € et ${PRO.year}/240/180 €). La baisse s’applique au renouvellement suivant.`,
-  },
-  {
-    q: "C’est quoi l’offre Fondateur ?",
-    a: `Un seul paiement de ${FOUNDER.price} € pour Pro à vie. Elle est réservée aux ${FOUNDER.seats} premiers, pour remercier ceux qui soutiennent Navpit dès le début.`,
-  },
-  {
-    q: "Mes données sont-elles privées ?",
-    a: "Oui. Chaque compte ne voit que ses propres données, protégées au niveau de la base. Ton agenda externe est lu en lecture seule et n’est jamais modifié.",
-  },
-  {
-    q: "Je peux annuler quand je veux ?",
-    a: "Oui, en deux clics depuis ton compte. Tu gardes Pro jusqu’à la fin de la période payée.",
-  },
-];
+export const FAQ: { q: string; a: string }[] = FAQ_GROUPS.flatMap((g) => g.items);
