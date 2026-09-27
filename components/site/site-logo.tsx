@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BrandFocus } from "@/components/site/brand-focus";
 import { BRAND } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +52,7 @@ export function SiteLogo({
           )}
         >
           {BRAND.name}
-          <span className="text-brand-violet">.</span>
+          <BrandFocus className="brand-focus-dot inline-block translate-y-[-0.02em]">.</BrandFocus>
         </span>
       ) : null}
     </Link>

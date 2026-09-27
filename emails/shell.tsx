@@ -25,6 +25,8 @@ export type NavpitEmailShellProps = {
   children: ReactNode;
   steps?: { title: string; text: string; href: string; linkLabel: string }[];
   footerNote?: string;
+  /** Masque la grande image mascotte (mails perso / check-in). */
+  hideHeroImage?: boolean;
 };
 
 function logoUrl(appUrl: string) {
@@ -40,6 +42,7 @@ export function NavpitEmailShell({
   children,
   steps,
   footerNote,
+  hideHeroImage = false,
 }: NavpitEmailShellProps) {
   const mascot = logoUrl(appUrl);
   const helpUrl = `${appUrl.replace(/\/$/, "")}/#faq`;
@@ -77,15 +80,17 @@ export function NavpitEmailShell({
               <Section className="mt-8 max-w-copy">{children}</Section>
             </Section>
 
-            <Section className="px-6 pb-10">
-              <Img
-                src={mascot}
-                alt=""
-                width={592}
-                height={592}
-                className="block w-full max-w-[592px] rounded-[20px] border border-line bg-surface"
-              />
-            </Section>
+            {!hideHeroImage ? (
+              <Section className="px-6 pb-10">
+                <Img
+                  src={mascot}
+                  alt=""
+                  width={592}
+                  height={592}
+                  className="block w-full max-w-[592px] rounded-[20px] border border-line bg-surface"
+                />
+              </Section>
+            ) : null}
 
             {steps && steps.length > 0 ? (
               <Section className="px-6 pb-12">

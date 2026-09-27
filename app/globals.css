@@ -251,6 +251,25 @@
   .brand-focus-inherit {
     color: inherit;
   }
+  /* Point Navpit. — même glow que « Lance-le. », cadré sur le point seul. */
+  .brand-focus-dot {
+    margin-left: 0.02em;
+    padding-inline: 0.05em;
+  }
+  .brand-focus-dot::before {
+    left: -0.12em;
+    right: -0.14em;
+    top: 0.18em;
+    bottom: -0.04em;
+    border-radius: 0.35em;
+  }
+  .brand-focus-dot::after {
+    left: -0.08em;
+    right: -0.1em;
+    top: 0.28em;
+    bottom: -0.08em;
+    border-radius: 0.3em;
+  }
 }
 
 @property --focus-glow {
