@@ -69,6 +69,21 @@ type FullRow = {
 const CARD_COLUMNS =
   "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, theme, project_features(status), project_tasks(done)";
 
+const CARD_COLUMNS_FALLBACK =
+  "id, slug, name, description, status, stage, next, site, github, figma, notion, theme, project_features(status), project_tasks(done)";
+
+const FULL_COLUMNS =
+  "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, theme, partner, pitch, target, problem, business, stack, team, risks, notes, updated_at, project_features(id, title, status, position), project_tasks(id, title, done, position), project_log(id, date, text, created_at)";
+
+const FULL_COLUMNS_FALLBACK =
+  "id, slug, name, description, status, stage, next, site, github, figma, notion, theme, partner, pitch, target, problem, business, stack, team, risks, notes, updated_at, project_features(id, title, status, position), project_tasks(id, title, done, position), project_log(id, date, text, created_at)";
+
+function missingNextMeta(message: string) {
+  return /next_due_date|next_priority|next_estimated_minutes|blocked|blocker_reason|does not exist/i.test(
+    message,
+  );
+}
+
 function toSummary(row: CardRow): ProjectSummary {
   const features = row.project_features ?? [];
   const tasks = row.project_tasks ?? [];
@@ -101,12 +116,22 @@ function toSummary(row: CardRow): ProjectSummary {
 export async function listProjects(): Promise<ProjectSummary[]> {
   const db = await getDb();
   if (!db) return [];
-  const { data, error } = await db.supabase
+  let { data, error } = await db.supabase
     .from("projects")
     .select(CARD_COLUMNS)
     .eq("user_id", db.user.id)
     .order("sort_order")
     .order("name");
+  if (error && missingNextMeta(error.message)) {
+    const retry = await db.supabase
+      .from("projects")
+      .select(CARD_COLUMNS_FALLBACK)
+      .eq("user_id", db.user.id)
+      .order("sort_order")
+      .order("name");
+    data = retry.data;
+    error = retry.error;
+  }
   if (error) throw new Error(`Lecture des projets : ${error.message}`);
 
   return ((data ?? []) as unknown as CardRow[]).map(toSummary);
@@ -116,14 +141,22 @@ export async function listProjects(): Promise<ProjectSummary[]> {
 export async function getProject(slug: string): Promise<ProjectFull | null> {
   const db = await getDb();
   if (!db) return null;
-  const { data, error } = await db.supabase
+  let { data, error } = await db.supabase
     .from("projects")
-    .select(
-      "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, theme, partner, pitch, target, problem, business, stack, team, risks, notes, updated_at, project_features(id, title, status, position), project_tasks(id, title, done, position), project_log(id, date, text, created_at)",
-    )
+    .select(FULL_COLUMNS)
     .eq("user_id", db.user.id)
     .eq("slug", slug)
     .maybeSingle();
+  if (error && missingNextMeta(error.message)) {
+    const retry = await db.supabase
+      .from("projects")
+      .select(FULL_COLUMNS_FALLBACK)
+      .eq("user_id", db.user.id)
+      .eq("slug", slug)
+      .maybeSingle();
+    data = retry.data;
+    error = retry.error;
+  }
   if (error) throw new Error(`Lecture du projet : ${error.message}`);
   if (!data) return null;
 

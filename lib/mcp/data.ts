@@ -98,6 +98,30 @@ function ilikeSafe(query: string) {
   return query.replace(/[%_\\]/g, "").slice(0, 200);
 }
 
+const PROJECT_CARD_COLUMNS =
+  "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at";
+
+const PROJECT_CARD_COLUMNS_FALLBACK =
+  "id, slug, name, description, status, stage, next, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at";
+
+async function selectProjectCard(
+  userId: string,
+  filter: { id: string } | { status: "focus" },
+) {
+  let q = admin().from("projects").select(PROJECT_CARD_COLUMNS).eq("user_id", userId);
+  q = "id" in filter ? q.eq("id", filter.id) : q.eq("status", filter.status);
+  const first = await q.maybeSingle();
+  if (!first.error) return first.data;
+  if (!/next_due_date|next_priority|next_estimated_minutes|blocked|blocker_reason|does not exist/i.test(first.error.message)) {
+    throw first.error;
+  }
+  let retry = admin().from("projects").select(PROJECT_CARD_COLUMNS_FALLBACK).eq("user_id", userId);
+  retry = "id" in filter ? retry.eq("id", filter.id) : retry.eq("status", filter.status);
+  const second = await retry.maybeSingle();
+  if (second.error) throw second.error;
+  return second.data;
+}
+
 export const data = {
   async getFocusProject(userId: string): Promise<Project | null> {
     const { data: row, error } = await admin()
@@ -267,29 +291,11 @@ export const data = {
   },
 
   async getProjectCard(userId: string, projectId: string) {
-    const { data: row, error } = await admin()
-      .from("projects")
-      .select(
-        "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at",
-      )
-      .eq("user_id", userId)
-      .eq("id", projectId)
-      .maybeSingle();
-    if (error) throw error;
-    return row;
+    return selectProjectCard(userId, { id: projectId });
   },
 
   async getFocusCard(userId: string) {
-    const { data: row, error } = await admin()
-      .from("projects")
-      .select(
-        "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at",
-      )
-      .eq("user_id", userId)
-      .eq("status", "focus")
-      .maybeSingle();
-    if (error) throw error;
-    return row;
+    return selectProjectCard(userId, { status: "focus" });
   },
 
   async findProjectIdBySlug(userId: string, slug: string) {
