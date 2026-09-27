@@ -35,7 +35,7 @@ export default function LandingPage() {
   return (
     <>
       <JsonLd data={[softwareApplicationJsonLd(), faqPageJsonLd()]} />
-      <section id="commencer" className="relative isolate scroll-mt-24 overflow-clip">
+      <section id="commencer" className="relative isolate scroll-mt-24 overflow-x-clip bg-ink">
         <LandingHero />
 
         <LandingMarquee className="relative z-10 mt-10 sm:mt-12" />

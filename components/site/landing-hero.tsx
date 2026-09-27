@@ -56,12 +56,12 @@ function HeroBackdrop({ reduce }: { reduce: boolean }) {
   );
 }
 
-/** Hero #commencer : cadre film + le bloc fondateur inchangé. */
+/** Hero #commencer : film bord à bord (lvh + fill-available = plus de bandes Safari). */
 export function LandingHero() {
   const reduce = useReducedMotion();
 
   return (
-    <div className="relative isolate min-h-dvh w-full overflow-hidden bg-ink">
+    <div className="relative isolate min-h-lvh min-h-[-webkit-fill-available] w-full overflow-hidden bg-ink">
         <HeroBackdrop reduce={!!reduce} />
         <div aria-hidden className="noise-overlay opacity-25 mix-blend-overlay" />
         <div
@@ -71,10 +71,11 @@ export function LandingHero() {
 
         <RevealGroup
           className={cn(
-            "relative z-10 mx-auto flex min-h-dvh w-full max-w-[860px]",
+            "relative z-10 mx-auto flex min-h-lvh min-h-[-webkit-fill-available] w-full max-w-[860px]",
             "flex-col items-center justify-end gap-3 px-4",
-            "pt-[4.75rem] pb-[max(1.75rem,env(safe-area-inset-bottom))]",
-            "text-center sm:gap-5 sm:px-8 sm:pt-[5.5rem] sm:pb-12",
+            "pt-[max(4.75rem,calc(env(safe-area-inset-top)+3.25rem))]",
+            "pb-[max(1.75rem,env(safe-area-inset-bottom))]",
+            "text-center sm:gap-5 sm:px-8 sm:pb-12",
           )}
         >
           <Reveal>

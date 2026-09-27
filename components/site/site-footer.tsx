@@ -71,7 +71,7 @@ export function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-bg px-4 pt-4 pb-8 sm:px-8 sm:pt-6 sm:pb-10">
+    <footer className="bg-bg px-4 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8 sm:pt-6 sm:pb-[max(2.5rem,env(safe-area-inset-bottom))]">
       <InView className="mx-auto max-w-[1080px]" stagger={0.1}>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.18fr)] lg:gap-5">
           <motion.article
