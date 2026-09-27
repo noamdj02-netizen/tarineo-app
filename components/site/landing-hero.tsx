@@ -83,7 +83,7 @@ export function LandingHero() {
             "text-center sm:gap-6 sm:px-8 sm:pb-12",
           )}
         >
-          {/* Titre + CTA en haut : le milieu du film reste libre pour le fondateur. */}
+          {/* Titre en haut — bonhomme au milieu — boutons d’action en bas. */}
           <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
             <Reveal>
               <p className="mono-label text-accent-ink/70">/ Cockpit fondateur ///</p>
@@ -109,8 +109,11 @@ export function LandingHero() {
             >
               <p>{BRAND.description}</p>
             </Reveal>
+          </div>
+
+          <div className="flex w-full flex-col items-center gap-2.5 sm:gap-3">
             <Reveal
-              className="mt-1 flex w-full max-w-[min(100%,360px)] flex-col gap-2 sm:mt-2 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3"
+              className="flex w-full max-w-[min(100%,360px)] flex-col gap-2 sm:max-w-none sm:flex-row sm:flex-wrap sm:justify-center sm:gap-3"
               transition={{ duration: 0.55, delay: 0.7, ease: EASE }}
             >
               <Link
@@ -131,9 +134,6 @@ export function LandingHero() {
                 Voir le produit
               </LandingButton>
             </Reveal>
-          </div>
-
-          <div className="flex w-full flex-col items-center gap-2.5 sm:gap-3">
             <Reveal className="w-full max-w-[680px]">
               <HeroPrompt onFilm />
             </Reveal>
