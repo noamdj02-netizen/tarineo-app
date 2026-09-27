@@ -61,22 +61,33 @@ export async function sendEmailWithPdf(input: {
   to: string;
   subject: string;
   text: string;
+  html?: string;
   filename: string;
   pdf: Buffer;
   replyTo?: string;
+  inline?: { filename: string; content: Buffer; contentId: string }[];
 }) {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false as const, skipped: true as const, error: "E-mail non configuré (RESEND_API_KEY)." };
   client ??= new Resend(key);
+  const attachments = [
+    { filename: input.filename, content: input.pdf },
+    ...(input.inline ?? []).map((f) => ({
+      filename: f.filename,
+      content: f.content,
+      contentId: f.contentId,
+      content_id: f.contentId,
+    })),
+  ];
   const { data, error } = await client.emails.send({
     from: FROM,
     to: input.to,
     subject: input.subject,
     text: input.text,
-    html: `<p style="font:15px/1.5 sans-serif;white-space:pre-wrap">${escapeHtml(input.text)}</p>`,
+    html: input.html ?? `<p style="font:15px/1.5 sans-serif;white-space:pre-wrap">${escapeHtml(input.text)}</p>`,
     replyTo: input.replyTo,
-    attachments: [{ filename: input.filename, content: input.pdf }],
-  });
+    attachments,
+  } as Parameters<Resend["emails"]["send"]>[0]);
   if (error) return { ok: false as const, skipped: false as const, error: error.message };
   return { ok: true as const, skipped: false as const, id: data?.id ?? null };
 }

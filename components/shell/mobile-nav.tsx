@@ -19,15 +19,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { TABS, isActive } from "@/lib/nav";
+import { MOBILE_MORE, isActive } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 const MAIN = [
   { href: "/accueil", label: "Accueil", icon: House },
-  { href: "/projets", label: "Chantiers", icon: HardHat },
+  { href: "/chantiers", label: "Chantiers", icon: HardHat },
 ] as const;
 
-const MORE = TABS.filter((t) => !MAIN.some((m) => m.href === t.href));
+const MORE = MOBILE_MORE;
 
 const ACTIONS = [
   { id: "plus", icon: "/figma/navbar/plus.svg", label: "Nouveau chantier" },
@@ -110,11 +110,11 @@ export function MobileNav() {
   function run(id: ActionId) {
     setPanel("none");
     if (id === "plus") {
-      if (isActive(pathname, "/projets"))
+      if (isActive(pathname, "/chantiers"))
         window.dispatchEvent(new Event("navpit:new-project"));
-      else router.push("/projets#nouveau");
+      else router.push("/chantiers#nouveau");
     } else if (id === "scan") window.dispatchEvent(new Event("navpit:search"));
-    else router.push("/copilote");
+    else router.push("/distributeur/devis");
   }
 
   const moreOn = MORE.some((t) => isActive(pathname, t.href, search));

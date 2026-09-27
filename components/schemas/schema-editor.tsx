@@ -233,7 +233,7 @@ export function SchemaEditor({
     <section className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <Link
-          href="/schemas"
+          href="/accueil"
           aria-label="Tous les schémas"
           className="grid size-11 flex-none place-items-center rounded-pill border border-line hover:bg-accent-soft"
         >

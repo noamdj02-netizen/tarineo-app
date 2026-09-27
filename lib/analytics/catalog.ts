@@ -63,12 +63,14 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
 };
 
 export function featureFromPath(path: string): FeatureKey | "" {
-  if (path.startsWith("/projets")) return "projets";
+  if (path.startsWith("/chantiers") || path.startsWith("/projets")) return "projets";
   if (path.startsWith("/copilote")) return "copilote";
-  if (path.startsWith("/ressources")) return "ressources";
-  if (path.startsWith("/schemas")) return "schemas";
-  if (path.startsWith("/anatomie")) return "anatomie";
-  if (path.startsWith("/composants")) return "composants";
+  if (path.startsWith("/distributeur") || path.startsWith("/ressources")) return "ressources";
+  if (path.startsWith("/hausses") || path.startsWith("/schemas")) return "schemas";
+  if (path.startsWith("/achats") || path.startsWith("/anatomie")) return "anatomie";
+  if (path.startsWith("/client") || path.startsWith("/composants")) return "composants";
+  if (path.startsWith("/fournisseurs") || path.startsWith("/outils")) return "ressources";
+  if (path.startsWith("/comparateur") || path.startsWith("/audit")) return "anatomie";
   if (path.startsWith("/themes")) return "themes";
   if (path.startsWith("/prix") || path.startsWith("/abonnement")) return "pricing";
   if (path.startsWith("/bibliotheque/heros")) return "heros";

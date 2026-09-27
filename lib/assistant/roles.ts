@@ -25,6 +25,6 @@ export const ROLE_PROMPTS: Record<AgentRole, string> = {
 };
 
 export function projectSlugFromPath(path: string) {
-  const m = /^\/projets\/([a-z0-9-]+)/.exec(path);
+  const m = /^\/(?:chantiers|projets)\/([a-z0-9-]+)/.exec(path);
   return m?.[1] ?? null;
 }

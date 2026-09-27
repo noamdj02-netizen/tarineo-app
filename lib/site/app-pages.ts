@@ -29,7 +29,7 @@ export const APP_PAGES = {
     label: "Chantiers",
     title: "Un chantier ouvert,",
     tail: "les autres en pause.",
-    text: "Chaque affaire a ses achats, son client, ses devis à renvoyer. Le Focus est celui du jour.",
+    text: "Chaque affaire a ses achats, son client, ses devis à renvoyer. Un chantier ouvert à la fois.",
   },
   devis: {
     label: "Entreprise",

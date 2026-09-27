@@ -36,7 +36,7 @@ export function FocusProjectCard({
                 {project.name}
               </h2>
               <p className="mt-1.5 text-[14px] leading-relaxed text-muted-foreground">
-                {project.next?.trim() || "Ouvre la fiche pour ranger les pièces."}
+                {project.next?.trim() || "Ouvrez la fiche pour ranger les pièces."}
               </p>
               {project.docsCount != null ? (
                 <p className="mt-1 text-[13px] text-muted-foreground">
@@ -51,7 +51,7 @@ export function FocusProjectCard({
                 Pas encore de chantier
               </h2>
               <p className="mt-1.5 text-[14px] leading-relaxed text-muted-foreground">
-                Ouvre un chantier pour y ranger devis, factures et marge.
+                Ouvrez un chantier pour y ranger devis, factures et marge.
               </p>
             </>
           )}
@@ -66,13 +66,13 @@ export function FocusProjectCard({
         {project ? (
           <>
             <Link
-              href="/ressources"
+              href={`/distributeur/devis?chantier=${project.slug}`}
               className="inline-flex min-h-10 items-center rounded-pill border border-line px-3 text-[13px] hover:bg-accent-soft"
             >
               Déposer
             </Link>
             <Link
-              href="/composants"
+              href={`/client/devis?chantier=${project.slug}`}
               className="inline-flex min-h-10 items-center rounded-pill border border-line px-3 text-[13px] hover:bg-accent-soft"
             >
               Envoyer au client
@@ -80,7 +80,7 @@ export function FocusProjectCard({
           </>
         ) : null}
         <Link
-          href={project ? `/projets/${project.slug}` : "/projets"}
+          href={project ? `/chantiers/${project.slug}` : "/chantiers#nouveau"}
           className="pressable ml-auto inline-flex min-h-10 items-center gap-1.5 rounded-pill border border-line bg-surface px-3.5 text-[13.5px] font-medium hover:bg-accent-soft"
         >
           {project ? "Fiche" : "Ouvrir un chantier"}

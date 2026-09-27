@@ -66,7 +66,7 @@ const CATALOG: CatalogItem[] = [
   {
     key: "projects",
     title: "Chantiers",
-    description: "Focus et affaires en pause",
+    description: "Ouverts et en pause",
     icon: FolderKanban,
     group: "board",
   },

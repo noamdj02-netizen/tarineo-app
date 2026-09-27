@@ -27,7 +27,16 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       // l'ancien onglet « Figma → Cursor » vit maintenant en bas de la page Outils
-      { source: "/workflow", destination: "/schemas", permanent: false },
+      { source: "/workflow", destination: "/hausses", permanent: false },
+      { source: "/projets", destination: "/chantiers", permanent: false },
+      { source: "/projets/:slug", destination: "/chantiers/:slug", permanent: false },
+      { source: "/ressources", destination: "/distributeur", permanent: false },
+      { source: "/composants", destination: "/client", permanent: false },
+      { source: "/composants-2", destination: "/client", permanent: false },
+      { source: "/schemas", destination: "/hausses", permanent: false },
+      { source: "/audit", destination: "/comparateur", permanent: false },
+      { source: "/outils", destination: "/fournisseurs", permanent: false },
+      { source: "/anatomie", destination: "/achats", permanent: false },
       { source: "/cgu", destination: "/cgv", permanent: true },
     ];
   },

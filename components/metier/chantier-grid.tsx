@@ -3,7 +3,7 @@
 import { Loader2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { createChantierAction } from "@/app/(app)/metier/actions";
 import { ChantierStatusToggle } from "@/components/metier/chantier-status";
 import type { ChantierCard } from "@/lib/metier/types";
@@ -19,7 +19,7 @@ export function ChantierGrid({ chantiers }: { chantiers: ChantierCard[] }) {
           className={cn(
             "card-soft relative flex flex-col gap-3 p-5 transition-shadow hover:shadow-lift",
             c.status === "focus"
-              ? "shadow-[inset_4px_0_0_var(--color-brand-orange),inset_-4px_0_0_var(--color-brand-orange)]"
+              ? "shadow-[inset_4px_0_24px_-8px_color-mix(in_srgb,var(--color-brand-orange)_55%,transparent),inset_-4px_0_24px_-8px_color-mix(in_srgb,var(--color-brand-orange)_55%,transparent),inset_4px_0_0_var(--color-brand-orange),inset_-4px_0_0_var(--color-brand-orange)]"
               : c.status === "pause"
                 ? "shadow-[inset_4px_0_0_#f4c4a8]"
                 : "",
@@ -29,7 +29,7 @@ export function ChantierGrid({ chantiers }: { chantiers: ChantierCard[] }) {
             {c.seed_key ? <p className="mono-label text-[10px]">{DEMO_MARK}</p> : null}
             <h3 className="font-display text-[22px] leading-tight font-semibold tracking-tight">
               <Link
-                href={`/projets/${c.slug}`}
+                href={`/chantiers/${c.slug}`}
                 className="outline-none after:absolute after:inset-0 after:rounded-card"
               >
                 {c.name}
@@ -56,8 +56,15 @@ function NewChantier() {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const open = () => setOpen(true);
+    if (typeof window !== "undefined" && window.location.hash === "#nouveau") open();
+    window.addEventListener("navpit:new-project", open);
+    return () => window.removeEventListener("navpit:new-project", open);
+  }, []);
+
   return (
-    <div className="flex min-h-[180px] flex-col rounded-card border border-dashed border-ink/15">
+    <div id="nouveau" className="flex min-h-[180px] flex-col rounded-card border border-dashed border-ink/15">
       {open ? (
         <form
           className="flex flex-1 flex-col justify-center gap-2 p-5"
@@ -71,7 +78,7 @@ function NewChantier() {
                 setError(res.error);
                 return;
               }
-              router.push(`/projets/${res.slug}`);
+              router.push(`/chantiers/${res.slug}`);
             });
           }}
         >

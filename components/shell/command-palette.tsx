@@ -19,7 +19,7 @@ function normalize(s: string) {
     .toLowerCase();
 }
 
-/** Recherche ⌘K : aller vite à n'importe quel onglet (les projets s'ajouteront à l'étape 3). */
+/** Recherche ⌘K : chantiers, pièces, compte. */
 export function useCommandPalette() {
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -55,7 +55,7 @@ export function CommandPalette({
 
   const extras = useMemo(
     () => [
-      { href: "/compte#configuration", label: "Configuration initiale", icon: User },
+      { href: "/chantiers#nouveau", label: "Nouveau chantier", icon: User },
       { href: "/compte", label: "Compte", icon: User },
       { href: "/entreprise", label: "Mon entreprise", icon: User },
       { href: "/abonnement", label: "Tarifs", icon: CreditCard },

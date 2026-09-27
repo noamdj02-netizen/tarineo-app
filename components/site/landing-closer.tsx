@@ -14,10 +14,9 @@ const COLS = [
   {
     title: "Produit",
     links: [
-      { href: "/#solution", label: "Solution" },
-      { href: "/#fonctions", label: "Fonctions" },
+      { href: "/#analyse", label: "Analyse" },
+      { href: "/#chantiers", label: "Chantiers" },
       { href: "/prix", label: "Prix" },
-      { href: "/avis", label: "Avis" },
       { href: "/#faq", label: "FAQ" },
     ],
   },
@@ -25,8 +24,8 @@ const COLS = [
     title: "Parcours",
     links: [
       { href: "/#comment", label: "Comment ça marche" },
-      { href: "/#film", label: "Téléphone" },
-      { href: "/#temoignages", label: "Témoignages" },
+      { href: "/#fournisseurs", label: "Fournisseurs" },
+      { href: "/#pour-qui", label: "Pour qui" },
     ],
   },
   {
@@ -126,15 +125,15 @@ export function LandingCloser() {
       <div className="landing-closer-scrim" aria-hidden />
 
       <div className="landing-closer-stage">
-        <p className="landing-closer-eyebrow">Prêt quand tu l’es</p>
+        <p className="landing-closer-eyebrow">Prêt quand vous l’êtes</p>
         <div className="landing-closer-mask">
           <h2 id="closer-title" className="landing-closer-headline">
-            Lance ton prochain projet.
+            Déposez le prochain devis.
           </h2>
         </div>
         <p className="landing-closer-lede">
-          {PRO_TRIAL_DAYS} jours d’essai Pro sans carte. Crée ton compte, ajoute tes projets et
-          choisis ton Focus.
+          {PRO_TRIAL_DAYS} jours d’essai sans carte. Créez votre compte, ouvrez un chantier,
+          renvoyez au client.
         </p>
         <Link href="/inscription?plan=pro" className="landing-closer-cta">
           <span>Commencer l’essai</span>
@@ -147,7 +146,7 @@ export function LandingCloser() {
             <div className="landing-closer-brand">
               <span className="landing-closer-word">{BRAND.name}</span>
               <p className="landing-closer-tag">
-                Le cockpit des fondateurs solo. Un projet en Focus, la prochaine action.
+                {BRAND.tagline}
               </p>
             </div>
             <nav className="landing-closer-nav" aria-label="Pied de page">
@@ -169,7 +168,7 @@ export function LandingCloser() {
           <div className="landing-closer-footrow">
             <p className="landing-closer-legal">
               © {year} {BRAND.name} · Fait en France ·{" "}
-              <a href="mailto:contact@navpit.com">contact@navpit.com</a>
+              <a href={`mailto:${BRAND.contactEmail}`}>{BRAND.contactEmail}</a>
             </p>
           </div>
         </div>

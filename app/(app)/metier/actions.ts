@@ -6,20 +6,45 @@ import { extractDocument } from "@/lib/metier/extract";
 import {
   createChantier,
   createParty,
+  getCompanyProfile,
   getDocument,
   recordPriceAlerts,
   saveExtractedDocument,
   setChantierStatus,
   transformImportedDocument,
+  addDocumentLine,
+  listParties,
+  updateDocument,
 } from "@/lib/metier/queries";
+import { DEVIS_TEMPLATES } from "@/lib/metier/devis-templates";
 import type { ChantierStatus, ClientOutKind, DocDirection, DocKind, ExtractTotals, PartyKind } from "@/lib/metier/types";
 import { sendEmailWithPdf } from "@/lib/email/send";
+import { loadCompanyLogo } from "@/lib/metier/brand-assets";
+import { draftDocumentMail, pieceMailHtml } from "@/lib/metier/draft-mail";
 import { pdfFromDocument } from "@/lib/metier/pdf/from-document";
 import { getViewer } from "@/lib/session";
-import { CLIENT_OUT_KINDS, KIND_LABEL, marginToMarkup } from "@/lib/metier/types";
+import { CLIENT_OUT_KINDS, marginToMarkup } from "@/lib/metier/types";
 
 function refresh() {
-  for (const p of ["/accueil", "/copilote", "/ressources", "/schemas", "/anatomie", "/projets", "/composants", "/outils", "/audit"]) {
+  for (const p of [
+    "/accueil",
+    "/copilote",
+    "/distributeur",
+    "/hausses",
+    "/achats",
+    "/chantiers",
+    "/client",
+    "/client/devis",
+    "/client/bon-commande",
+    "/client/facture",
+    "/distributeur/devis",
+    "/distributeur/bon-commande",
+    "/distributeur/bon-enlevement",
+    "/distributeur/facture",
+    "/fournisseurs",
+    "/comparateur",
+    "/pieces",
+  ]) {
     revalidatePath(p);
   }
 }
@@ -113,6 +138,28 @@ export async function setChantierStatusAction(id: string, status: ChantierStatus
   refresh();
 }
 
+export async function saveDocumentAction(form: FormData) {
+  const id = String(form.get("documentId") ?? "");
+  if (!id) return { ok: false as const, error: "Pièce manquante." };
+  const title = String(form.get("title") ?? "");
+  const partyId = String(form.get("partyId") || "") || null;
+  const chantierId = String(form.get("chantierId") || "") || null;
+  const partyName = String(form.get("partyName") ?? "").trim();
+  const ids = form.getAll("lineId").map(String);
+  const lines = ids.map((lineId, i) => ({
+    id: lineId,
+    label: String(form.getAll("lineLabel")[i] ?? ""),
+    qty: Number(form.getAll("lineQty")[i]),
+    buy_price: Number(form.getAll("lineBuy")[i]),
+    sell_price: Number(form.getAll("lineSell")[i]),
+  }));
+  const res = await updateDocument({ id, title, partyId, chantierId, partyName, lines });
+  if (!res.ok) return res;
+  refresh();
+  revalidatePath(`/pieces/${id}`);
+  return { ok: true as const };
+}
+
 export async function transformQuoteAction(form: FormData) {
   const sourceId = String(form.get("sourceId") ?? "");
   const kindRaw = String(form.get("kind") ?? "devis") as ClientOutKind;
@@ -129,27 +176,85 @@ export async function transformQuoteAction(form: FormData) {
   return { ok: true as const, id: doc.id, kind: doc.kind };
 }
 
+export async function draftDocumentMailAction(documentId: string) {
+  const doc = await getDocument(documentId);
+  if (!doc) return { ok: false as const, error: "Pièce introuvable." };
+  const draft = await draftDocumentMail(doc);
+  return { ok: true as const, ...draft };
+}
+
 export async function sendDocumentAction(form: FormData) {
   const id = String(form.get("documentId") ?? "");
   const to = String(form.get("to") ?? "").trim();
   const note = String(form.get("note") ?? "").trim();
+  const subjectIn = String(form.get("subject") ?? "").trim();
   if (!id) return { ok: false as const, error: "Document manquant." };
-  if (!to.includes("@")) return { ok: false as const, error: "E-mail client invalide." };
-  const [doc, viewer] = await Promise.all([getDocument(id), getViewer()]);
-  if (!doc || doc.direction !== "out") return { ok: false as const, error: "Pièce introuvable." };
+  if (!to.includes("@")) return { ok: false as const, error: "E-mail invalide." };
+  const [doc, viewer, company, logo] = await Promise.all([
+    getDocument(id),
+    getViewer(),
+    getCompanyProfile(),
+    loadCompanyLogo(),
+  ]);
+  if (!doc) return { ok: false as const, error: "Pièce introuvable." };
+  const draft = await draftDocumentMail(doc);
+  const text = note || draft.body;
+  const subject = subjectIn || draft.subject;
   const { buffer, filename } = await pdfFromDocument(doc, viewer?.email);
-  const label = KIND_LABEL[doc.kind].toLowerCase();
+  const html = pieceMailHtml({
+    body: text,
+    company: company?.raison_sociale || "L’entreprise",
+    phone: company?.telephone,
+    email: company?.email_contact || viewer?.email || undefined,
+    address: [company?.adresse_rue, company?.adresse_code_postal, company?.adresse_ville].filter(Boolean).join(", "),
+    logoCid: logo?.cid,
+  });
   const res = await sendEmailWithPdf({
     to,
-    subject: `${KIND_LABEL[doc.kind]} — ${doc.title}`,
-    text:
-      note ||
-      `Bonjour,\n\nVeuillez trouver ci-joint ${label} « ${doc.title} ».\n\nCordialement`,
+    subject,
+    text,
+    html,
     filename,
     pdf: buffer,
-    replyTo: viewer?.email,
+    replyTo: company?.email_contact || viewer?.email,
+    inline: logo ? [{ filename: logo.filename, content: logo.buffer, contentId: logo.cid }] : undefined,
   });
   if (!res.ok) return { ok: false as const, error: res.error ?? "Envoi impossible." };
+  refresh();
+  return { ok: true as const };
+}
+
+export async function createFromTemplateAction(form: FormData) {
+  const templateId = String(form.get("templateId") ?? "");
+  const tpl = DEVIS_TEMPLATES.find((t) => t.id === templateId);
+  if (!tpl) return { ok: false as const, error: "Modèle inconnu." };
+  const chantierId = String(form.get("chantierId") || "") || null;
+  const clientId = String(form.get("clientId") || "");
+  const clients = await listParties("client");
+  const client = clients.find((c) => c.id === clientId);
+  const doc = await saveExtractedDocument({
+    title: tpl.id === "vide" ? "Devis" : `Devis — ${tpl.title}`,
+    direction: "out",
+    kind: "devis",
+    partyName: client?.name || "Client",
+    partyKind: "client",
+    chantierId,
+    extract: { source: "template", templateId },
+    lines: tpl.lines.map((l) => ({
+      label: l.label,
+      qty: l.qty,
+      unit: l.unit,
+      buy_price: 0,
+      sell_price: l.sell,
+    })),
+  });
+  refresh();
+  return { ok: true as const, id: doc.id };
+}
+
+export async function addDocumentLineAction(documentId: string) {
+  const res = await addDocumentLine(documentId);
+  if (!res.ok) return res;
   refresh();
   return { ok: true as const };
 }

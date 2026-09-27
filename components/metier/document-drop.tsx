@@ -25,11 +25,17 @@ export function DocumentDrop({
   clients = [],
   compact,
   defaultChantierId,
+  lockKind,
+  lockDirection,
+  hint,
 }: {
   chantiers: ChantierCard[];
   clients?: Party[];
   compact?: boolean;
   defaultChantierId?: string | null;
+  lockKind?: DocKind;
+  lockDirection?: DocDirection;
+  hint?: string;
 }) {
   const reduce = useReducedMotion();
   const router = useRouter();
@@ -40,7 +46,9 @@ export function DocumentDrop({
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<(ExtractResult & { filePath?: string }) | null>(null);
   const [saving, setSaving] = useState(false);
-  const [outKind, setOutKind] = useState<ClientOutKind>("devis");
+  const [outKind, setOutKind] = useState<ClientOutKind>(
+    lockKind && CLIENT_OUT_KINDS.includes(lockKind as ClientOutKind) ? (lockKind as ClientOutKind) : "devis",
+  );
 
   function handleFiles(files: FileList | null) {
     const file = files?.[0];
@@ -62,8 +70,8 @@ export function DocumentDrop({
     if (!draft) return null;
     return {
       title: String(form.get("title") || draft.title),
-      direction: (asSource ? "in" : String(form.get("direction"))) as DocDirection,
-      kind: String(form.get("kind")) as DocKind,
+      direction: (asSource ? "in" : lockDirection ?? String(form.get("direction"))) as DocDirection,
+      kind: (lockKind ?? String(form.get("kind"))) as DocKind,
       partyName: String(form.get("partyName") || draft.party_name),
       partyKind: String(form.get("partyKind")) as PartyKind,
       chantierId: String(form.get("chantierId") || "") || null,
@@ -123,7 +131,7 @@ export function DocumentDrop({
       return;
     }
     setDraft(null);
-    router.push("/composants");
+    router.push(lockKind === "bon_commande" ? "/client/bon-commande" : lockKind === "facture" ? "/client/facture" : "/client/devis");
     router.refresh();
   }
 
@@ -170,7 +178,11 @@ export function DocumentDrop({
           <Upload className="size-8 text-brand-orange" aria-hidden />
         )}
         <p className="font-display text-[18px] font-semibold tracking-tight">
-          {pending ? "Lecture du document…" : over ? "Déposez ici" : "Glissez un devis, une facture ou un bon"}
+          {pending
+            ? "Lecture du document…"
+            : over
+              ? "Déposez ici"
+              : hint || "Glissez un devis, une facture ou un bon"}
         </p>
         <p className="max-w-[42ch] text-[13.5px] text-muted-foreground">
           PDF, JPEG, PNG ou HEIC. Tarinéo lit le type, le total HT, l’éco-contribution, la PMCB et le poids s’ils sont écrits.
@@ -210,6 +222,9 @@ export function DocumentDrop({
               Partie
               <Input name="partyName" defaultValue={draft.party_name} className="h-11 rounded-xl" />
             </label>
+            {lockKind ? (
+              <input type="hidden" name="kind" value={lockKind} />
+            ) : (
             <label className="flex flex-col gap-1.5 text-[13px]">
               Type
               <select name="kind" defaultValue={draft.kind} className="h-11 rounded-xl border border-line bg-surface px-3">
@@ -220,6 +235,10 @@ export function DocumentDrop({
                 ))}
               </select>
             </label>
+            )}
+            {lockDirection ? (
+              <input type="hidden" name="direction" value={lockDirection} />
+            ) : (
             <label className="flex flex-col gap-1.5 text-[13px]">
               Sens
               <select name="direction" defaultValue={draft.direction} className="h-11 rounded-xl border border-line bg-surface px-3">
@@ -227,6 +246,7 @@ export function DocumentDrop({
                 <option value="out">{DIRECTION_LABEL.out}</option>
               </select>
             </label>
+            )}
             <label className="flex flex-col gap-1.5 text-[13px]">
               Rôle
               <select name="partyKind" defaultValue={draft.party_kind} className="h-11 rounded-xl border border-line bg-surface px-3">
@@ -291,6 +311,7 @@ export function DocumentDrop({
               </li>
             ))}
           </ul>
+          {lockDirection === "out" ? null : (
           <div className="rounded-[22px] border border-line bg-surface-2 p-4">
             <p className="text-[14px] font-medium">Transformer le fichier</p>
             <p className="mt-1 text-[13px] text-muted-foreground">
@@ -342,6 +363,7 @@ export function DocumentDrop({
               {saving ? "Transformation…" : `Créer ${CLIENT_OUT_LABEL[outKind].toLowerCase()}`}
             </Button>
           </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={saving} variant="outline" className="rounded-full">
               {saving ? "Enregistrement…" : "Enregistrer sans transformer"}

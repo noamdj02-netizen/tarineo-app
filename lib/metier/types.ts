@@ -74,6 +74,7 @@ export type DocumentRow = {
 
 export type DocumentCard = DocumentRow & {
   party_name: string | null;
+  party_address: string | null;
   party_kind: PartyKind | null;
   chantier_name: string | null;
   chantier_slug: string | null;

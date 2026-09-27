@@ -11,7 +11,7 @@ export default function ProjetNotFound() {
         Ce slug n’existe pas sur ce compte, ou la fiche n’est plus là.
       </p>
       <Link
-        href="/projets"
+        href="/chantiers"
         className="btn-dark mt-6 inline-flex min-h-11 items-center rounded-pill px-5 text-[14px] font-medium"
       >
         Retour aux projets

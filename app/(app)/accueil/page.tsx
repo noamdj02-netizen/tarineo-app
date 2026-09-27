@@ -1,6 +1,5 @@
-import { loadDashboardLayout } from "@/app/(app)/accueil/dashboard-actions";
 import { HomeDashboard } from "@/components/home/home-dashboard";
-import { focusChantier, listAlerts, listChantiers, listDocuments, listParties } from "@/lib/metier/queries";
+import { focusChantier, listAlerts, listChantiers, listDocuments, listParties, rankingRows, spendByMonth } from "@/lib/metier/queries";
 import { getViewer } from "@/lib/session";
 import { siteMetadata } from "@/lib/seo";
 
@@ -10,14 +9,14 @@ export const metadata = {
 };
 
 export default async function AccueilPage() {
-  const [viewer, chantiers, clients, dashboardLayout, inbound, outbound, alerts] = await Promise.all([
+  const [viewer, chantiers, clients, inbound, outbound, alerts, ranking] = await Promise.all([
     getViewer(),
     listChantiers(),
     listParties("client"),
-    loadDashboardLayout(),
     listDocuments({ direction: "in" }),
     listDocuments({ direction: "out" }),
     listAlerts(),
+    rankingRows(),
   ]);
   const focus = focusChantier(chantiers);
   const pending = inbound.filter((d) => !outbound.some((o) => o.source_document_id === d.id));
@@ -29,6 +28,8 @@ export default async function AccueilPage() {
       clients={clients}
       pendingDocs={pending}
       alerts={alerts}
+      months={spendByMonth(inbound)}
+      enseignes={ranking.enseignes}
       focus={
         focus
           ? {
@@ -40,8 +41,6 @@ export default async function AccueilPage() {
             }
           : null
       }
-      initialLayout={dashboardLayout}
-      showTour={viewer?.needsTour === true}
     />
   );
 }

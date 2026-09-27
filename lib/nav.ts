@@ -14,6 +14,7 @@ import {
   Truck,
   type LucideIcon,
 } from "lucide-react";
+import { R } from "@/lib/routes";
 
 export type Tab = {
   href: string;
@@ -55,31 +56,31 @@ const analyse: Tab = {
   icon: FileSearch,
 };
 const alertes: Tab = {
-  href: "/schemas",
+  href: R.hausses,
   label: "Hausses",
   short: "Hausses",
   icon: Bell,
 };
 const classement: Tab = {
-  href: "/anatomie",
+  href: R.achats,
   label: "Achats",
   short: "Achats",
   icon: FolderTree,
 };
 const chantiers: Tab = {
-  href: "/projets",
+  href: R.chantiers,
   label: "Chantiers",
   short: "Chantiers",
   icon: HardHat,
 };
 const fournisseurs: Tab = {
-  href: "/outils",
+  href: R.fournisseurs,
   label: "Fournisseurs",
   short: "Fournisseurs",
   icon: Store,
 };
 const comparateur: Tab = {
-  href: "/audit",
+  href: R.comparateur,
   label: "Comparateur",
   short: "Compare",
   icon: ArrowLeftRight,
@@ -91,62 +92,26 @@ const tarifs: Tab = {
   icon: CreditCard,
 };
 
-const distDevis: Tab = {
-  href: "/ressources?kind=devis",
-  label: "Devis",
-  short: "Devis",
-  icon: FileText,
-};
-const distBc: Tab = {
-  href: "/ressources?kind=bon_commande",
-  label: "Bon de commande",
-  short: "BC",
-  icon: FileSpreadsheet,
-};
-const distBe: Tab = {
-  href: "/ressources?kind=bon_enlevement",
-  label: "Bon d’enlèvement",
-  short: "Enlèvement",
-  icon: Truck,
-};
-const distFacture: Tab = {
-  href: "/ressources?kind=facture",
-  label: "Facture",
-  short: "Facture",
-  icon: Receipt,
-};
-
-const entDevis: Tab = {
-  href: "/composants?kind=devis",
-  label: "Devis client",
-  short: "Devis",
-  icon: FileSpreadsheet,
-};
-const entBc: Tab = {
-  href: "/composants?kind=bon_commande",
-  label: "Bon de commande client",
-  short: "BC client",
-  icon: FileText,
-};
-const entFacture: Tab = {
-  href: "/composants?kind=facture",
-  label: "Facture client",
-  short: "Facture",
-  icon: Receipt,
-};
-
 const docsDistributeur: NavDrawer = {
   id: "docs-distributeur",
   label: "Documents distributeur",
   icon: Truck,
-  items: [distDevis, distBc, distBe, distFacture],
+  items: [
+    { href: R.distributeurDevis, label: "Devis", short: "Devis", icon: FileText },
+    { href: R.distributeurBc, label: "Bon de commande", short: "BC", icon: FileSpreadsheet },
+    { href: R.distributeurBe, label: "Bon d’enlèvement", short: "Enlèvement", icon: Truck },
+    { href: R.distributeurFacture, label: "Facture", short: "Facture", icon: Receipt },
+  ],
 };
-
 const docsEntreprise: NavDrawer = {
   id: "docs-entreprise",
   label: "Documents entreprise",
   icon: Building2,
-  items: [entDevis, entBc, entFacture],
+  items: [
+    { href: R.clientDevis, label: "Devis client", short: "Devis", icon: FileSpreadsheet },
+    { href: R.clientBc, label: "Bon de commande client", short: "BC client", icon: FileText },
+    { href: R.clientFacture, label: "Facture client", short: "Facture", icon: Receipt },
+  ],
 };
 
 /** Sections de la barre latérale — mêmes thèmes que la landing. */
@@ -154,7 +119,19 @@ export const NAV_SECTIONS: NavSection[] = [
   { id: "aujourd-hui", label: "Aujourd’hui", items: [accueil, analyse] },
   { id: "documents", label: "Documents", items: [docsDistributeur, docsEntreprise] },
   { id: "chantiers", label: "Chantiers", items: [chantiers] },
-  { id: "achats", label: "Achats", items: [fournisseurs, comparateur, alertes, classement, tarifs] },
+  { id: "achats", label: "Achats", items: [fournisseurs, comparateur, alertes, classement] },
+];
+
+/** Menu mobile « Plus » : hubs, pas chaque type de pièce. */
+export const MOBILE_MORE: Tab[] = [
+  { href: R.distributeurDevis, label: "Devis achat", short: "Devis", icon: FileText },
+  { href: R.clientDevis, label: "Devis client", short: "Client", icon: FileSpreadsheet },
+  fournisseurs,
+  comparateur,
+  alertes,
+  classement,
+  { href: R.entreprise, label: "Mon entreprise", short: "SIRET", icon: Building2 },
+  tarifs,
 ];
 
 /** Liste plate (palette ⌘K, mobile, etc.). */

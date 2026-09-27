@@ -168,7 +168,7 @@ export function Chat({
               Comment puis-je t’aider ?
             </p>
             <p className="text-[13.5px] text-muted-foreground">
-              Je lis tout le projet et j’agis : mail, tâche, landing, schéma, journal.
+              Pose une question sur un devis, une hausse ou le chantier en cours.
             </p>
           </div>
         ) : null}

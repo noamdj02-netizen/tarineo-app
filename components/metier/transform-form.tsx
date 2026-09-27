@@ -37,7 +37,7 @@ export function TransformForm({
             setError(res.error);
             return;
           }
-          router.push("/composants");
+          router.push(`/pieces/${res.id}`);
           router.refresh();
         });
       }}

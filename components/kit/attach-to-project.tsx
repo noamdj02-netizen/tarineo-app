@@ -36,7 +36,7 @@ export function AttachToProject({
 
   if (!projects.length) {
     return (
-      <Link href="/projets#nouveau" className={btnClass}>
+      <Link href="/chantiers#nouveau" className={btnClass}>
         <FolderPlus className="size-3.5" aria-hidden />
         Créer un projet
       </Link>

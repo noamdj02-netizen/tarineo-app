@@ -14,11 +14,10 @@ import { OnboardingLaunch } from "./onboarding-launch";
 export const metadata = { title: "Compte" };
 
 const TIPS = [
-  "Un seul projet en Focus jusqu’à sa première vente.",
-  "Note chaque soir une ligne dans le journal du projet : ça nourrit le copilote.",
-  "Dépose un fichier (devis, brief) dans la barre d’accueil pour le résumer.",
-  "⌘J ouvre l’assistant sans quitter la page. ⌘K cherche partout.",
-  "Connecte ton agenda dans Planning pour voir tes rendez-vous au même endroit.",
+  "Un chantier ouvert à la fois : les devis s’y rangent tout seuls.",
+  "Déposez le PDF Cedeo, transformez, envoyez au client.",
+  "⌘K cherche un chantier ou une pièce. ⌘J ouvre l’assistant.",
+  "Les mentions PDF se règlent dans Mon entreprise.",
 ];
 
 export default async function ComptePage() {
@@ -73,8 +72,7 @@ export default async function ComptePage() {
         <div id="configuration" className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-3">/ Configuration initiale ///</p>
           <p className="text-[14.5px] leading-relaxed text-muted-foreground">
-            Le parcours : objectif, freins, projet Focus (existant ou idée tendance), cockpit,
-            puis le guide sur l’accueil. Le thème se change ici, pas dans le wizard.
+            Accueil guidé : vous, l’entreprise, le premier chantier, puis le tableau de bord.
           </p>
           <ol className="mt-4 flex flex-col gap-2">
             {WIZARD_STEPS.map((step, i) => (
@@ -125,14 +123,14 @@ export default async function ComptePage() {
           </p>
           <p className="mt-1 text-[14px] text-muted-foreground">
             {owner
-              ? "Compte noamdj02 : projets, schémas, IA et agenda sans plafond."
+              ? "Compte studio : chantiers, analyses et PDF sans plafond."
               : info.plan === "free"
-                ? "Gratuit : 2 projets, 30 IA / mois, 3 schémas. Essai Pro 14 jours sans carte à l’inscription."
+                ? "Essai : déposez vos devis, créez les pièces client. Passez Pro quand vous voulez."
                 : info.plan === "founder"
                   ? "Pro à vie, un seul paiement."
                   : info.plan === "starter"
-                    ? "Création : jusqu’à 6 projets, 300 IA et 100 schémas par mois."
-                    : "Pro : projets et schémas illimités, agenda synchronisé."}
+                    ? "Starter : l’essentiel pour une petite équipe."
+                    : "Pro : analyses et pièces sans plafond."}
           </p>
           <Link
             href="/abonnement"

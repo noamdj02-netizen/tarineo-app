@@ -9,6 +9,7 @@ import {
   memSetChantierStatus,
   memSetCompany,
   memTransform,
+  memUpdateDocument,
   seedMem,
 } from "@/lib/metier/memory";
 import type { CompanyProfile } from "@/lib/metier/company";
@@ -63,6 +64,7 @@ function docCardsFromMem(
       return {
         ...d,
         party_name: party?.name ?? null,
+        party_address: party?.address ?? null,
         party_kind: party?.kind ?? null,
         chantier_name: ch?.name ?? null,
         chantier_slug: ch?.slug ?? null,
@@ -307,7 +309,7 @@ export async function listDocuments(filter?: {
   if (error) return docCardsFromMem(db.user.id, filter);
   const docs = (data ?? []) as DocumentRow[];
   const [{ data: parties }, { data: chantiers }, { data: lines }] = await Promise.all([
-    db.supabase.from("parties").select("id, name, kind").eq("user_id", db.user.id),
+    db.supabase.from("parties").select("id, name, kind, address").eq("user_id", db.user.id),
     db.supabase.from("chantiers").select("id, name, slug").eq("user_id", db.user.id),
     docs.length
       ? db.supabase.from("document_lines").select("*").eq("user_id", db.user.id).in(
@@ -331,6 +333,7 @@ export async function listDocuments(filter?: {
       ...d,
       extract: (d.extract ?? {}) as Record<string, unknown>,
       party_name: p?.name ?? null,
+      party_address: (p as { address?: string } | undefined)?.address ?? null,
       party_kind: (p?.kind as Party["kind"]) ?? null,
       chantier_name: c?.name ?? null,
       chantier_slug: c?.slug ?? null,
@@ -571,7 +574,7 @@ export async function saveExtractedDocument(input: {
   chantierId: string | null;
   filePath?: string;
   extract: Record<string, unknown>;
-  lines: Array<{ label: string; qty: number; unit: string; buy_price: number }>;
+  lines: Array<{ label: string; qty: number; unit: string; buy_price: number; sell_price?: number }>;
 }): Promise<DocumentCard> {
   const db = await useRemote();
   const now = demoNow();
@@ -613,7 +616,7 @@ export async function saveExtractedDocument(input: {
       qty: l.qty,
       unit: l.unit,
       buy_price: l.buy_price,
-      sell_price: 0,
+      sell_price: l.sell_price ?? 0,
       position: i,
     }));
     memAddDocument("local", row, lines);
@@ -691,7 +694,7 @@ export async function saveExtractedDocument(input: {
       qty: l.qty,
       unit: l.unit,
       buy_price: l.buy_price,
-      sell_price: 0,
+      sell_price: l.sell_price ?? 0,
       position: i,
     }));
     memAddDocument(db.user.id, row, lines);
@@ -699,6 +702,7 @@ export async function saveExtractedDocument(input: {
     return {
       ...row,
       party_name: party.name,
+      party_address: party.address || null,
       party_kind: party.kind,
       chantier_name: ch?.name ?? null,
       chantier_slug: ch?.slug ?? null,
@@ -714,7 +718,7 @@ export async function saveExtractedDocument(input: {
         qty: l.qty,
         unit: l.unit,
         buy_price: l.buy_price,
-        sell_price: 0,
+        sell_price: l.sell_price ?? 0,
         position: i,
         distributor_party_id: input.partyKind === "distributeur" ? partyId : null,
         supplier_party_id: input.partyKind === "fournisseur" ? partyId : null,
@@ -796,6 +800,167 @@ export async function transformImportedDocument(
 
 export function focusChantier(cards: ChantierCard[]) {
   return cards.find((c) => c.status === "focus") ?? cards[0] ?? null;
+}
+
+export async function addDocumentLine(documentId: string) {
+  const db = await useRemote();
+  const blank = {
+    label: "Nouvelle ligne",
+    qty: 1,
+    unit: "u",
+    buy_price: 0,
+    sell_price: 0,
+  };
+  if (!db) {
+    const u = seedMem("local");
+    const doc = u.documents.find((d) => d.id === documentId);
+    if (!doc) return { ok: false as const, error: "Pièce introuvable." };
+    const pos = u.lines.filter((l) => l.document_id === documentId).length;
+    u.lines.push({
+      id: `l-${Math.random().toString(36).slice(2, 8)}`,
+      document_id: documentId,
+      product_id: null,
+      supplier_party_id: null,
+      distributor_party_id: null,
+      position: pos,
+      ...blank,
+    });
+    return { ok: true as const };
+  }
+  const { data: owned } = await db.supabase
+    .from("documents")
+    .select("id")
+    .eq("id", documentId)
+    .eq("user_id", db.user.id)
+    .maybeSingle();
+  if (!owned) return { ok: false as const, error: "Pièce introuvable." };
+  const { data: existing } = await db.supabase
+    .from("document_lines")
+    .select("position")
+    .eq("document_id", documentId)
+    .eq("user_id", db.user.id);
+  const { error } = await db.supabase.from("document_lines").insert({
+    user_id: db.user.id,
+    document_id: documentId,
+    ...blank,
+    position: (existing ?? []).length,
+  });
+  if (error) {
+    const u = seedMem(db.user.id);
+    const pos = u.lines.filter((l) => l.document_id === documentId).length;
+    u.lines.push({
+      id: `l-${Math.random().toString(36).slice(2, 8)}`,
+      document_id: documentId,
+      product_id: null,
+      supplier_party_id: null,
+      distributor_party_id: null,
+      position: pos,
+      ...blank,
+    });
+  }
+  return { ok: true as const };
+}
+
+export async function updateDocument(input: {
+  id: string;
+  title?: string;
+  partyId?: string | null;
+  chantierId?: string | null;
+  partyName?: string;
+  lines?: { id: string; label?: string; qty?: number; buy_price?: number; sell_price?: number }[];
+}) {
+  const db = await useRemote();
+  if (!db) {
+    const row = memUpdateDocument("local", input.id, input);
+    return row ? { ok: true as const } : { ok: false as const, error: "Pièce introuvable." };
+  }
+  const { data: owned } = await db.supabase
+    .from("documents")
+    .select("id, extract")
+    .eq("user_id", db.user.id)
+    .eq("id", input.id)
+    .maybeSingle();
+  if (!owned) {
+    const row = memUpdateDocument(db.user.id, input.id, input);
+    return row ? { ok: true as const } : { ok: false as const, error: "Pièce introuvable." };
+  }
+  const patchDoc: { title?: string; party_id?: string | null; chantier_id?: string | null } = {};
+  if (input.title?.trim()) patchDoc.title = input.title.trim();
+  if (input.partyId !== undefined) patchDoc.party_id = input.partyId;
+  if (input.chantierId !== undefined) patchDoc.chantier_id = input.chantierId;
+  if (Object.keys(patchDoc).length) {
+    await db.supabase.from("documents").update(patchDoc).eq("id", input.id).eq("user_id", db.user.id);
+  }
+  if (input.partyName?.trim()) {
+    const { data: current } = await db.supabase
+      .from("documents")
+      .select("party_id, direction")
+      .eq("id", input.id)
+      .eq("user_id", db.user.id)
+      .maybeSingle();
+    let partyId = input.partyId !== undefined ? input.partyId : (current?.party_id as string | null);
+    if (partyId) {
+      await db.supabase.from("parties").update({ name: input.partyName.trim() }).eq("id", partyId).eq("user_id", db.user.id);
+    } else {
+      const { data: created } = await db.supabase
+        .from("parties")
+        .insert({
+          user_id: db.user.id,
+          kind: current?.direction === "out" ? "client" : "distributeur",
+          name: input.partyName.trim(),
+        })
+        .select("id")
+        .maybeSingle();
+      if (created?.id) {
+        await db.supabase.from("documents").update({ party_id: created.id }).eq("id", input.id).eq("user_id", db.user.id);
+      }
+    }
+  }
+  for (const row of input.lines ?? []) {
+    const patch: { label?: string; qty?: number; buy_price?: number; sell_price?: number } = {};
+    if (row.label != null) patch.label = row.label;
+    if (row.qty != null && Number.isFinite(row.qty)) patch.qty = row.qty;
+    if (row.buy_price != null && Number.isFinite(row.buy_price)) patch.buy_price = row.buy_price;
+    if (row.sell_price != null && Number.isFinite(row.sell_price)) patch.sell_price = row.sell_price;
+    if (Object.keys(patch).length) {
+      await db.supabase.from("document_lines").update(patch).eq("id", row.id).eq("user_id", db.user.id);
+    }
+  }
+  const { data: lines } = await db.supabase
+    .from("document_lines")
+    .select("buy_price, sell_price, qty")
+    .eq("document_id", input.id)
+    .eq("user_id", db.user.id);
+  const ht = (lines ?? []).reduce(
+    (s, l) => s + Number(l.buy_price || l.sell_price) * Number(l.qty),
+    0,
+  );
+  const prev = (owned.extract && typeof owned.extract === "object" ? owned.extract : {}) as Record<string, unknown>;
+  await db.supabase
+    .from("documents")
+    .update({ extract: { ...prev, totals: { ...((prev.totals as object) ?? {}), ht: Math.round(ht * 100) / 100 } } })
+    .eq("id", input.id)
+    .eq("user_id", db.user.id);
+  return { ok: true as const };
+}
+
+export function spendByMonth(docs: DocumentCard[]) {
+  const now = new Date();
+  return Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+    const next = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+    const amount = docs
+      .filter((doc) => {
+        const t = new Date(doc.created_at);
+        return t >= d && t < next;
+      })
+      .reduce((s, doc) => s + doc.lines.reduce((a, l) => a + Number(l.buy_price) * Number(l.qty), 0), 0);
+    return {
+      key: `${d.getFullYear()}-${d.getMonth()}`,
+      label: d.toLocaleDateString("fr-FR", { month: "short" }),
+      amount,
+    };
+  });
 }
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {

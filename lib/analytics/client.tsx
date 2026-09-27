@@ -67,13 +67,16 @@ export function ProductTracker() {
     if (pathname.startsWith("/prix") || pathname.startsWith("/abonnement")) {
       emitEvent("pricing_viewed", { path: pathname, feature: "pricing" });
     }
-    if (pathname.startsWith("/projets/") && pathname.split("/").length >= 3) {
+    if (
+      (pathname.startsWith("/chantiers/") || pathname.startsWith("/projets/")) &&
+      pathname.split("/").length >= 3
+    ) {
       emitEvent("project_opened", { path: pathname, feature: "projets" });
     }
-    if (pathname.startsWith("/ressources")) {
+    if (pathname.startsWith("/distributeur") || pathname.startsWith("/ressources")) {
       emitEvent("resource_opened", { path: pathname, feature: "ressources" });
     }
-    if (pathname.startsWith("/composants")) {
+    if (pathname.startsWith("/client") || pathname.startsWith("/composants")) {
       emitEvent("component_opened", { path: pathname, feature: "composants" });
     }
   }, [pathname]);

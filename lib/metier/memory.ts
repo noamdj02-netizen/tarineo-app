@@ -283,6 +283,56 @@ export function memTransform(
   return out;
 }
 
+export function memUpdateDocument(
+  userId: string,
+  id: string,
+  input: {
+    title?: string;
+    partyId?: string | null;
+    chantierId?: string | null;
+    partyName?: string;
+    lines?: { id: string; label?: string; qty?: number; buy_price?: number; sell_price?: number }[];
+  },
+) {
+  const u = seedMem(userId);
+  const doc = u.documents.find((d) => d.id === id);
+  if (!doc) return null;
+  if (input.title?.trim()) doc.title = input.title.trim();
+  if (input.chantierId !== undefined) doc.chantier_id = input.chantierId;
+  if (input.partyId !== undefined) doc.party_id = input.partyId;
+  if (input.partyName?.trim()) {
+    let party = input.partyId ? u.parties.find((p) => p.id === input.partyId) : u.parties.find((p) => p.id === doc.party_id);
+    if (!party) {
+      party = {
+        id: uid("p"),
+        kind: doc.direction === "out" ? "client" : "distributeur",
+        name: input.partyName.trim(),
+        address: "",
+        seed_key: null,
+      };
+      u.parties.push(party);
+      doc.party_id = party.id;
+    } else {
+      party.name = input.partyName.trim();
+    }
+  }
+  for (const row of input.lines ?? []) {
+    const line = u.lines.find((l) => l.id === row.id && l.document_id === id);
+    if (!line) continue;
+    if (row.label != null) line.label = row.label;
+    if (row.qty != null && Number.isFinite(row.qty)) line.qty = row.qty;
+    if (row.buy_price != null && Number.isFinite(row.buy_price)) line.buy_price = row.buy_price;
+    if (row.sell_price != null && Number.isFinite(row.sell_price)) line.sell_price = row.sell_price;
+  }
+  const ht = u.lines
+    .filter((l) => l.document_id === id)
+    .reduce((s, l) => s + Number(l.buy_price || l.sell_price) * Number(l.qty), 0);
+  const prev = (doc.extract && typeof doc.extract === "object" ? doc.extract : {}) as Record<string, unknown>;
+  const totals = { ...((prev.totals as object) ?? {}), ht: Math.round(ht * 100) / 100 };
+  doc.extract = { ...prev, totals };
+  return doc;
+}
+
 export function memGetCompany(userId: string): CompanyProfile | null {
   return companies.get(userId) ?? null;
 }

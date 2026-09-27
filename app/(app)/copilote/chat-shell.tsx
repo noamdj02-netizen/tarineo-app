@@ -1,11 +1,10 @@
 "use client";
 
-import { ArrowLeft, Layers, NotebookPen, Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, Layers, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/app/(app)/assistant/actions";
-import { runCopilotJob } from "@/app/(app)/copilote/jobs";
 import { Chat, type Queued } from "@/components/assistant/chat";
 import { Mascot } from "@/components/home/mascot";
 import { consumeCopilotDraft } from "@/lib/assistant/copilot-draft.client";
@@ -88,7 +87,7 @@ export function CopilotChatShell({
                 !projectId ? "bg-ink text-accent-ink" : "hover:bg-accent-soft",
               )}
             >
-              Tous · Focus
+              Tous les chantiers
             </button>
           </li>
           {projects.map((p) => (
@@ -168,55 +167,21 @@ function ActionStrip({
   keyMissing: boolean;
   onAsk: (text: string) => void;
 }) {
-  const [name, setName] = useState("");
-  const [pending, start] = useTransition();
-  const [jobMsg, setJobMsg] = useState<string | null>(null);
-
   return (
     <div className="shrink-0 border-b border-line px-3 py-2">
       <div className="flex flex-wrap gap-1.5">
-        <form
-          className="flex min-w-[12rem] flex-1 items-center gap-1 rounded-xl border border-line bg-surface-2 px-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const n = name.trim();
-            if (!n) return;
-            onAsk(`Crée le chantier « ${n} » en pause (pas en Focus).`);
-            setName("");
-          }}
+        <Link
+          href="/distributeur/devis"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line px-2.5 text-[12.5px] hover:bg-accent-soft"
         >
-          <Plus className="size-3.5 text-muted-foreground" aria-hidden />
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Créer un chantier"
-            disabled={keyMissing || pending}
-            className="min-h-9 min-w-0 flex-1 bg-transparent text-[13px] outline-none"
-          />
-        </form>
+          <Plus className="size-3.5" aria-hidden />
+          Déposer un devis
+        </Link>
         <button
           type="button"
-          disabled={keyMissing || pending}
+          disabled={keyMissing}
           onClick={() =>
-            start(async () => {
-              setJobMsg(null);
-              const res = await runCopilotJob("debrief-focus");
-              setJobMsg(res.ok ? `${res.title} → ${res.href}` : res.error);
-              if (res.ok) onAsk(`Le débrief Focus est fait. Résume-le en 5 lignes et pointe les 3 actions.`);
-            })
-          }
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line px-2.5 text-[12.5px] hover:bg-accent-soft disabled:opacity-50"
-        >
-          <NotebookPen className="size-3.5" aria-hidden />
-          Relire le Focus
-        </button>
-        <button
-          type="button"
-          disabled={keyMissing || pending}
-          onClick={() =>
-            onAsk(
-              "Liste les hausses de prix du chantier ouvert (ou du Focus) à partir des derniers documents.",
-            )
+            onAsk("Liste les hausses de prix à partir des derniers documents d’achat, par chantier.")
           }
           className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line px-2.5 text-[12.5px] hover:bg-accent-soft disabled:opacity-50"
         >
@@ -224,14 +189,13 @@ function ActionStrip({
           Hausses
         </button>
         <Link
-          href="/composants"
+          href="/client/devis"
           className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-line px-2.5 text-[12.5px] hover:bg-accent-soft"
         >
           <Sparkles className="size-3.5" aria-hidden />
-          Devis client
+          Pièces client
         </Link>
       </div>
-      {jobMsg ? <p className="mt-1.5 px-1 text-[12.5px] text-muted-foreground">{jobMsg}</p> : null}
     </div>
   );
 }

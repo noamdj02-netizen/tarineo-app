@@ -5,8 +5,8 @@ import {
   ArrowUpRight,
   Building2,
   ChevronRight,
+  CreditCard,
   LifeBuoy,
-  Link2,
   LogIn,
   type LucideIcon,
 } from "lucide-react";
@@ -74,11 +74,11 @@ export function Sidebar({
             active={isActive(pathname, "/entreprise")}
           />
           <SideFooterButton
-            href="/outils"
-            icon={Link2}
-            label="Fournisseurs"
-            hint="Enseignes, export comptable"
-            active={isActive(pathname, "/outils")}
+            href="/abonnement"
+            icon={CreditCard}
+            label="Tarifs"
+            hint="Formule et essai"
+            active={isActive(pathname, "/abonnement")}
           />
           <SideFooterButton
             href={`mailto:${SUPPORT_MAIL}?subject=Support%20Tarin%C3%A9o`}
@@ -179,9 +179,14 @@ function SideNavItem({
         <motion.span
           layoutId="side-active"
           transition={{ duration: 0.35, ease: EASE }}
-          className="absolute inset-0 rounded-xl border border-white/10 bg-gradient-to-r from-white/[.16] via-white/[.07] to-white/0"
+          className="absolute inset-0 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r from-white/[.16] via-white/[.07] to-white/0"
           aria-hidden
-        />
+        >
+          <span className="absolute inset-x-[-20%] bottom-[-70%] h-[120%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-brand-orange)_55%,white)_18%,transparent)] opacity-75 blur-2xl" />
+          <span className="absolute inset-x-[18%] bottom-[-40%] h-[70%] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-orange-light)_14%,transparent)] opacity-55 blur-xl" />
+          <span className="absolute top-[-20%] bottom-[-20%] left-[-45%] w-[70%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-brand-orange)_50%,white)_16%,transparent)] opacity-65 blur-2xl" />
+          <span className="absolute top-[-20%] bottom-[-20%] right-[-45%] w-[70%] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-orange-light)_12%,transparent)] opacity-50 blur-2xl" />
+        </motion.span>
       ) : null}
       <Link
         href={tab.href}

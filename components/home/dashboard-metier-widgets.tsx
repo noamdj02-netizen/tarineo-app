@@ -11,8 +11,8 @@ export function PendingDocsWidget({ docs }: { docs: DocumentCard[] }) {
           {docs.slice(0, 4).map((d) => (
             <li key={d.id} className="flex items-baseline justify-between gap-2 text-[14px]">
               <span className="min-w-0 truncate font-medium">{d.title}</span>
-              <Link href="/ressources" className="shrink-0 text-[13px] underline underline-offset-2">
-                Transformer
+              <Link href={`/pieces/${d.id}`} className="shrink-0 text-[13px] underline underline-offset-2">
+                Ouvrir
               </Link>
             </li>
           ))}
@@ -29,7 +29,7 @@ export function HaussesWidget({ alerts }: { alerts: PriceAlert[] }) {
     <section className="card-soft p-4">
       <div className="mb-2 flex items-center justify-between">
         <p className="mono-label">{"/ Hausses ///"}</p>
-        <Link href="/schemas" className="text-[12.5px] underline underline-offset-2">
+        <Link href="/hausses" className="text-[12.5px] underline underline-offset-2">
           Tout voir
         </Link>
       </div>
@@ -58,7 +58,7 @@ export function ChantiersWidget({ chantiers }: { chantiers: ChantierCard[] }) {
     <section className="card-soft p-4">
       <div className="mb-2 flex items-center justify-between">
         <p className="mono-label">{"/ Chantiers ///"}</p>
-        <Link href="/projets" className="text-[12.5px] underline underline-offset-2">
+        <Link href="/chantiers" className="text-[12.5px] underline underline-offset-2">
           Tous
         </Link>
       </div>
@@ -66,7 +66,7 @@ export function ChantiersWidget({ chantiers }: { chantiers: ChantierCard[] }) {
         <ul className="grid gap-2">
           {chantiers.slice(0, 5).map((c) => (
             <li key={c.id}>
-              <Link href={`/projets/${c.slug}`} className="flex items-baseline justify-between gap-2 text-[14px]">
+              <Link href={`/chantiers/${c.slug}`} className="flex items-baseline justify-between gap-2 text-[14px]">
                 <span className="min-w-0 truncate font-medium">{c.name}</span>
                 <span className="shrink-0 text-[12.5px] text-muted-foreground">
                   {c.status === "focus" ? "En cours" : c.status} · {c.docs_count}

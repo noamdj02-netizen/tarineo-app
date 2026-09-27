@@ -6,7 +6,9 @@ import { ChantierStatusToggle } from "@/components/metier/chantier-status";
 import { DocumentDrop } from "@/components/metier/document-drop";
 import { DocumentList } from "@/components/metier/document-list";
 import { SupplierLogo } from "@/components/site/supplier-logo";
-import type { ChantierCard, DocumentCard, Party } from "@/lib/metier/types";
+import type { ChantierCard, DocumentCard, Party, PriceAlert } from "@/lib/metier/types";
+import { R } from "@/lib/routes";
+import { signedPct, variation } from "@/lib/site/tarineo";
 import { DEMO_MARK, euro } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
@@ -18,12 +20,14 @@ export function ChantierFiche({
   clients,
   chantiers,
   defaultMarginPct,
+  alerts = [],
 }: {
   chantier: ChantierCard;
   documents: DocumentCard[];
   clients: Party[];
   chantiers: ChantierCard[];
   defaultMarginPct?: number;
+  alerts?: PriceAlert[];
 }) {
   const [tab, setTab] = useState<Tab>("achats");
   const inbound = documents.filter((d) => d.direction === "in");
@@ -81,7 +85,31 @@ export function ChantierFiche({
           Achats {euro(buyHt)} HT · Vente {euro(sellHt)} HT
           {buyHt > 0 && sellHt > 0 ? ` · marge ${Math.round(((sellHt - buyHt) / sellHt) * 100)} %` : ""}
         </p>
+        {inbound.length >= 2 ? (
+          <Link
+            href={`${R.comparateur}?a=${inbound[0].id}&b=${inbound[1].id}`}
+            className="text-[13px] underline underline-offset-2"
+          >
+            Comparer les deux derniers devis
+          </Link>
+        ) : null}
       </header>
+
+      {alerts.length ? (
+        <section>
+          <p className="mono-label mb-3">{"/ Hausses ///"}</p>
+          <ul className="grid gap-2">
+            {alerts.slice(0, 4).map((a) => (
+              <li key={a.id} className="flex items-baseline justify-between gap-2 text-[14px]">
+                <span className="truncate">{a.label}</span>
+                <span className="tabular-nums text-brand-orange">
+                  {signedPct(variation(Number(a.old_price), Number(a.new_price)))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <DocumentDrop chantiers={chantiers} clients={clients} defaultChantierId={chantier.id} />
 
@@ -140,24 +168,22 @@ export function ChantierFiche({
           <DocumentList
             docs={inbound}
             empty="Pas encore de devis ou facture fournisseur."
-            clients={clients}
-            defaultMarginPct={defaultMarginPct}
-            defaultClientId={chantier.client_id}
+            className="sm:grid-cols-1 xl:grid-cols-1"
           />
         </div>
         <div className={cn("lg:block", tab === "client" ? "block" : "hidden lg:block")}>
           <p className="mono-label mb-3">{"/ Pièces client ///"}</p>
-          <DocumentList docs={outbound} empty="Pas encore de devis envoyé au client." />
+          <DocumentList docs={outbound} empty="Pas encore de devis envoyé au client." className="sm:grid-cols-1 xl:grid-cols-1" />
         </div>
       </section>
 
       <p className="text-[13px] text-muted-foreground">
-        <Link href="/ressources" className="underline underline-offset-2">
-          Tous les achats
+        <Link href={`${R.distributeurDevis}?chantier=${chantier.slug}`} className="underline underline-offset-2">
+          Devis d’achat
         </Link>
         {" · "}
-        <Link href="/composants" className="underline underline-offset-2">
-          Toutes les pièces client
+        <Link href={`${R.clientDevis}?chantier=${chantier.slug}`} className="underline underline-offset-2">
+          Devis client
         </Link>
       </p>
     </div>
