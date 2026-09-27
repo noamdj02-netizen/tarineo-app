@@ -1,6 +1,14 @@
 import type { ActionCard } from "@/components/home/action-cards";
 import type { ProjectSummary } from "@/lib/projects/types";
 
+const EMPTY_NEXT = {
+  nextDueDate: null as string | null,
+  nextPriority: null as ProjectSummary["nextPriority"],
+  nextEstimatedMinutes: null as number | null,
+  blocked: false,
+  blockerReason: "",
+};
+
 export const DEMO_PROJECTS: ProjectSummary[] = [
   {
     id: "1",
@@ -10,6 +18,10 @@ export const DEMO_PROJECTS: ProjectSummary[] = [
     status: "focus",
     stage: 3,
     next: "Recruter 10 artisans bêta.",
+    ...EMPTY_NEXT,
+    nextDueDate: null,
+    nextPriority: "elevee",
+    nextEstimatedMinutes: 45,
     site: "",
     github: "",
     figma: "",
@@ -28,6 +40,9 @@ export const DEMO_PROJECTS: ProjectSummary[] = [
     status: "pause",
     stage: 2,
     next: "Finir la page tarifs.",
+    ...EMPTY_NEXT,
+    blocked: true,
+    blockerReason: "En attente du retour client",
     site: "",
     github: "",
     figma: "",
@@ -46,6 +61,7 @@ export const DEMO_PROJECTS: ProjectSummary[] = [
     status: "fini",
     stage: 6,
     next: "Livré, facture envoyée.",
+    ...EMPTY_NEXT,
     site: "",
     github: "",
     figma: "",

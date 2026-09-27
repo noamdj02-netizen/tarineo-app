@@ -270,7 +270,7 @@ export const data = {
     const { data: row, error } = await admin()
       .from("projects")
       .select(
-        "id, slug, name, description, status, stage, next, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at",
+        "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at",
       )
       .eq("user_id", userId)
       .eq("id", projectId)
@@ -283,7 +283,7 @@ export const data = {
     const { data: row, error } = await admin()
       .from("projects")
       .select(
-        "id, slug, name, description, status, stage, next, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at",
+        "id, slug, name, description, status, stage, next, next_due_date, next_priority, next_estimated_minutes, blocked, blocker_reason, site, github, figma, notion, pitch, target, problem, business, stack, risks, theme, updated_at",
       )
       .eq("user_id", userId)
       .eq("status", "focus")

@@ -1,5 +1,13 @@
 import type { Feature, ProjectFull, ProjectSummary } from "@/lib/projects/types";
 
+/** Prochain mardi (démo landing). */
+function nextTuesdayIso() {
+  const d = new Date();
+  const day = d.getDay();
+  d.setDate(d.getDate() + (day <= 2 ? 2 - day : 9 - day));
+  return d.toISOString().slice(0, 10);
+}
+
 const FEATURES: Feature[] = [
   { id: "f1", title: "Calendrier éditorial", status: "fait", position: 0 },
   { id: "f2", title: "Brief de marque + ton", status: "fait", position: 1 },
@@ -23,7 +31,12 @@ export const DEMO_PROJECT: ProjectFull = {
   description: "Calendrier éditorial, posts LinkedIn et newsletters. Un ton, le prochain contenu.",
   status: "focus",
   stage: 3,
-  next: "Rédiger le carrousel LinkedIn de lancement et le programmer pour mardi.",
+  next: "Rédiger le carrousel LinkedIn de lancement",
+  nextDueDate: nextTuesdayIso(),
+  nextPriority: "elevee",
+  nextEstimatedMinutes: 30,
+  blocked: false,
+  blockerReason: "",
   site: "https://www.navpit.com",
   github: "https://github.com",
   figma: "https://www.figma.com",
@@ -69,6 +82,11 @@ export const DEMO_PROJECT_CARD: ProjectSummary = {
   status: DEMO_PROJECT.status,
   stage: DEMO_PROJECT.stage,
   next: DEMO_PROJECT.next,
+  nextDueDate: DEMO_PROJECT.nextDueDate,
+  nextPriority: DEMO_PROJECT.nextPriority,
+  nextEstimatedMinutes: DEMO_PROJECT.nextEstimatedMinutes,
+  blocked: DEMO_PROJECT.blocked,
+  blockerReason: DEMO_PROJECT.blockerReason,
   site: DEMO_PROJECT.site,
   github: DEMO_PROJECT.github,
   figma: DEMO_PROJECT.figma,

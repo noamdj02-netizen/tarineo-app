@@ -18,6 +18,7 @@ import {
   seoFromBusiness,
   type ProjectSeo,
 } from "@/lib/projects/seo";
+import { isNextPriority } from "@/lib/projects/next-meta";
 import {
   FEATURE_ORDER,
   slugify,
@@ -25,6 +26,7 @@ import {
   type ProjectPatch,
   type ProjectStatus,
 } from "@/lib/projects/types";
+import type { ProjectRow } from "@/lib/supabase/types";
 
 type Result = { ok: true } | { ok: false; error: string };
 const MAX_TEXT = 2000;
@@ -77,7 +79,7 @@ async function run(fn: (db: Db) => Promise<Result>): Promise<Result> {
 export async function updateProject(projectId: string, patch: ProjectPatch): Promise<Result> {
   return run(async (db) => {
     if (!isUuid(projectId)) return fail("Identifiant invalide");
-    const row: ProjectPatch = {};
+    const row: Partial<ProjectRow> = {};
     if (patch.stage !== undefined) {
       const s = Math.round(Number(patch.stage));
       if (!(s >= 1 && s <= 6)) return fail("Étape invalide");
@@ -92,6 +94,28 @@ export async function updateProject(projectId: string, patch: ProjectPatch): Pro
       if (patch[k] !== undefined) row[k] = clean(patch[k], 1000);
     }
     if (patch.notes !== undefined) row.notes = clean(patch.notes, 20000);
+    if (patch.nextDueDate !== undefined) {
+      const d = patch.nextDueDate;
+      if (d === null || d === "") row.next_due_date = null;
+      else if (/^\d{4}-\d{2}-\d{2}$/.test(d)) row.next_due_date = d;
+      else return fail("Deadline invalide");
+    }
+    if (patch.nextPriority !== undefined) {
+      if (patch.nextPriority === null) row.next_priority = null;
+      else if (isNextPriority(patch.nextPriority)) row.next_priority = patch.nextPriority;
+      else return fail("Priorité invalide");
+    }
+    if (patch.nextEstimatedMinutes !== undefined) {
+      if (patch.nextEstimatedMinutes === null) row.next_estimated_minutes = null;
+      else {
+        const m = Math.round(Number(patch.nextEstimatedMinutes));
+        if (!(m > 0 && m <= 24 * 60)) return fail("Durée invalide");
+        row.next_estimated_minutes = m;
+      }
+    }
+    if (patch.blocked !== undefined) row.blocked = Boolean(patch.blocked);
+    if (patch.blockerReason !== undefined) row.blocker_reason = clean(patch.blockerReason, 500);
+    if (row.blocked === false) row.blocker_reason = "";
 
     const { error } = await db.supabase
       .from("projects")
@@ -99,7 +123,7 @@ export async function updateProject(projectId: string, patch: ProjectPatch): Pro
       .eq("id", projectId)
       .eq("user_id", db.user.id);
     if (error) return fail(error.message);
-    if (row.status === "focus") {
+    if (patch.status === "focus") {
       await db.supabase
         .from("projects")
         .update({ status: "pause" })

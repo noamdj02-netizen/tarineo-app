@@ -36,23 +36,28 @@ export function AssistantPanel({
     role: "general" | "tech" | "produit" | "design" | "launch";
   } | null>(null);
   const [queued, setQueued] = useState<Queued>(null);
+  const [preferredProjectId, setPreferredProjectId] = useState<string | null>(null);
   const loading = useRef(false);
 
-  const show = useCallback((question?: string, files?: AssistantFile[]) => {
-    setOpen(true);
-    void import("@/lib/analytics/client").then(({ emitEvent }) =>
-      emitEvent("copilot_opened", { feature: "copilote", path: pathname }),
-    );
-    if (question || files?.length) {
-      setQueued((q) => ({ id: (q?.id ?? 0) + 1, text: question ?? "", files }));
-    }
-  }, [pathname]);
+  const show = useCallback(
+    (question?: string, files?: AssistantFile[], projectId?: string | null) => {
+      setOpen(true);
+      setPreferredProjectId(projectId ?? null);
+      void import("@/lib/analytics/client").then(({ emitEvent }) =>
+        emitEvent("copilot_opened", { feature: "copilote", path: pathname }),
+      );
+      if (question || files?.length) {
+        setQueued((q) => ({ id: (q?.id ?? 0) + 1, text: question ?? "", files }));
+      }
+    },
+    [pathname],
+  );
 
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
     loading.current = true;
-    loadAssistant({ page: pathname })
+    loadAssistant({ page: pathname, projectId: preferredProjectId })
       .then((d) => {
         if (!cancelled) setData(d);
       })
@@ -65,19 +70,22 @@ export function AssistantPanel({
     return () => {
       cancelled = true;
     };
-  }, [open, pathname]);
+  }, [open, pathname, preferredProjectId]);
 
   // à la fermeture, on relira l'historique enregistré (après l'animation de sortie)
   useEffect(() => {
     if (open) return;
-    const t = setTimeout(() => setData(null), 500);
+    const t = setTimeout(() => {
+      setData(null);
+      setPreferredProjectId(null);
+    }, 500);
     return () => clearTimeout(t);
   }, [open]);
 
   useEffect(() => {
     const onOpen = (e: Event) => {
       const d = (e as CustomEvent<AssistantEventDetail>).detail;
-      show(d?.question, d?.files);
+      show(d?.question, d?.files, d?.projectId);
     };
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {

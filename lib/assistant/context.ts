@@ -50,6 +50,11 @@ function cardLine(
     status: string;
     stage: number;
     next: string;
+    next_due_date?: string | null;
+    next_priority?: string | null;
+    next_estimated_minutes?: number | null;
+    blocked?: boolean | null;
+    blocker_reason?: string | null;
     site: string;
     github: string;
     figma: string;
@@ -62,10 +67,22 @@ function cardLine(
   },
   label: string,
 ) {
+  const nextMeta = [
+    p.next_due_date ? `deadline ${p.next_due_date}` : null,
+    p.next_estimated_minutes ? `~${p.next_estimated_minutes} min` : null,
+    p.next_priority ? `priorité ${p.next_priority}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const block = p.blocked
+    ? `Blocage: ${p.blocker_reason?.trim() || "oui"}`
+    : "Aucun blocage.";
+
   return [
     `${label}: ${p.name} (${p.slug ?? "—"}) · ${p.status} · étape ${p.stage}/6 ${STAGES[(p.stage || 1) - 1] ?? ""}`,
     p.theme ? `Thème kit: ${p.theme}` : "",
-    p.next ? `Prochaine action: ${p.next}` : "Pas de prochaine action notée.",
+    p.next ? `Prochaine action: ${p.next}${nextMeta ? ` (${nextMeta})` : ""}` : "Pas de prochaine action notée.",
+    block,
     p.pitch || p.description || "",
     `Liens: site=${p.site || "—"} github=${p.github || "—"} figma=${p.figma || "—"} notion=${p.notion || "—"}`,
     `Stack: ${(p.stack ?? []).join(", ") || "—"}`,

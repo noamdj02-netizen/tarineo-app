@@ -5,6 +5,8 @@ export type ProjectStatus = "focus" | "pause" | "fini";
 export type FeatureStatus = "afaire" | "encours" | "fait" | "verif";
 export type ResourceSource = "notion" | "moi" | "curated";
 
+export type NextPriority = "faible" | "normale" | "elevee";
+
 export type ProjectRow = {
   id: string;
   user_id: string;
@@ -14,6 +16,11 @@ export type ProjectRow = {
   status: ProjectStatus;
   stage: number;
   next: string;
+  next_due_date: string | null;
+  next_priority: NextPriority | null;
+  next_estimated_minutes: number | null;
+  blocked: boolean;
+  blocker_reason: string;
   site: string;
   github: string;
   figma: string;

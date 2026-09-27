@@ -1,4 +1,6 @@
-import type { FeatureStatus, ProjectStatus, SchemaKind } from "@/lib/supabase/types";
+import type { FeatureStatus, NextPriority, ProjectStatus, SchemaKind } from "@/lib/supabase/types";
+
+export type { NextPriority };
 
 export type ProjectSchemaLink = {
   id: string;
@@ -38,6 +40,11 @@ export type ProjectSummary = {
   status: ProjectStatus;
   stage: number;
   next: string;
+  nextDueDate: string | null;
+  nextPriority: NextPriority | null;
+  nextEstimatedMinutes: number | null;
+  blocked: boolean;
+  blockerReason: string;
   site: string;
   github: string;
   figma: string;
@@ -89,6 +96,11 @@ export const EDITABLE_FIELDS = [
   "stage",
   "status",
   "next",
+  "nextDueDate",
+  "nextPriority",
+  "nextEstimatedMinutes",
+  "blocked",
+  "blockerReason",
   "site",
   "github",
   "figma",
@@ -99,6 +111,11 @@ export type ProjectPatch = Partial<{
   stage: number;
   status: ProjectStatus;
   next: string;
+  nextDueDate: string | null;
+  nextPriority: NextPriority | null;
+  nextEstimatedMinutes: number | null;
+  blocked: boolean;
+  blockerReason: string;
   site: string;
   github: string;
   figma: string;
