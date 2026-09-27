@@ -32,29 +32,34 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-2.5 sm:gap-4">
+    <div className={cn("flex w-full flex-col items-center", onFilm ? "gap-0" : "gap-2.5 sm:gap-4")}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
           submit();
         }}
         className={cn(
-          "relative flex w-full max-w-[680px] items-center gap-1.5 rounded-[22px] p-1.5 pl-3.5 text-left backdrop-blur-xl transition-shadow duration-500 ease-out-soft sm:items-end sm:gap-2 sm:rounded-[28px] sm:p-2.5 sm:pl-5",
+          "relative flex w-full max-w-[680px] items-center gap-1.5 rounded-[22px] p-1.5 pl-3.5 text-left backdrop-blur-xl transition-shadow duration-500 ease-out-soft",
           onFilm
             ? "border border-accent-ink/20 bg-accent-ink/10 shadow-none focus-within:shadow-[0_0_0_6px_rgba(255,255,255,0.08)]"
-            : "border border-line bg-surface/95 shadow-lift focus-within:shadow-[0_0_0_6px_rgba(17,17,17,0.05),var(--shadow-lift)]",
+            : "items-center gap-2 rounded-[28px] border border-line bg-surface/95 p-2.5 pl-5 shadow-lift focus-within:shadow-[0_0_0_6px_rgba(17,17,17,0.05),var(--shadow-lift)] sm:items-end",
         )}
       >
         <label htmlFor="hero-prompt" className="sr-only">
           Ce que tu veux faire avec Navpit
         </label>
-        <div className="relative min-h-11 min-w-0 flex-1 py-1.5 sm:min-h-[88px] sm:py-0 sm:pt-2">
+        <div
+          className={cn(
+            "relative min-w-0 flex-1",
+            onFilm ? "min-h-11 py-1.5" : "min-h-11 py-1.5 sm:min-h-[88px] sm:py-0 sm:pt-2",
+          )}
+        >
           {empty ? (
             <div
               aria-hidden
               className={cn(
-                "pointer-events-none absolute inset-x-0 top-1.5 flex min-w-0 items-center overflow-hidden text-[14.5px] leading-6 sm:top-2 sm:text-[16.5px] sm:leading-7",
-                onFilm ? "text-white" : "text-muted-foreground",
+                "pointer-events-none absolute inset-x-0 top-1.5 flex min-w-0 items-center overflow-hidden text-[14.5px] leading-6",
+                onFilm ? "text-white" : "text-muted-foreground sm:top-2 sm:text-[16.5px] sm:leading-7",
               )}
             >
               <TypingPlaceholder
@@ -85,7 +90,8 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
               }
             }}
             className={cn(
-              "block h-7 w-full resize-none bg-transparent text-[14.5px] leading-7 outline-none sm:h-auto sm:min-h-[72px] sm:text-[16.5px] sm:leading-7",
+              "block h-7 w-full resize-none bg-transparent text-[14.5px] leading-7 outline-none",
+              !onFilm && "sm:h-auto sm:min-h-[72px] sm:text-[16.5px] sm:leading-7",
               empty && "caret-transparent",
               onFilm ? "text-white caret-white" : "text-ink",
             )}
@@ -103,7 +109,12 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
         </button>
       </form>
       <ul
-        className="hidden w-full max-w-[680px] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
+        className={cn(
+          "w-full max-w-[680px] gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          onFilm
+            ? "hidden"
+            : "hidden sm:flex sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0",
+        )}
         aria-label="Exemples"
       >
         {EXAMPLES.map((s, i) => (

@@ -28,7 +28,8 @@ const EASE = [0.16, 1, 0.3, 1] as const;
 /** Paysage du film. Cadré pour laisser le fondateur visible au centre. */
 function HeroBackdrop({ reduce }: { reduce: boolean }) {
   const [failed, setFailed] = useState(false);
-  const mediaClass = "absolute inset-0 size-full object-cover object-[center_52%] sm:object-[center_48%]";
+  const mediaClass =
+    "absolute inset-0 size-full object-cover object-[center_52%] sm:object-[center_48%] lg:object-[center_42%]";
 
   return (
     <>
@@ -80,16 +81,16 @@ export function LandingHero() {
             "items-center justify-between gap-5 px-4",
             "pt-[max(5.25rem,calc(env(safe-area-inset-top)+3.75rem))]",
             "pb-[max(1.75rem,env(safe-area-inset-bottom))]",
-            "text-center sm:gap-6 sm:px-8 sm:pb-12",
+            "text-center sm:max-w-[920px] sm:justify-center sm:gap-6 sm:px-8 sm:pt-16 sm:pb-10",
           )}
         >
-          {/* Titre en haut — bonhomme au milieu — boutons d’action en bas. */}
-          <div className="flex w-full flex-col items-center gap-3 sm:gap-4">
+          {/* Mobile : titre haut / prompt bas. Dès sm : bloc centré, titre plus bas, prompt au milieu. */}
+          <div className="flex w-full flex-col items-center gap-3 sm:gap-3">
             <Reveal>
               <p className="mono-label text-accent-ink/70">/ Cockpit fondateur ///</p>
             </Reveal>
             <Reveal>
-              <h1 className="font-display text-[clamp(32px,8.6vw,72px)] leading-[1.02] font-semibold tracking-tightest text-balance text-accent-ink">
+              <h1 className="font-display text-[clamp(32px,8.6vw,72px)] leading-[1.02] font-semibold tracking-tightest text-balance text-accent-ink sm:text-[clamp(44px,5vw,64px)]">
                 <span className="block">
                   <WordsPullUp text="Construis ton SaaS." />
                 </span>
@@ -98,13 +99,13 @@ export function LandingHero() {
                     <WordsPullUp text="Lance-le." delay={0.2} />
                   </BrandFocus>
                 </span>
-                <span className="mt-1.5 block text-[0.72em] font-semibold tracking-tightest text-accent-ink/70 sm:mt-2 sm:text-[0.62em]">
+                <span className="mt-1.5 block text-[0.72em] font-semibold tracking-tightest text-accent-ink/70 sm:mt-2 sm:text-[0.62em] lg:mt-1.5">
                   <WordsPullUp text="Ne te disperse plus." delay={0.4} />
                 </span>
               </h1>
             </Reveal>
             <Reveal
-              className="max-w-[38ch] text-[15px] leading-snug text-pretty text-accent-ink/70 sm:max-w-[52ch] sm:text-[17px] sm:leading-relaxed"
+              className="max-w-[38ch] text-[15px] leading-snug text-pretty text-accent-ink/70 sm:max-w-[52ch] sm:text-[17px] sm:leading-relaxed lg:max-w-[44ch] lg:text-[16px]"
               transition={{ duration: 0.55, delay: 0.55, ease: EASE }}
             >
               <p>{BRAND.description}</p>
@@ -112,7 +113,7 @@ export function LandingHero() {
           </div>
 
           <div className="flex w-full flex-col items-center gap-2.5 sm:gap-3">
-            <Reveal className="w-full max-w-[680px]">
+            <Reveal className="w-full max-w-[640px]">
               <HeroPrompt onFilm />
             </Reveal>
             <Reveal

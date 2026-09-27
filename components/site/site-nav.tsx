@@ -39,7 +39,7 @@ export function SiteNav() {
       className={cn(
         "z-40",
         pathname === "/"
-          ? "fixed inset-x-0 top-0 px-4 pt-[max(1rem,env(safe-area-inset-top))] md:px-6"
+          ? "fixed inset-x-0 top-0 px-4 pt-[max(0.35rem,env(safe-area-inset-top))] md:px-6"
           : "sticky top-0 px-3 pt-3 sm:px-6",
       )}
     >
