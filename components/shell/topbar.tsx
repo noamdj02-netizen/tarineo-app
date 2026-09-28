@@ -2,6 +2,7 @@
 
 import { CreditCard, LogOut, Search, User } from "lucide-react";
 import Link from "next/link";
+import { CopilotTrigger } from "@/components/assistant/copilot-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,6 +71,7 @@ export function Topbar({ viewer, planId }: { viewer: Viewer | null; planId: Plan
           >
             <Search className="size-5" strokeWidth={1.75} aria-hidden />
           </Button>
+          <CopilotTrigger variant="compact" className="size-9 lg:size-10" />
           <ThemeToggle />
           <PlanBadge planId={planId} />
           <AvatarMenu viewer={viewer} />

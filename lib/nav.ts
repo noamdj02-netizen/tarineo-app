@@ -10,6 +10,7 @@ import {
   HardHat,
   House,
   LifeBuoy,
+  MessageSquare,
   Receipt,
   Store,
   Truck,
@@ -52,10 +53,16 @@ const accueil: Tab = {
   icon: House,
 };
 const analyse: Tab = {
-  href: "/copilote",
-  label: "Analyse",
-  short: "Analyse",
+  href: R.devisAnalyser,
+  label: "Devis IA",
+  short: "Devis",
   icon: FileSearch,
+};
+const copilote: Tab = {
+  href: "/copilote",
+  label: "Copilote",
+  short: "IA",
+  icon: MessageSquare,
 };
 const alertes: Tab = {
   href: R.hausses,
@@ -118,7 +125,7 @@ const docsEntreprise: NavDrawer = {
 
 /** Sections de la barre latérale — mêmes thèmes que la landing. */
 export const NAV_SECTIONS: NavSection[] = [
-  { id: "aujourd-hui", label: "Aujourd’hui", items: [accueil, analyse] },
+  { id: "aujourd-hui", label: "Aujourd’hui", items: [accueil, analyse, copilote] },
   { id: "documents", label: "Documents", items: [docsDistributeur, docsEntreprise] },
   { id: "chantiers", label: "Chantiers", items: [chantiers] },
   { id: "achats", label: "Achats", items: [fournisseurs, comparateur, alertes, classement] },

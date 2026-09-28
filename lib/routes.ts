@@ -2,6 +2,7 @@
 export const R = {
   accueil: "/accueil",
   analyse: "/copilote",
+  devisAnalyser: "/devis/analyser",
   chantiers: "/chantiers",
   chantier: (slug: string) => `/chantiers/${slug}`,
   nouveauChantier: "/chantiers#nouveau",
