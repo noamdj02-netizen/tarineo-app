@@ -6,7 +6,15 @@ const TARINEO_FROM = `${BRAND.name} <${BRAND.contactEmail}>`;
 
 function fromAddress() {
   const raw = process.env.EMAIL_FROM?.trim();
-  if (!raw || /navpit/i.test(raw) || /[éÉ]/.test(raw.split("<")[0] ?? "")) return TARINEO_FROM;
+  // Domaine Resend non vérifié (.fr) ou legacy Navpit → fallback TARINEO vérifié.
+  if (
+    !raw ||
+    /navpit/i.test(raw) ||
+    /@tarineo\.fr\b/i.test(raw) ||
+    /[éÉ]/.test(raw.split("<")[0] ?? "")
+  ) {
+    return TARINEO_FROM;
+  }
   return raw;
 }
 

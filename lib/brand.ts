@@ -11,8 +11,8 @@ export const BRAND = {
   logoDarkSrc: "/brand/tarineo-logo-dark.png",
   /** Logo landing (nav + footer site public) — asset marketing, inchangé. */
   logoLandingSrc: "/brand/tarineo-mark.png",
-  /** À confirmer : adresse de contact publique. */
-  contactEmail: "contact@tarineo.fr",
+  /** Expéditeur Resend : domaine vérifié = tarineo.com (tarineo.fr DNS pas encore prêt). */
+  contactEmail: "contact@tarineo.com",
   tagline: "L’assistant qui protège votre marge.",
   /** Description courte (français) : balise meta, écran de connexion. */
   description:
