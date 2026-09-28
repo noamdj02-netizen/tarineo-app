@@ -133,7 +133,14 @@ export function Wizard({
               {step === 1 ? (
                 <IdentiteScreen first={name} last={family} lang={lang} onFirst={setName} onLast={setFamily} onLang={setLang} />
               ) : null}
-              {step === 2 ? <EntrepriseLookupFlow variant="onboarding" emailContact={email} formId="onboard-entreprise" /> : null}
+              {step === 2 ? (
+                <EntrepriseLookupFlow
+                  variant="onboarding"
+                  emailContact={email}
+                  formId="onboard-entreprise"
+                  onSkipLater={() => go(async () => setStep(3))}
+                />
+              ) : null}
               {step === 3 ? <ChantierOnboard /> : null}
               {step === 4 ? (
                 <div className="flex flex-1 flex-col items-center justify-center text-center">

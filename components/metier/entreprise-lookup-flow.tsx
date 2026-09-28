@@ -40,6 +40,8 @@ type Props = {
   className?: string;
   /** Appelé quand une entreprise est sélectionnée / confirmée. */
   onResolved?: (draft: EntrepriseDraft) => void;
+  /** Onboarding : passer l’étape sans enregistrer (infos pro plus tard). */
+  onSkipLater?: () => void;
 };
 
 export function EntrepriseLookupFlow({
@@ -49,6 +51,7 @@ export function EntrepriseLookupFlow({
   formId = "onboard-entreprise",
   className,
   onResolved,
+  onSkipLater,
 }: Props) {
   const [mode, setMode] = useState<Mode>(initial?.raisonSociale ? "edit" : "search");
   const [query, setQuery] = useState("");
@@ -240,13 +243,26 @@ export function EntrepriseLookupFlow({
             {pending ? "Recherche de votre entreprise…" : "Rechercher mon entreprise"}
           </Button>
 
-          <button
-            type="button"
-            className="text-left text-[13px] text-muted-foreground underline-offset-2 hover:underline"
-            onClick={() => setMode("edit")}
-          >
-            Saisir manuellement
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              className="text-left text-[13px] text-muted-foreground underline-offset-2 hover:underline"
+              onClick={() => setMode("edit")}
+            >
+              Saisir manuellement
+            </button>
+            {onboard && onSkipLater ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="min-h-12 w-full justify-center rounded-full text-[14px] text-muted-foreground sm:w-auto sm:justify-start"
+                disabled={pending}
+                onClick={onSkipLater}
+              >
+                Ajouter plus tard mes infos pro
+              </Button>
+            ) : null}
+          </div>
         </div>
       ) : null}
 
@@ -280,6 +296,17 @@ export function EntrepriseLookupFlow({
           <Button type="button" variant="ghost" className="min-h-11 self-start" onClick={() => setMode("search")}>
             Nouvelle recherche
           </Button>
+          {onboard && onSkipLater ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-11 self-start text-muted-foreground"
+              disabled={pending}
+              onClick={onSkipLater}
+            >
+              Ajouter plus tard mes infos pro
+            </Button>
+          ) : null}
         </div>
       ) : null}
 
@@ -447,6 +474,17 @@ export function EntrepriseLookupFlow({
               <Button type="button" variant="ghost" className="min-h-11" onClick={() => setMode("search")}>
                 ← Recherche
               </Button>
+              {onboard && onSkipLater ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="min-h-11 text-muted-foreground"
+                  disabled={pending}
+                  onClick={onSkipLater}
+                >
+                  Ajouter plus tard mes infos pro
+                </Button>
+              ) : null}
             </div>
           ) : null}
         </form>
