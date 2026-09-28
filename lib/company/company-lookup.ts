@@ -100,6 +100,7 @@ async function searchApi(searchText: string, digits: string | null): Promise<Api
   } finally {
     clearTimeout(timer);
   }
+}
 
 function mapEntreprise(row: ApiEntreprise, website: string | null): CompanyLookupResult {
   const siege = row.siege ?? row.matching_etablissements?.[0] ?? null;
