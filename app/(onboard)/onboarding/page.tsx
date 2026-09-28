@@ -22,6 +22,7 @@ export default async function OnboardingPage({
       firstName={viewer.firstName}
       lastName={viewer.lastName}
       locale={viewer.locale}
+      email={viewer.email ?? ""}
       avatarUrl={viewer.avatarUrl}
       initial={viewer.initial}
       projects={projects}

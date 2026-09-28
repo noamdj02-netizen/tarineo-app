@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { enregistrerEntreprise } from "@/app/(app)/entreprise/actions";
 import { createChantierAction } from "@/app/(app)/metier/actions";
+import { EntrepriseLookupFlow } from "@/components/metier/entreprise-lookup-flow";
 import { IdentiteScreen } from "@/components/onboarding/screens/identite-screen";
 import { WelcomeScreen } from "@/components/onboarding/screens/welcome-screen";
 import { WizardStepBg } from "@/components/onboarding/wizard-step-bg";
@@ -24,6 +25,7 @@ export function Wizard({
   firstName,
   lastName,
   locale,
+  email,
   next,
   ask,
   startStep = 0,
@@ -31,6 +33,7 @@ export function Wizard({
   firstName: string;
   lastName: string;
   locale: Locale;
+  email: string;
   avatarUrl: string | null;
   initial: string;
   projects: { id: string; name: string; slug: string; status: string }[];
@@ -130,7 +133,7 @@ export function Wizard({
               {step === 1 ? (
                 <IdentiteScreen first={name} last={family} lang={lang} onFirst={setName} onLast={setFamily} onLang={setLang} />
               ) : null}
-              {step === 2 ? <EntrepriseOnboard /> : null}
+              {step === 2 ? <EntrepriseLookupFlow variant="onboarding" emailContact={email} formId="onboard-entreprise" /> : null}
               {step === 3 ? <ChantierOnboard /> : null}
               {step === 4 ? (
                 <div className="flex flex-1 flex-col items-center justify-center text-center">
@@ -167,54 +170,6 @@ export function Wizard({
         ) : null}
       </Card>
     </div>
-  );
-}
-
-function EntrepriseOnboard() {
-  return (
-    <form id="onboard-entreprise" className="flex flex-col gap-3">
-      <TarineoHdMascot name="05-bras-croises" className="h-24 w-28 self-center" label="" />
-      <h2 className="font-display text-[24px] font-semibold tracking-tight">Votre entreprise</h2>
-      <p className="text-[14px] text-muted-foreground">Ces mentions iront sur chaque devis et facture PDF.</p>
-      <label className="text-[13px]">
-        Raison sociale
-        <Input name="raisonSociale" required className="mt-1 h-11 rounded-xl" />
-      </label>
-      <label className="text-[13px]">
-        SIRET (14 chiffres)
-        <Input name="siret" required inputMode="numeric" className="mt-1 h-11 rounded-xl" />
-      </label>
-      <label className="text-[13px]">
-        Adresse
-        <Input name="adresseRue" required className="mt-1 h-11 rounded-xl" />
-      </label>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-[13px]">
-          Code postal
-          <Input name="adresseCodePostal" required className="mt-1 h-11 rounded-xl" />
-        </label>
-        <label className="text-[13px]">
-          Ville
-          <Input name="adresseVille" required className="mt-1 h-11 rounded-xl" />
-        </label>
-      </div>
-      <label className="text-[13px]">
-        Email de contact
-        <Input name="emailContact" type="email" className="mt-1 h-11 rounded-xl" />
-      </label>
-      <fieldset className="text-[13px]">
-        <legend className="mb-1">TVA</legend>
-        <label className="flex gap-2">
-          <input type="radio" name="regimeTva" value="FRANCHISE_293B" defaultChecked />
-          Franchise 293 B
-        </label>
-        <label className="mt-1 flex gap-2">
-          <input type="radio" name="regimeTva" value="NORMAL" />
-          TVA 20 %
-        </label>
-      </fieldset>
-      <input type="hidden" name="margeParDefautPct" value="35" />
-    </form>
   );
 }
 
