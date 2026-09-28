@@ -1,5 +1,4 @@
 import "server-only";
-import { brandLogoUrl } from "@/lib/resources/logo";
 
 const FETCH_MS = 4_000;
 const MAX_HTML = 400_000;
@@ -13,7 +12,9 @@ export async function resolveWebsiteLogo(website: string | null, domain: string 
   if (fromSite) return fromSite;
 
   // logo.dev (clé publique déjà utilisée ailleurs) — domaine seulement.
-  return brandLogoUrl(host, 128);
+  const token = process.env.NEXT_PUBLIC_LOGO_DEV_TOKEN?.trim();
+  if (token) return `https://img.logo.dev/${host}?token=${token}&size=128&format=png&retina=true`;
+  return null;
 }
 
 async function scrapeLogo(pageUrl: string): Promise<string | null> {

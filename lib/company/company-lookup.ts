@@ -80,21 +80,26 @@ export async function lookupCompany(query: string): Promise<CompanyLookupRespons
 async function searchApi(searchText: string, digits: string | null): Promise<ApiEntreprise[]> {
   const q = digits ?? searchText;
   const url = `${API}?q=${encodeURIComponent(q)}&per_page=${digits ? 5 : 8}&page=1`;
-  const res = await fetch(url, {
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-    headers: { Accept: "application/json" },
-    next: { revalidate: 0 },
-  });
-  if (!res.ok) throw new Error(`API ${res.status}`);
-  const json = (await res.json()) as { results?: ApiEntreprise[] };
-  const rows = json.results ?? [];
-  if (!digits) return rows;
-  return rows.filter((row) => {
-    const siren = row.siren ?? "";
-    const siret = row.siege?.siret ?? "";
-    return siren === digits || siret === digits || siret.startsWith(digits);
-  });
-}
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { Accept: "application/json" },
+      cache: "no-store",
+    });
+    if (!res.ok) throw new Error(`API ${res.status}`);
+    const json = (await res.json()) as { results?: ApiEntreprise[] };
+    const rows = json.results ?? [];
+    if (!digits) return rows;
+    return rows.filter((row) => {
+      const siren = row.siren ?? "";
+      const siret = row.siege?.siret ?? "";
+      return siren === digits || siret === digits || siret.startsWith(digits);
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 
 function mapEntreprise(row: ApiEntreprise, website: string | null): CompanyLookupResult {
   const siege = row.siege ?? row.matching_etablissements?.[0] ?? null;

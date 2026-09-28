@@ -101,6 +101,14 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
+  // APIs JSON : 401 plutôt qu’une redirection HTML (évite de casser fetch()).
+  if (!user && pathname.startsWith("/api/")) {
+    const isPublicApi = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+    if (!isPublicApi) {
+      return NextResponse.json({ status: "error", message: "Connexion requise." }, { status: 401 });
+    }
+  }
+
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

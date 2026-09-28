@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
+import { lookupCompanyAction } from "@/lib/company/actions";
 import type { CompanyLookupResult } from "@/lib/company/types";
 import { siretValide } from "@/lib/metier/company";
 import { cn } from "@/lib/utils";
@@ -122,17 +123,7 @@ export function EntrepriseLookupFlow({
     setError(null);
     setPending(true);
     try {
-      const res = await fetch("/api/company/lookup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
-      });
-      const data = (await res.json()) as
-        | { status: "found"; company: CompanyLookupResult }
-        | { status: "candidates"; candidates: CompanyLookupResult[]; query: string }
-        | { status: "not_found"; query: string }
-        | { status: "error"; message: string };
-
+      const data = await lookupCompanyAction(query);
       if (data.status === "found") {
         applyCompany(data.company);
         return;
@@ -149,7 +140,8 @@ export function EntrepriseLookupFlow({
       }
       setError(data.message || "Recherche impossible.");
       setMode("edit");
-    } catch {
+    } catch (err) {
+      console.error("[entreprise-lookup]", err);
       setError("Recherche impossible. Complétez les informations manuellement.");
       setMode("edit");
     } finally {
@@ -161,19 +153,20 @@ export function EntrepriseLookupFlow({
     setPending(true);
     setError(null);
     try {
-      // Re-lookup par SIRET pour logo éventuel + confirmation serveur.
       if (c.siret) {
-        const res = await fetch("/api/company/lookup", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: c.siret }),
-        });
-        const data = (await res.json()) as { status: string; company?: CompanyLookupResult };
-        if (data.status === "found" && data.company) {
-          applyCompany({ ...data.company, website: c.website, logoUrl: data.company.logoUrl ?? c.logoUrl });
+        const data = await lookupCompanyAction(c.siret);
+        if (data.status === "found") {
+          applyCompany({
+            ...data.company,
+            website: c.website,
+            logoUrl: data.company.logoUrl ?? c.logoUrl,
+          });
           return;
         }
       }
+      applyCompany(c);
+    } catch (err) {
+      console.error("[entreprise-lookup]", err);
       applyCompany(c);
     } finally {
       setPending(false);
