@@ -35,7 +35,7 @@ function guarded<A>(
     } catch (err) {
       if (err instanceof McpAuthError) return fail(err.message);
       console.error("[navpit-mcp]", err);
-      return fail("Erreur interne Navpit. Réessaie dans un instant.");
+      return fail("Erreur interne TARINEO. Réessaie dans un instant.");
     }
   };
 }
@@ -50,7 +50,7 @@ export function registerNavpitTools(server: McpServer): void {
     {
       title: "Projet en Focus",
       description:
-        "Renvoie le projet actuellement en Focus dans Navpit (un seul à la fois, jusqu'à la 1ère vente), avec ses tâches ouvertes. À appeler en premier pour savoir sur quoi l'utilisateur travaille.",
+        "Renvoie le projet actuellement en Focus dans TARINEO (un seul à la fois, jusqu'à la 1ère vente), avec ses tâches ouvertes. À appeler en premier pour savoir sur quoi l'utilisateur travaille.",
       inputSchema: z.object({}),
     },
     guarded<Record<string, never>>("read", async (_args, userId) => {
@@ -65,7 +65,7 @@ export function registerNavpitTools(server: McpServer): void {
     "list_projects",
     {
       title: "Lister les projets",
-      description: "Liste tous les projets Navpit de l'utilisateur (Focus, en attente, terminés).",
+      description: "Liste tous les projets TARINEO de l'utilisateur (Focus, en attente, terminés).",
       inputSchema: z.object({}),
     },
     guarded<Record<string, never>>("read", async (_args, userId) =>
@@ -107,7 +107,7 @@ export function registerNavpitTools(server: McpServer): void {
     "search_notes",
     {
       title: "Chercher dans les notes",
-      description: "Recherche plein texte dans les notes Navpit de l'utilisateur.",
+      description: "Recherche plein texte dans les notes TARINEO de l'utilisateur.",
       inputSchema: z.object({
         query: z.string().min(2).max(200),
         limit: z.number().int().min(1).max(25).default(10),
@@ -125,7 +125,7 @@ export function registerNavpitTools(server: McpServer): void {
     {
       title: "Créer un projet",
       description:
-        "Crée un projet en attente (jamais en Focus : c'est l'utilisateur qui choisit son Focus dans Navpit).",
+        "Crée un projet en attente (jamais en Focus : c'est l'utilisateur qui choisit son Focus dans TARINEO).",
       inputSchema: z.object({
         name: z.string().min(1).max(120),
         description: z.string().max(2000).optional(),

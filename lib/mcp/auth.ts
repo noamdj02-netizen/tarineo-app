@@ -38,7 +38,7 @@ export function getUserId(authInfo: AuthInfo | undefined): string {
 export function requireScope(authInfo: AuthInfo | undefined, scope: Scope): void {
   if (!authInfo?.scopes.includes(scope)) {
     throw new McpAuthError(
-      `Cette clé API n'a pas le droit "${scope}". Crée une clé avec l'accès écriture dans Navpit > Compte > Clés API.`
+      `Cette clé API n'a pas le droit "${scope}". Crée une clé avec l'accès écriture dans TARINEO > Compte > Clés API.`
     );
   }
 }

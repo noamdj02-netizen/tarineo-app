@@ -33,7 +33,7 @@ function PreviewShell({ children, className }: { children: ReactNode; className?
           <span className="size-2 rounded-full bg-[#ff5f57]" aria-hidden />
           <span className="size-2 rounded-full bg-[#febc2e]" aria-hidden />
           <span className="size-2 rounded-full bg-[#28c840]" aria-hidden />
-          <span className="ml-2 font-mono text-[10px] tracking-wide text-muted-foreground">Navpit · aperçu</span>
+          <span className="ml-2 font-mono text-[10px] tracking-wide text-muted-foreground">TARINEO · aperçu</span>
         </div>
         <div className="flex flex-1 flex-col">{children}</div>
       </div>

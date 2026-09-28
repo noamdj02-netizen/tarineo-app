@@ -18,8 +18,15 @@ export default async function EntreprisePage() {
   }
   return (
     <section className="mx-auto flex max-w-[720px] flex-col gap-8">
-      <PageHead mascot="05-bras-croises" label="Entreprise" title="Vos mentions," tail="sur chaque PDF.">
-        SIRET, TVA, logo, décennale. Alan les avait déjà prévues : elles se recopient sur devis, bon et facture.
+      <PageHead
+        label="Entreprise"
+        title="Mon entreprise"
+        crumbs={[
+          { href: "/accueil", label: "Accueil" },
+          { label: "Mon entreprise" },
+        ]}
+      >
+        Informations reprises sur vos devis, bons et factures PDF.
       </PageHead>
       <EntrepriseForm profil={filled} logoUrl={logoUrl} />
     </section>

@@ -47,8 +47,12 @@ export async function enregistrerEntreprise(form: FormData) {
     if (!error) profile.logo_path = path;
   }
 
-  await saveCompanyProfile(profile);
+  try {
+    await saveCompanyProfile(profile);
+  } catch (err) {
+    console.error("[metier] enregistrerEntreprise", err);
+    return { ok: false as const, error: "Profil non enregistré." };
+  }
   revalidatePath("/entreprise");
-  revalidatePath("/composants");
   return { ok: true as const };
 }

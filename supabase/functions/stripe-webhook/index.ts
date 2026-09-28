@@ -24,7 +24,7 @@ const LOYALTY = {
 type Interval = "month" | "year";
 type PaidPlan = "starter" | "pro";
 const planLookupKey = (plan: PaidPlan, interval: Interval, tier: number) =>
-  tier === 0 ? `navpit_${plan}_${interval}` : `navpit_${plan}_${interval}_t${tier}`;
+  tier === 0 ? `tarineo_${plan}_${interval}` : `tarineo_${plan}_${interval}_t${tier}`;
 
 function tierFor(startedAt: Date, now = new Date()) {
   const months =
@@ -46,7 +46,7 @@ function intervalOf(item: Stripe.SubscriptionItem | undefined): Interval {
 }
 
 function planFromLookup(lookup: string, metaPlan?: string | null): PaidPlan {
-  if (lookup.startsWith("navpit_starter_") || metaPlan === "starter") return "starter";
+  if (lookup.includes("starter") || metaPlan === "starter") return "starter";
   return "pro";
 }
 
@@ -120,9 +120,9 @@ async function applyLoyalty(invoice: Stripe.Invoice) {
   const sub = await stripe.subscriptions.retrieve(ref);
   const item = sub.items.data[0];
   const lookup = item?.price.lookup_key ?? "";
-  const plan: PaidPlan | null = lookup.startsWith("navpit_starter_")
+  const plan: PaidPlan | null = lookup.includes("_starter_")
     ? "starter"
-    : lookup.startsWith("navpit_pro_")
+    : lookup.includes("_pro_")
       ? "pro"
       : null;
   if (!plan || !item) return;
@@ -147,7 +147,19 @@ async function applyLoyalty(invoice: Stripe.Invoice) {
   await sendLoyaltyEmail(invoice.customer_email, plan, interval, target);
 }
 
-const APP_URL = Deno.env.get("APP_URL") ?? "https://www.navpit.com";
+const APP_URL = (() => {
+  const raw = Deno.env.get("APP_URL") ?? "https://app.tarineo.com";
+  if (/navpit/i.test(raw) || /localhost/i.test(raw)) return "https://app.tarineo.com";
+  return raw.replace(/\/$/, "");
+})();
+
+function fromAddress() {
+  const raw = Deno.env.get("EMAIL_FROM") ?? "";
+  if (!raw.trim() || /navpit/i.test(raw) || /[éÉ]/.test(raw.split("<")[0] ?? "")) {
+    return "TARINEO <contact@tarineo.fr>";
+  }
+  return raw.trim();
+}
 
 async function sendEmail(
   to: string | null | undefined,
@@ -160,13 +172,13 @@ async function sendEmail(
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      from: Deno.env.get("EMAIL_FROM") ?? "Navpit <bonjour@navpit.com>",
+      from: fromAddress(),
       to,
       subject,
       html: navpitTransactionalHtml({ ...htmlOpts, appUrl: APP_URL }),
     }),
   });
-  if (!res.ok) console.error("[stripe-webhook] email", subject, res.status);
+  if (!res.ok) console.error("[stripe-webhook] email", subject, res.status, await res.text());
 }
 
 async function sendLoyaltyEmail(
@@ -181,7 +193,7 @@ async function sendLoyaltyEmail(
   await sendEmail(to, `Merci d’être là depuis ${years} : ton prix baisse`, {
     label: "Prix fidélité",
     title: `Ton prix passe à ${price} € ${unit}`,
-    body: `Tu es abonné à Navpit depuis ${years}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien faire. Merci de ta confiance.`,
+    body: `Tu es abonné à TARINEO depuis ${years}. Comme promis, ton prix baisse dès ta prochaine facture, sans rien faire. Merci de ta confiance.`,
   });
 }
 
@@ -206,10 +218,10 @@ async function handle(event: Stripe.Event) {
         await sendEmail(s.customer_details?.email, "Merci, Fondateur !", {
           label: "Fondateur",
           title: "Merci, Fondateur",
-          body: "Ton paiement est reçu : tu as Navpit Pro à vie, sans abonnement. Merci de soutenir le projet dès le début.",
+          body: "Ton paiement est reçu : tu as TARINEO Pro à vie, sans abonnement. Merci de nous faire confiance dès le début.",
           ctaHref: `${APP_URL}/accueil`,
-          ctaLabel: "Ouvrir Navpit",
-          footer: "Tu fais partie des premiers : Navpit Pro à vie, sans abonnement.",
+          ctaLabel: "Ouvrir TARINEO",
+          footer: "Tu fais partie des premiers : TARINEO Pro à vie, sans abonnement.",
         });
         return;
       }
@@ -229,10 +241,10 @@ async function handle(event: Stripe.Event) {
             label: starter ? "Création" : "Pro",
             title: starter ? "Bienvenue en Création" : "Bienvenue en Pro",
             body: starter
-              ? "6 projets, 300 questions IA par mois et 100 schémas. Ton prix baissera à chaque anniversaire d’abonnement."
-              : "Projets illimités, 500 questions IA par mois, schémas illimités et agenda synchronisé. Et ton prix baissera à chaque anniversaire d’abonnement.",
+              ? "Documents, historique d’achats et suivi de marge. Ton prix baissera à chaque anniversaire d’abonnement."
+              : "Tous les distributeurs, devis client et analyses. Ton prix baissera à chaque anniversaire d’abonnement.",
             ctaHref: `${APP_URL}/accueil`,
-            ctaLabel: "Ouvrir Navpit",
+            ctaLabel: "Ouvrir TARINEO",
           },
         );
       }
@@ -240,7 +252,7 @@ async function handle(event: Stripe.Event) {
     }
     case "invoice.payment_failed": {
       const inv = event.data.object;
-      await sendEmail(inv.customer_email, "Ton paiement Navpit n’est pas passé", {
+      await sendEmail(inv.customer_email, "Ton paiement TARINEO n’est pas passé", {
         label: "Paiement",
         title: "Paiement refusé",
         body: "Stripe va réessayer dans quelques jours. Pour garder ton accès sans coupure, vérifie ta carte bancaire.",

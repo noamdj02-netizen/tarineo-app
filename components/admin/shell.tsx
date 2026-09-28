@@ -30,8 +30,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
                         className={cn(
                           "block rounded-lg px-2.5 py-1.5 text-[13px] leading-tight",
                           active
-                            ? "bg-white text-ink"
-                            : "text-side-muted hover:bg-white/[.06] hover:text-side-ink",
+                            ? "nav-active"
+                            : "text-side-muted hover:bg-side-ink/[.06] hover:text-side-ink",
                         )}
                       >
                         {item.label}

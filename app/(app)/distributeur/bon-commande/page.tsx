@@ -1,7 +1,7 @@
 import { PieceKindPage } from "@/components/metier/piece-kind-page";
 import { R } from "@/lib/routes";
 
-export const metadata = { title: "Bon de commande distributeur" };
+export const metadata = { title: "Bons de commande distributeur" };
 
 export default async function Page({
   searchParams,
@@ -15,10 +15,9 @@ export default async function Page({
       kind="bon_commande"
       base={R.distributeurBc}
       label="Distributeur"
-      title="Bons de commande"
-      tail="reçus."
-      text="Déposez le BC du distributeur. Il reste rattaché au chantier, à part des devis."
-      empty="Aucun bon de commande d’achat."
+      title="Bons de commande distributeur"
+      text="Retrouvez les bons de commande reçus de vos fournisseurs."
+      empty="Aucun bon de commande d’achat. Importez un PDF pour commencer."
       dropHint="PDF bon de commande enseigne."
       chantierSlug={q.chantier}
       partyId={q.party}

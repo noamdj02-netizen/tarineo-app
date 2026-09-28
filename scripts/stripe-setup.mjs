@@ -1,6 +1,7 @@
-// Crée (une seule fois) les produits, prix, portail et webhook Stripe de Navpit.
-// Relançable sans risque : un objet déjà présent n'est pas recréé.
+// Crée (une seule fois) les produits et lookup keys TARINEO.
+// Relançable : un objet déjà présent n'est pas recréé.
 // Usage : node --env-file=.env.local scripts/stripe-setup.mjs
+// Les Price ID sont générés par Stripe — ne pas les copier à la main dans le code.
 
 import Stripe from "stripe";
 
@@ -11,7 +12,7 @@ if (!key) {
 }
 const stripe = new Stripe(key);
 const live = key.startsWith("sk_live_") || key.startsWith("rk_live_");
-const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://www.navpit.com").replace(/\/$/, "");
+const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://app.tarineo.com").replace(/\/$/, "");
 
 // Mêmes montants que lib/billing/plans.ts (en centimes). Index = palier fidélité.
 const STARTER = { month: [1500, 1200, 900], year: [15000, 12000, 9000] };
@@ -19,18 +20,18 @@ const PRO = { month: [3000, 2400, 1800], year: [30000, 24000, 18000] };
 const FOUNDER = 14900;
 
 const lookup = (plan, interval, tier) =>
-  tier === 0 ? `navpit_${plan}_${interval}` : `navpit_${plan}_${interval}_t${tier}`;
+  tier === 0 ? `tarineo_${plan}_${interval}` : `tarineo_${plan}_${interval}_t${tier}`;
 
 async function product(name, description) {
   try {
-    const found = await stripe.products.search({ query: `metadata['navpit']:'${name}'` });
+    const found = await stripe.products.search({ query: `metadata['tarineo']:'${name}'` });
     if (found.data[0]) return found.data[0];
   } catch {
     const listed = await stripe.products.list({ limit: 100, active: true });
-    const hit = listed.data.find((p) => p.metadata?.navpit === name);
+    const hit = listed.data.find((p) => p.metadata?.tarineo === name);
     if (hit) return hit;
   }
-  return stripe.products.create({ name, description, metadata: { navpit: name } });
+  return stripe.products.create({ name, description, metadata: { tarineo: name } });
 }
 
 async function price(lookup_key, params) {
@@ -64,16 +65,16 @@ async function recurringPrices(planName, productId, amounts) {
 console.log(`Mode ${live ? "LIVE" : "TEST"}`);
 
 const starter = await product(
-  "Navpit Création",
-  "6 projets, 300 questions IA/mois, 100 schémas. Prix fidélité dégressif.",
+  "TARINEO Création",
+  "Documents, historique d’achats, suivi de marge. Prix fidélité dégressif.",
 );
 const starterPrices = await recurringPrices("starter", starter.id, STARTER);
 
-const pro = await product("Navpit Pro", "Projets et schémas illimités, copilote IA, agenda. Prix fidélité dégressif.");
+const pro = await product("TARINEO Pro", "Tous les distributeurs, devis client, analyses. Prix fidélité dégressif.");
 const proPrices = await recurringPrices("pro", pro.id, PRO);
 
-const founder = await product("Navpit Fondateur", "Accès Pro à vie, un seul paiement.");
-await price("navpit_founder", { product: founder.id, unit_amount: FOUNDER, nickname: "Fondateur à vie" });
+const founder = await product("TARINEO Fondateur", "Accès Pro à vie, un seul paiement.");
+await price("tarineo_founder", { product: founder.id, unit_amount: FOUNDER, nickname: "Fondateur à vie" });
 
 const portals = await stripe.billingPortal.configurations.list({ active: true, limit: 1 });
 if (portals.data[0]) {
@@ -82,7 +83,7 @@ if (portals.data[0]) {
   try {
     const portal = await stripe.billingPortal.configurations.create({
       business_profile: {
-        headline: "Navpit — gérer ton abonnement",
+        headline: "TARINEO — gérer ton abonnement",
         privacy_policy_url: `${appUrl}/confidentialite`,
         terms_of_service_url: `${appUrl}/cgv`,
       },
@@ -125,7 +126,7 @@ try {
         "invoice.paid",
         "invoice.payment_failed",
       ],
-      metadata: { navpit: "app" },
+      metadata: { tarineo: "app" },
     });
     console.log(`+ webhook créé (${hook.id})`);
     if (hook.secret) {

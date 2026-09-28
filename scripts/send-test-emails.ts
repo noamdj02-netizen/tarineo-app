@@ -31,34 +31,34 @@ async function main() {
       WelcomeEmail,
     } = await import("@/emails/index");
     const list = [
-      { subject: "[Navpit] Bienvenue", react: WelcomeEmail({ firstName: "Noam", appUrl }) },
-      { subject: "[Navpit] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback, token: "482913" }) },
+      { subject: "[TARINEO] Bienvenue", react: WelcomeEmail({ firstName: "Noam", appUrl }) },
+      { subject: "[TARINEO] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback, token: "482913" }) },
       {
-        subject: "[Navpit] Ton lien de connexion",
+        subject: "[TARINEO] Ton lien de connexion",
         react: AuthMagicLinkEmail({ appUrl, confirmationUrl: callback, token: "12345678" }),
       },
       {
-        subject: "[Navpit] Nouveau mot de passe",
+        subject: "[TARINEO] Nouveau mot de passe",
         react: AuthResetPasswordEmail({ appUrl, confirmationUrl: `${appUrl}/nouveau-mot-de-passe`, token: "482913" }),
       },
-      { subject: "[Navpit] Confirme ta nouvelle adresse", react: AuthEmailChangeEmail({ appUrl, confirmationUrl: callback }) },
-      { subject: "[Navpit] Bienvenue en Pro", react: BillingProWelcomeEmail({ appUrl }) },
-      { subject: "[Navpit] Merci, Fondateur", react: BillingFounderEmail({ appUrl }) },
+      { subject: "[TARINEO] Confirme ta nouvelle adresse", react: AuthEmailChangeEmail({ appUrl, confirmationUrl: callback }) },
+      { subject: "[TARINEO] Bienvenue en Pro", react: BillingProWelcomeEmail({ appUrl }) },
+      { subject: "[TARINEO] Merci, Fondateur", react: BillingFounderEmail({ appUrl }) },
       {
-        subject: "[Navpit] Prix fidélité",
+        subject: "[TARINEO] Prix fidélité",
         react: BillingLoyaltyEmail({ appUrl, price: 12, intervalLabel: "par mois", yearsLabel: "un an" }),
       },
-      { subject: "[Navpit] Paiement refusé", react: BillingPaymentFailedEmail({ appUrl }) },
+      { subject: "[TARINEO] Paiement refusé", react: BillingPaymentFailedEmail({ appUrl }) },
       {
-        subject: "[Navpit] Abonnement annulé",
+        subject: "[TARINEO] Abonnement annulé",
         react: BillingCancelledEmail({ appUrl, endDate: "12 avril 2026" }),
       },
       {
-        subject: `[Navpit] ${CHECK_IN_SUBJECT}`,
+        subject: `[TARINEO] ${CHECK_IN_SUBJECT}`,
         react: CheckInEmail({ firstName: "Noam", appUrl }),
       },
       {
-        subject: "[Navpit] Petit check de Noam (version courte)",
+        subject: "[TARINEO] Petit check de Noam (version courte)",
         react: CheckInEmailShort({ firstName: "Noam", appUrl }),
       },
     ];
@@ -90,30 +90,30 @@ async function main() {
     process.exit(1);
   }
   const to = process.argv[2] ?? "noamdj02@gmail.com";
-  const from = process.env.EMAIL_FROM ?? "Navpit <bonjour@navpit.com>";
+  const from = process.env.EMAIL_FROM ?? "TARINEO <contact@tarineo.fr>";
   const appUrl = getSiteUrl();
   const callback = `${appUrl}/auth/callback`;
   const resend = new Resend(key);
 
   const sends = [
-    { subject: "[Navpit] Bienvenue", react: WelcomeEmail({ firstName: "Noam", appUrl }) },
-    { subject: "[Navpit] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback, token: "482913" }) },
+    { subject: "[TARINEO] Bienvenue", react: WelcomeEmail({ firstName: "Noam", appUrl }) },
+    { subject: "[TARINEO] Confirme ton compte", react: AuthSignupEmail({ appUrl, confirmationUrl: callback, token: "482913" }) },
     {
-      subject: "[Navpit] Ton lien de connexion",
+      subject: "[TARINEO] Ton lien de connexion",
       react: AuthMagicLinkEmail({ appUrl, confirmationUrl: callback, token: "12345678" }),
     },
     {
-      subject: "[Navpit] Nouveau mot de passe",
+      subject: "[TARINEO] Nouveau mot de passe",
       react: AuthResetPasswordEmail({ appUrl, confirmationUrl: `${appUrl}/nouveau-mot-de-passe`, token: "482913" }),
     },
     {
-      subject: "[Navpit] Confirme ta nouvelle adresse",
+      subject: "[TARINEO] Confirme ta nouvelle adresse",
       react: AuthEmailChangeEmail({ appUrl, confirmationUrl: callback }),
     },
-    { subject: "[Navpit] Bienvenue en Pro", react: BillingProWelcomeEmail({ appUrl }) },
-    { subject: "[Navpit] Merci, Fondateur", react: BillingFounderEmail({ appUrl }) },
+    { subject: "[TARINEO] Bienvenue en Pro", react: BillingProWelcomeEmail({ appUrl }) },
+    { subject: "[TARINEO] Merci, Fondateur", react: BillingFounderEmail({ appUrl }) },
     {
-      subject: "[Navpit] Prix fidélité",
+      subject: "[TARINEO] Prix fidélité",
       react: BillingLoyaltyEmail({
         appUrl,
         price: 12,
@@ -121,17 +121,17 @@ async function main() {
         yearsLabel: "un an",
       }),
     },
-    { subject: "[Navpit] Paiement refusé", react: BillingPaymentFailedEmail({ appUrl }) },
+    { subject: "[TARINEO] Paiement refusé", react: BillingPaymentFailedEmail({ appUrl }) },
     {
-      subject: "[Navpit] Abonnement annulé",
+      subject: "[TARINEO] Abonnement annulé",
       react: BillingCancelledEmail({ appUrl, endDate: "12 avril 2026" }),
     },
     {
-      subject: `[Navpit] ${CHECK_IN_SUBJECT}`,
+      subject: `[TARINEO] ${CHECK_IN_SUBJECT}`,
       react: CheckInEmail({ firstName: "Noam", appUrl }),
     },
     {
-      subject: "[Navpit] Petit check de Noam (version courte)",
+      subject: "[TARINEO] Petit check de Noam (version courte)",
       react: CheckInEmailShort({ firstName: "Noam", appUrl }),
     },
   ];

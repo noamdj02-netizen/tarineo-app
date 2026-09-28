@@ -15,10 +15,9 @@ export default async function Page({
       kind="devis"
       base={R.distributeurDevis}
       label="Distributeur"
-      title="Devis d’achat"
-      tail="à traiter."
-      text="Glissez le devis du distributeur. Reliez-le au chantier, puis transformez-le pour le client."
-      empty="Aucun devis d’achat. Déposez un PDF ci-dessus."
+      title="Devis distributeur"
+      text="Retrouvez les documents reçus de vos fournisseurs."
+      empty="Aucun devis distributeur. Importez un PDF pour commencer."
       dropHint="PDF devis fournisseur / enseigne."
       chantierSlug={q.chantier}
       partyId={q.party}

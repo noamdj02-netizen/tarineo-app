@@ -22,7 +22,7 @@ export function navpitTransactionalHtml(opts: NavpitHtmlOpts): string {
       : "";
   const codeBlock = opts.code
     ? `<p style="font:600 32px/1.1 'Space Grotesk',Helvetica,sans-serif;letter-spacing:.2em;color:#111;margin:20px 0 8px">${opts.code}</p>
-       <p style="font-size:13px;line-height:1.5;color:#8c8c8c;margin:0 0 12px">Colle ce code sur la page de connexion Tarinéo.</p>`
+       <p style="font-size:13px;line-height:1.5;color:#8c8c8c;margin:0 0 12px">Colle ce code sur la page de connexion TARINEO.</p>`
     : "";
 
   return `<!DOCTYPE html>
@@ -34,7 +34,7 @@ export function navpitTransactionalHtml(opts: NavpitHtmlOpts): string {
         <tr><td style="padding:24px 24px 8px">
           <table role="presentation" cellpadding="0" cellspacing="0"><tr>
             <td style="padding-right:12px;vertical-align:middle"><img src="${mascot}" alt="" width="36" height="36" style="display:block;border-radius:8px" /></td>
-            <td style="vertical-align:middle;font-size:22px;font-weight:700;letter-spacing:-.04em;color:#111">Tarinéo<span style="color:#8c8c8c">.</span></td>
+            <td style="vertical-align:middle;font-size:22px;font-weight:700;letter-spacing:-.04em;color:#111">TARINEO<span style="color:#8c8c8c">.</span></td>
           </tr></table>
         </td></tr>
         <tr><td style="padding:32px 24px 40px">
@@ -48,7 +48,7 @@ export function navpitTransactionalHtml(opts: NavpitHtmlOpts): string {
           <img src="${mascot}" alt="" width="592" style="display:block;width:100%;max-width:592px;border-radius:20px;border:1px solid #ececeb;background:#fff" />
         </td></tr>
         <tr><td style="border-top:1px solid #ececeb;padding:40px 24px">
-          <p style="font-size:13px;line-height:1.55;color:#555;margin:0;max-width:320px">${opts.footer ?? "Navpit : un seul projet en Focus, la prochaine action visible, et un copilote IA qui connaît tes projets."}</p>
+          <p style="font-size:13px;line-height:1.55;color:#555;margin:0;max-width:320px">${opts.footer ?? "TARINEO — l’assistant qui protège la marge des artisans."}</p>
         </td></tr>
       </table>
     </td></tr>

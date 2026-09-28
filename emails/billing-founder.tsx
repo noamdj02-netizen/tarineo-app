@@ -10,15 +10,15 @@ export function BillingFounderEmail({ appUrl }: BillingFounderEmailProps) {
       label="Fondateur"
       title="Merci, Fondateur"
       appUrl={appUrl}
-      footerNote="Tu fais partie des premiers : Tarinéo Pro à vie, sans abonnement. Merci de soutenir le projet dès le début."
+      footerNote="Tu fais partie des premiers : TARINEO Pro à vie, sans abonnement. Merci de soutenir le projet dès le début."
     >
       <EmailParagraph>
-        Ton paiement est reçu : tu as Tarinéo Pro à vie, sans abonnement. Merci de soutenir le projet dès le début.
+        Ton paiement est reçu : tu as TARINEO Pro à vie, sans abonnement. Merci de soutenir le projet dès le début.
       </EmailParagraph>
-      <EmailCta href={`${base}/accueil`}>Ouvrir Tarinéo</EmailCta>
+      <EmailCta href={`${base}/accueil`}>Ouvrir TARINEO</EmailCta>
     </TarineoEmailShell>
   );
 }
 
-BillingFounderEmail.PreviewProps = { appUrl: "https://www.tarineo.fr" } satisfies BillingFounderEmailProps;
+BillingFounderEmail.PreviewProps = { appUrl: "https://app.tarineo.com" } satisfies BillingFounderEmailProps;
 export default BillingFounderEmail;

@@ -6,7 +6,7 @@ export function BillingStarterWelcomeEmail({ appUrl }: BillingStarterWelcomeEmai
   const base = appUrl.replace(/\/$/, "");
   return (
     <TarineoEmailShell
-      preview="Bienvenue en Tarinéo Création"
+      preview="Bienvenue en TARINEO Création"
       label="Création"
       title="Bienvenue en Création"
       appUrl={appUrl}
@@ -14,12 +14,12 @@ export function BillingStarterWelcomeEmail({ appUrl }: BillingStarterWelcomeEmai
       <EmailParagraph>
         6 projets, 300 questions IA par mois et 100 schémas. Ton prix baissera à chaque anniversaire d’abonnement.
       </EmailParagraph>
-      <EmailCta href={`${base}/accueil`}>Ouvrir Tarinéo</EmailCta>
+      <EmailCta href={`${base}/accueil`}>Ouvrir TARINEO</EmailCta>
     </TarineoEmailShell>
   );
 }
 
 BillingStarterWelcomeEmail.PreviewProps = {
-  appUrl: "https://www.tarineo.fr",
+  appUrl: "https://app.tarineo.com",
 } satisfies BillingStarterWelcomeEmailProps;
 export default BillingStarterWelcomeEmail;

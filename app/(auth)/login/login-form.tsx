@@ -88,7 +88,9 @@ export function LoginForm({
       setMsg(
         error.code === "email_not_confirmed"
           ? "Confirme d’abord ton email : clique sur le lien reçu à l’inscription."
-          : "Email ou mot de passe incorrect.",
+          : error.status === 429
+            ? "Trop d’essais. Attends un moment, puis réessaie."
+            : "Email ou mot de passe incorrect. Si le compte est nouveau, confirme d’abord l’email.",
       );
       return;
     }

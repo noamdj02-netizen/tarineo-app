@@ -1,0 +1,412 @@
+import "server-only";
+import { getDb } from "@/lib/db";
+import {
+  documentSentAt,
+  followUpAudience,
+  followUpStillEligible,
+  isDocumentTransformed,
+  scheduleAtNine,
+  type FollowUp,
+  type FollowUpStatus,
+} from "@/lib/metier/follow-ups";
+import {
+  getMem,
+  memListFollowUps,
+  memMergeExtract,
+  memUpdateFollowUp,
+  memUpsertFollowUp,
+} from "@/lib/metier/memory";
+import { getDocument, listDocuments } from "@/lib/metier/queries";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import type { DocumentCard } from "@/lib/metier/types";
+import type { CompanyProfile } from "@/lib/metier/company";
+import { loadCompanyLogo } from "@/lib/metier/brand-assets";
+import { pieceMailHtml } from "@/lib/metier/draft-mail";
+import { pdfFromDocument } from "@/lib/metier/pdf/from-document";
+import { sendEmailWithPdf } from "@/lib/email/send";
+import { getViewer } from "@/lib/session";
+import { getCompanyProfile } from "@/lib/metier/queries";
+
+function allowLocalMemory() {
+  return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "preview" && process.env.VERCEL_ENV !== "production";
+}
+
+function isMissingTable(error: { message?: string; code?: string } | null) {
+  const m = error?.message ?? "";
+  return /does not exist|schema cache|Could not find the table/i.test(m);
+}
+
+function uid() {
+  return crypto.randomUUID();
+}
+
+export async function listStoredFollowUps(): Promise<FollowUp[]> {
+  const db = await getDb();
+  if (!db) {
+    if (!allowLocalMemory()) return [];
+    return memListFollowUps("local");
+  }
+  const { data, error } = await db.supabase
+    .from("follow_ups")
+    .select(
+      "id, document_id, chantier_id, audience, status, scheduled_at, last_action_at, sent_at, to_email, subject, body, created_at",
+    )
+    .eq("user_id", db.user.id)
+    .order("created_at", { ascending: false });
+  if (error) {
+    if (isMissingTable(error) && allowLocalMemory()) return memListFollowUps(db.user.id);
+    console.error("[metier] listStoredFollowUps", error);
+    return [];
+  }
+  return (data ?? []) as FollowUp[];
+}
+
+export async function markDocumentSent(documentId: string, extra?: Record<string, unknown>) {
+  const patch = { sent_at: new Date().toISOString(), ...extra };
+  const db = await getDb();
+  if (!db) {
+    if (!allowLocalMemory()) return;
+    memMergeExtract("local", documentId, patch);
+    return;
+  }
+  const { data } = await db.supabase
+    .from("documents")
+    .select("extract")
+    .eq("id", documentId)
+    .eq("user_id", db.user.id)
+    .maybeSingle();
+  if (!data) return;
+  const prev = (data.extract && typeof data.extract === "object" ? data.extract : {}) as Record<string, unknown>;
+  await db.supabase
+    .from("documents")
+    .update({ extract: { ...prev, ...patch } })
+    .eq("id", documentId)
+    .eq("user_id", db.user.id);
+}
+
+export async function upsertFollowUp(input: {
+  id?: string;
+  documentId: string;
+  status: FollowUpStatus;
+  scheduledAt?: string | null;
+  toEmail: string;
+  subject: string;
+  body: string;
+}): Promise<{ ok: true; followUp: FollowUp } | { ok: false; error: string }> {
+  const doc = await getDocument(input.documentId);
+  if (!doc) return { ok: false, error: "Pièce introuvable." };
+  const now = new Date().toISOString();
+  const row: FollowUp = {
+    id: input.id && !input.id.startsWith("virtual:") ? input.id : uid(),
+    document_id: doc.id,
+    chantier_id: doc.chantier_id,
+    audience: followUpAudience(doc),
+    status: input.status,
+    scheduled_at: input.scheduledAt ?? null,
+    last_action_at: now,
+    sent_at: input.status === "sent" ? now : null,
+    to_email: input.toEmail,
+    subject: input.subject,
+    body: input.body,
+    created_at: now,
+  };
+
+  const db = await getDb();
+  if (!db) {
+    if (!allowLocalMemory()) return { ok: false, error: "Enregistrement impossible." };
+    memUpsertFollowUp("local", row);
+    return { ok: true, followUp: row };
+  }
+
+  const payload = {
+    id: row.id,
+    user_id: db.user.id,
+    document_id: row.document_id,
+    chantier_id: row.chantier_id,
+    audience: row.audience,
+    status: row.status,
+    scheduled_at: row.scheduled_at,
+    last_action_at: row.last_action_at,
+    sent_at: row.sent_at,
+    to_email: row.to_email,
+    subject: row.subject,
+    body: row.body,
+  };
+  const { error } = await db.supabase.from("follow_ups").upsert(payload);
+  if (error) {
+    if (isMissingTable(error) && allowLocalMemory()) {
+      memUpsertFollowUp(db.user.id, row);
+      return { ok: true, followUp: row };
+    }
+    console.error("[metier] upsertFollowUp", error);
+    return { ok: false, error: "Relance non enregistrée." };
+  }
+  return { ok: true, followUp: row };
+}
+
+export async function setFollowUpStatus(id: string, status: FollowUpStatus) {
+  if (id.startsWith("virtual:")) return { ok: false as const, error: "Relance non enregistrée." };
+  const db = await getDb();
+  const now = new Date().toISOString();
+  if (!db) {
+    if (!allowLocalMemory()) return { ok: false as const, error: "Enregistrement impossible." };
+    const row = memUpdateFollowUp("local", id, { status, last_action_at: now });
+    return row ? { ok: true as const } : { ok: false as const, error: "Relance introuvable." };
+  }
+  const { error } = await db.supabase
+    .from("follow_ups")
+    .update({ status, last_action_at: now })
+    .eq("id", id)
+    .eq("user_id", db.user.id);
+  if (error) {
+    if (isMissingTable(error) && allowLocalMemory()) {
+      memUpdateFollowUp(db.user.id, id, { status, last_action_at: now });
+      return { ok: true as const };
+    }
+    return { ok: false as const, error: "Mise à jour impossible." };
+  }
+  return { ok: true as const };
+}
+
+export async function sendDocumentMail(input: {
+  documentId: string;
+  to: string;
+  subject: string;
+  body: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const [doc, viewer, company, logo] = await Promise.all([
+    getDocument(input.documentId),
+    getViewer(),
+    getCompanyProfile(),
+    loadCompanyLogo(),
+  ]);
+  if (!doc) return { ok: false, error: "Pièce introuvable." };
+  const { buffer, filename } = await pdfFromDocument(doc, viewer?.email);
+  const html = pieceMailHtml({
+    body: input.body,
+    company: company?.raison_sociale || "L’entreprise",
+    phone: company?.telephone,
+    email: company?.email_contact || viewer?.email || undefined,
+    address: [company?.adresse_rue, company?.adresse_code_postal, company?.adresse_ville].filter(Boolean).join(", "),
+    logoCid: logo?.cid,
+  });
+  const res = await sendEmailWithPdf({
+    to: input.to,
+    subject: input.subject,
+    text: input.body,
+    html,
+    filename,
+    pdf: buffer,
+    replyTo: company?.email_contact || viewer?.email,
+    inline: logo ? [{ filename: logo.filename, content: logo.buffer, contentId: logo.cid }] : undefined,
+    idempotencyKey: `doc-mail:${input.documentId}:${input.to}`,
+  });
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: res.skipped ? "E-mail non configuré. Le document n’a pas été envoyé." : (res.error ?? "Envoi impossible."),
+    };
+  }
+  await markDocumentSent(doc.id, { last_sent_to: input.to });
+  return { ok: true };
+}
+
+export async function scheduleFollowUpForDocument(input: {
+  documentId: string;
+  to: string;
+  subject: string;
+  body: string;
+  days: number;
+  id?: string;
+}) {
+  const all = await listDocuments();
+  const doc = all.find((d) => d.id === input.documentId);
+  if (!doc) return { ok: false as const, error: "Pièce introuvable." };
+  if (doc.status !== "ready") return { ok: false as const, error: "Document invalide." };
+  if (isDocumentTransformed(doc, all)) {
+    return { ok: false as const, error: "Ce document a déjà une suite. Relance inutile." };
+  }
+  if (!input.to.includes("@")) return { ok: false as const, error: "E-mail invalide." };
+  if (!documentSentAt(doc.extract)) {
+    return { ok: false as const, error: "Envoyez d’abord le document avant de programmer une relance." };
+  }
+  return upsertFollowUp({
+    id: input.id,
+    documentId: input.documentId,
+    status: "scheduled",
+    scheduledAt: scheduleAtNine(input.days),
+    toEmail: input.to,
+    subject: input.subject,
+    body: input.body,
+  });
+}
+
+export async function processScheduledFollowUps() {
+  if (!isSupabaseConfigured()) {
+    if (allowLocalMemory()) {
+      const u = getMem("local");
+      const now = Date.now();
+      const docs = await listDocuments();
+      let sent = 0;
+      for (const fu of [...u.followUps]) {
+        if (fu.status !== "scheduled" || !fu.scheduled_at) continue;
+        if (Date.parse(fu.scheduled_at) > now) continue;
+        if (fu.sent_at) continue;
+        try {
+          const doc = docs.find((d) => d.id === fu.document_id) ?? null;
+          const check = followUpStillEligible(doc, docs, fu, { requirePriorSend: true });
+          if (!check.ok) {
+            memUpdateFollowUp("local", fu.id, { status: "done", last_action_at: new Date().toISOString() });
+            continue;
+          }
+          const mail = await sendDocumentMail({
+            documentId: fu.document_id,
+            to: fu.to_email,
+            subject: fu.subject,
+            body: fu.body,
+          });
+          if (mail.ok) {
+            memUpdateFollowUp("local", fu.id, {
+              status: "sent",
+              sent_at: new Date().toISOString(),
+              last_action_at: new Date().toISOString(),
+              attempt_number: (fu.attempt_number ?? 0) + 1,
+            });
+            sent += 1;
+          }
+        } catch (err) {
+          console.error("[cron] follow-up", fu.id, err);
+        }
+      }
+      return { processed: sent };
+    }
+    return { processed: 0 };
+  }
+
+  const admin = createAdminClient();
+  const nowIso = new Date().toISOString();
+  const { data, error } = await admin
+    .from("follow_ups")
+    .select("*")
+    .eq("status", "scheduled")
+    .is("sent_at", null)
+    .lte("scheduled_at", nowIso);
+  if (error) {
+    if (isMissingTable(error)) return { processed: 0 };
+    console.error("[cron] follow_ups", error);
+    return { processed: 0, error: error.message };
+  }
+
+  let sent = 0;
+  for (const raw of data ?? []) {
+    const fu = raw as FollowUp & { user_id: string; attempt_number?: number };
+    try {
+      const claimed = await admin
+        .from("follow_ups")
+        .update({
+          last_action_at: nowIso,
+          attempt_number: (fu.attempt_number ?? 0) + 1,
+        })
+        .eq("id", fu.id)
+        .eq("user_id", fu.user_id)
+        .eq("status", "scheduled")
+        .eq("attempt_number", fu.attempt_number ?? 0)
+        .is("sent_at", null)
+        .select("id")
+        .maybeSingle();
+      if (!claimed.data) continue;
+
+      const docs = await listDocumentsForUser(admin, fu.user_id);
+      const doc = docs.find((d) => d.id === fu.document_id) ?? null;
+      const check = followUpStillEligible(doc, docs, fu, { requirePriorSend: true });
+      if (!check.ok) {
+        await admin
+          .from("follow_ups")
+          .update({ status: "done", last_action_at: nowIso })
+          .eq("id", fu.id)
+          .eq("user_id", fu.user_id);
+        continue;
+      }
+      const mail = await sendFollowUpAsUser(admin, fu.user_id, doc!, fu);
+      if (mail.ok) {
+        await admin
+          .from("follow_ups")
+          .update({ status: "sent", sent_at: nowIso, last_action_at: nowIso })
+          .eq("id", fu.id)
+          .eq("user_id", fu.user_id);
+        const prev = (doc!.extract && typeof doc!.extract === "object" ? doc!.extract : {}) as Record<string, unknown>;
+        await admin
+          .from("documents")
+          .update({ extract: { ...prev, sent_at: documentSentAt(doc!.extract) ?? nowIso, last_sent_to: fu.to_email } })
+          .eq("id", doc!.id)
+          .eq("user_id", fu.user_id);
+        sent += 1;
+      }
+    } catch (err) {
+      console.error("[cron] follow-up", fu.id, err);
+    }
+  }
+  return { processed: sent };
+}
+
+async function listDocumentsForUser(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+): Promise<DocumentCard[]> {
+  const { data: docs } = await admin
+    .from("documents")
+    .select("id, direction, kind, title, party_id, chantier_id, source_document_id, file_path, extract, status, error, seed_key, created_at")
+    .eq("user_id", userId);
+  const rows = docs ?? [];
+  if (!rows.length) return [];
+  const [{ data: parties }, { data: chantiers }, { data: lines }] = await Promise.all([
+    admin.from("parties").select("id, name, kind, address").eq("user_id", userId),
+    admin.from("chantiers").select("id, name, slug").eq("user_id", userId),
+    admin.from("document_lines").select("*").eq("user_id", userId),
+  ]);
+  const pMap = new Map((parties ?? []).map((p) => [p.id, p]));
+  const cMap = new Map((chantiers ?? []).map((c) => [c.id, c]));
+  return rows.map((d) => {
+    const p = d.party_id ? pMap.get(d.party_id) : undefined;
+    const c = d.chantier_id ? cMap.get(d.chantier_id) : undefined;
+    return {
+      ...d,
+      extract: (d.extract ?? {}) as Record<string, unknown>,
+      party_name: p?.name ?? null,
+      party_address: p?.address ?? null,
+      party_kind: p?.kind ?? null,
+      chantier_name: c?.name ?? null,
+      chantier_slug: c?.slug ?? null,
+      lines: (lines ?? []).filter((l) => l.document_id === d.id),
+    } as DocumentCard;
+  });
+}
+
+async function sendFollowUpAsUser(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  doc: DocumentCard,
+  fu: FollowUp,
+) {
+  const { data: company } = await admin.from("company_profiles").select("*").eq("user_id", userId).maybeSingle();
+  const profile = (company as CompanyProfile | null) ?? null;
+  const { buffer, filename } = await pdfFromDocument(doc, profile?.email_contact, profile);
+  const html = pieceMailHtml({
+    body: fu.body,
+    company: profile?.raison_sociale || "L’entreprise",
+    phone: profile?.telephone,
+    email: profile?.email_contact,
+    address: [profile?.adresse_rue, profile?.adresse_code_postal, profile?.adresse_ville].filter(Boolean).join(", "),
+  });
+  return sendEmailWithPdf({
+    to: fu.to_email,
+    subject: fu.subject,
+    text: fu.body,
+    html,
+    filename,
+    pdf: buffer,
+    replyTo: profile?.email_contact,
+    idempotencyKey: `follow-up:${fu.id}`,
+  });
+}

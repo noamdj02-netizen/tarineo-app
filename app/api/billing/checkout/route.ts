@@ -10,6 +10,12 @@ import {
   starterLookupKey,
 } from "@/lib/billing/stripe";
 import { getDb } from "@/lib/db";
+import { assertSensitiveConfig, isDeployedRuntime } from "@/lib/runtime-config";
+import { getSiteUrl } from "@/lib/site-url";
+
+function billingOrigin(request: NextRequest) {
+  return isDeployedRuntime() ? getSiteUrl() : request.nextUrl.origin;
+}
 
 function parsePlan(raw: FormDataEntryValue | null): PlanId {
   if (raw === "founder") return "founder";
@@ -19,12 +25,17 @@ function parsePlan(raw: FormDataEntryValue | null): PlanId {
 
 /** Formulaire de /abonnement : crée la session Stripe Checkout et y redirige. */
 export async function POST(request: NextRequest) {
-  const origin = request.nextUrl.origin;
+  const origin = billingOrigin(request);
   const back = (q: string) => NextResponse.redirect(`${origin}/abonnement?${q}`, 303);
 
   const db = await getDb();
   if (!db) return NextResponse.redirect(`${origin}/login?next=/abonnement`, 303);
   if (!isStripeConfigured()) return back("erreur=config");
+  try {
+    assertSensitiveConfig("checkout", "stripe");
+  } catch {
+    return back("erreur=config");
+  }
 
   const form = await request.formData();
   const plan = parsePlan(form.get("plan"));

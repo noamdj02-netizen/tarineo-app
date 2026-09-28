@@ -39,18 +39,18 @@ const META: Record<string, ConnectorMeta> = {
   Excalidraw: {
     kind: "internal",
     connectUrl: "/schemas",
-    hint: "Les schémas Navpit remplacent Excalidraw. Active, puis dessine ici.",
+    hint: "Les schémas TARINEO remplacent Excalidraw. Active, puis dessine ici.",
     stayHref: "/schemas",
     stayLabel: "Ouvrir les schémas",
-    bindLabel: "Schémas Navpit",
+    bindLabel: "Schémas TARINEO",
   },
   Claude: {
     kind: "mcp",
     connectUrl: "/copilote",
-    hint: "Navpit crée une clé officielle. Claude lit et écrit tes projets.",
+    hint: "TARINEO crée une clé officielle. Claude lit et écrit tes projets.",
     stayHref: "/copilote",
     stayLabel: "Ouvrir le copilote",
-    bindLabel: "Clé MCP Navpit",
+    bindLabel: "Clé MCP TARINEO",
   },
   ChatGPT: {
     kind: "mcp",
@@ -58,7 +58,7 @@ const META: Record<string, ConnectorMeta> = {
     hint: "Même clé MCP officielle. ChatGPT parle à tes projets.",
     stayHref: "/copilote",
     stayLabel: "Ouvrir le copilote",
-    bindLabel: "Clé MCP Navpit",
+    bindLabel: "Clé MCP TARINEO",
   },
   Figma: {
     kind: "url",
@@ -82,18 +82,18 @@ const META: Record<string, ConnectorMeta> = {
   Cursor: {
     kind: "mcp",
     connectUrl: "/copilote?role=tech",
-    hint: "Une clé Navpit officielle dans Cursor : Focus, tâches, landings.",
+    hint: "Une clé TARINEO officielle dans Cursor : Focus, tâches, landings.",
     stayHref: "/copilote?role=tech",
     stayLabel: "Ouvrir le copilote tech",
-    bindLabel: "Clé MCP Navpit",
+    bindLabel: "Clé MCP TARINEO",
   },
   "Claude Code": {
     kind: "mcp",
     connectUrl: "/copilote?role=tech",
-    hint: "Même serveur MCP officiel. L’agent terminal reste sur Navpit.",
+    hint: "Même serveur MCP officiel. L’agent terminal reste sur TARINEO.",
     stayHref: "/copilote?role=tech",
     stayLabel: "Ouvrir le copilote tech",
-    bindLabel: "Clé MCP Navpit",
+    bindLabel: "Clé MCP TARINEO",
   },
   GitHub: {
     kind: "url",
@@ -128,7 +128,7 @@ const META: Record<string, ConnectorMeta> = {
   Stripe: {
     kind: "secret",
     connectUrl: "https://dashboard.stripe.com/apikeys",
-    hint: "Clé restreinte Stripe (rk_live_ ou rk_test_). Navpit vérifie le compte, ne garde pas la clé.",
+    hint: "Clé restreinte Stripe (rk_live_ ou rk_test_). TARINEO vérifie le compte, ne garde pas la clé.",
     stayHref: "/copilote?role=launch",
     stayLabel: "Préparer le lancement",
     bindLabel: "Clé restreinte Stripe",

@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/app/(app)/assistant/actions";
 import { Chat, type Queued } from "@/components/assistant/chat";
-import { Mascot } from "@/components/home/mascot";
+import { filterPillClass } from "@/components/app-ui/filter-pills";
+import { TarineoCopilotAvatar } from "@/components/assistant/copilot-face";
 import { consumeCopilotDraft } from "@/lib/assistant/copilot-draft.client";
 import type { AssistantFile } from "@/lib/assistant/files";
 import { AGENT_ROLE_LABELS, AGENT_ROLES, type AgentRole } from "@/lib/assistant/roles";
@@ -66,7 +67,7 @@ export function CopilotChatShell({
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-card border border-line bg-surface shadow-soft lg:flex-row">
-      <aside className="flex max-h-56 shrink-0 flex-col border-b border-line lg:max-h-none lg:h-full lg:w-[240px] lg:flex-none lg:border-r lg:border-b-0">
+      <aside className="hidden max-h-56 shrink-0 flex-col border-b border-line lg:flex lg:max-h-none lg:h-full lg:w-[240px] lg:flex-none lg:border-r lg:border-b-0">
         <div className="flex items-center gap-2 border-b border-line px-3 py-3">
           <Link
             href="/accueil"
@@ -84,7 +85,7 @@ export function CopilotChatShell({
               onClick={() => go({ slug: null })}
               className={cn(
                 "min-h-10 w-full rounded-xl px-3 text-left text-[13.5px]",
-                !projectId ? "bg-ink text-accent-ink" : "hover:bg-accent-soft",
+                !projectId ? filterPillClass(true) : filterPillClass(false),
               )}
             >
               Tous les chantiers
@@ -97,7 +98,7 @@ export function CopilotChatShell({
                 onClick={() => go({ slug: p.slug })}
                 className={cn(
                   "flex min-h-10 w-full items-center gap-2 rounded-xl px-3 text-left text-[13.5px]",
-                  projectId === p.id ? "bg-ink text-accent-ink" : "hover:bg-accent-soft",
+                  projectId === p.id ? filterPillClass(true) : filterPillClass(false),
                 )}
               >
                 {p.status === "focus" ? (
@@ -120,7 +121,7 @@ export function CopilotChatShell({
                 onClick={() => go({ role: r })}
                 className={cn(
                   "min-h-8 rounded-pill px-2.5 font-mono text-[11px]",
-                  role === r ? "bg-ink text-accent-ink" : "text-muted-foreground hover:bg-accent-soft",
+                  role === r ? filterPillClass(true) : "min-h-8 rounded-pill px-2.5 font-mono text-[11px] text-muted-foreground hover:bg-accent-soft",
                 )}
               >
                 {AGENT_ROLE_LABELS[r]}
@@ -131,11 +132,30 @@ export function CopilotChatShell({
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="scroll-x border-b border-line px-3 py-2 lg:hidden">
+          <button
+            type="button"
+            onClick={() => go({ slug: null })}
+            className={cn("max-md:min-h-11 shrink-0", !projectId ? filterPillClass(true) : filterPillClass(false))}
+          >
+            Tous
+          </button>
+          {projects.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => go({ slug: p.slug })}
+              className={cn("max-md:min-h-11 shrink-0 truncate", projectId === p.id ? filterPillClass(true) : filterPillClass(false))}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
         <header className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3">
-          <Mascot mood="idle" className="size-10 flex-none" />
+          <TarineoCopilotAvatar variant="header" />
           <div className="min-w-0 flex-1">
-            <p className="mono-label">/ Analyse ///</p>
-            <p className="truncate text-[15px] font-semibold tracking-[-0.02em]">
+            <p className="text-[14px] font-semibold tracking-[-0.01em]">TARINEO COPILOTE</p>
+            <p className="truncate text-[11px] text-[#6E6E6E] dark:text-[#A1A1A1]">
               {projects.find((p) => p.id === projectId)?.name ?? "Tous les chantiers"} ·{" "}
               {AGENT_ROLE_LABELS[role]}
             </p>

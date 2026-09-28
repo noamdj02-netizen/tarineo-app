@@ -1,7 +1,7 @@
 import { PieceKindPage } from "@/components/metier/piece-kind-page";
 import { R } from "@/lib/routes";
 
-export const metadata = { title: "Devis client" };
+export const metadata = { title: "Devis clients" };
 
 export default async function Page({
   searchParams,
@@ -15,11 +15,11 @@ export default async function Page({
       kind="devis"
       base={R.clientDevis}
       label="Entreprise"
-      title="Devis client"
-      tail="à envoyer."
-      text="Choisissez un modèle, ou glissez un devis déjà rédigé. Ouvrez la pièce pour ajouter des lignes."
-      empty="Pas encore de devis client. Partez d’un modèle ou d’un dépôt."
+      title="Devis clients"
+      text="Créez, suivez et transformez vos devis clients."
+      empty="Pas encore de devis client. Partez d’un modèle ou importez un PDF."
       dropHint="PDF devis déjà prêt, ou partez d’un modèle."
+      ornament="mark"
       showTemplates
       chantierSlug={q.chantier}
     />

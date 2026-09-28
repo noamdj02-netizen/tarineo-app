@@ -1,6 +1,8 @@
+import React from "react";
 import { View, Text, Image, StyleSheet, Font } from "@react-pdf/renderer";
 import { MENTION_FRANCHISE_TVA, type RegimeTva } from "@/lib/metier/pdf/mentions";
 
+/** Empêche @react-pdf/hyphenate d’importer `./en-us` (casse Node 20+ / Vercel). */
 Font.registerHyphenationCallback((mot) => [mot]);
 
 export const stylesPdfCommun = StyleSheet.create({
@@ -46,7 +48,7 @@ export const stylesPdfCommun = StyleSheet.create({
     borderTopColor: "#1a1a1a",
   },
   totalFinalTexte: { fontSize: 12, fontFamily: "Helvetica-Bold" },
-  mentionFranchise: { marginTop: 16, fontSize: 8, fontStyle: "italic", color: "#444" },
+  mentionFranchise: { marginTop: 16, fontSize: 8, color: "#444" },
   sectionAssurance: { marginTop: 20, fontSize: 8, color: "#444", lineHeight: 1.5 },
   sectionConditions: { marginTop: 20, fontSize: 8, color: "#444", lineHeight: 1.5 },
   sectionSignature: { marginTop: 36, flexDirection: "row", justifyContent: "space-between" },
@@ -104,7 +106,9 @@ export function assuranceComplete(e: EntrepriseInfoPdf): boolean {
 export function EnTeteEntreprise({ entreprise }: { entreprise: EntrepriseInfoPdf }) {
   return (
     <View>
-      {entreprise.logoDataUrl ? <Image src={entreprise.logoDataUrl} style={stylesPdfCommun.logo} /> : null}
+      {entreprise.logoDataUrl?.startsWith("data:") ? (
+        <Image src={entreprise.logoDataUrl} style={stylesPdfCommun.logo} />
+      ) : null}
       <Text style={stylesPdfCommun.raisonSociale}>{entreprise.raisonSociale}</Text>
       {entreprise.formeJuridique ? <Text style={stylesPdfCommun.ligneEntreprise}>{entreprise.formeJuridique}</Text> : null}
       <Text style={stylesPdfCommun.ligneEntreprise}>

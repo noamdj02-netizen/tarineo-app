@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { isAllowedOrigin } from "@/lib/assistant/origin";
 import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
 import { DEFAULT_MODEL, isModelId } from "@/lib/models";
@@ -15,17 +16,6 @@ function json(status: number, body: Record<string, unknown>) {
   return Response.json(body, { status });
 }
 
-/** Refuse les appels venant d'un autre site (protège tes crédits Claude). */
-function sameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-  try {
-    return new URL(origin).host === new URL(request.url).host;
-  } catch {
-    return false;
-  }
-}
-
 function friendlyError(e: unknown) {
   if (e instanceof Anthropic.AuthenticationError)
     return "Clé Claude invalide. Vérifie ANTHROPIC_API_KEY.";
@@ -37,7 +27,7 @@ function friendlyError(e: unknown) {
 }
 
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return json(403, { error: "Origine refusée." });
+  if (!isAllowedOrigin(request).ok) return json(403, { error: "Origine refusée." });
   if (!process.env.ANTHROPIC_API_KEY) {
     return json(503, {
       error: "Ajoute ta clé ANTHROPIC_API_KEY pour générer des schémas.",

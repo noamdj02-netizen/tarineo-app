@@ -28,7 +28,7 @@ function intervalOf(item: Stripe.SubscriptionItem | undefined): Interval {
 }
 
 function planFromLookup(lookup: string, metaPlan?: string | null): "starter" | "pro" {
-  if (lookup.startsWith("navpit_starter_") || metaPlan === "starter") return "starter";
+  if (lookup.includes("starter") || metaPlan === "starter") return "starter";
   return "pro";
 }
 
@@ -102,9 +102,9 @@ async function applyLoyalty(invoice: Stripe.Invoice) {
   const sub = await getStripe().subscriptions.retrieve(ref);
   const item = sub.items.data[0];
   const lookup = item?.price.lookup_key ?? "";
-  const plan = lookup.startsWith("navpit_starter_")
+  const plan = lookup.includes("_starter_")
     ? "starter"
-    : lookup.startsWith("navpit_pro_")
+    : lookup.includes("_pro_")
       ? "pro"
       : null;
   if (!plan || !item) return;
@@ -213,7 +213,7 @@ export async function handleStripeEvent(event: Stripe.Event) {
       if (inv.customer_email) {
         await sendEmail(
           inv.customer_email,
-          "Ton paiement Navpit n’est pas passé",
+          "Votre paiement TARINEO n’est pas passé",
           BillingPaymentFailedEmail({ appUrl: getSiteUrl() }),
         );
       }
@@ -241,7 +241,7 @@ export async function handleStripeEvent(event: Stripe.Event) {
           : undefined;
         await sendEmail(
           email,
-          "Ton abonnement Navpit se termine",
+          "Votre abonnement TARINEO se termine",
           BillingCancelledEmail({ appUrl: getSiteUrl(), endDate }),
         );
       }

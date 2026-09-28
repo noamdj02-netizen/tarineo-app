@@ -4,6 +4,7 @@ import { Check, Copy } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import { parseActions } from "@/lib/assistant/actions-markup";
 import { ActionPills } from "./action-pills";
+import { StreamingCaret } from "./copilot-states";
 
 const FOLD_LINES = 12;
 
@@ -11,7 +12,7 @@ const FOLD_LINES = 12;
  * Affiche une réponse de Claude : paragraphes, titres, listes, **gras**, `code`
  * et blocs ```code``` avec un bouton Copier. Pavés repliés au-delà de ~12 lignes.
  */
-export function MessageContent({ text }: { text: string }) {
+export function MessageContent({ text, streaming = false }: { text: string; streaming?: boolean }) {
   const { body, actions } = parseActions(text);
   const hasVerdict = Boolean(grab("Verdict", body) && grab("Preuve", body) && grab("Action", body));
   const parts = splitFences(hasVerdict ? stripVerdict(body) : body);
@@ -43,7 +44,8 @@ export function MessageContent({ text }: { text: string }) {
           Voir la suite
         </button>
       ) : null}
-      <ActionPills actions={actions} />
+      {streaming ? <StreamingCaret /> : null}
+      {!streaming ? <ActionPills actions={actions} /> : null}
     </div>
   );
 }
@@ -155,7 +157,7 @@ function Prose({ text }: { text: string }) {
     flush();
     if (heading) {
       blocks.push(
-        <p key={blocks.length} className="text-[18px] font-semibold tracking-[-0.02em]">
+        <p key={blocks.length} className="text-[14px] font-semibold tracking-[-0.02em]">
           <Inline text={heading[1]} />
         </p>,
       );

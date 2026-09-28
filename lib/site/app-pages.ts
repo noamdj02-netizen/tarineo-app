@@ -5,7 +5,7 @@ export const APP_PAGES = {
     label: "Analyse",
     title: "Photo ou PDF,",
     tail: "on lit le devis.",
-    text: "Déposez le devis Cedeo sur le chantier. Tarinéo extrait les lignes, compare aux prix déjà payés, puis vous créez le devis client.",
+    text: "Déposez le devis Cedeo sur le chantier. TARINEO extrait les lignes, compare aux prix déjà payés, puis vous créez le devis client.",
   },
   documents: {
     label: "Distributeur",
@@ -52,7 +52,7 @@ export const APP_PAGES = {
   tarifs: {
     label: "Tarifs",
     title: "Votre formule",
-    tail: "Tarinéo.",
+    tail: "TARINEO.",
     text: "1er mois offert, sans carte. Puis Starter, Pro ou Équipe, sans engagement.",
   },
 } as const;

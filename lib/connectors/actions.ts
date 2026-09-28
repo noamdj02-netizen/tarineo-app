@@ -71,7 +71,7 @@ export async function activateTool(tool: string) {
   if (meta && meta.kind !== "internal") {
     return { ok: false as const, error: "Lie le compte officiel d’abord." };
   }
-  return writeConnection(tool, true, { kind: "internal", label: "Navpit" });
+  return writeConnection(tool, true, { kind: "internal", label: "TARINEO" });
 }
 
 export async function deactivateTool(tool: string) {

@@ -1,4 +1,3 @@
-import type { IllustrationName } from "@/lib/illustrations";
 import type { MascotName } from "@/lib/mascots";
 import { FOUNDER, PRO, PRO_TRIAL_DAYS, STARTER } from "@/lib/billing/plans";
 
@@ -31,7 +30,7 @@ export const FEATURES: { mascot: MascotName; title: string; text: string }[] = [
   {
     mascot: "14-taches-ordi",
     title: "Ton planning au même endroit",
-    text: "Tes échéances Navpit et ton agenda Google ou Apple dans un seul calendrier, avec le bilan de ta semaine.",
+    text: "Tes échéances TARINEO et ton agenda Google ou Apple dans un seul calendrier, avec le bilan de ta semaine.",
   },
 ];
 
@@ -112,18 +111,18 @@ export type LandingTestimonial = {
   photoBg?: string;
   /** Source Unsplash (licence + crédit photographe). */
   photoSource?: { page: string; author: string };
-  /** Logos d’outils branchés / utilisés via Navpit. */
+  /** Logos d’outils branchés / utilisés via TARINEO. */
   stackTools: readonly StackToolRef[];
 };
 
 export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
   {
     id: "noam",
-    brand: "Navpit",
+    brand: "TARINEO",
     quote:
       "J’avais dix projets ouverts et aucun ne sortait. Un seul en Focus jusqu’à la première vente — c’est la règle qui a tout changé.",
     name: "Noam",
-    role: "Créateur de Navpit",
+    role: "Créateur de TARINEO",
     photo: "/landing/testimonials/noam.jpg",
     photoVariant: "graphic",
     photoBg: "#0b1220",
@@ -246,7 +245,7 @@ export const COMPARE_COLUMNS: CompareColumn[] = [
     mascot: "05-detente",
   },
   {
-    title: "Navpit",
+    title: "TARINEO",
     subtitle: "Cockpit fondateur",
     points: ["Un Focus, une prochaine action", "Copilote avec ton contexte", "Planning + projets + schémas"],
     highlight: true,

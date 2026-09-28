@@ -1,6 +1,9 @@
 /**
- * Mascottes 3D Tarinéo — export Figma « Mascottes — Originaux HD » (node 414:72).
+ * Mascottes 3D TARINEO — sources Figma « Mascottes — Originaux HD » (node 414:72).
  * Fichier : https://www.figma.com/design/TvO91gJNuCUY5YJ7X52FTY/Tarineo
+ *
+ * Raster uniquement (pas de SVG) · ~1200–1500 px · fond transparent.
+ * Les `figmaNode` pointent vers les calques « Mascotte HD / … ».
  */
 
 export const TARINEO_HD_MASCOTS = {

@@ -1,5 +1,5 @@
+import { filterPillClass } from "@/components/app-ui/filter-pills";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 export function DocumentKindNav({
   base,
@@ -19,10 +19,7 @@ export function DocumentKindNav({
           <Link
             key={item.label}
             href={href}
-            className={cn(
-              "rounded-full px-3 py-1.5 text-[13px]",
-              on ? "bg-ink text-accent-ink" : "border border-line hover:bg-surface-2",
-            )}
+            className={filterPillClass(on)}
           >
             {item.label}
           </Link>

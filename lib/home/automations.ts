@@ -87,9 +87,9 @@ export const AUTOMATIONS: Automation[] = [
   {
     id: "pitch-30s",
     label: "Pitch 30 secondes",
-    hint: "Explique Tarinéo en 30 s…",
+    hint: "Explique TARINEO en 30 s…",
     prompt:
-      "Écris un pitch oral de 30 secondes pour Tarinéo : hausses de prix, documents par chantier, marge protégée.",
+      "Écris un pitch oral de 30 secondes pour TARINEO : hausses de prix, documents par chantier, marge protégée.",
     category: "communication",
   },
   {
@@ -128,7 +128,7 @@ export const AUTOMATIONS: Automation[] = [
 
 export const DASHBOARD_AUTOMATION_LIMIT = 4;
 
-/** Raccourcis vers d’autres modules Navpit (hors copilote). */
+/** Raccourcis vers d’autres modules TARINEO (hors copilote). */
 export type CopilotFeatureLink = {
   href: string;
   label: string;

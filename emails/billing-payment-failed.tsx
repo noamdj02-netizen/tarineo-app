@@ -6,7 +6,7 @@ export function BillingPaymentFailedEmail({ appUrl }: BillingPaymentFailedEmailP
   const base = appUrl.replace(/\/$/, "");
   return (
     <TarineoEmailShell
-      preview="Ton paiement Tarinéo n’est pas passé"
+      preview="Ton paiement TARINEO n’est pas passé"
       label="Paiement"
       title="Paiement refusé"
       appUrl={appUrl}
@@ -19,5 +19,5 @@ export function BillingPaymentFailedEmail({ appUrl }: BillingPaymentFailedEmailP
   );
 }
 
-BillingPaymentFailedEmail.PreviewProps = { appUrl: "https://www.tarineo.fr" } satisfies BillingPaymentFailedEmailProps;
+BillingPaymentFailedEmail.PreviewProps = { appUrl: "https://app.tarineo.com" } satisfies BillingPaymentFailedEmailProps;
 export default BillingPaymentFailedEmail;

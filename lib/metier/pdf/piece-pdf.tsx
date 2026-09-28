@@ -1,3 +1,4 @@
+import React from "react";
 import { Document, Page, View, Text, renderToBuffer } from "@react-pdf/renderer";
 import { MENTIONS_RETARD_PAIEMENT } from "@/lib/metier/pdf/mentions";
 import {

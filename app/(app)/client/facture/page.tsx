@@ -1,7 +1,7 @@
 import { PieceKindPage } from "@/components/metier/piece-kind-page";
 import { R } from "@/lib/routes";
 
-export const metadata = { title: "Facture client" };
+export const metadata = { title: "Factures clients" };
 
 export default async function Page({
   searchParams,
@@ -15,10 +15,9 @@ export default async function Page({
       kind="facture"
       base={R.clientFacture}
       label="Entreprise"
-      title="Factures"
-      tail="à encaisser."
-      text="Les factures client sont ici, séparées des devis. Déposez ou ouvrez une pièce pour ajouter des lignes."
-      empty="Aucune facture client."
+      title="Factures clients"
+      text="Suivez les factures émises pour vos clients."
+      empty="Aucune facture client. Transformez une commande ou importez un PDF."
       dropHint="PDF facture client."
       chantierSlug={q.chantier}
     />

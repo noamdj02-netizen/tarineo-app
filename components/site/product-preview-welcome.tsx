@@ -250,7 +250,7 @@ export function ProductPreviewWelcome({ onStart }: ProductPreviewWelcomeProps) {
   return (
     <motion.div
       role="region"
-      aria-label="Présentation du copilote Navpit"
+      aria-label="Présentation du copilote TARINEO"
       initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12, filter: "blur(4px)" }}
       animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
       transition={{ duration: 0.5, ease: EASE }}
@@ -259,20 +259,20 @@ export function ProductPreviewWelcome({ onStart }: ProductPreviewWelcomeProps) {
         <CardHeader className="relative gap-3 border-b border-line px-4 pt-6 pb-5 text-center sm:px-10 sm:pt-10 sm:pb-6 sm:pr-[12.5rem]">
           <p className="mono-label">/ Copilote ///</p>
           <CardTitle className="font-display text-[clamp(1.5rem,4.2vw,2rem)] font-semibold tracking-tightest text-balance">
-            Salut — je suis ton copilote Navpit.
+            Salut — je suis ton copilote TARINEO.
           </CardTitle>
           <CardDescription className="mx-auto max-w-[52ch] text-[15px] leading-relaxed sm:mx-0 sm:text-left">
             Je connais tes projets, ton <span className="brand-focus">Focus</span> et ton journal. Je lis Figma,
             Notion et tes tâches — puis je te propose la prochaine action, pas un pavé générique.
           </CardDescription>
           <div className="mx-auto mt-1 sm:hidden">
-            <Mascot name="07-chat-robot" className="h-24 w-[9.5rem]" label="Copilote Navpit" />
+            <Mascot name="07-chat-robot" className="h-24 w-[9.5rem]" label="Copilote TARINEO" />
           </div>
           <div className="pointer-events-none absolute top-6 right-6 hidden sm:block" aria-hidden>
             <Mascot
               name="07-chat-robot"
               className="h-[6.75rem] w-[11rem] -translate-y-1"
-              label="Copilote Navpit"
+              label="Copilote TARINEO"
             />
           </div>
         </CardHeader>

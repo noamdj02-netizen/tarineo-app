@@ -29,8 +29,8 @@ export function SolutionScreen({
       </h2>
       <p className="mt-2 text-[14.5px] leading-relaxed text-muted-foreground">
         {pains.length
-          ? `${pains.length} frein${pains.length > 1 ? "s" : ""} noté${pains.length > 1 ? "s" : ""}. Navpit répond en trois ponts.`
-          : "Navpit répond en trois ponts, même sans frein coché."}
+          ? `${pains.length} frein${pains.length > 1 ? "s" : ""} noté${pains.length > 1 ? "s" : ""}. TARINEO répond en trois ponts.`
+          : "TARINEO répond en trois ponts, même sans frein coché."}
       </p>
       <ul className="mt-5 flex flex-col gap-3">
         {BRIDGES.map((b) => (

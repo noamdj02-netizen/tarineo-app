@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import type { ChantierCard, ClientOutKind, ExtractResult, Party } from "@/lib/metier/types";
 import { CLIENT_OUT_KINDS, CLIENT_OUT_LABEL, emptyTotals } from "@/lib/metier/types";
 import { DIRECTION_LABEL, KIND_LABEL, PARTY_LABEL, type DocDirection, type DocKind, type PartyKind } from "@/lib/metier/types";
+import { suggestChantierFromHint } from "@/lib/metier/chantier-match";
 import { cn } from "@/lib/utils";
 
 function numField(raw: FormDataEntryValue | null, fallback: number | null | undefined) {
@@ -44,8 +45,11 @@ export function DocumentDrop({
   const [over, setOver] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [draft, setDraft] = useState<(ExtractResult & { filePath?: string }) | null>(null);
+  const [draft, setDraft] = useState<(ExtractResult & { filePath?: string; fileSha256?: string }) | null>(null);
   const [saving, setSaving] = useState(false);
+  const suggestedChantier = draft
+    ? suggestChantierFromHint([draft.chantier_hint, draft.title].filter(Boolean).join(" "), chantiers)
+    : null;
   const [outKind, setOutKind] = useState<ClientOutKind>(
     lockKind && CLIENT_OUT_KINDS.includes(lockKind as ClientOutKind) ? (lockKind as ClientOutKind) : "devis",
   );
@@ -62,7 +66,7 @@ export function DocumentDrop({
         setError(res.error);
         return;
       }
-      setDraft({ ...res.extracted, filePath: res.filePath });
+      setDraft({ ...res.extracted, filePath: res.filePath, fileSha256: res.fileSha256 });
     });
   }
 
@@ -76,6 +80,7 @@ export function DocumentDrop({
       partyKind: String(form.get("partyKind")) as PartyKind,
       chantierId: String(form.get("chantierId") || "") || null,
       filePath: draft.filePath,
+      fileSha256: draft.fileSha256,
       totals: {
         ht: numField(form.get("ht"), draft.totals?.ht),
         eco_contribution: numField(form.get("eco"), draft.totals?.eco_contribution),
@@ -104,6 +109,8 @@ export function DocumentDrop({
     if (res.ok) {
       setDraft(null);
       router.refresh();
+    } else {
+      setError("error" in res ? res.error : "Enregistrement impossible.");
     }
   }
 
@@ -136,7 +143,7 @@ export function DocumentDrop({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div id="import" className="flex flex-col gap-4 scroll-mt-24">
       <motion.button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -160,8 +167,8 @@ export function DocumentDrop({
                 : { scale: 1 }
         }
         className={cn(
-          "relative flex w-full flex-col items-center justify-center gap-2 rounded-[28px] border border-dashed px-4 text-center transition-colors",
-          compact ? "min-h-[140px] py-6" : "min-h-[220px] py-10",
+          "relative flex w-full flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed px-4 text-center transition-[border-color,background-color,transform] duration-200 md:rounded-[28px]",
+          compact ? "min-h-[140px] py-6" : "min-h-[180px] py-8 md:min-h-[220px] md:py-10",
           over ? "border-brand-orange bg-[#fff0e9]" : "border-line bg-surface-2",
         )}
       >
@@ -177,16 +184,40 @@ export function DocumentDrop({
         ) : (
           <Upload className="size-8 text-brand-orange" aria-hidden />
         )}
-        <p className="font-display text-[18px] font-semibold tracking-tight">
+        <p className="font-display text-[17px] font-semibold tracking-tight md:text-[18px]">
           {pending
             ? "Lecture du document…"
             : over
               ? "Déposez ici"
-              : hint || "Glissez un devis, une facture ou un bon"}
+              : hint || (
+                  <>
+                    <span className="md:hidden">Ajouter un document</span>
+                    <span className="hidden md:inline">Glissez un devis, une facture ou un bon</span>
+                  </>
+                )}
         </p>
-        <p className="max-w-[42ch] text-[13.5px] text-muted-foreground">
-          PDF, JPEG, PNG ou HEIC. Tarinéo lit le type, le total HT, l’éco-contribution, la PMCB et le poids s’ils sont écrits.
+        <p className="max-w-[42ch] text-[13px] text-muted-foreground md:text-[13.5px]">
+          <span className="md:hidden">PDF · JPG · PNG · HEIC</span>
+          <span className="hidden md:inline">
+            PDF, JPEG, PNG ou HEIC. TARINEO lit le type, le total HT, l’éco-contribution, la PMCB et le poids s’ils sont
+            écrits.
+          </span>
         </p>
+        {!pending ? (
+          <span className="mt-1 inline-flex h-11 items-center rounded-[12px] bg-[#FF6B1A] px-4 text-[14px] font-medium text-white md:hidden">
+            Choisir un fichier
+          </span>
+        ) : null}
+        <ul className="hidden flex-wrap justify-center gap-1.5 md:flex">
+          {["PDF", "JPEG", "PNG", "HEIC"].map((fmt) => (
+            <li
+              key={fmt}
+              className="rounded-full border border-line bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground uppercase"
+            >
+              {fmt}
+            </li>
+          ))}
+        </ul>
         {pending && !reduce ? (
           <motion.span
             className="absolute inset-x-10 bottom-5 h-1 overflow-hidden rounded-full bg-line"
@@ -259,14 +290,24 @@ export function DocumentDrop({
             </label>
             <label className="flex flex-col gap-1.5 text-[13px]">
               Chantier
-              <select name="chantierId" defaultValue={chantiers.find((c) => c.name.includes(draft.chantier_hint))?.id ?? defaultChantierId ?? ""} className="h-11 rounded-xl border border-line bg-surface px-3">
-                <option value="">À classer</option>
+              <select
+                key={suggestedChantier?.id ?? "none"}
+                name="chantierId"
+                defaultValue={suggestedChantier?.id ?? defaultChantierId ?? ""}
+                className="h-11 rounded-xl border border-line bg-surface px-3"
+              >
+                <option value="">Sans chantier</option>
                 {chantiers.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
               </select>
+              {suggestedChantier ? (
+                <span className="text-[12.5px] text-muted-foreground">
+                  Chantier détecté : {suggestedChantier.name}. Confirmez ou choisissez « Sans chantier ».
+                </span>
+              ) : null}
             </label>
           </div>
           <p className="mono-label">/ Totaux lus ///</p>

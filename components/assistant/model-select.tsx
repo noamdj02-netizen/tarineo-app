@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DEFAULT_MODEL, MODELS, isModelId, type ModelId } from "@/lib/models";
 
-const KEY = "navpit-model";
+const KEY = "tarineo-model";
 
 /** Modèle choisi, mémorisé dans ce navigateur. */
 export function useModel(initial?: string | null) {
@@ -12,7 +12,7 @@ export function useModel(initial?: string | null) {
   useEffect(() => {
     if (isModelId(initial)) return;
     try {
-      const saved = localStorage.getItem(KEY);
+      const saved = localStorage.getItem(KEY) ?? localStorage.getItem("navpit-model");
       if (isModelId(saved)) setModel(saved);
     } catch {
       // stockage indisponible (navigation privée)
@@ -42,7 +42,7 @@ export function ModelSelect({
         value={value}
         onChange={(e) => onChange(e.target.value as ModelId)}
         aria-label="Modèle"
-        className="h-10 appearance-none rounded-pill border border-line bg-surface-2 pr-8 pl-3.5 font-mono text-[11px] font-medium tracking-[0.08em] text-ink/80 uppercase outline-none hover:bg-accent-soft"
+        className="h-7 appearance-none rounded-md border border-[rgba(10,10,10,0.08)] bg-transparent pr-6 pl-2 font-mono text-[10.5px] tracking-[0.04em] text-[#6E6E6E] uppercase outline-none hover:border-[#FF6B1A]/30 hover:text-ink focus-visible:border-[#FF6B1A] dark:border-white/8 dark:text-[#A1A1A1]"
       >
         {MODELS.map((m) => (
           <option key={m.id} value={m.id}>
@@ -51,7 +51,7 @@ export function ModelSelect({
         ))}
       </select>
       <ChevronDown
-        className="pointer-events-none absolute top-1/2 right-2.5 size-3.5 -translate-y-1/2 text-muted-foreground"
+        className="pointer-events-none absolute top-1/2 right-1.5 size-3 -translate-y-1/2 text-[#6E6E6E] dark:text-[#A1A1A1]"
         aria-hidden
       />
     </div>

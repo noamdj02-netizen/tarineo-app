@@ -8,8 +8,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        orange:
+          "bg-tarineo-orange text-white hover:brightness-[0.96] active:scale-[0.98]",
+        /** FAB Copilote — orange plein + ombre shader soft. */
+        "orange-soft":
+          "border-white/25 bg-tarineo-orange text-white shadow-[0_10px_28px_-6px_rgba(255,107,26,0.55),0_4px_12px_-2px_rgba(255,107,26,0.35),inset_0_1px_0_rgba(255,255,255,0.35),inset_0_-1px_0_rgba(0,0,0,0.08)] hover:brightness-[1.04] hover:shadow-[0_12px_32px_-4px_rgba(255,107,26,0.6),0_6px_14px_-2px_rgba(255,107,26,0.4),inset_0_1px_0_rgba(255,255,255,0.4),inset_0_-1px_0_rgba(0,0,0,0.08)] active:scale-[0.98] active:brightness-[0.97] aria-expanded:brightness-[1.03]",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-border bg-surface hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-[rgba(255,255,255,0.08)] dark:bg-surface-2 dark:hover:bg-surface-2",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
@@ -20,7 +25,7 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+          "h-9 gap-1.5 rounded-[10px] px-3 text-[13.5px] max-md:min-h-11 max-md:rounded-xl has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-7 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
         lg: "h-9 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
@@ -30,6 +35,8 @@ const buttonVariants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        /** FAB circulaire navbar mobile (64px). */
+        "icon-fab": "size-16 rounded-full [&_svg]:size-auto",
       },
     },
     defaultVariants: {

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Logo Tarinéo : trois barres montantes, orange → noir (fichier officiel).
+ * Logo TARINEO : trois barres montantes, orange → noir (fichier officiel).
  * Source : public/brand/tarineo-logo-source.png — icônes PWA générées depuis ce fichier.
  * Un léger liseré clair garde la barre noire lisible sur fond sombre.
  */

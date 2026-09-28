@@ -21,10 +21,11 @@ import type { Viewer } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "./logo";
+import { useTheme } from "@/components/theme/theme-provider";
 
 const SUPPORT_MAIL = BRAND.contactEmail;
 
-/** Barre latérale noire (desktop). */
+/** Barre latérale — thème synchronisé avec le mode global (clair/sombre). */
 export function Sidebar({
   onboarding,
   viewer,
@@ -34,21 +35,26 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const search = useSearchParams().toString();
+  const { resolved } = useTheme();
 
   return (
     <aside
-      className="fixed inset-y-0 left-0 z-30 hidden w-[252px] flex-col bg-side px-3 pt-5 pb-4 text-side-ink lg:flex"
-      style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top))" }}
+      className="fixed inset-y-0 left-0 z-30 hidden w-[252px] flex-col border-r border-side-line bg-side px-3 pb-4 text-side-ink transition-[background-color,border-color,color] duration-[180ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none lg:flex"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
     >
-      <Logo className="shrink-0 px-2" />
+      <div className="flex h-16 shrink-0 items-center px-1.5">
+        <Logo theme={resolved} size={28} showWordmark className="shrink-0" />
+      </div>
 
       <nav
         aria-label="Navigation principale"
-        className="mt-6 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1"
+        className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1"
       >
         {NAV_SECTIONS.map((section, si) => (
           <div key={section.id} className={cn(si > 0 && "mt-5")}>
-            <p className="mono-label mb-1.5 px-2 text-side-muted/90">{`/ ${section.label} ///`}</p>
+            <p className="mb-1.5 px-2.5 text-[10.5px] font-semibold tracking-[0.08em] text-[color:var(--color-side-hint)] uppercase">
+              {section.label}
+            </p>
             <ul className="flex flex-col gap-0.5">
               {section.items.map((item) =>
                 isNavDrawer(item) ? (
@@ -91,7 +97,7 @@ export function Sidebar({
             <SignOutButton
               className={cn(
                 footerButtonClass("ghost"),
-                "justify-start px-2.5 text-side-muted hover:bg-white/[.06] hover:text-side-ink",
+                "justify-start px-2.5",
               )}
             />
           ) : (
@@ -130,11 +136,11 @@ function SideDrawer({
         aria-expanded={shown}
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "relative flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-left text-[13px] font-medium tracking-[-0.02em] transition-colors duration-300 ease-out-soft",
-          childOn ? "text-side-ink" : "text-side-muted hover:text-side-ink",
+          "relative flex min-h-9 w-full items-center gap-2.5 rounded-xl px-2.5 text-left text-[13px] font-medium tracking-[-0.02em] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
+          childOn ? "nav-active" : shown ? "nav-idle bg-tarineo-orange-hover" : "nav-idle",
         )}
       >
-        <Icon className="size-[17px] shrink-0 opacity-90" aria-hidden />
+        <Icon className="size-[17px] shrink-0" aria-hidden />
         <span className="min-w-0 flex-1 truncate">{drawer.label}</span>
         <ChevronRight
           className={cn("size-3.5 shrink-0 transition-transform duration-300", shown && "rotate-90")}
@@ -175,30 +181,17 @@ function SideNavItem({
   const Icon = tab.icon;
   return (
     <li className="relative">
-      {on ? (
-        <motion.span
-          layoutId="side-active"
-          transition={{ duration: 0.35, ease: EASE }}
-          className="absolute inset-0 overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r from-white/[.16] via-white/[.07] to-white/0"
-          aria-hidden
-        >
-          <span className="absolute inset-x-[-20%] bottom-[-70%] h-[120%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-brand-orange)_55%,white)_18%,transparent)] opacity-75 blur-2xl" />
-          <span className="absolute inset-x-[18%] bottom-[-40%] h-[70%] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-orange-light)_14%,transparent)] opacity-55 blur-xl" />
-          <span className="absolute top-[-20%] bottom-[-20%] left-[-45%] w-[70%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--color-brand-orange)_50%,white)_16%,transparent)] opacity-65 blur-2xl" />
-          <span className="absolute top-[-20%] bottom-[-20%] right-[-45%] w-[70%] rounded-full bg-[radial-gradient(closest-side,var(--color-brand-orange-light)_12%,transparent)] opacity-50 blur-2xl" />
-        </motion.span>
-      ) : null}
       <Link
         href={tab.href}
         prefetch={true}
         aria-current={on ? "page" : undefined}
         className={cn(
-          "relative flex min-h-9 items-center gap-2.5 rounded-xl px-2.5 text-[13px] font-medium tracking-[-0.02em] transition-colors duration-300 ease-out-soft",
-          on ? "text-side-ink" : "text-side-muted hover:text-side-ink",
+          "relative flex min-h-9 items-center gap-2.5 rounded-xl px-2.5 text-[13px] font-medium tracking-[-0.02em] transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
           nested && "min-h-8 text-[12.5px]",
+          on ? "nav-active" : "nav-idle",
         )}
       >
-        <Icon className={cn("shrink-0 opacity-90", nested ? "size-3.5" : "size-[17px]")} aria-hidden />
+        <Icon className={cn("shrink-0", nested ? "size-3.5" : "size-[17px]")} aria-hidden />
         {tab.label}
       </Link>
     </li>
@@ -207,12 +200,12 @@ function SideNavItem({
 
 function footerButtonClass(variant: "ghost" | "primary", active?: boolean) {
   return cn(
-    "flex w-full min-h-10 items-center gap-2.5 rounded-xl px-2.5 text-left transition-colors duration-300 ease-out-soft",
+    "flex w-full min-h-10 items-center gap-2.5 rounded-xl px-2.5 text-left transition-[color,background-color] duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]",
     variant === "primary"
-      ? "bg-white text-ink hover:bg-white/90"
+      ? "bg-side-ink text-side hover:opacity-90"
       : active
-        ? "bg-white/10 text-side-ink"
-        : "text-side-muted hover:bg-white/[.06] hover:text-side-ink",
+        ? "nav-active"
+        : "nav-idle",
   );
 }
 
@@ -240,7 +233,7 @@ function SideFooterButton({
       <span className="flex min-w-0 flex-col">
         <span className="text-[13px] font-medium leading-tight tracking-[-0.02em]">{label}</span>
         {hint ? (
-          <span className="truncate text-[11px] leading-tight text-side-muted">{hint}</span>
+          <span className="truncate text-[11px] leading-tight text-[color:var(--color-side-hint)]">{hint}</span>
         ) : null}
       </span>
     </>
@@ -266,15 +259,17 @@ export function OnboardingCard({ steps }: { steps: OnboardingStep[] }) {
   if (!next) return null;
 
   return (
-    <div className="rounded-card border border-side-line bg-white/[.04] p-3">
+    <div className="rounded-card border border-side-line bg-[color:var(--color-side-card)] p-3">
       <div className="flex items-baseline justify-between">
-        <p className="mono-label text-side-muted">/ Démarrage</p>
-        <p className="font-mono text-xs text-side-ink tabular-nums">
+        <p className="text-[10.5px] font-semibold tracking-[0.08em] text-[color:var(--color-side-hint)] uppercase">
+          Démarrage
+        </p>
+        <p className="font-mono text-xs text-side-muted tabular-nums">
           {done}/{steps.length}
         </p>
       </div>
       <div
-        className="mt-2.5 h-1.5 overflow-hidden rounded-pill bg-white/10"
+        className="mt-2.5 h-1.5 overflow-hidden rounded-pill bg-side-ink/10"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={steps.length}
@@ -282,7 +277,7 @@ export function OnboardingCard({ steps }: { steps: OnboardingStep[] }) {
         aria-label="Progression du démarrage"
       >
         <motion.div
-          className="h-full rounded-pill bg-gradient-to-r from-white/60 to-white"
+          className="h-full rounded-pill bg-tarineo-orange"
           initial={{ width: 0 }}
           animate={{ width: `${(done / steps.length) * 100}%` }}
           transition={{ duration: 0.9, ease: EASE, delay: 0.2 }}
@@ -290,7 +285,7 @@ export function OnboardingCard({ steps }: { steps: OnboardingStep[] }) {
       </div>
       <Link
         href={next.href}
-        className="group mt-2.5 flex items-center justify-between gap-2 text-[12.5px] leading-snug text-side-ink/80 hover:text-side-ink"
+        className="group mt-2.5 flex items-center justify-between gap-2 text-[12.5px] leading-snug text-side-muted transition-colors duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:text-tarineo-orange"
       >
         <span className="line-clamp-2">Ensuite : {next.label}</span>
         <ArrowUpRight

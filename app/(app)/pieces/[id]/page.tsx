@@ -1,14 +1,23 @@
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DocumentDownload } from "@/components/metier/document-download";
+import Link from "next/link";
 import { DocumentEdit } from "@/components/metier/document-edit";
 import { DocumentSend } from "@/components/metier/document-send";
 import { DocumentViewer } from "@/components/metier/document-viewer";
+import { ConvertDevisActions } from "@/components/metier/convert-devis";
+import { DocumentDownload } from "@/components/metier/document-download";
+import { RelanceButton, RelanceStatus } from "@/components/metier/relance-dialog";
 import { TransformForm } from "@/components/metier/transform-form";
-import { getCompanyProfile, getDocument, listChantiers, listParties } from "@/lib/metier/queries";
+import { MetricStrip } from "@/components/app-ui/metric-strip";
+import { PageHeader } from "@/components/app-ui/page-header";
+import { SectionHeader } from "@/components/app-ui/section-header";
+import { StatusBadge } from "@/components/tarineo/status-badge";
+import { DocumentChain } from "@/components/metier/document-chain";
+import { documentAmountHt, documentChains, documentLifecycleLabel, buildFollowUpViews } from "@/lib/metier/follow-ups";
+import { listStoredFollowUps } from "@/lib/metier/follow-up-queries";
+import { getCompanyProfile, getDocument, listChantiers, listDocuments, listParties } from "@/lib/metier/queries";
 import { pieceListHref, R } from "@/lib/routes";
 import { KIND_LABEL } from "@/lib/metier/types";
+import { euro } from "@/lib/site/tarineo";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,56 +29,110 @@ export default async function PiecePage({ params }: { params: Promise<{ id: stri
   const { id } = await params;
   const doc = await getDocument(id);
   if (!doc) notFound();
-  const [clients, dists, chantiers, company] = await Promise.all([
+  const [clients, dists, chantiers, company, all, stored] = await Promise.all([
     listParties("client"),
     listParties("distributeur"),
     listChantiers(),
     getCompanyProfile(),
+    listDocuments(),
+    listStoredFollowUps(),
   ]);
   const back = pieceListHref(doc.direction, doc.kind);
   const parties = doc.direction === "out" ? clients : dists;
+  const ht = documentAmountHt(doc);
+  const followUp = buildFollowUpViews(all, stored).find((f) => f.document_id === doc.id);
+  const chain = documentChains(all).find((c) => c.some((d) => d.id === doc.id)) ?? [];
+  const lifecycle = documentLifecycleLabel(doc, all);
+  const partyLabel = doc.direction === "out" ? "Client" : "Fournisseur";
+
   return (
     <section className="flex flex-col gap-6">
-      <Link
-        href={back}
-        className="inline-flex min-h-11 items-center gap-2 font-mono text-[11px] font-medium tracking-[0.1em] text-muted-foreground uppercase hover:text-ink"
-      >
-        <ArrowLeft className="size-4" aria-hidden />
-        {KIND_LABEL[doc.kind]}
-      </Link>
-      <header className="flex flex-col gap-2">
-        <p className="mono-label">{`/ ${KIND_LABEL[doc.kind]} ///`}</p>
-        <h1 className="font-display text-[clamp(28px,5vw,40px)] font-semibold tracking-tightest">{doc.title}</h1>
-        <p className="text-[15px] text-muted-foreground">
-          {doc.party_name ?? (doc.direction === "out" ? "Sans client" : "Sans distributeur")}
-          {doc.chantier_name ? ` · ${doc.chantier_name}` : ""}
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <DocumentDownload doc={doc} />
-          {doc.chantier_slug ? (
-            <Link
-              href={R.chantier(doc.chantier_slug)}
-              className="inline-flex h-8 items-center rounded-full border border-line px-3 text-[12.5px]"
-            >
-              Chantier
-            </Link>
-          ) : null}
-          {doc.direction === "in" ? (
-            <Link
-              href={`${R.comparateur}?a=${doc.id}`}
-              className="inline-flex h-8 items-center rounded-full border border-line px-3 text-[12.5px]"
-            >
-              Comparer
-            </Link>
-          ) : null}
+      <PageHeader
+        crumbs={[
+          { href: "/accueil", label: "Accueil" },
+          { href: back, label: KIND_LABEL[doc.kind] },
+          { label: doc.title },
+        ]}
+        title={doc.title}
+        description={KIND_LABEL[doc.kind]}
+        action={
+          <div className="flex flex-wrap gap-2">
+            <DocumentDownload doc={doc} />
+            {doc.chantier_slug ? (
+              <Link
+                href={R.chantier(doc.chantier_slug)}
+                className="inline-flex h-9 items-center rounded-[10px] border border-line bg-surface px-3 text-[13px]"
+              >
+                Voir le chantier
+              </Link>
+            ) : null}
+            {doc.direction === "in" ? (
+              <Link
+                href={`${R.comparateur}?a=${doc.id}`}
+                className="inline-flex h-9 items-center rounded-[10px] border border-line bg-surface px-3 text-[13px]"
+              >
+                Comparer
+              </Link>
+            ) : null}
+          </div>
+        }
+      />
+
+      <MetricStrip
+        items={[
+          {
+            label: partyLabel,
+            value: doc.party_name ?? "—",
+          },
+          {
+            label: "Chantier",
+            value: doc.chantier_name ?? "Non lié",
+          },
+          {
+            label: "Montant HT",
+            value: ht ? euro(ht) : "—",
+          },
+          {
+            label: "Statut",
+            value: lifecycle,
+          },
+        ]}
+      />
+
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge
+          label={lifecycle}
+          tone={lifecycle.includes("Envoy") || lifecycle.includes("Factur") ? "ok" : "muted"}
+        />
+      </div>
+
+      {followUp ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface px-4 py-3 shadow-soft">
+          <RelanceStatus followUp={followUp} />
+          <RelanceButton doc={doc} followUp={followUp} />
         </div>
-      </header>
+      ) : doc.status === "ready" && !all.some((d) => d.source_document_id === doc.id) ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface px-4 py-3 shadow-soft">
+          <p className="text-[13.5px] text-muted-foreground">Relance</p>
+          <RelanceButton doc={doc} />
+        </div>
+      ) : null}
+
+      {chain.length > 1 ? (
+        <div>
+          <SectionHeader title="Historique" className="mb-3" />
+          <DocumentChain chain={chain} />
+        </div>
+      ) : null}
 
       <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <DocumentViewer doc={doc} />
+        <div>
+          <SectionHeader title="Aperçu" className="mb-3" />
+          <DocumentViewer doc={doc} />
+        </div>
         <aside className="flex flex-col gap-6">
-          <div>
-            <p className="mono-label mb-3">{"/ Modifier ///"}</p>
+          <div className="rounded-card border border-line bg-surface p-4 shadow-soft">
+            <SectionHeader title="Informations" className="mb-3" />
             <DocumentEdit doc={doc} chantiers={chantiers} parties={parties} />
           </div>
           <DocumentSend doc={doc} />
@@ -79,6 +142,14 @@ export default async function PiecePage({ params }: { params: Promise<{ id: stri
               clients={clients}
               defaultClientId={doc.party_kind === "client" ? doc.party_id : clients[0]?.id ?? null}
               defaultMarginPct={company?.marge_par_defaut_pct}
+            />
+          ) : null}
+          {doc.direction === "out" && (doc.kind === "devis" || doc.kind === "bon_commande") ? (
+            <ConvertDevisActions
+              sourceId={doc.id}
+              sourceKind={doc.kind}
+              size="form"
+              className="rounded-card border border-line bg-surface-2 p-4"
             />
           ) : null}
         </aside>

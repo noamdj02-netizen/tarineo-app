@@ -1,16 +1,17 @@
 export type CopilotAction = {
-  kind: "project" | "task" | "note" | "schema" | "component" | "landing" | "email" | "studio";
+  kind: "project" | "task" | "note" | "schema" | "component" | "landing" | "email" | "studio" | "piece" | "chantier" | "confirm";
   label: string;
-  href: string;
+  href?: string;
+  actionId?: string;
 };
 
 export function encodeActions(actions: CopilotAction[]) {
   if (!actions.length) return "";
-  return `\n\n<!--navpit-actions:${JSON.stringify(actions)}-->`;
+  return `\n\n<!--tarineo-actions:${JSON.stringify(actions)}-->`;
 }
 
 export function parseActions(text: string): { body: string; actions: CopilotAction[] } {
-  const m = text.match(/<!--navpit-actions:(\[[\s\S]*?\])-->/);
+  const m = text.match(/<!--(?:tarineo|navpit)-actions:(\[[\s\S]*?\])-->/);
   if (!m) return { body: text, actions: [] };
   try {
     const actions = JSON.parse(m[1]) as CopilotAction[];

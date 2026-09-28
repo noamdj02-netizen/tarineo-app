@@ -11,7 +11,7 @@ const SPOTS = [
     id: "prompt",
     art: "03-salut" as TarineoHdMascotName,
     title: "Analyse un document ici",
-    text: "Dépose un devis ou une facture. Tarinéo compare aux prix déjà payés.",
+    text: "Dépose un devis ou une facture. TARINEO compare aux prix déjà payés.",
   },
   {
     id: "actions",

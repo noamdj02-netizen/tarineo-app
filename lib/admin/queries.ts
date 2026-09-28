@@ -437,7 +437,7 @@ export async function loadChurn(range: DateRange) {
     { label: "N'ont jamais créé leur premier projet", count: stale.filter((user) => user.projects === 0).length },
     { label: "Ont créé un projet mais jamais utilisé le Focus", count: stale.filter((user) => user.projects > 0 && !user.hasFocus).length },
     {
-      label: "Ont utilisé Navpit < 10 min",
+      label: "Ont utilisé TARINEO < 10 min",
       count: stale.filter((user) => {
         const own = events.filter((event) => event.user_id === user.id);
         if (!own.length) return true;

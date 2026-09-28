@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { Illustration } from "@/components/illustration";
@@ -188,7 +188,7 @@ export function Pricing() {
           unit={`pendant ${PRO_TRIAL_DAYS} jours`}
           thenPrice={euro(interval === "month" ? PRO.month : PRO.year)}
           thenUnit={unit}
-          text="Tout Navpit : illimité, agenda branché, copilote sans plafond schéma."
+          text="Tout TARINEO : illimité, agenda branché, copilote sans plafond schéma."
           features={FEATURES.pro}
           cta="Essayer puis passer Pro"
           href={`/inscription?plan=pro&interval=${interval}`}

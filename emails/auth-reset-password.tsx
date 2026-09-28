@@ -20,8 +20,8 @@ export function AuthResetPasswordEmail({ appUrl, confirmationUrl, token }: AuthR
 }
 
 AuthResetPasswordEmail.PreviewProps = {
-  appUrl: "https://www.tarineo.fr",
-  confirmationUrl: "https://www.tarineo.fr/nouveau-mot-de-passe",
+  appUrl: "https://app.tarineo.com",
+  confirmationUrl: "https://app.tarineo.com/nouveau-mot-de-passe",
   token: "482913",
 } satisfies AuthResetPasswordEmailProps;
 

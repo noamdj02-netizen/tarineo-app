@@ -15,8 +15,8 @@ export function LandingHow() {
       <LandingSectionHead
         label="Comment ça marche"
         title="Trois étapes."
-        tail="Vous déposez, Tarinéo lit et compare."
-        text="Vous déposez le document. Tarinéo fait la lecture et la comparaison. Vous vérifiez, vous corrigez si besoin."
+        tail="Vous déposez, TARINEO lit et compare."
+        text="Vous déposez le document. TARINEO fait la lecture et la comparaison. Vous vérifiez, vous corrigez si besoin."
       />
 
       <InView className="relative mx-auto max-w-[1080px]">

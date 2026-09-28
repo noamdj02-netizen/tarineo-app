@@ -17,6 +17,7 @@ const PUBLIC_PATHS = [
   "/cgv",
   "/confidentialite",
   "/api/billing/webhook",
+  "/api/cron",
   "/api/mcp",
 ];
 /** Pages de connexion : un visiteur déjà connecté part directement dans l'app. */
@@ -95,6 +96,10 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic =
     pathname === "/" || PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+
+  if (!user && (pathname === "/api/assistant" || pathname.startsWith("/api/assistant/"))) {
+    return response;
+  }
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

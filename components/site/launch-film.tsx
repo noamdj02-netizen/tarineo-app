@@ -41,7 +41,7 @@ export function LaunchFilm({
         controls
         playsInline
         preload={concealed ? "none" : "metadata"}
-        aria-label="Film de présentation Navpit"
+        aria-label="Film de présentation TARINEO"
         onPlay={() => onPlayback(true)}
         onPause={() => onPlayback(false)}
         onEnded={() => onPlayback(false)}

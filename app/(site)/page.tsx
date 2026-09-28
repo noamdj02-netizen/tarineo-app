@@ -42,7 +42,7 @@ export default function LandingPage() {
           label="Analyse de document"
           title="Chaque ligne,"
           tail="comparée à ce que vous payiez avant."
-          text="Tarinéo lit le document, retrouve chaque produit dans votre historique et met en évidence ce qui a bougé."
+          text="TARINEO lit le document, retrouve chaque produit dans votre historique et met en évidence ce qui a bougé."
         />
         <DeferredDocument />
       </LandingSection>
@@ -80,7 +80,7 @@ export default function LandingPage() {
       <LandingSection id="fonctionnalites" className="border-t border-line">
         <LandingSectionHead
           label="Dans l’app"
-          title="Tout ce que fait Tarinéo,"
+          title="Tout ce que fait TARINEO,"
           tail="déjà disponible."
           text="Des achats fournisseurs jusqu’au devis de votre client : les outils livrés aujourd’hui dans l’application."
         />

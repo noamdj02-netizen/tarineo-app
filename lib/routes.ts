@@ -14,6 +14,7 @@ export const R = {
   clientDevis: "/client/devis",
   clientBc: "/client/bon-commande",
   clientFacture: "/client/facture",
+  relances: "/relances",
   hausses: "/hausses",
   comparateur: "/comparateur",
   fournisseurs: "/fournisseurs",

@@ -79,7 +79,7 @@ function RowIcon({ icon: Icon }: { icon: LucideIcon }) {
 
 export function FeatProduitsEnregistres() {
   return (
-    <Shell title="Produits enregistrés dans votre base Tarinéo" icon={Database}>
+    <Shell title="Produits enregistrés dans votre base TARINEO" icon={Database}>
       <ul className="flex flex-col">
         {PRODUCTS.map((p, i) => (
           <li key={p.supplier}>

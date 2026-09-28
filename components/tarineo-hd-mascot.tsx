@@ -3,7 +3,7 @@ import Image from "next/image";
 import { TARINEO_HD_MASCOTS, type TarineoHdMascotName } from "@/lib/tarineo-hd-mascots";
 import { cn } from "@/lib/utils";
 
-/** Mascotte 3D Tarinéo (export Figma HD, fond transparent). */
+/** Mascotte 3D TARINEO (export Figma HD, fond transparent). */
 export function TarineoHdMascot({
   name,
   className,

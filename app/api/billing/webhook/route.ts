@@ -4,7 +4,7 @@ import { getStripe, isStripeConfigured } from "@/lib/billing/stripe";
 
 export const runtime = "nodejs";
 
-/** Stripe → table public.subscriptions. Branche l’URL https://www.navpit.com/api/billing/webhook */
+/** Stripe → table public.subscriptions. Branche l’URL https://app.tarineo.com/api/billing/webhook */
 export async function POST(req: Request) {
   if (!isStripeConfigured()) return new NextResponse("Stripe non configuré", { status: 503 });
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();

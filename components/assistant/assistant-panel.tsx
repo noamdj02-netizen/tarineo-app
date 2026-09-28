@@ -5,17 +5,17 @@ import { X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadAssistant, type ChatMessage } from "@/app/(app)/assistant/actions";
-import { Mascot } from "@/components/home/mascot";
-import { EASE } from "@/components/motion/reveal";
 import type { AssistantFile } from "@/lib/assistant/files";
 import { ASSISTANT_EVENT, type AssistantEventDetail } from "@/lib/assistant/open";
 import { Chat, type Queued } from "./chat";
+import { TarineoCopilotAvatar } from "./copilot-face";
+import { CopilotTrigger } from "./copilot-trigger";
 
-const SPRING = { type: "spring", stiffness: 420, damping: 40, mass: 0.9 } as const;
+const PANEL_EASE = [0.2, 0.8, 0.2, 1] as const;
 
 /**
  * Assistant disponible partout : carte flottante à droite sur ordinateur, feuille qui monte du bas
- * sur mobile. S'ouvre avec ⌘J, le bouton rond, l'événement `navpit:assistant` ou `?ask=` dans l'URL.
+ * sur mobile. S'ouvre avec ⌘J, le bouton, l'événement `navpit:assistant` ou `?ask=` dans l'URL.
  */
 export function AssistantPanel({
   keyMissing,
@@ -72,7 +72,6 @@ export function AssistantPanel({
     };
   }, [open, pathname, preferredProjectId]);
 
-  // à la fermeture, on relira l'historique enregistré (après l'animation de sortie)
   useEffect(() => {
     if (open) return;
     const t = setTimeout(() => {
@@ -94,14 +93,15 @@ export function AssistantPanel({
       } else if (e.key === "Escape") setOpen(false);
     };
     window.addEventListener(ASSISTANT_EVENT, onOpen);
+    window.addEventListener("navpit:assistant", onOpen);
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener(ASSISTANT_EVENT, onOpen);
+      window.removeEventListener("navpit:assistant", onOpen);
       window.removeEventListener("keydown", onKey);
     };
   }, [show]);
 
-  // ?ask=… (après l'inscription, anciens liens /assistant) ; « 1 » ouvre sans question
   useEffect(() => {
     const ask = params.get("ask");
     if (!ask) return;
@@ -111,27 +111,40 @@ export function AssistantPanel({
     router.replace(rest.size ? `${pathname}?${rest}` : pathname, { scroll: false });
   }, [params, pathname, router, show]);
 
+  const [wide, setWide] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const apply = () => setWide(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+
+  const motionProps = wide
+    ? {
+        initial: reduce ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 },
+        animate: { opacity: 1, y: 0, scale: 1 },
+        exit: reduce ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 },
+        transition: { duration: reduce ? 0.15 : 0.2, ease: PANEL_EASE },
+      }
+    : {
+        initial: reduce ? { opacity: 0 } : { opacity: 0, y: "100%" },
+        animate: { opacity: 1, y: 0 },
+        exit: reduce ? { opacity: 0 } : { opacity: 0, y: "100%" },
+        transition: { duration: reduce ? 0.15 : 0.22, ease: PANEL_EASE },
+      };
+
   return (
     <>
       <AnimatePresence>
         {!open ? (
-          <motion.button
+          <motion.div
             key="fab"
-            type="button"
-            onClick={() => show()}
-            aria-label="Ouvrir l’assistant (⌘J)"
-            initial={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 0.8, filter: "blur(4px)" }}
-            transition={{ duration: 0.3, ease: EASE }}
-            className="group fixed right-6 bottom-6 z-40 hidden items-center gap-2 rounded-pill bg-ink py-1.5 pr-4 pl-1.5 text-[13px] font-medium text-accent-ink shadow-lift transition-transform duration-300 ease-out-soft hover:-translate-y-0.5 lg:inline-flex"
+            {...motionProps}
+            className="fixed right-4 z-[45] bottom-[calc(112px+env(safe-area-inset-bottom,0px))] hidden lg:right-6 lg:bottom-6 lg:block"
           >
-            <span className="grid size-9 place-items-center rounded-pill bg-surface">
-              <Mascot mood="idle" className="size-8" />
-            </span>
-            Assistant
-            <kbd className="rounded-md bg-white/15 px-1.5 py-0.5 font-mono text-[10.5px]">⌘J</kbd>
-          </motion.button>
+            <CopilotTrigger variant="inline" onClick={() => show()} />
+          </motion.div>
         ) : null}
       </AnimatePresence>
 
@@ -141,33 +154,46 @@ export function AssistantPanel({
             <motion.button
               key="scrim"
               type="button"
-              aria-label="Fermer l’assistant"
+              aria-label="Fermer le Copilote"
               onClick={() => setOpen(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="fixed inset-0 z-50 bg-ink/25 backdrop-blur-[2px] lg:hidden"
+              transition={{ duration: 0.2, ease: PANEL_EASE }}
+              className="fixed inset-0 z-[54] bg-ink/20 lg:hidden"
             />
             <motion.aside
               key="panel"
               role="dialog"
-              aria-label="Assistant IA"
-              initial={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98, filter: "blur(6px)" }}
-              animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-              exit={reduce ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98, filter: "blur(6px)" }}
-              transition={reduce ? { duration: 0.15 } : SPRING}
-              className="fixed inset-x-0 bottom-0 z-50 flex h-[88dvh] origin-bottom flex-col overflow-hidden rounded-t-[28px] bg-bg shadow-lift lg:inset-x-auto lg:top-4 lg:right-4 lg:bottom-4 lg:h-auto lg:w-[400px] lg:origin-bottom-right lg:rounded-card lg:border lg:border-line"
+              aria-modal="true"
+              aria-labelledby="copilot-title"
+              {...motionProps}
+              className="fixed inset-x-0 bottom-0 z-[55] mx-auto flex h-[min(90dvh,760px)] w-full origin-bottom flex-col overflow-hidden rounded-t-[24px] border border-t border-line bg-surface text-ink shadow-[0_8px_28px_rgba(0,0,0,0.08)] lg:inset-x-auto lg:top-4 lg:right-4 lg:bottom-4 lg:mx-0 lg:h-auto lg:w-[392px] lg:max-w-none lg:origin-bottom-right lg:rounded-[18px] dark:border-white/8 dark:bg-[#0F0F0F] dark:shadow-[0_8px_28px_rgba(0,0,0,0.35)]"
               style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
             >
-              <div className="mx-auto mt-2 h-1 w-10 flex-none rounded-pill bg-ink/15 lg:hidden" aria-hidden />
-              <header className="flex flex-none items-center justify-between gap-2 border-b border-line px-4 py-2.5">
-                <p className="mono-label">{"/ Assistant IA ///"}</p>
+              <div className="mx-auto mt-2 h-1 w-10 flex-none rounded-pill bg-ink/12 lg:hidden" aria-hidden />
+              <header className="sticky top-0 z-10 flex h-[60px] shrink-0 items-center justify-between gap-3 border-b border-[rgba(10,10,10,0.08)] bg-inherit px-4 dark:border-white/8">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <TarineoCopilotAvatar variant="header" />
+                  <div className="min-w-0">
+                    <p id="copilot-title" className="text-[14px] font-semibold tracking-[-0.01em]">
+                      Assistant TARINEO
+                    </p>
+                    <p className="flex items-center gap-1.5 text-[11px] text-[#6E6E6E] dark:text-[#A1A1A1]">
+                      Que voulez-vous faire ?
+                      <span aria-hidden>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-[#22C55E]" aria-hidden />
+                        Prêt
+                      </span>
+                    </p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  aria-label="Fermer"
-                  className="grid size-9 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-accent-soft hover:text-ink"
+                  aria-label="Fermer le Copilote"
+                  className="grid size-8 place-items-center rounded-lg text-[#6E6E6E] transition-colors hover:bg-black/[0.04] hover:text-ink dark:text-[#A1A1A1] dark:hover:bg-white/[0.06]"
                 >
                   <X className="size-4" aria-hidden />
                 </button>
@@ -184,9 +210,16 @@ export function AssistantPanel({
                   role={data.role}
                 />
               ) : (
-                <div className="grid flex-1 place-items-center">
-                  <Mascot mood="typing" className="size-14" />
-                </div>
+                <Chat
+                  key="boot"
+                  initial={[]}
+                  presets={[]}
+                  keyMissing={keyMissing}
+                  firstName={firstName}
+                  queued={null}
+                  projectId={null}
+                  role="general"
+                />
               )}
             </motion.aside>
           </>

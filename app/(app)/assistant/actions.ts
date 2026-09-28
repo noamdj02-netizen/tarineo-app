@@ -1,18 +1,16 @@
 "use server";
 
 import { isAgentRole, projectSlugFromPath, type AgentRole } from "@/lib/assistant/roles";
-import { isOwner } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
-import { PRESETS } from "@/lib/design-data/assistant";
-import { data } from "@/lib/mcp/data";
+import { listChantiers } from "@/lib/metier/queries";
 
 export type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
 const GENERIC_PRESETS = [
-  "Quels devis restent à transformer ?",
-  "Résume le chantier en cours et la prochaine pièce à envoyer",
-  "Quelles hausses de prix cette semaine ?",
-  "Compare le dernier devis Cedeo au précédent",
+  "Faire le point sur mes chantiers",
+  "Voir mes devis à relancer",
+  "Analyser mes achats",
+  "Voir les hausses fournisseurs",
 ];
 
 export async function loadAssistant(opts?: {
@@ -27,7 +25,10 @@ export async function loadAssistant(opts?: {
   let projectId = opts?.projectId ?? null;
   if (!projectId && opts?.page) {
     const slug = projectSlugFromPath(opts.page);
-    if (slug) projectId = await data.findProjectIdBySlug(db.user.id, slug);
+    if (slug) {
+      const chantiers = await listChantiers();
+      projectId = chantiers.find((c) => c.slug === slug)?.id ?? null;
+    }
   }
 
   let q = db.supabase
@@ -42,7 +43,7 @@ export async function loadAssistant(opts?: {
   const { data: rows } = await q;
   return {
     history: (rows ?? []).reverse(),
-    presets: isOwner(db.user.email) ? PRESETS : GENERIC_PRESETS,
+    presets: GENERIC_PRESETS,
     projectId,
     role,
   };

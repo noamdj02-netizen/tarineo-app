@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { filterPillClass } from "@/components/app-ui/filter-pills";
 import type { DocumentCard } from "@/lib/metier/types";
 
 export function DocumentViewer({ doc }: { doc: DocumentCard }) {
@@ -11,19 +12,11 @@ export function DocumentViewer({ doc }: { doc: DocumentCard }) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setTab("devis")}
-          className={`rounded-full px-3 py-1.5 text-[13px] ${tab === "devis" ? "bg-ink text-accent-ink" : "border border-line"}`}
-        >
+        <button type="button" onClick={() => setTab("devis")} className={filterPillClass(tab === "devis")}>
           Devis
         </button>
         {hasFile ? (
-          <button
-            type="button"
-            onClick={() => setTab("source")}
-            className={`rounded-full px-3 py-1.5 text-[13px] ${tab === "source" ? "bg-ink text-accent-ink" : "border border-line"}`}
-          >
+          <button type="button" onClick={() => setTab("source")} className={filterPillClass(tab === "source")}>
             Fichier déposé
           </button>
         ) : null}

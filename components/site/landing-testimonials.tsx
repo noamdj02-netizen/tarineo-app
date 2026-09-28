@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function TestimonialStackLogos({ tools }: { tools: readonly StackToolRef[] }) {
   return (
-    <ul className="flex shrink-0 items-center gap-1 sm:gap-1.5" aria-label="Outils utilisés dans Navpit">
+    <ul className="flex shrink-0 items-center gap-1 sm:gap-1.5" aria-label="Outils utilisés dans TARINEO">
       {tools.map((tool) => {
         const logo = brandLogoUrl(tool.domain, 64);
         return (

@@ -56,9 +56,12 @@ export function writeCookieConsent(value: CookieConsent) {
 }
 
 /** Bandeau CNIL : analytics uniquement après consentement. */
+const BANNER_OFFSET_VAR = "--cookie-banner-offset";
+
 export function CookieConsentBanner() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
+  const [bannerEl, setBannerEl] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const current = readCookieConsent();
@@ -66,7 +69,33 @@ export function CookieConsentBanner() {
     if (!current) setVisible(true);
   }, []);
 
-  if (!visible || pathname.startsWith("/onboarding")) return null;
+  const hideForOnboarding = pathname.startsWith("/onboarding");
+  const showBanner = visible && !hideForOnboarding;
+
+  useEffect(() => {
+    if (!showBanner) {
+      document.documentElement.style.removeProperty(BANNER_OFFSET_VAR);
+      return;
+    }
+    if (!bannerEl) return;
+    const publish = () => {
+      document.documentElement.style.setProperty(
+        BANNER_OFFSET_VAR,
+        `${Math.ceil(bannerEl.getBoundingClientRect().height)}px`,
+      );
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(bannerEl);
+    window.addEventListener("resize", publish);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", publish);
+      document.documentElement.style.removeProperty(BANNER_OFFSET_VAR);
+    };
+  }, [showBanner, bannerEl]);
+
+  if (!showBanner) return null;
 
   function choose(value: CookieConsent) {
     writeCookieConsent(value);
@@ -75,6 +104,8 @@ export function CookieConsentBanner() {
 
   return (
     <div
+      ref={setBannerEl}
+      id="cookie-consent-banner"
       role="region"
       aria-labelledby="cookie-title"
       className="theme-tarineo fixed inset-x-0 bottom-0 z-[60] border-t border-line bg-surface/95 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-ink shadow-lift backdrop-blur-xl sm:px-6"

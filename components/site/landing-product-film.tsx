@@ -51,7 +51,7 @@ export function LandingProductFilm() {
         controls
         playsInline
         preload="metadata"
-        aria-label="Navpit sur iPhone"
+        aria-label="TARINEO sur iPhone"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onEnded={() => setPlaying(false)}

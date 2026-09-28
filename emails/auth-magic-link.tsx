@@ -10,7 +10,7 @@ export type AuthMagicLinkEmailProps = {
 export function AuthMagicLinkEmail({ appUrl, confirmationUrl, token }: AuthMagicLinkEmailProps) {
   return (
     <TarineoEmailShell
-      preview="Ton code de connexion Tarinéo"
+      preview="Ton code de connexion TARINEO"
       label="Connexion"
       title="Ton lien de connexion"
       appUrl={appUrl}
@@ -25,8 +25,8 @@ export function AuthMagicLinkEmail({ appUrl, confirmationUrl, token }: AuthMagic
 }
 
 AuthMagicLinkEmail.PreviewProps = {
-  appUrl: "https://www.tarineo.fr",
-  confirmationUrl: "https://www.tarineo.fr/auth/callback",
+  appUrl: "https://app.tarineo.com",
+  confirmationUrl: "https://app.tarineo.com/auth/callback",
   token: "12345678",
 } satisfies AuthMagicLinkEmailProps;
 

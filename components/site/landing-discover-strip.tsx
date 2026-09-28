@@ -13,11 +13,11 @@ const TINT_RING: Record<GlowTint, string> = {
   "glow-3": "bg-glow-3/20 ring-glow-3/35",
 };
 
-/** Bandeau horizontal « Découvrir ce que Navpit peut faire » (style Notion). */
+/** Bandeau horizontal « Découvrir ce que TARINEO peut faire » (style Notion). */
 export function LandingDiscoverStrip() {
   return (
     <div className="flex w-full flex-col gap-4">
-      <p className="text-[14px] text-muted-foreground">Découvrir ce que Navpit peut faire</p>
+      <p className="text-[14px] text-muted-foreground">Découvrir ce que TARINEO peut faire</p>
       <div
         className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-2 [scrollbar-width:none] sm:-mx-8 sm:px-8 [&::-webkit-scrollbar]:hidden"
       >

@@ -124,7 +124,7 @@ export function ApiKeysCard() {
   }
 
   const claudeCmd = newKey
-    ? `claude mcp add --transport http navpit ${mcpUrl} --header "Authorization: Bearer ${newKey}"`
+    ? `claude mcp add --transport http tarineo ${mcpUrl} --header "Authorization: Bearer ${newKey}"`
     : "";
 
   return (
@@ -132,14 +132,14 @@ export function ApiKeysCard() {
       <p className="mono-label mb-3">{`/ Agents IA ///`}</p>
       <h2 className="text-[18px] font-semibold tracking-[-0.02em]">Connecter tes agents IA</h2>
       <p className="mt-1 max-w-prose text-[14px] leading-relaxed text-muted-foreground">
-        Branche Navpit à Claude Code, Claude Desktop, Cursor ou tes propres agents. Ils
+        Branche TARINEO à Claude Code, Claude Desktop, Cursor ou tes propres agents. Ils
         pourront lire ton Focus, créer des tâches et importer tes notes Obsidian.
       </p>
 
       {newKey ? (
         <div className="mt-5 rounded-card border border-st-pause bg-st-pause-soft p-4" role="status">
           <p className="text-[13.5px] font-medium text-st-pause-ink">
-            Copie ta clé maintenant. Navpit ne la stocke pas : si tu quittes
+            Copie ta clé maintenant. TARINEO ne la stocke pas : si tu quittes
             sans copier, il faudra en créer une autre.
           </p>
           <div className="mt-2 flex flex-col gap-2 sm:flex-row">

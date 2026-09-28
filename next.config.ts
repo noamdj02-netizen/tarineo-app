@@ -9,11 +9,19 @@ const nextConfig: NextConfig = {
   // `npm run dev` écrit dans .next-dev : un `npm run build` en parallèle ne casse plus le serveur de dev
   distDir: process.env.NEXT_DIST_DIR || ".next",
   outputFileTracingRoot: projectRoot,
+  serverExternalPackages: ["@react-pdf/renderer", "@react-pdf/hyphenate"],
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
     serverActions: {
       bodySizeLimit: "3mb",
     },
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@react-pdf/hyphenate/en-us": path.join(projectRoot, "node_modules/@react-pdf/hyphenate/lib/en-us.js"),
+    };
+    return config;
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "img.logo.dev", pathname: "/**" }],
@@ -38,6 +46,13 @@ const nextConfig: NextConfig = {
       { source: "/outils", destination: "/fournisseurs", permanent: false },
       { source: "/anatomie", destination: "/achats", permanent: false },
       { source: "/cgu", destination: "/cgv", permanent: true },
+      { source: "/themes", destination: "/accueil", permanent: false },
+      { source: "/themes/:path*", destination: "/accueil", permanent: false },
+      { source: "/bibliotheque", destination: "/accueil", permanent: false },
+      { source: "/bibliotheque/:path*", destination: "/accueil", permanent: false },
+      { source: "/automatisations", destination: "/accueil", permanent: false },
+      { source: "/assistant", destination: "/accueil", permanent: false },
+      { source: "/schemas/:id", destination: "/hausses", permanent: false },
     ];
   },
   async headers() {

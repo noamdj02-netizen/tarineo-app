@@ -22,19 +22,19 @@ export function WelcomeEmail({ firstName, appUrl }: WelcomeEmailProps) {
         {
           title: "Ouvrez un chantier",
           text: "Rangez les devis Cedeo et les pièces client par affaire.",
-          href: `${base}/projets`,
+          href: `${base}/chantiers`,
           linkLabel: "Chantiers",
         },
         {
           title: "Déposez un devis",
           text: "On lit les lignes, vous transformez, vous renvoyez au client.",
-          href: `${base}/ressources`,
+          href: `${base}/distributeur/devis`,
           linkLabel: "Documents distributeur",
         },
       ]}
     >
       <EmailParagraph>
-        Tarinéo est prêt. Finissez l’accueil guidé, puis déposez le premier devis distributeur.
+        TARINEO est prêt. Finissez l’accueil guidé, puis déposez le premier devis distributeur.
       </EmailParagraph>
       <EmailCta href={`${base}/onboarding`}>Continuer l’accueil</EmailCta>
       <EmailParagraph>Une question ? Répondez à cet email.</EmailParagraph>
@@ -44,7 +44,7 @@ export function WelcomeEmail({ firstName, appUrl }: WelcomeEmailProps) {
 
 WelcomeEmail.PreviewProps = {
   firstName: "Noam",
-  appUrl: "https://www.tarineo.fr",
+  appUrl: "https://app.tarineo.com",
 } satisfies WelcomeEmailProps;
 
 export default WelcomeEmail;

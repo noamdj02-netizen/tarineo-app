@@ -1,12 +1,14 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { encodeActions } from "@/lib/assistant/actions-markup";
-import { slimContext, wantsDesignKnowledge } from "@/lib/assistant/context";
+import { slimContext } from "@/lib/assistant/context";
 import { fileKind, MAX_FILE_BYTES, MAX_FILES } from "@/lib/assistant/files";
+import { isAllowedOrigin } from "@/lib/assistant/origin";
+import { inferEntityType, parsePageContext } from "@/lib/assistant/page-context";
 import { isAgentRole, projectSlugFromPath, type AgentRole } from "@/lib/assistant/roles";
 import { COPILOT_TOOLS, runCopilotTool } from "@/lib/assistant/tools";
 import { limitReached } from "@/lib/billing/plan";
 import { getDb } from "@/lib/db";
-import { data } from "@/lib/mcp/data";
+import { listChantiers, getDocument } from "@/lib/metier/queries";
 import { DEFAULT_MODEL, isModelId, type ModelId } from "@/lib/models";
 import { classifyAgent } from "@/lib/analytics/catalog";
 import { track } from "@/lib/analytics/track";
@@ -21,8 +23,8 @@ const MAX_TOKENS = 1500;
 const TOOL_ROUNDS = 6;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-function json(status: number, error: string) {
-  return Response.json({ error }, { status });
+function json(status: number, error: string, code?: string) {
+  return Response.json({ success: false, error, code: code ?? "error" }, { status });
 }
 
 function pickModel(requested: unknown): ModelId {
@@ -48,36 +50,28 @@ function friendlyError(e: unknown) {
   return "Réponse interrompue. Tu peux renvoyer ta question.";
 }
 
-function sameOrigin(request: Request) {
-  const origin = request.headers.get("origin");
-  if (!origin) return false;
-  try {
-    return new URL(origin).host === new URL(request.url).host;
-  } catch {
-    return false;
-  }
-}
-
 function textFrom(content: Anthropic.ContentBlock[]): string {
   return content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
 }
 
 export async function POST(request: Request) {
-  if (!sameOrigin(request)) return json(403, "Origine refusée.");
+  if (!isAllowedOrigin(request).ok) return json(403, "Origine refusée.", "origin_denied");
   if (!process.env.ANTHROPIC_API_KEY) {
-    return json(503, "Ajoute ta clé ANTHROPIC_API_KEY dans .env.local, puis relance le serveur.");
+    return json(503, "Ajoute ta clé ANTHROPIC_API_KEY dans .env.local, puis relance le serveur.", "config");
   }
 
   const db = await getDb();
-  if (!db) return json(401, "Connecte-toi pour utiliser l’assistant.");
+  if (!db) return json(401, "Connecte-toi pour utiliser l’assistant.", "unauthorized");
 
   let body: {
     question?: unknown;
     model?: unknown;
     page?: unknown;
+    context?: unknown;
     files?: unknown;
     projectId?: unknown;
     role?: unknown;
+    user_id?: unknown;
   };
   try {
     body = await request.json();
@@ -90,16 +84,38 @@ export async function POST(request: Request) {
   if (question.length > MAX_QUESTION) return json(400, "Question trop longue.");
   const model = pickModel(body.model);
   const role: AgentRole = isAgentRole(body.role) ? body.role : "general";
-  const page = typeof body.page === "string" ? body.page.slice(0, 120) : "";
-
-  let projectId = typeof body.projectId === "string" && UUID.test(body.projectId) ? body.projectId : null;
-  if (!projectId && /^\/[\w\-/]*$/.test(page)) {
-    const slug = projectSlugFromPath(page);
-    if (slug) projectId = await data.findProjectIdBySlug(db.user.id, slug);
+  const pageRaw = typeof body.page === "string" ? body.page.slice(0, 160) : "";
+  const pageCtx = parsePageContext(body.context, pageRaw);
+  if (pageCtx && !pageCtx.entityType) pageCtx.entityType = inferEntityType(pageCtx.route);
+  if (pageCtx && !pageCtx.entityId) {
+    const piece = /^\/pieces\/([0-9a-f-]{36})/i.exec(pageCtx.route);
+    if (piece?.[1]) pageCtx.entityId = piece[1];
   }
-  if (projectId) {
-    const owned = await data.getProject(db.user.id, projectId);
-    if (!owned) projectId = null;
+  const page = pageCtx?.route ?? pageRaw;
+  void body.user_id;
+
+  const chantiers = await listChantiers();
+  let projectId = typeof body.projectId === "string" && UUID.test(body.projectId) ? body.projectId : null;
+  let chantierId: string | null = null;
+  if (projectId && chantiers.some((c) => c.id === projectId)) {
+    chantierId = projectId;
+    projectId = null;
+  }
+  if (!chantierId) {
+    const slug = projectSlugFromPath(page);
+    if (slug) chantierId = chantiers.find((c) => c.slug === slug)?.id ?? null;
+  }
+  if (pageCtx && chantierId) {
+    if (!pageCtx.entityType) pageCtx.entityType = "chantier";
+    if (!pageCtx.entityId) pageCtx.entityId = chantierId;
+  }
+  if (pageCtx?.entityId) {
+    if (pageCtx.entityType === "chantier" || pageCtx.entityType === "dashboard") {
+      if (!chantiers.some((c) => c.id === pageCtx.entityId)) pageCtx.entityId = undefined;
+    } else {
+      const owned = await getDocument(pageCtx.entityId);
+      if (!owned) pageCtx.entityId = undefined;
+    }
   }
 
   const stored = [
@@ -142,17 +158,18 @@ export async function POST(request: Request) {
     {
       type: "text",
       text: await slimContext(db, viewer?.firstName ?? "", {
-        projectId,
+        projectId: chantierId,
         role,
-        includeDesign: wantsDesignKnowledge(question, role),
+        includeDesign: false,
         question,
+        page: pageCtx,
       }),
     },
   ];
   if (/^\/[\w\-/]*$/.test(page)) {
     system.push({
       type: "text",
-      text: `Page Tarinéo : ${page}.${projectId ? ` Fil du chantier ${projectId}.` : ""} Rôle : ${role}.`,
+      text: `Page TARINEO : ${page}.${chantierId ? ` Chantier ouvert : ${chantierId}. Appelle get_chantier sans redemander lequel.` : ""} Rôle : ${role}.`,
     });
   }
 
@@ -207,10 +224,23 @@ export async function POST(request: Request) {
             messages.push({ role: "assistant", content: res.content });
             const results: Anthropic.ToolResultBlockParam[] = [];
             for (const use of uses) {
-              const out = await runCopilotTool(db.user.id, use.name, use.input, {
-                model,
-                signal: request.signal,
+              await track({
+                name: "copilot_tool_started",
+                userId: db.user.id,
+                feature: "copilote",
+                path: page || "/copilote",
+                properties: { tool: use.name },
               });
+              const out = await runCopilotTool({ userId: db.user.id, page: pageCtx ?? undefined }, use.name, use.input);
+              if (!out.awaiting) {
+                await track({
+                  name: out.success ? "copilot_tool_success" : "copilot_tool_failed",
+                  userId: db.user.id,
+                  feature: "copilote",
+                  path: page || "/copilote",
+                  properties: { tool: use.name, status: out.success ? "success" : "failed" },
+                });
+              }
               if (out.action) actions.push(out.action);
               if (out.reveal) reveals.push(out.reveal);
               results.push({

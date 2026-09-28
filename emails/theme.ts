@@ -10,7 +10,7 @@ export const navpitEmailTailwindConfig = {
         "ink-2": "#555555",
         muted: "#8c8c8c",
         line: "#ececeb",
-        accent: "#c4b5fd",
+        accent: "#ec5821",
       },
       fontFamily: {
         sans: ['"Inter"', "Helvetica", "Arial", "sans-serif"],

@@ -4,7 +4,7 @@
 @import "../styles/studio.css" layer(components);
 
 /* Variantes `dark:` des primitives shadcn pilotées par la classe .dark (site public), pas par l'OS. */
-@custom-variant dark (&:where(.dark, .dark *):not(:where(.theme-light, .theme-light *)));
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *):not(:where(.theme-light, .theme-light *)));
 
 /*
  * Direction artistique « Mono Lead ».
@@ -13,23 +13,26 @@
  */
 @theme {
   /* Couleurs */
-  --color-bg: #f3f3f2;
+  --color-bg: #f5f5f3;
   --color-surface: #ffffff;
   --color-surface-2: #f6f6f5;
-  --color-ink: #111111;
+  --color-ink: #0a0a0a;
   /* Texte secondaire (utiliser text-muted-foreground ; bg-muted = surface-2 via @theme inline) */
   /* ~4.6:1 sur bg pour le petit texte (WCAG AA). */
-  --color-muted-ink: #6f6f6f;
-  --color-line: rgba(17, 17, 17, 0.08);
+  --color-muted-ink: #6e6e6e;
+  --color-line: rgba(10, 10, 10, 0.07);
   --color-accent: #111111;
   --color-accent-ink: #ffffff;
   --color-accent-soft: #f4f4f3;
   --color-accent-2: #9a9a9a;
-  /* Barre latérale noire */
-  --color-side: #111111;
-  --color-side-ink: #ffffff;
-  --color-side-muted: rgba(255, 255, 255, 0.5);
-  --color-side-line: rgba(255, 255, 255, 0.08);
+  /* Barre latérale — défaut clair (sync data-sidebar / data-theme) */
+  --color-side: #ffffff;
+  --color-side-ink: #0a0a0a;
+  --color-side-muted: #525252;
+  --color-side-icon: #6e6e6e;
+  --color-side-line: rgba(10, 10, 10, 0.08);
+  --color-side-hint: #737373;
+  --color-side-card: #f7f7f5;
   /* Barre du bas mobile (même teinte que public/figma/navbar/notch.svg) */
   --color-nav: #1f1f1f;
   /* Halo pastel des cartes d'accueil (pêche, lavande, bleu doux) */
@@ -40,9 +43,29 @@
   --color-brand-violet: #6e5ce6;
   /* Ciel du closer alpin (match le film) */
   --color-closer-sky: #1d8fb8;
-  /* Orange Tarinéo : CTA, accents, indicateurs — jamais en aplat large */
-  --color-brand-orange: #ec5821;
-  --color-brand-orange-light: #ff7a45;
+  /* Orange TARINEO — source unique (CTA, nav active, tabs) */
+  --tarineo-orange: #ff6b1a;
+  --tarineo-orange-soft: rgba(255, 107, 26, 0.16);
+  --tarineo-orange-hover: rgba(255, 107, 26, 0.08);
+  --tarineo-orange-ring: rgba(255, 107, 26, 0.18);
+  --color-tarineo-orange: var(--tarineo-orange);
+  --color-tarineo-orange-soft: var(--tarineo-orange-soft);
+  --color-tarineo-orange-hover: var(--tarineo-orange-hover);
+  --color-tarineo-orange-ring: var(--tarineo-orange-ring);
+  --color-brand-orange: var(--tarineo-orange);
+  --color-brand-orange-light: var(--tarineo-orange);
+  --color-nav-orange: var(--tarineo-orange);
+  --color-nav-orange-hover: var(--tarineo-orange);
+  --color-nav-orange-press: var(--tarineo-orange);
+  --color-faint: #999999;
+  --color-line-strong: rgba(10, 10, 10, 0.12);
+  --color-info: #3b82f6;
+  --color-warning: #f59e0b;
+  --ease-nav: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-slow: 280ms;
+  --radius-control: 10px;
   /* Papier devis + baisse (démos) */
   --color-paper: #f4f1ea;
   --color-paper-ink: #161412;
@@ -50,17 +73,18 @@
   --color-alert-wash: #1a100c;
   /* Statuts de projet (pastille + fond teinté) */
   --color-st-focus: #16a34a;
-  --color-st-focus-soft: #e8f7ee;
-  --color-st-focus-ink: #166534;
-  --color-st-pause: #eab308;
-  --color-st-pause-soft: #fdf6dc;
-  --color-st-pause-ink: #854d0e;
-  --color-st-fini: #dc2626;
-  --color-st-fini-soft: #fdecec;
-  --color-st-fini-ink: #991b1b;
+  --color-st-focus-soft: #ecfdf3;
+  --color-st-focus-ink: #15803d;
+  --color-st-pause: #f59e0b;
+  --color-st-pause-soft: #fff7e6;
+  --color-st-pause-ink: #b45309;
+  --color-st-fini: #6b7280;
+  --color-st-fini-soft: #f3f4f6;
+  --color-st-fini-ink: #4b5563;
+  --color-search: #f3f3f2;
 
   /* Arrondis */
-  --radius-card: 18px;
+  --radius-card: 16px;
   --radius-pill: 999px;
 
   /* Polices (chargées par next/font dans app/layout.tsx) */
@@ -70,11 +94,9 @@
   --font-serif: var(--font-instrument-serif), Georgia, serif;
   --font-grotesk: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 
-  /* Ombres douces multi-couches + reflet des boutons sombres */
-  --shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04),
-    0 16px 40px -18px rgba(0, 0, 0, 0.18);
-  --shadow-lift: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 10px rgba(0, 0, 0, 0.05),
-    0 24px 48px -20px rgba(0, 0, 0, 0.24);
+  /* Ombres : la bordure porte la hiérarchie */
+  --shadow-soft: 0 1px 0 rgba(10, 10, 10, 0.03);
+  --shadow-lift: 0 4px 16px -10px rgba(10, 10, 10, 0.12);
   --shadow-dark: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.2),
     0 8px 20px -8px rgba(0, 0, 0, 0.45);
 
@@ -143,8 +165,8 @@
   --color-border: var(--color-line);
   --color-input: var(--color-line);
   --color-ring: var(--color-ink);
-  --radius-sm: 8px;
-  --radius-md: 12px;
+  --radius-sm: 10px;
+  --radius-md: 10px;
   --radius-lg: 14px;
   --radius-xl: 18px;
   --radius-2xl: 22px;
@@ -181,10 +203,79 @@
   --f-disp: var(--font-display);
   --f-body: var(--font-sans);
   --f-mono: var(--font-mono);
+  --color-side-active: rgba(255, 107, 26, 0.1);
+  --color-side-hover: rgba(10, 10, 10, 0.045);
+  --color-row-hover: rgba(10, 10, 10, 0.025);
+  --color-search: #f5f5f3;
 }
 
 /*
- * Thème Tarinéo (site public) : on remappe les tokens Mono Lead sur le wrapper
+ * Palette app sombre — tokens dédiés, pas une inversion.
+ * Pilotée par html.dark / data-theme=dark (script synchrone + ThemeProvider).
+ */
+html.dark,
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface-2: #171717;
+  --color-ink: #f5f5f3;
+  --color-muted-ink: #a1a1a1;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-strong: rgba(255, 255, 255, 0.12);
+  --color-accent: #f5f5f3;
+  --color-accent-ink: #0a0a0a;
+  --color-accent-soft: #171717;
+  --color-accent-2: #737373;
+  --color-nav: #111111;
+  --color-st-focus-soft: rgba(22, 163, 74, 0.15);
+  --color-st-focus-ink: #4ade80;
+  --color-st-pause-soft: rgba(245, 158, 11, 0.15);
+  --color-st-pause-ink: #fbbf24;
+  --color-st-fini-soft: rgba(107, 114, 128, 0.15);
+  --color-st-fini-ink: #9ca3af;
+  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.03);
+  --shadow-lift: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  --bg: var(--color-bg);
+  --panel: var(--color-surface);
+  --panel2: var(--color-surface-2);
+  --ink: var(--color-ink);
+  --ink2: var(--color-muted-ink);
+  --line: var(--color-line);
+  --brand: var(--color-ink);
+  --brand-soft: var(--color-accent-soft);
+  --color-row-hover: rgba(255, 255, 255, 0.04);
+  --color-search: #171717;
+}
+
+html[data-sidebar="dark"],
+html[data-theme="dark"] {
+  --color-side: #0a0a0a;
+  --color-side-ink: #f5f5f3;
+  --color-side-muted: #f5f5f3;
+  --color-side-icon: #a3a3a3;
+  --color-side-line: rgba(255, 255, 255, 0.08);
+  --color-side-active: rgba(255, 107, 26, 0.12);
+  --color-side-hover: rgba(255, 255, 255, 0.06);
+  --color-side-hint: #8a8a8a;
+  --color-side-card: #171717;
+}
+
+html[data-sidebar="light"],
+html[data-theme="light"] {
+  --color-side: #ffffff;
+  --color-side-ink: #0a0a0a;
+  --color-side-muted: #525252;
+  --color-side-icon: #6e6e6e;
+  --color-side-line: rgba(10, 10, 10, 0.08);
+  --color-side-active: rgba(255, 107, 26, 0.1);
+  --color-side-hover: rgba(10, 10, 10, 0.045);
+  --color-side-hint: #737373;
+  --color-side-card: #f7f7f5;
+}
+
+/*
+ * Thème TARINEO (site public) : on remappe les tokens Mono Lead sur le wrapper
  * du layout (site) — tous les composants existants (Card, Button, Faq…) passent
  * en noir / blanc / gris sans être réécrits. L'app connectée reste en clair.
  */
@@ -265,8 +356,8 @@ body:has(.theme-tarineo) {
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
     scroll-behavior: smooth;
-    /* Évite le flash / bandeau clair sous la barre Safari au-dessus du hero. */
-    background-color: var(--color-ink);
+    background-color: var(--color-bg);
+    transition: background-color 180ms ease, color 180ms ease;
   }
   body {
     @apply bg-bg font-sans text-ink antialiased;
@@ -274,6 +365,13 @@ body:has(.theme-tarineo) {
     min-height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
+    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html,
+    body {
+      transition: none;
+    }
   }
   :focus-visible {
     outline: 2px solid var(--color-ink);
@@ -291,24 +389,45 @@ body:has(.theme-tarineo) {
   }
   /* Carte Mono Lead */
   .card-soft {
-    @apply rounded-card border border-line bg-surface shadow-soft;
+    @apply rounded-card border border-line bg-surface;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
   }
-  /* Lift desktop only — pas de hover-translate au doigt */
+  @media (prefers-reduced-motion: reduce) {
+    .card-soft {
+      transition: none;
+    }
+  }
   .card-lift {
-    @apply transition-[transform,box-shadow] duration-300 ease-out-soft;
+    @apply transition-[box-shadow,border-color] duration-[var(--duration-normal)] ease-nav;
   }
   @media (hover: hover) and (pointer: fine) {
     .card-lift:hover {
-      transform: translateY(-2px);
+      border-color: var(--color-line-strong);
       box-shadow: var(--shadow-lift);
     }
   }
-  /* Feedback au doigt (Apple : highlight on press, pas au relâchement) */
   .pressable {
-    transition: transform 100ms ease-out;
+    transition: transform var(--duration-fast) var(--ease-nav);
   }
   .pressable:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
+  }
+  .app-table {
+    @apply w-full text-left text-[14px];
+  }
+  .app-table thead th {
+    @apply border-b border-line px-4 py-2.5 text-[12px] font-medium tracking-[0.04em] text-muted-foreground;
+  }
+  .app-table tbody td {
+    @apply border-b border-line px-4 py-[14px] align-middle;
+  }
+  .app-table tbody tr:last-child td {
+    @apply border-b-0;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .app-table tbody tr:hover td {
+      background: var(--color-row-hover);
+    }
   }
   /* Chrome flottant de l’accueil */
   .dash-chip {
@@ -316,16 +435,64 @@ body:has(.theme-tarineo) {
   }
   /* Bouton noir avec reflet interne */
   .btn-dark {
-    @apply bg-accent text-accent-ink shadow-dark transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
+    @apply bg-accent text-accent-ink transition-[background-color,transform] duration-[var(--duration-normal)] ease-nav hover:bg-ink/90 active:scale-[0.98];
+    border-radius: var(--radius-control);
   }
 
-  /* CTA orange Tarinéo : même reflet et même lift que .btn-dark */
   .btn-orange {
-    @apply bg-brand-orange text-white transition-[transform,box-shadow,background-color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:bg-brand-orange-light active:translate-y-0 active:scale-[0.98];
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      0 1px 2px rgba(0, 0, 0, 0.35),
-      0 10px 28px -10px color-mix(in srgb, var(--color-brand-orange) 70%, transparent);
+    background-color: var(--tarineo-orange);
+    color: #fff;
+    border-radius: var(--radius-control);
+    transition: background-color var(--duration-normal) var(--ease-nav), transform var(--duration-fast) var(--ease-nav);
+  }
+  .btn-orange:hover {
+    background-color: var(--tarineo-orange);
+    filter: brightness(0.96);
+  }
+  .btn-orange:active {
+    background-color: var(--tarineo-orange);
+    filter: brightness(0.92);
+    transform: scale(0.98);
+  }
+
+  .scroll-x {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.375rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-x::-webkit-scrollbar {
+    display: none;
+  }
+  @media (min-width: 768px) {
+    .scroll-x {
+      flex-wrap: wrap;
+      overflow: visible;
+    }
+  }
+
+  .nav-active {
+    background-color: var(--color-side-active);
+    color: var(--tarineo-orange);
+  }
+  .nav-active svg {
+    color: var(--tarineo-orange);
+  }
+  .nav-idle {
+    color: var(--color-side-muted);
+  }
+  .nav-idle svg {
+    color: var(--color-side-icon);
+  }
+  .nav-idle:hover {
+    background-color: var(--color-side-hover);
+    color: var(--color-side-ink);
+  }
+  .nav-idle:hover svg {
+    color: var(--color-side-ink);
   }
   /* Verre sombre (cartes flottantes du hero, navbar) */
   .glass-dark {
@@ -892,6 +1059,38 @@ body:has(.theme-tarineo) {
   100% {
     transform: translateY(var(--scan-distance, 260px));
     opacity: 0;
+  }
+}
+
+@keyframes copilot-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes copilot-live {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes copilot-caret {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
   }
 }
 

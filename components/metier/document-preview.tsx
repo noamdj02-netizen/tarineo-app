@@ -37,14 +37,14 @@ export function DocumentPreview({
     <article
       className={cn(
         "relative overflow-hidden bg-white text-[#1a1a1a] shadow-[0_18px_50px_rgba(20,16,12,0.12)]",
-        thumb ? "pointer-events-none aspect-[210/297] select-none" : "mx-auto w-full max-w-[210mm]",
+        thumb ? "pointer-events-none h-[140px] w-full select-none" : "mx-auto w-full max-w-[210mm]",
       )}
     >
       <div
         className={cn(
           "box-border flex flex-col px-10 py-10 text-[9px] leading-snug",
           thumb
-            ? "absolute top-0 left-0 h-[297mm] w-[210mm] origin-top-left scale-[0.34]"
+            ? "absolute top-0 left-0 h-[297mm] w-[210mm] origin-top-left scale-[0.22]"
             : "min-h-[297mm] w-full",
         )}
         style={{ fontFamily: "Helvetica, Arial, sans-serif" }}

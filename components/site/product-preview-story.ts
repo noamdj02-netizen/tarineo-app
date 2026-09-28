@@ -33,7 +33,7 @@ export const AI_STORY: AiStoryStep[] = [
     label: "Étape 2 · Contexte",
     title: "Il connaît déjà tes projets",
     body:
-      "Navpit injecte ton projet en Focus, tes tâches, ton journal et tes fichiers. Tu n’as pas à tout recoller dans ChatGPT.",
+      "TARINEO injecte ton projet en Focus, tes tâches, ton journal et tes fichiers. Tu n’as pas à tout recoller dans ChatGPT.",
     art: "feedback-question",
     mode: "context",
   },

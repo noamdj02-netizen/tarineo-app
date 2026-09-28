@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 
 /**
  * Arrivée depuis l’email.
- * ?token_hash=…&type=… (lien Navpit), ?code=… (Google / PKCE),
+ * ?token_hash=…&type=… (lien e-mail TARINEO), ?code=… (Google / PKCE),
  * ou session déjà ouverte après un code saisi sur place.
  */
 export async function GET(request: NextRequest) {

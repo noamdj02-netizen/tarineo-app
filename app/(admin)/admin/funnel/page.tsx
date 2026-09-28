@@ -14,7 +14,7 @@ export default async function FunnelPage({
   return (
     <>
       <RangeBar />
-      <Panel title="Où Navpit perd ses utilisateurs">
+      <Panel title="Où TARINEO perd ses utilisateurs">
         <Funnel steps={data.funnel} />
       </Panel>
     </>

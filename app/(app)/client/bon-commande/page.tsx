@@ -1,7 +1,7 @@
 import { PieceKindPage } from "@/components/metier/piece-kind-page";
 import { R } from "@/lib/routes";
 
-export const metadata = { title: "Bon de commande client" };
+export const metadata = { title: "Commandes clients" };
 
 export default async function Page({
   searchParams,
@@ -15,10 +15,9 @@ export default async function Page({
       kind="bon_commande"
       base={R.clientBc}
       label="Entreprise"
-      title="Bons de commande"
-      tail="client."
-      text="BC à renvoyer au client. Déposez un PDF ou transformez un achat depuis la pièce."
-      empty="Aucun bon de commande client."
+      title="Commandes clients"
+      text="Suivez les bons de commande envoyés à vos clients."
+      empty="Aucune commande client. Transformez un devis ou importez un PDF."
       dropHint="PDF bon de commande client."
       chantierSlug={q.chantier}
     />

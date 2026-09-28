@@ -14,7 +14,11 @@ export function n(value: number) {
 }
 
 export function pct(value: number, digits = 1) {
-  return `${frOne.format(value)}%`;
+  const fmt =
+    digits === 1
+      ? frOne
+      : new Intl.NumberFormat("fr-FR", { maximumFractionDigits: digits });
+  return `${fmt.format(value)}%`;
 }
 
 export function eur(value: number) {

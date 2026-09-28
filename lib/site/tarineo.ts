@@ -1,5 +1,5 @@
 /**
- * Contenu de la landing Tarinéo : textes, démo, tarifs, FAQ.
+ * Contenu de la landing TARINEO : textes, démo, tarifs, FAQ.
  * Un seul fichier à modifier — les composants de components/site/ ne contiennent pas de copy métier.
  *
  * Toutes les données chiffrées ci-dessous sont des DONNÉES DE DÉMONSTRATION,
@@ -35,7 +35,7 @@ export const DEMO_NOTE = "Données fictives.";
 export const HERO = {
   badge: OFFER,
   title: "Déposez vos devis.",
-  titleTail: "Tarinéo fait le reste.",
+  titleTail: "TARINEO fait le reste.",
   text: "Hausses de prix détectées, documents rangés par chantier, devis client prêt en 2 minutes.",
   primary: { label: CTA_TRIAL.long, href: "/inscription" },
   secondary: { label: "Voir comment ça marche", href: "/#comment" },
@@ -133,7 +133,7 @@ export const HOW_STEPS: {
   {
     id: "analyse",
     label: "Analyser",
-    title: "Tarinéo extrait les lignes et les prix.",
+    title: "TARINEO extrait les lignes et les prix.",
     text: "Références, désignations, quantités et prix unitaires sont lus automatiquement. Vous vérifiez, vous corrigez si besoin.",
   },
   {
@@ -438,14 +438,14 @@ export const CHANTIER_DEMO = {
 
 export const FOUNDER = {
   name: "Noam",
-  role: "Fondateur de Tarinéo",
+  role: "Fondateur de TARINEO",
   /** Photo à déposer dans /public. Absente : un portrait neutre s'affiche à la place. */
   photo: "/landing/fondateur.jpg",
-  text: "Bac Pro Travaux Publics, passé chez Colas, il a créé Tarinéo pour les artisans qu’il a côtoyés sur les chantiers : des pros qui n’ont pas le temps de vérifier chaque ligne de facture, et qui méritent un outil simple pour protéger leur marge.",
+  text: "Bac Pro Travaux Publics, passé chez Colas, il a créé TARINEO pour les artisans qu’il a côtoyés sur les chantiers : des pros qui n’ont pas le temps de vérifier chaque ligne de facture, et qui méritent un outil simple pour protéger leur marge.",
   facts: [
     "Bac Pro Travaux Publics",
     "Passé chez Colas",
-    "Fondateur de Tarinéo",
+    "Fondateur de TARINEO",
   ],
 } as const;
 
@@ -462,7 +462,7 @@ export const SUPPLIERS = [
 ] as const;
 
 export const SUPPLIERS_DISCLAIMER =
-  "Noms cités à titre d’exemple de fournisseurs courants. Tarinéo n’est affilié à aucun d’entre eux.";
+  "Noms cités à titre d’exemple de fournisseurs courants. TARINEO n’est affilié à aucun d’entre eux.";
 
 /* ------------------------------------------------------------------ */
 /* Bénéfices                                                           */
@@ -472,7 +472,7 @@ export type FeatureId =
   "alertes" | "classement" | "depenses" | "comparateur" | "devis" | "export";
 
 /**
- * Fonctionnalités DISPONIBLES dans l'app Tarinéo (voir tarineo-app/src/lib/features.ts).
+ * Fonctionnalités DISPONIBLES dans l'app TARINEO (voir tarineo-app/src/lib/features.ts).
  * `soon` = annoncé mais pas encore livré : affiché avec un badge « Bientôt ».
  */
 export const FEATURES: {
@@ -504,7 +504,7 @@ export const FEATURES: {
     id: "comparateur",
     kicker: "Comparateur",
     title: "Le meilleur prix entre vos enseignes.",
-    text: "Quand un prix monte, Tarinéo vérifie si vous avez payé moins cher la même référence fabricant chez un autre de vos distributeurs.",
+    text: "Quand un prix monte, TARINEO vérifie si vous avez payé moins cher la même référence fabricant chez un autre de vos distributeurs.",
   },
   {
     id: "devis",
@@ -516,7 +516,7 @@ export const FEATURES: {
     id: "export",
     kicker: "Prix & export",
     title: "Prix de vente suggéré, export comptable.",
-    text: "Tarinéo propose un prix de vente à partir de vos derniers achats et de votre marge. Export comptable de vos dépenses en un fichier.",
+    text: "TARINEO propose un prix de vente à partir de vos derniers achats et de votre marge. Export comptable de vos dépenses en un fichier.",
   },
 ];
 
@@ -665,11 +665,11 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: "Puis-je importer une photo ?",
-        a: "Oui, prise sur le chantier ou au comptoir. Si la lecture n’est pas assez sûre, Tarinéo vous demande de vérifier les lignes concernées avant de les enregistrer.",
+        a: "Oui, prise sur le chantier ou au comptoir. Si la lecture n’est pas assez sûre, TARINEO vous demande de vérifier les lignes concernées avant de les enregistrer.",
       },
       {
         q: "Quels fournisseurs sont compatibles ?",
-        a: "Tarinéo lit le contenu du document, pas un format propre à une enseigne : Cedeo, Point.P, Rexel, Brossette, Richardson, Aubade ou votre grossiste local. Le nom du distributeur est détecté automatiquement.",
+        a: "TARINEO lit le contenu du document, pas un format propre à une enseigne : Cedeo, Point.P, Rexel, Brossette, Richardson, Aubade ou votre grossiste local. Le nom du distributeur est détecté automatiquement.",
       },
     ],
   },
@@ -679,11 +679,11 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         q: "Je n’ai pas encore d’historique, ça marche quand même ?",
-        a: "Oui. Importez vos factures des 3 derniers mois en une fois, Tarinéo construit votre historique automatiquement.",
+        a: "Oui. Importez vos factures des 3 derniers mois en une fois, TARINEO construit votre historique automatiquement.",
       },
       {
-        q: "Comment Tarinéo analyse mes prix ?",
-        a: "L’IA lit chaque ligne (référence, désignation, quantité, prix, remise). Le calcul, lui, est fait par Tarinéo : chaque prix est comparé à vos propres achats précédents — dernier prix payé et moyenne 12 mois. Une alerte s’affiche au-delà de +3 %.",
+        q: "Comment TARINEO analyse mes prix ?",
+        a: "L’IA lit chaque ligne (référence, désignation, quantité, prix, remise). Le calcul, lui, est fait par TARINEO : chaque prix est comparé à vos propres achats précédents — dernier prix payé et moyenne 12 mois. Une alerte s’affiche au-delà de +3 %.",
       },
       {
         q: "Comparez-vous mes prix avec ceux d’autres artisans ?",
@@ -701,7 +701,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         q: "L’essai est-il vraiment sans carte ?",
-        a: "Oui : le 1er mois est offert, sans carte bancaire. Vous ajoutez un moyen de paiement seulement si Tarinéo vous est utile.",
+        a: "Oui : le 1er mois est offert, sans carte bancaire. Vous ajoutez un moyen de paiement seulement si TARINEO vous est utile.",
       },
       {
         q: "Puis-je annuler mon abonnement ?",

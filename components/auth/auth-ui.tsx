@@ -235,7 +235,9 @@ export function GoogleButton({ next }: { next: string }) {
         )}
         Continuer avec Google
       </Button>
-      {error ? <FormMessage>Google n’est pas encore activé. Utilise ton email.</FormMessage> : null}
+      {error ? (
+        <FormMessage>Connexion Google impossible. Réessaie, ou utilise ton email.</FormMessage>
+      ) : null}
     </div>
   );
 }

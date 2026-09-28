@@ -106,7 +106,7 @@ export function CommandPreview() {
                 <circle cx="330" cy="130" r="4" fill="rgba(255,255,255,.5)" />
               </svg>
               <span className="absolute top-[88px] left-[52%] rounded-full bg-[#f3f3f2] px-3 py-1 text-[12px] font-semibold text-[#111]">
-                Navpit · on course
+                TARINEO · on course
               </span>
             </Panel>
           </div>

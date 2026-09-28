@@ -364,6 +364,26 @@ export type Database = {
         },
         "label" | "old_price" | "new_price"
       >;
+      follow_ups: Table<
+        {
+          id: string;
+          user_id: string;
+          document_id: string;
+          chantier_id: string | null;
+          audience: "client" | "fournisseur";
+          status: "due" | "scheduled" | "sent" | "answered" | "done" | "cancelled";
+          scheduled_at: string | null;
+          last_action_at: string | null;
+          sent_at: string | null;
+          to_email: string;
+          subject: string;
+          body: string;
+          created_at: string;
+          updated_at: string;
+          attempt_number: number;
+        },
+        "document_id" | "audience"
+      >;
     };
     Views: Record<string, never>;
     Functions: {

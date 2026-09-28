@@ -13,10 +13,12 @@ import { ServiceWorker } from "@/components/shell/service-worker";
 import { ProductTracker } from "@/lib/analytics/client";
 import { SiteAnalytics } from "@/components/site/analytics";
 import { CookieConsentBanner } from "@/components/site/cookie-consent";
+import { ThemeProvider } from "@/components/theme/theme-provider";
 import { GTM_HEAD_SCRIPT, GTM_ID } from "@/lib/analytics/gtm";
 import { BRAND } from "@/lib/brand";
 import { siteMetadata } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/site-url";
+import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const interTight = Inter_Tight({
@@ -25,7 +27,7 @@ const interTight = Inter_Tight({
   weight: ["400", "500", "600", "700"],
 });
 
-/** Typo de marque Tarinéo (site public) — même police que l'app Tarinéo. */
+/** Typo de marque TARINEO (site public) — même police que l'app TARINEO. */
 const barlow = Barlow({
   variable: "--font-barlow",
   subsets: ["latin"],
@@ -67,11 +69,11 @@ export const metadata: Metadata = {
   appleWebApp: { title: BRAND.name, capable: true, statusBarStyle: "default" },
   icons: {
     icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/brand/favicon/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/brand/favicon/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: { url: "/icons/apple-touch-icon.png", sizes: "180x180" },
-    shortcut: "/icons/icon-192.png",
+    apple: { url: "/brand/favicon/apple-touch-icon.png", sizes: "180x180" },
+    shortcut: "/brand/favicon/icon-192.png",
   },
 };
 
@@ -79,8 +81,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // même valeur que --color-bg (globals.css)
-  themeColor: "#f3f3f2",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F5F3" },
+    { media: "(prefers-color-scheme: dark)", color: "#0A0A0A" },
+  ],
 };
 
 export default function RootLayout({
@@ -89,13 +93,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="fr"
-      // l'app est en clair : empêche studio.css de passer les couleurs d'état en mode sombre
-      data-theme="light"
-      className={`${interTight.variable} ${barlow.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
-    >
-      <body className="antialiased">
+    <html lang="fr" suppressHydrationWarning>
+      <body
+        className={`antialiased ${interTight.variable} ${barlow.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
+        suppressHydrationWarning
+      >
+        <Script id="tarineo-theme" strategy="beforeInteractive">
+          {THEME_BOOTSTRAP_SCRIPT}
+        </Script>
         <Script id="gtm" strategy="beforeInteractive">
           {GTM_HEAD_SCRIPT}
         </Script>
@@ -110,13 +115,15 @@ export default function RootLayout({
         {process.env.NEXT_PUBLIC_FIGMA_CAPTURE === "1" ? (
           <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" strategy="beforeInteractive" />
         ) : null}
-        <NavigationProgress />
-        <PwaInstallBanner />
-        {children}
-        <ProductTracker />
-        <CookieConsentBanner />
-        <SiteAnalytics />
-        <ServiceWorker />
+        <ThemeProvider>
+          <NavigationProgress />
+          <PwaInstallBanner />
+          {children}
+          <ProductTracker />
+          <CookieConsentBanner />
+          <SiteAnalytics />
+          <ServiceWorker />
+        </ThemeProvider>
       </body>
     </html>
   );

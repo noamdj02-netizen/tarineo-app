@@ -40,7 +40,7 @@ export function EntrepriseForm({
     >
       <input type="hidden" name="logoPath" value={profil.logo_path} />
       <section className="card-soft flex flex-col gap-4 p-5">
-        <p className="mono-label">/ Identité ///</p>
+      <p className="text-[12px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">Identité visuelle</p>
         <p className="text-[13px] text-muted-foreground">Repris sur chaque devis, facture et bon client.</p>
         <div className="flex items-center gap-4">
           {preview ? (
@@ -103,7 +103,7 @@ export function EntrepriseForm({
       </section>
 
       <section className="card-soft flex flex-col gap-3 p-5">
-        <p className="mono-label">/ TVA ///</p>
+        <p className="text-[12px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">TVA & marge</p>
         {(["FRANCHISE_293B", "NORMAL"] as const).map((v) => (
           <label key={v} className="flex items-start gap-2 text-[14px]">
             <input type="radio" name="regimeTva" value={v} defaultChecked={profil.regime_tva === v} className="mt-1" />

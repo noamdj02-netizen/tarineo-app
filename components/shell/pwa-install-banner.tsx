@@ -31,7 +31,7 @@ function isIos() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-/** Bandeau haut d’écran : installer Navpit (PWA) sur mobile. */
+/** Bandeau haut d’écran : installer TARINEO (PWA) sur mobile. */
 export function PwaInstallBanner() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);

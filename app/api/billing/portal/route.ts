@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getStripe, isStripeConfigured } from "@/lib/billing/stripe";
 import { getDb } from "@/lib/db";
+import { isDeployedRuntime } from "@/lib/runtime-config";
+import { getSiteUrl } from "@/lib/site-url";
 
 /** Portail client Stripe : carte bancaire, factures, résiliation. */
 export async function POST(request: NextRequest) {
-  const origin = request.nextUrl.origin;
+  const origin = isDeployedRuntime() ? getSiteUrl() : request.nextUrl.origin;
   const db = await getDb();
   if (!db) return NextResponse.redirect(`${origin}/login?next=/abonnement`, 303);
   if (!isStripeConfigured()) return NextResponse.redirect(`${origin}/abonnement?erreur=config`, 303);

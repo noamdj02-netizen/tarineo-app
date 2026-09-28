@@ -1,6 +1,9 @@
 "use client";
 
 import { Loader2, Plus } from "lucide-react";
+import { EmptyState } from "@/components/app-ui/empty-state";
+import { FilterPills } from "@/components/app-ui/filter-pills";
+import { StatusBadge, chantierTone } from "@/components/tarineo/status-badge";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -10,42 +13,84 @@ import type { ChantierCard } from "@/lib/metier/types";
 import { DEMO_MARK } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
-export function ChantierGrid({ chantiers }: { chantiers: ChantierCard[] }) {
+export function ChantierGrid({
+  chantiers,
+  dueByChantier = {},
+}: {
+  chantiers: ChantierCard[];
+  dueByChantier?: Map<string, number> | Record<string, number>;
+}) {
+  const dueOf = (id: string) =>
+    dueByChantier instanceof Map ? (dueByChantier.get(id) ?? 0) : (dueByChantier[id] ?? 0);
+  const [filter, setFilter] = useState<"all" | ChantierCard["status"]>("all");
+  const rows = filter === "all" ? chantiers : chantiers.filter((c) => c.status === filter);
   return (
-    <div className="grid gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
-      {chantiers.map((c) => (
+    <div className="flex flex-col gap-4">
+      <FilterPills
+        value={filter}
+        onChange={setFilter}
+        options={[
+          { id: "all", label: "Tous" },
+          { id: "focus", label: "En cours" },
+          { id: "pause", label: "En pause" },
+          { id: "fini", label: "Terminés" },
+        ]}
+      />
+      {!rows.length && filter !== "all" ? (
+        <EmptyState
+          title="Aucun chantier"
+          text="Aucun chantier dans ce filtre. Affichez tous les chantiers ou créez-en un nouveau."
+          actionHref="/chantiers#nouveau"
+          actionLabel="Nouveau chantier"
+        />
+      ) : (
+      <div className="grid gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
+      {rows.map((c) => (
         <article
           key={c.id}
           className={cn(
-            "card-soft relative flex flex-col gap-3 p-5 transition-shadow hover:shadow-lift",
-            c.status === "focus"
-              ? "shadow-[inset_4px_0_24px_-8px_color-mix(in_srgb,var(--color-brand-orange)_55%,transparent),inset_-4px_0_24px_-8px_color-mix(in_srgb,var(--color-brand-orange)_55%,transparent),inset_4px_0_0_var(--color-brand-orange),inset_-4px_0_0_var(--color-brand-orange)]"
-              : c.status === "pause"
-                ? "shadow-[inset_4px_0_0_#f4c4a8]"
-                : "",
+            "card-soft card-lift relative flex flex-col gap-3 p-5",
+            c.status === "focus" && "border-l-[3px] border-l-nav-orange",
+            c.status === "pause" && "border-l-[3px] border-l-st-pause",
+            c.status === "fini" && "border-l-[3px] border-l-line-strong",
           )}
         >
           <div>
             {c.seed_key ? <p className="mono-label text-[10px]">{DEMO_MARK}</p> : null}
-            <h3 className="font-display text-[22px] leading-tight font-semibold tracking-tight">
-              <Link
-                href={`/chantiers/${c.slug}`}
-                className="outline-none after:absolute after:inset-0 after:rounded-card"
-              >
-                {c.name}
-              </Link>
-            </h3>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="font-display text-[16px] leading-snug font-semibold tracking-[-0.02em]">
+                <Link
+                  href={`/chantiers/${c.slug}`}
+                  className="outline-none after:absolute after:inset-0 after:rounded-card"
+                >
+                  {c.name}
+                </Link>
+              </h3>
+              <StatusBadge
+                label={c.status === "focus" ? "En cours" : c.status === "pause" ? "Pause" : "Fini"}
+                tone={chantierTone(c.status)}
+                className="relative z-10 shrink-0"
+              />
+            </div>
             <p className="mt-1 text-[13.5px] text-muted-foreground">{c.address || "Lieu à préciser"}</p>
           </div>
           <p className="text-[14px]">
             {c.client_name ?? "Client à lier"} · {c.docs_count} document{c.docs_count > 1 ? "s" : ""}
           </p>
-          <div className="relative z-10" onClick={(e) => e.preventDefault()}>
+          {dueOf(c.id) > 0 ? (
+            <p className="text-[13px] text-brand-orange">
+              {dueOf(c.id)} relance{dueOf(c.id) > 1 ? "s" : ""} à traiter
+            </p>
+          ) : null}
+          <p className="text-[13px] font-medium text-tarineo-orange">Voir le chantier →</p>
+          <div className="relative z-10 hidden md:block" onClick={(e) => e.preventDefault()}>
             <ChantierStatusToggle id={c.id} status={c.status} />
           </div>
         </article>
       ))}
       <NewChantier />
+    </div>
+      )}
     </div>
   );
 }
@@ -82,11 +127,11 @@ function NewChantier() {
             });
           }}
         >
-          <input name="name" required placeholder="Nom du chantier" className="min-h-11 rounded-xl border border-line px-3" />
-          <input name="client" placeholder="Client (ex. Madame Dupont)" className="min-h-11 rounded-xl border border-line px-3" />
-          <input name="address" placeholder="Lieu du chantier" className="min-h-11 rounded-xl border border-line px-3" />
+          <input name="name" required placeholder="Nom du chantier" className="h-12 rounded-[12px] border border-line px-3 text-base md:h-9 md:rounded-[10px] md:text-[14px]" />
+          <input name="client" placeholder="Client (ex. Madame Dupont)" className="h-12 rounded-[12px] border border-line px-3 text-base md:h-9 md:rounded-[10px] md:text-[14px]" />
+          <input name="address" placeholder="Lieu du chantier" className="h-9 rounded-[10px] border border-line px-3 text-[14px]" />
           {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
-          <button type="submit" disabled={pending} className="btn-dark min-h-10 w-fit rounded-xl px-3 text-[13px]">
+          <button type="submit" disabled={pending} className="btn-orange inline-flex h-9 w-fit items-center gap-2 px-3 text-[13.5px] font-medium">
             {pending ? <Loader2 className="size-4 animate-spin" /> : "Créer"}
           </button>
         </form>

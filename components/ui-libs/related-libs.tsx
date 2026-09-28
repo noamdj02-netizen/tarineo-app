@@ -10,7 +10,7 @@ export function HeroRelatedLibs({ libs }: { libs: UiLib[] }) {
         {"/ Libs utiles pour ce style ///"}
       </p>
       <p className="mb-4 mt-2 max-w-[62ch] text-[14px] text-muted-foreground">
-        Liens et prompts Navpit uniquement. On n’embarque pas le code de ces libs.
+        Liens et prompts TARINEO uniquement. On n’embarque pas le code de ces libs.
       </p>
       <ul className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {libs.map((lib) => (

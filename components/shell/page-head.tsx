@@ -1,35 +1,41 @@
+import { PageHeader, type Crumb } from "@/components/app-ui/page-header";
 import { TarineoHdMascot, type TarineoHdMascotName } from "@/components/tarineo-hd-mascot";
 
 /**
- * En-tête d'onglet : label « / LABEL /// », titre en deux tons, chapeau, mascotte HD.
+ * En-tête d’onglet métier : fil d’Ariane, titre produit clair, description, CTA.
+ * `tail` est conservé pour compatibilité mais n’est plus concaténé (titres marketing abandonnés).
  */
 export function PageHead({
   label,
   title,
-  tail,
+  tail: _tail,
   mascot,
+  ornament = "none",
+  crumbs,
+  action,
   children,
 }: {
   label: string;
   title: string;
+  /** @deprecated Titres marketing — ignoré. */
   tail?: string;
   mascot?: TarineoHdMascotName;
+  ornament?: "mascot" | "mark" | "none";
+  crumbs?: Crumb[];
+  action?: React.ReactNode;
   children?: React.ReactNode;
 }) {
+  void _tail;
+  const trail = crumbs ?? [{ href: "/accueil", label: "Accueil" }, { label }];
   return (
-    <div className="mb-6 flex items-end justify-between gap-6">
-      <div className="flex min-w-0 flex-col gap-3">
-        <p className="mono-label">{`/ ${label} ///`}</p>
-        <h1 className="font-display text-[clamp(30px,6vw,44px)] leading-[1.02] font-semibold tracking-tightest text-balance">
-          {title}
-          {tail ? <span className="text-accent-2"> {tail}</span> : null}
-        </h1>
-        {children ? (
-          <p className="max-w-[62ch] text-[15.5px] leading-relaxed text-muted-foreground">{children}</p>
-        ) : null}
-      </div>
-      {mascot ? (
-        <TarineoHdMascot name={mascot} className="-my-3 hidden h-24 w-28 sm:block sm:h-28 sm:w-32 lg:h-32 lg:w-36" label="" />
+    <div className="relative">
+      <PageHeader crumbs={trail} title={title} description={children} action={action} />
+      {ornament === "mascot" && mascot ? (
+        <TarineoHdMascot
+          name={mascot}
+          className="pointer-events-none absolute top-0 right-0 hidden h-16 w-[4.5rem] opacity-80 sm:block"
+          label=""
+        />
       ) : null}
     </div>
   );

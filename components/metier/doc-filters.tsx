@@ -1,5 +1,6 @@
-import Link from "next/link";
+import { filterPillClass } from "@/components/app-ui/filter-pills";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export function DocFilters({
   base,
@@ -29,30 +30,30 @@ export function DocFilters({
   }
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap gap-2">
-        <Link href={href({ chantier: null })} className={cn("rounded-full px-3 py-1.5 text-[13px]", !chantier ? "bg-ink text-accent-ink" : "border border-line")}>
+      <div className="scroll-x">
+        <Link href={href({ chantier: null })} className={cn(filterPillClass(!chantier), "max-md:min-h-11 shrink-0")}>
           Tous chantiers
         </Link>
         {chantiers.map((c) => (
           <Link
             key={c.id}
             href={href({ chantier: c.slug })}
-            className={cn("rounded-full px-3 py-1.5 text-[13px]", chantier === c.slug ? "bg-ink text-accent-ink" : "border border-line")}
+            className={cn(filterPillClass(chantier === c.slug), "max-md:min-h-11 shrink-0")}
           >
             {c.name}
           </Link>
         ))}
       </div>
       {parties?.length ? (
-        <div className="flex flex-wrap gap-2">
-          <Link href={href({ party: null })} className={cn("rounded-full px-3 py-1.5 text-[13px]", !party ? "bg-ink text-accent-ink" : "border border-line")}>
+        <div className="scroll-x">
+          <Link href={href({ party: null })} className={cn(filterPillClass(!party), "max-md:min-h-11 shrink-0")}>
             Toutes enseignes
           </Link>
           {parties.map((p) => (
             <Link
               key={p.id}
               href={href({ party: p.id })}
-              className={cn("rounded-full px-3 py-1.5 text-[13px]", party === p.id ? "bg-ink text-accent-ink" : "border border-line")}
+              className={cn(filterPillClass(party === p.id), "max-md:min-h-11 shrink-0")}
             >
               {p.name}
             </Link>

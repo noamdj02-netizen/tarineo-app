@@ -111,5 +111,9 @@ export function pieceDonneesFromDocument(doc: DocumentCard, entreprise: Entrepri
     totalHt,
     totalTva,
     totalTtc: Math.round((totalHt + totalTva) * 100) / 100,
+    numeroOrigine:
+      typeof doc.extract?.from_title === "string"
+        ? (doc.extract.from_title.match(/n[°º]\s*([A-Z0-9-]+)/i)?.[1] ?? doc.extract.from_title)
+        : undefined,
   };
 }

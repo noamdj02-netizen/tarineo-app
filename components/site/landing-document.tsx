@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils";
 /** Id stable (SSR = client) : les ids générés par base-ui divergent quand la section est pré-rendue. */
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-/** Démo : un document fournisseur (papier) et sa lecture par Tarinéo, un onglet par fournisseur. */
+/** Démo : un document fournisseur (papier) et sa lecture par TARINEO, un onglet par fournisseur. */
 export function LandingDocument() {
   const [supplier, setSupplier] = useState(DEMO_DOCUMENTS[0].supplier);
   const reduce = useReducedMotion();
@@ -152,7 +152,7 @@ export function LandingDocument() {
           <LandingFrame className="h-full" innerClassName="h-full">
             <div className="flex items-center justify-between gap-3 px-5 py-4">
               <div>
-                <p className="text-[15px] font-semibold">Lecture Tarinéo</p>
+                <p className="text-[15px] font-semibold">Lecture TARINEO</p>
                 <p className="text-[13px] text-muted-foreground">
                   Comparé à vos derniers achats
                 </p>

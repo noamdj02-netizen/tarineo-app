@@ -12,7 +12,7 @@ import { CheckInEmail, CHECK_IN_SUBJECT } from "@/emails/check-in";
 
 async function main() {
   const html = await render(
-    CheckInEmail({ firstName: "Camille", appUrl: "https://www.navpit.com" }),
+    CheckInEmail({ firstName: "Camille", appUrl: "https://app.tarineo.com" }),
   );
 
   mkdirSync("/opt/cursor/artifacts/emails", { recursive: true });
@@ -30,7 +30,7 @@ body{margin:0;background:#f6f8fc;font-family:Roboto,Arial,sans-serif;color:#2021
 .snippet{padding:0 20px 16px;color:#5f6368;font-size:13px;border-bottom:1px solid #e8eaed}
 .body{background:#e8e7e5;padding:16px}
 </style></head><body><div class="app">
-<div class="top"><div class="avatar">N</div><div class="meta"><div class="from">Noam de Navpit</div><div class="email">à moi · bonjour@navpit.com</div></div></div>
+<div class="top"><div class="avatar">T</div><div class="meta"><div class="from">TARINEO</div><div class="email">à moi · contact@tarineo.fr</div></div></div>
 <div class="subject">${CHECK_IN_SUBJECT}</div>
 <div class="snippet">Juste un check rapide — tu peux me répondre en deux phrases.</div>
 <div class="body">${html}</div>
@@ -46,7 +46,7 @@ body{margin:0;background:#fff;font-family:Roboto,Arial,sans-serif;color:#202124}
 .body{background:#e8e7e5;padding:8px}
 </style></head><body>
 <div class="bar">Boîte de réception</div>
-<div class="from">Noam de Navpit</div>
+<div class="from">TARINEO</div>
 <div class="to">à moi</div>
 <div class="subject">${CHECK_IN_SUBJECT}</div>
 <div class="snippet">Juste un check rapide — tu peux me répondre en deux phrases.</div>

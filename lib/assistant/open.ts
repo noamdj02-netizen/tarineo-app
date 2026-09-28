@@ -1,7 +1,7 @@
 import type { AssistantFile } from "@/lib/assistant/files";
 
 /** Événement qui ouvre le panneau de l'assistant (voir AssistantPanel), avec une question optionnelle. */
-export const ASSISTANT_EVENT = "navpit:assistant";
+export const ASSISTANT_EVENT = "tarineo:assistant";
 
 export type AssistantEventDetail = {
   question?: string;

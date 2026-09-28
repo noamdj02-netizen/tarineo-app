@@ -23,7 +23,7 @@ const ERRORS: Record<string, string> = {
   config: "Le paiement n’est pas encore branché sur ce serveur (clés Stripe manquantes).",
   deja: "Tu as déjà un abonnement actif.",
   complet: "Les places Fondateur sont toutes prises. Les formules Création et Pro restent disponibles.",
-  prix: "Les tarifs Stripe ne sont pas encore créés. Réessaie dans un instant.",
+  prix: "Les prix TARINEO (lookup tarineo_starter_*, tarineo_pro_*, tarineo_founder) n’existent pas encore dans Stripe. Aucun paiement n’a été lancé.",
   stripe: "Stripe n’a pas répondu. Réessaie dans un instant.",
 };
 
@@ -67,13 +67,23 @@ export default async function AbonnementPage({
   const interval = q.interval === "year" ? "year" : "month";
   const today = priceLabel(info.plan, info.interval ?? "month");
   const headTitle =
-    info.plan === "free" ? "Choisis" : info.isFreeTrial ? "Tu es en" : `Tu paies ${today},`;
-  const headTail =
     info.plan === "free"
-      ? "ta formule."
+      ? "Tarifs"
       : info.isFreeTrial
-        ? "sans carte pour l’instant."
-        : `plan ${PLAN_LABEL[info.plan]}.`;
+        ? "Votre essai Pro"
+        : `Formule ${PLAN_LABEL[info.plan]}`;
+  const headDescription =
+    info.plan === "free"
+      ? `Essai Pro ${PRO_TRIAL_DAYS} jours sans carte, puis Création (${STARTER.month} €) ou Pro (${PRO.month} €).`
+      : info.isFreeTrial
+        ? info.periodEnd
+          ? `Votre essai se termine le ${dateFr(info.periodEnd)}. Ajoutez un paiement avant cette date pour garder votre compte.`
+          : `Profitez de tout Pro pendant ${PRO_TRIAL_DAYS} jours. Ajoutez un paiement avant la fin pour garder votre compte.`
+        : info.plan === "founder"
+          ? "Vous êtes Fondateur : Pro à vie, sans abonnement."
+          : today
+            ? `Vous êtes sur ${PLAN_LABEL[info.plan]} (${today}). Changez de formule depuis le portail Stripe si besoin.`
+            : `Vous êtes sur ${PLAN_LABEL[info.plan]}.`;
 
   return (
     <section className="mx-auto max-w-[760px]">
@@ -84,16 +94,16 @@ export default async function AbonnementPage({
         <ArrowLeft className="size-4" aria-hidden />
         Retour au compte
       </Link>
-      <PageHead mascot="01-pouce-leve" label="Abonnement" title={headTitle} tail={headTail}>
-        {info.plan === "free"
-          ? `Essai Pro ${PRO_TRIAL_DAYS} jours sans carte, puis Création (${STARTER.month} €) ou Pro (${PRO.month} €).`
-          : info.isFreeTrial
-            ? info.periodEnd
-              ? `Ton essai se termine le ${dateFr(info.periodEnd)}. Ajoute un paiement avant cette date pour garder ton compte — sinon il sera supprimé.`
-              : `Profite de tout Pro pendant ${PRO_TRIAL_DAYS} jours. Ajoute un paiement avant la fin pour garder ton compte.`
-            : info.plan === "founder"
-              ? "Tu es Fondateur : Pro à vie, sans abonnement. Merci !"
-              : `Tu es sur ${PLAN_LABEL[info.plan]}. Change de formule depuis le portail Stripe si besoin.`}
+      <PageHead
+        label="Abonnement"
+        title={headTitle}
+        crumbs={[
+          { href: "/accueil", label: "Accueil" },
+          { href: "/compte", label: "Compte" },
+          { label: "Tarifs" },
+        ]}
+      >
+        {headDescription}
       </PageHead>
 
       <RevealGroup className="flex flex-col gap-4">
@@ -131,7 +141,7 @@ export default async function AbonnementPage({
               {wanted === "founder"
                 ? "/ Fondateur ///"
                 : info.isFreeTrial
-                  ? "/ Garder Tarinéo après l’essai ///"
+                  ? "/ Garder TARINEO après l’essai ///"
                   : "/ Passer en payant ///"}
             </p>
             {wanted !== "founder" ? (

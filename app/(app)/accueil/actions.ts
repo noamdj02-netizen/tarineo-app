@@ -21,7 +21,7 @@ function toDate(v: unknown) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Événements Navpit + iCal entre deux instants (ISO). */
+/** Événements calendrier + iCal entre deux instants (ISO). */
 export async function getCalendar(
   fromIso: string,
   toIso: string,

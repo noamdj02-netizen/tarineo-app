@@ -1,4 +1,4 @@
-// Pousse les emails Supabase Auth en français, style Navpit (mascotte + layout Dither-like).
+// Pousse les emails Supabase Auth en français, style TARINEO.
 // Usage : SUPABASE_ACCESS_TOKEN=sbp_… node scripts/auth-emails.mjs [--dry]
 // Nécessite SMTP custom sur le projet (sinon l’API refuse les templates custom).
 
@@ -7,7 +7,7 @@ import { navpitTransactionalHtml } from "../emails/html-shell.mjs";
 const PROJECT = "tmhijqvuflokcsgcfolu";
 
 const config = {
-  mailer_subjects_confirmation: "Confirme ton compte Navpit",
+  mailer_subjects_confirmation: "Confirme ton compte TARINEO",
   mailer_templates_confirmation_content: navpitTransactionalHtml({
     label: "Inscription",
     title: "Plus qu’un clic",
@@ -16,16 +16,16 @@ const config = {
     ctaHref: "{{ .ConfirmationURL }}",
     ctaLabel: "Confirmer mon email",
   }),
-  mailer_subjects_magic_link: "Ton lien de connexion Navpit",
+  mailer_subjects_magic_link: "Ton lien de connexion TARINEO",
   mailer_templates_magic_link_content: navpitTransactionalHtml({
     label: "Connexion",
     title: "Ton lien de connexion",
-    body: "Colle ce code sur la page de connexion Navpit, ou utilise le bouton (lien à usage unique, ~1 h).",
+    body: "Colle ce code sur la page de connexion TARINEO, ou utilise le bouton (lien à usage unique, ~1 h).",
     code: "{{ .Token }}",
     ctaHref: "{{ .ConfirmationURL }}",
     ctaLabel: "Me connecter",
   }),
-  mailer_subjects_recovery: "Nouveau mot de passe Navpit",
+  mailer_subjects_recovery: "Nouveau mot de passe TARINEO",
   mailer_templates_recovery_content: navpitTransactionalHtml({
     label: "Mot de passe",
     title: "Nouveau mot de passe",
@@ -34,11 +34,11 @@ const config = {
     ctaHref: "{{ .ConfirmationURL }}",
     ctaLabel: "Choisir mon mot de passe",
   }),
-  mailer_subjects_email_change: "Confirme ta nouvelle adresse Navpit",
+  mailer_subjects_email_change: "Confirme ta nouvelle adresse TARINEO",
   mailer_templates_email_change_content: navpitTransactionalHtml({
     label: "Email",
     title: "Confirme ta nouvelle adresse",
-    body: "Clique pour utiliser cette adresse email sur ton compte Navpit.",
+    body: "Clique pour utiliser cette adresse email sur ton compte TARINEO.",
     ctaHref: "{{ .ConfirmationURL }}",
     ctaLabel: "Confirmer l’adresse",
   }),

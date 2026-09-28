@@ -46,7 +46,7 @@ export function HeroPrompt({ onFilm = false }: { onFilm?: boolean }) {
         )}
       >
         <label htmlFor="hero-prompt" className="sr-only">
-          Ce que tu veux faire avec Navpit
+          Ce que tu veux faire avec TARINEO
         </label>
         <div
           className={cn(

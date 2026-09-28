@@ -1,5 +1,6 @@
 import { DEMO_IDS, demoNow } from "@/lib/metier/demo";
 import type { CompanyProfile } from "@/lib/metier/company";
+import type { FollowUp } from "@/lib/metier/follow-ups";
 import type {
   Chantier,
   ChantierStatus,
@@ -17,6 +18,7 @@ export type MemUser = {
   documents: DocumentRow[];
   lines: DocumentLine[];
   alerts: PriceAlert[];
+  followUps: FollowUp[];
 };
 
 const g = globalThis as unknown as {
@@ -31,7 +33,7 @@ function uid(prefix: string) {
 }
 
 export function emptyUser(): MemUser {
-  return { parties: [], products: [], chantiers: [], documents: [], lines: [], alerts: [] };
+  return { parties: [], products: [], chantiers: [], documents: [], lines: [], alerts: [], followUps: [] };
 }
 
 export function getMem(userId: string): MemUser {
@@ -40,6 +42,7 @@ export function getMem(userId: string): MemUser {
     u = emptyUser();
     store.set(userId, u);
   }
+  if (!u.followUps) u.followUps = [];
   return u;
 }
 
@@ -176,6 +179,11 @@ export function memCreateChantier(
   input: { name: string; address?: string; clientName?: string },
 ): Chantier {
   const u = seedMem(userId);
+  const name = input.name.trim();
+  const existing = u.chantiers.find(
+    (c) => c.name === name || c.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() === name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(),
+  );
+  if (existing) return existing;
   const slug = input.name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -235,10 +243,13 @@ export function memTransform(
   markup: number,
   clientId: string | null,
   kind: DocumentRow["kind"] = "devis",
+  copySell = false,
 ): DocumentRow | null {
   const u = seedMem(userId);
   const src = u.documents.find((d) => d.id === sourceId);
   if (!src) return null;
+  const already = u.documents.find((d) => d.source_document_id === src.id && d.kind === kind && d.direction === "out");
+  if (already) return already;
   const now = demoNow();
   const n = u.documents.filter((d) => d.direction === "out" && d.kind === kind).length + 1;
   const titles: Record<string, string> = {
@@ -247,22 +258,24 @@ export function memTransform(
     bon_commande: "Bon de commande client",
     bon_enlevement: "Bon d’enlèvement",
   };
+  const factor = copySell ? 1 : markup;
   const out: DocumentRow = {
     id: uid("d"),
     direction: "out",
     kind,
     title: `${titles[kind] ?? "Document client"} n°${String(n).padStart(3, "0")}`,
-    party_id: clientId,
+    party_id: clientId ?? src.party_id,
     chantier_id: src.chantier_id,
     source_document_id: src.id,
     file_path: "",
     extract: {
-      markup,
+      markup: factor,
       from: src.id,
+      from_title: src.title,
       totals: (() => {
         const t = (src.extract?.totals ?? src.extract) as { ht?: number | null } | undefined;
         if (!t || typeof t !== "object") return src.extract?.totals ?? null;
-        return { ...t, ht: t.ht != null ? Math.round(Number(t.ht) * markup * 100) / 100 : t.ht };
+        return { ...t, ht: t.ht != null ? Math.round(Number(t.ht) * factor * 100) / 100 : t.ht };
       })(),
     },
     status: "ready",
@@ -273,11 +286,14 @@ export function memTransform(
   u.documents.unshift(out);
   const srcLines = u.lines.filter((l) => l.document_id === src.id);
   for (const l of srcLines) {
+    const sell = copySell
+      ? Number(l.sell_price || l.buy_price)
+      : Math.round(Number(l.buy_price) * markup * 100) / 100;
     u.lines.push({
       ...l,
       id: uid("l"),
       document_id: out.id,
-      sell_price: Math.round(l.buy_price * markup * 100) / 100,
+      sell_price: sell,
     });
   }
   return out;
@@ -339,4 +355,33 @@ export function memGetCompany(userId: string): CompanyProfile | null {
 
 export function memSetCompany(userId: string, profile: CompanyProfile) {
   companies.set(userId, profile);
+}
+
+export function memMergeExtract(userId: string, id: string, patch: Record<string, unknown>) {
+  const u = getMem(userId);
+  const doc = u.documents.find((d) => d.id === id);
+  if (!doc) return null;
+  const prev = (doc.extract && typeof doc.extract === "object" ? doc.extract : {}) as Record<string, unknown>;
+  doc.extract = { ...prev, ...patch };
+  return doc;
+}
+
+export function memListFollowUps(userId: string): FollowUp[] {
+  return [...getMem(userId).followUps];
+}
+
+export function memUpsertFollowUp(userId: string, row: FollowUp) {
+  const u = getMem(userId);
+  const i = u.followUps.findIndex((f) => f.id === row.id);
+  if (i >= 0) u.followUps[i] = row;
+  else u.followUps.unshift(row);
+  return row;
+}
+
+export function memUpdateFollowUp(userId: string, id: string, patch: Partial<FollowUp>) {
+  const u = getMem(userId);
+  const row = u.followUps.find((f) => f.id === id);
+  if (!row) return null;
+  Object.assign(row, patch);
+  return row;
 }

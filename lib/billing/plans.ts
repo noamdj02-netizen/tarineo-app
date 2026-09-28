@@ -1,5 +1,5 @@
 /**
- * Plans et prix de Navpit : le seul fichier à modifier pour changer une offre.
+ * Plans et prix TARINEO : le seul fichier à modifier pour changer une offre.
  */
 
 export type PlanId = "free" | "starter" | "pro" | "founder";

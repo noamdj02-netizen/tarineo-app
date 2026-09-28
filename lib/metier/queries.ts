@@ -25,15 +25,45 @@ import type {
   Product,
 } from "@/lib/metier/types";
 import { CLIENT_OUT_LABEL } from "@/lib/metier/types";
+import { normalizeChantierText } from "@/lib/metier/chantier-match";
+import { isOpenAccess } from "@/lib/supabase/config";
 
 function isMissingTable(error: { message?: string; code?: string } | null) {
   const m = error?.message ?? "";
   return /does not exist|schema cache|Could not find the table/i.test(m);
 }
 
+function allowLocalMemory() {
+  return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "preview" && process.env.VERCEL_ENV !== "production";
+}
+
+function logMetier(op: string, error: unknown) {
+  console.error("[metier]", op, error);
+}
+
+function persistUnavailable(op: string): never {
+  logMetier(op, "no-session");
+  throw new Error("Vos données sont inaccessibles. Vérifiez la connexion, puis réessayez.");
+}
+
+function failRead(op: string, error: unknown): never {
+  logMetier(op, error);
+  throw new Error("Impossible de charger vos données. Réessayez.");
+}
+
 async function getRemote() {
   const db = await getDb();
   return db;
+}
+
+async function assertOwned(
+  db: NonNullable<Awaited<ReturnType<typeof getRemote>>>,
+  table: "parties" | "chantiers",
+  id: string | null | undefined,
+) {
+  if (!id) return null;
+  const { data } = await db.supabase.from(table).select("id").eq("id", id).eq("user_id", db.user.id).maybeSingle();
+  return data?.id ?? null;
 }
 
 function hydrateCards(userId: string): { parties: Party[]; products: Product[]; chantiers: Chantier[]; documents: DocumentRow[]; lines: DocumentLine[]; alerts: PriceAlert[] } {
@@ -74,6 +104,9 @@ function docCardsFromMem(
 }
 
 export async function ensureMetierSeed() {
+  const vercel = process.env.VERCEL_ENV;
+  if (vercel === "production" || vercel === "preview") return;
+  if (process.env.NODE_ENV === "production" || !isOpenAccess()) return;
   const db = await getRemote();
   if (!db) return;
   const { data, error } = await db.supabase
@@ -236,14 +269,21 @@ export async function ensureMetierSeed() {
 
 export async function listChantiers(): Promise<ChantierCard[]> {
   const db = await getRemote();
-  if (!db) return cardsFromMem("local");
+  if (!db) {
+    if (!allowLocalMemory()) persistUnavailable("listChantiers");
+    return cardsFromMem("local");
+  }
   await ensureMetierSeed();
   const { data, error } = await db.supabase
     .from("chantiers")
     .select("id, slug, name, address, client_id, project_id, status, seed_key, created_at, updated_at")
     .eq("user_id", db.user.id)
     .order("updated_at", { ascending: false });
-  if (error) return cardsFromMem(db.user.id);
+  if (error) {
+    if (!allowLocalMemory()) failRead("listChantiers", error);
+    logMetier("listChantiers", error);
+    return [];
+  }
   const ids = (data ?? []).map((c) => c.id);
   const [{ data: parties }, { data: docs }] = await Promise.all([
     db.supabase.from("parties").select("id, name").eq("user_id", db.user.id),
@@ -275,6 +315,7 @@ export async function getChantier(slug: string): Promise<(ChantierCard & { docum
 export async function listParties(kind?: Party["kind"]): Promise<Party[]> {
   const db = await getRemote();
   if (!db) {
+    if (!allowLocalMemory()) persistUnavailable("listParties");
     const u = hydrateCards("local");
     return kind ? u.parties.filter((p) => p.kind === kind) : u.parties;
   }
@@ -283,8 +324,9 @@ export async function listParties(kind?: Party["kind"]): Promise<Party[]> {
   if (kind) q = q.eq("kind", kind);
   const { data, error } = await q.order("name");
   if (error) {
-    const u = hydrateCards(db.user.id);
-    return kind ? u.parties.filter((p) => p.kind === kind) : u.parties;
+    if (!allowLocalMemory()) failRead("listParties", error);
+    logMetier("listParties", error);
+    return [];
   }
   return (data ?? []) as Party[];
 }
@@ -295,7 +337,10 @@ export async function listDocuments(filter?: {
   kind?: DocumentRow["kind"];
 }): Promise<DocumentCard[]> {
   const db = await getRemote();
-  if (!db) return docCardsFromMem("local", filter);
+  if (!db) {
+    if (!allowLocalMemory()) persistUnavailable("listDocuments");
+    return docCardsFromMem("local", filter);
+  }
   await ensureMetierSeed();
   let q = db.supabase
     .from("documents")
@@ -306,7 +351,11 @@ export async function listDocuments(filter?: {
   if (filter?.chantierId) q = q.eq("chantier_id", filter.chantierId);
   if (filter?.kind) q = q.eq("kind", filter.kind);
   const { data, error } = await q;
-  if (error) return docCardsFromMem(db.user.id, filter);
+  if (error) {
+    if (!allowLocalMemory()) failRead("listDocuments", error);
+    logMetier("listDocuments", error);
+    return [];
+  }
   const docs = (data ?? []) as DocumentRow[];
   const [{ data: parties }, { data: chantiers }, { data: lines }] = await Promise.all([
     db.supabase.from("parties").select("id, name, kind, address").eq("user_id", db.user.id),
@@ -349,14 +398,21 @@ export async function getDocument(id: string): Promise<DocumentCard | null> {
 
 export async function listAlerts(): Promise<PriceAlert[]> {
   const db = await getRemote();
-  if (!db) return hydrateCards("local").alerts;
+  if (!db) {
+    if (!allowLocalMemory()) persistUnavailable("listAlerts");
+    return hydrateCards("local").alerts;
+  }
   await ensureMetierSeed();
   const { data, error } = await db.supabase
     .from("price_alerts")
     .select("id, product_id, document_id, chantier_id, label, old_price, new_price, created_at")
     .eq("user_id", db.user.id)
     .order("created_at", { ascending: false });
-  if (error) return hydrateCards(db.user.id).alerts;
+  if (error) {
+    if (!allowLocalMemory()) failRead("listAlerts", error);
+    logMetier("listAlerts", error);
+    return [];
+  }
   const { data: chantiers } = await db.supabase.from("chantiers").select("id, name").eq("user_id", db.user.id);
   const names = new Map((chantiers ?? []).map((c) => [c.id, c.name]));
   return (data ?? []).map((a) => ({
@@ -437,6 +493,7 @@ export async function createParty(input: {
   const address = [input.address?.trim(), input.website?.trim()].filter(Boolean).join(" · ");
   const db = await getRemote();
   if (!db) {
+    if (!allowLocalMemory()) return { ok: false as const, error: "Enregistrement impossible. Vérifiez la connexion." };
     const u = seedMem("local");
     if (!u.parties.some((p) => p.name === name && p.kind === input.kind)) {
       u.parties.push({ id: `p-${Math.random().toString(36).slice(2, 8)}`, kind: input.kind, name, address, seed_key: null });
@@ -488,6 +545,7 @@ export async function recordPriceAlerts(doc: DocumentCard) {
       created_at: new Date().toISOString(),
     };
     if (!db) {
+      if (!allowLocalMemory()) continue;
       seedMem("local").alerts.unshift(alert);
       continue;
     }
@@ -505,8 +563,21 @@ export async function recordPriceAlerts(doc: DocumentCard) {
 
 export async function createChantier(input: { name: string; address?: string; clientName?: string }) {
   const db = await getRemote();
-  if (!db) return memCreateChantier("local", input);
-  const slugBase = input.name
+  if (!db) {
+    if (!allowLocalMemory()) throw new Error("Impossible de créer le chantier. Vérifiez la connexion.");
+    return memCreateChantier("local", input);
+  }
+  const name = input.name.trim();
+  const { data: ownedChantiers } = await db.supabase
+    .from("chantiers")
+    .select("id, slug, name, address, client_id, project_id, status, seed_key, created_at, updated_at")
+    .eq("user_id", db.user.id);
+  const same = (ownedChantiers ?? []).find(
+    (c) => c.name === name || normalizeChantierText(c.name) === normalizeChantierText(name),
+  );
+  if (same) return same as Chantier;
+
+  const slugBase = name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
@@ -539,7 +610,10 @@ export async function createChantier(input: { name: string; address?: string; cl
     })
     .select("id, slug, name, address, client_id, project_id, status, seed_key, created_at, updated_at")
     .single();
-  if (error || !data) return memCreateChantier(db.user.id, input);
+  if (error || !data) {
+    logMetier("createChantier", error);
+    throw new Error("Impossible de créer le chantier.");
+  }
   const created = data as Chantier;
   const { data: focus } = await db.supabase
     .from("chantiers")
@@ -555,6 +629,7 @@ export async function createChantier(input: { name: string; address?: string; cl
 export async function setChantierStatus(id: string, status: ChantierStatus) {
   const db = await getRemote();
   if (!db) {
+    if (!allowLocalMemory()) persistUnavailable("setChantierStatus");
     memSetChantierStatus("local", id, status);
     return;
   }
@@ -562,7 +637,10 @@ export async function setChantierStatus(id: string, status: ChantierStatus) {
     await db.supabase.from("chantiers").update({ status: "pause" }).eq("user_id", db.user.id).eq("status", "focus");
   }
   const { error } = await db.supabase.from("chantiers").update({ status }).eq("id", id).eq("user_id", db.user.id);
-  if (error) memSetChantierStatus(db.user.id, id, status);
+  if (error) {
+    logMetier("setChantierStatus", error);
+    throw new Error("Statut non enregistré.");
+  }
 }
 
 export async function saveExtractedDocument(input: {
@@ -578,8 +656,14 @@ export async function saveExtractedDocument(input: {
 }): Promise<DocumentCard> {
   const db = await getRemote();
   const now = demoNow();
+  const chantierId = db ? await assertOwned(db, "chantiers", input.chantierId) : input.chantierId;
   if (!db) {
+    if (!allowLocalMemory()) throw new Error("Enregistrement impossible. Vérifiez la connexion.");
     const u = seedMem("local");
+    if (input.filePath) {
+      const already = u.documents.find((d) => d.file_path && d.file_path === input.filePath);
+      if (already) return (await listDocuments()).find((d) => d.id === already.id)!;
+    }
     let party = u.parties.find((p) => p.name === input.partyName && p.kind === input.partyKind);
     if (!party) {
       party = {
@@ -597,7 +681,7 @@ export async function saveExtractedDocument(input: {
       kind: input.kind,
       title: input.title,
       party_id: party.id,
-      chantier_id: input.chantierId,
+      chantier_id: chantierId,
       source_document_id: null,
       file_path: input.filePath ?? "",
       extract: input.extract,
@@ -623,6 +707,18 @@ export async function saveExtractedDocument(input: {
     return (await listDocuments()).find((d) => d.id === row.id)!;
   }
 
+  if (input.filePath) {
+    const { data: byFile } = await db.supabase
+      .from("documents")
+      .select("id")
+      .eq("user_id", db.user.id)
+      .eq("file_path", input.filePath)
+      .limit(1);
+    if (byFile?.[0]?.id) {
+      const existingDoc = await getDocument(byFile[0].id);
+      if (existingDoc) return existingDoc;
+    }
+  }
   let partyId: string | null = null;
   const { data: existing } = await db.supabase
     .from("parties")
@@ -648,7 +744,7 @@ export async function saveExtractedDocument(input: {
       kind: input.kind,
       title: input.title,
       party_id: partyId,
-      chantier_id: input.chantierId,
+      chantier_id: chantierId,
       file_path: input.filePath ?? "",
       extract: input.extract,
       status: "ready",
@@ -656,58 +752,8 @@ export async function saveExtractedDocument(input: {
     .select("id")
     .single();
   if (error || !doc) {
-    const u = seedMem(db.user.id);
-    let party = u.parties.find((p) => p.name === input.partyName && p.kind === input.partyKind);
-    if (!party) {
-      party = {
-        id: `p-${Math.random().toString(36).slice(2, 8)}`,
-        kind: input.partyKind,
-        name: input.partyName,
-        address: "",
-        seed_key: null,
-      };
-      u.parties.push(party);
-    }
-    const now = demoNow();
-    const row: DocumentRow = {
-      id: `d-${Math.random().toString(36).slice(2, 10)}`,
-      direction: input.direction,
-      kind: input.kind,
-      title: input.title,
-      party_id: party.id,
-      chantier_id: input.chantierId,
-      source_document_id: null,
-      file_path: input.filePath ?? "",
-      extract: input.extract,
-      status: "ready",
-      error: "",
-      seed_key: null,
-      created_at: now,
-    };
-    const lines = input.lines.map((l, i) => ({
-      id: `l-${Math.random().toString(36).slice(2, 8)}`,
-      document_id: row.id,
-      product_id: null,
-      supplier_party_id: input.partyKind === "fournisseur" ? party.id : null,
-      distributor_party_id: input.partyKind === "distributeur" ? party.id : null,
-      label: l.label,
-      qty: l.qty,
-      unit: l.unit,
-      buy_price: l.buy_price,
-      sell_price: l.sell_price ?? 0,
-      position: i,
-    }));
-    memAddDocument(db.user.id, row, lines);
-    const ch = u.chantiers.find((c) => c.id === input.chantierId);
-    return {
-      ...row,
-      party_name: party.name,
-      party_address: party.address || null,
-      party_kind: party.kind,
-      chantier_name: ch?.name ?? null,
-      chantier_slug: ch?.slug ?? null,
-      lines,
-    };
+    logMetier("saveExtractedDocument", error);
+    throw new Error("Le document n’a pas pu être enregistré.");
   }
   if (input.lines.length) {
     await db.supabase.from("document_lines").insert(
@@ -741,14 +787,20 @@ export async function transformImportedDocument(
   markup: number,
   clientId: string | null,
   kind: DocumentRow["kind"] = "devis",
+  copySell = false,
 ) {
   const db = await getRemote();
   if (!db) {
-    const out = memTransform("local", sourceId, markup, clientId, kind);
+    if (!allowLocalMemory()) throw new Error("Enregistrement impossible. Vérifiez la connexion.");
+    const out = memTransform("local", sourceId, markup, clientId, kind, copySell);
     return out ? getDocument(out.id) : null;
   }
   const src = await getDocument(sourceId);
   if (!src) return null;
+  const already = (await listDocuments({ direction: "out", kind })).find((d) => d.source_document_id === src.id);
+  if (already) return already;
+  const partyId = await assertOwned(db, "parties", clientId ?? src.party_id);
+  const factor = copySell ? 1 : markup;
   const title = await nextOutTitle(kind);
   const srcTotals = src.extract && typeof src.extract === "object" && "totals" in src.extract
     ? (src.extract as { totals?: { ht?: number | null } }).totals
@@ -756,7 +808,7 @@ export async function transformImportedDocument(
   const outTotals = srcTotals
     ? {
         ...srcTotals,
-        ht: srcTotals.ht != null ? Math.round(Number(srcTotals.ht) * markup * 100) / 100 : null,
+        ht: srcTotals.ht != null ? Math.round(Number(srcTotals.ht) * factor * 100) / 100 : null,
       }
     : null;
   const { data: doc, error } = await db.supabase
@@ -766,17 +818,17 @@ export async function transformImportedDocument(
       direction: "out",
       kind,
       title,
-      party_id: clientId,
+      party_id: partyId,
       chantier_id: src.chantier_id,
       source_document_id: src.id,
-      extract: { markup, from: src.id, totals: outTotals },
+      extract: { markup: factor, from: src.id, from_title: src.title, totals: outTotals },
       status: "ready",
     })
     .select("id")
     .single();
   if (error || !doc) {
-    const out = memTransform(db.user.id, sourceId, markup, clientId, kind);
-    return out ? getDocument(out.id) : null;
+    logMetier("transformImportedDocument", error);
+    throw new Error(error?.message || "La pièce n’a pas pu être créée.");
   }
   if (src.lines.length) {
     await db.supabase.from("document_lines").insert(
@@ -790,7 +842,9 @@ export async function transformImportedDocument(
         qty: l.qty,
         unit: l.unit,
         buy_price: l.buy_price,
-        sell_price: Math.round(Number(l.buy_price) * markup * 100) / 100,
+        sell_price: copySell
+          ? Number(l.sell_price || l.buy_price)
+          : Math.round(Number(l.buy_price) * markup * 100) / 100,
         position: i,
       })),
     );
@@ -812,6 +866,7 @@ export async function addDocumentLine(documentId: string) {
     sell_price: 0,
   };
   if (!db) {
+    if (!allowLocalMemory()) return { ok: false as const, error: "Enregistrement impossible. Vérifiez la connexion." };
     const u = seedMem("local");
     const doc = u.documents.find((d) => d.id === documentId);
     if (!doc) return { ok: false as const, error: "Pièce introuvable." };
@@ -846,17 +901,8 @@ export async function addDocumentLine(documentId: string) {
     position: (existing ?? []).length,
   });
   if (error) {
-    const u = seedMem(db.user.id);
-    const pos = u.lines.filter((l) => l.document_id === documentId).length;
-    u.lines.push({
-      id: `l-${Math.random().toString(36).slice(2, 8)}`,
-      document_id: documentId,
-      product_id: null,
-      supplier_party_id: null,
-      distributor_party_id: null,
-      position: pos,
-      ...blank,
-    });
+    logMetier("addDocumentLine", error);
+    return { ok: false as const, error: "Ligne non enregistrée." };
   }
   return { ok: true as const };
 }
@@ -871,6 +917,7 @@ export async function updateDocument(input: {
 }) {
   const db = await getRemote();
   if (!db) {
+    if (!allowLocalMemory()) return { ok: false as const, error: "Enregistrement impossible. Vérifiez la connexion." };
     const row = memUpdateDocument("local", input.id, input);
     return row ? { ok: true as const } : { ok: false as const, error: "Pièce introuvable." };
   }
@@ -881,8 +928,15 @@ export async function updateDocument(input: {
     .eq("id", input.id)
     .maybeSingle();
   if (!owned) {
-    const row = memUpdateDocument(db.user.id, input.id, input);
-    return row ? { ok: true as const } : { ok: false as const, error: "Pièce introuvable." };
+    return { ok: false as const, error: "Pièce introuvable." };
+  }
+  if (input.partyId) {
+    const party = await assertOwned(db, "parties", input.partyId);
+    if (!party) return { ok: false as const, error: "Client introuvable." };
+  }
+  if (input.chantierId) {
+    const chantier = await assertOwned(db, "chantiers", input.chantierId);
+    if (!chantier) return { ok: false as const, error: "Chantier introuvable." };
   }
   const patchDoc: { title?: string; party_id?: string | null; chantier_id?: string | null } = {};
   if (input.title?.trim()) patchDoc.title = input.title.trim();
@@ -965,15 +1019,23 @@ export function spendByMonth(docs: DocumentCard[]) {
 
 export async function getCompanyProfile(): Promise<CompanyProfile | null> {
   const db = await getRemote();
-  if (!db) return memGetCompany("local");
+  if (!db) {
+    if (!allowLocalMemory()) persistUnavailable("getCompanyProfile");
+    return memGetCompany("local");
+  }
   const { data, error } = await db.supabase.from("company_profiles").select("*").eq("user_id", db.user.id).maybeSingle();
-  if (error || !data) return memGetCompany(db.user.id);
-  return data as CompanyProfile;
+  if (error) {
+    if (!allowLocalMemory()) failRead("getCompanyProfile", error);
+    logMetier("getCompanyProfile", error);
+    return null;
+  }
+  return (data as CompanyProfile) ?? null;
 }
 
 export async function saveCompanyProfile(input: CompanyProfile) {
   const db = await getRemote();
   if (!db) {
+    if (!allowLocalMemory()) throw new Error("Enregistrement impossible. Vérifiez la connexion.");
     memSetCompany("local", input);
     return input;
   }
@@ -983,8 +1045,8 @@ export async function saveCompanyProfile(input: CompanyProfile) {
     updated_at: new Date().toISOString(),
   });
   if (error) {
-    memSetCompany(db.user.id, input);
-    return input;
+    logMetier("saveCompanyProfile", error);
+    throw new Error("Profil entreprise non enregistré.");
   }
   return input;
 }

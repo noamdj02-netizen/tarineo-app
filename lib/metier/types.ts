@@ -161,6 +161,10 @@ export const CLIENT_OUT_LABEL: Record<ClientOutKind, string> = {
   facture: "Facture client",
 };
 
+/** Suite métier d’un devis déjà envoyé au client. */
+export const CLIENT_DEVIS_NEXT_KINDS = ["bon_commande", "facture"] as const;
+export type ClientDevisNextKind = (typeof CLIENT_DEVIS_NEXT_KINDS)[number];
+
 /** 35 % de marge → coefficient 1,35. */
 export function marginToMarkup(percent: number) {
   if (!Number.isFinite(percent)) return 1.35;

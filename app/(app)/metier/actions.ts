@@ -4,26 +4,29 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db";
 import { extractDocument } from "@/lib/metier/extract";
 import {
+  addDocumentLine,
   createChantier,
   createParty,
-  getCompanyProfile,
   getDocument,
+  listDocuments,
+  listParties,
   recordPriceAlerts,
   saveExtractedDocument,
   setChantierStatus,
   transformImportedDocument,
-  addDocumentLine,
-  listParties,
   updateDocument,
 } from "@/lib/metier/queries";
 import { DEVIS_TEMPLATES } from "@/lib/metier/devis-templates";
+import {
+  scheduleFollowUpForDocument,
+  sendDocumentMail,
+  setFollowUpStatus,
+  upsertFollowUp,
+} from "@/lib/metier/follow-up-queries";
+import { followUpStillEligible, isDocumentTransformed, type FollowUpStatus } from "@/lib/metier/follow-ups";
 import type { ChantierStatus, ClientOutKind, DocDirection, DocKind, ExtractTotals, PartyKind } from "@/lib/metier/types";
-import { sendEmailWithPdf } from "@/lib/email/send";
-import { loadCompanyLogo } from "@/lib/metier/brand-assets";
-import { draftDocumentMail, pieceMailHtml } from "@/lib/metier/draft-mail";
-import { pdfFromDocument } from "@/lib/metier/pdf/from-document";
-import { getViewer } from "@/lib/session";
-import { CLIENT_OUT_KINDS, marginToMarkup } from "@/lib/metier/types";
+import { draftDocumentMail } from "@/lib/metier/draft-mail";
+import { CLIENT_DEVIS_NEXT_KINDS, CLIENT_OUT_KINDS, marginToMarkup } from "@/lib/metier/types";
 
 function refresh() {
   for (const p of [
@@ -44,6 +47,7 @@ function refresh() {
     "/fournisseurs",
     "/comparateur",
     "/pieces",
+    "/relances",
   ]) {
     revalidatePath(p);
   }
@@ -55,23 +59,33 @@ export async function ingestDocument(form: FormData) {
   if (file.size > 12 * 1024 * 1024) return { ok: false as const, error: "Fichier trop lourd (12 Mo max)." };
 
   const buf = Buffer.from(await file.arrayBuffer());
+  const { createHash } = await import("crypto");
+  const fileSha256 = createHash("sha256").update(buf).digest("hex");
   const db = await getDb();
   let filePath = "";
   if (db) {
-    filePath = `${db.user.id}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, "_")}`;
+    const safeName = file.name.replace(/[^\w.\-]+/g, "_");
+    filePath = `${db.user.id}/${fileSha256}-${safeName}`;
     const { error } = await db.supabase.storage.from("documents").upload(filePath, buf, {
       contentType: file.type || "application/octet-stream",
-      upsert: false,
+      upsert: true,
     });
-    if (error) filePath = "";
+    if (error) {
+      return { ok: false as const, error: "Impossible d’enregistrer le fichier. Réessayez." };
+    }
   }
 
-  const extracted = await extractDocument({
-    fileName: file.name,
-    mime: file.type || "application/octet-stream",
-    base64: buf.toString("base64"),
-  });
-  return { ok: true as const, extracted, filePath, fileName: file.name };
+  try {
+    const extracted = await extractDocument({
+      fileName: file.name,
+      mime: file.type || "application/octet-stream",
+      base64: buf.toString("base64"),
+    });
+    return { ok: true as const, extracted, filePath, fileName: file.name, fileSha256 };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Extraction impossible.";
+    return { ok: false as const, error: message };
+  }
 }
 
 export async function confirmDocument(input: {
@@ -82,6 +96,7 @@ export async function confirmDocument(input: {
   partyKind: PartyKind;
   chantierId: string | null;
   filePath?: string;
+  fileSha256?: string;
   totals?: ExtractTotals;
   lines: Array<{
     label: string;
@@ -95,8 +110,17 @@ export async function confirmDocument(input: {
 }) {
   const doc = await saveExtractedDocument({
     ...input,
-    extract: { confirmed: true, totals: input.totals ?? null, lines: input.lines },
+    extract: {
+      confirmed: true,
+      totals: input.totals ?? null,
+      lines: input.lines,
+      file_sha256: input.fileSha256 || null,
+    },
+  }).catch((err: unknown) => {
+    console.error("[metier] confirmDocument", err);
+    return null;
   });
+  if (!doc) return { ok: false as const, error: "Le document n’a pas pu être enregistré." };
   await recordPriceAlerts(doc);
   refresh();
   return { ok: true as const, id: doc.id };
@@ -124,13 +148,18 @@ export async function createPartyFormAction(form: FormData) {
 export async function createChantierAction(form: FormData) {
   const name = String(form.get("name") ?? "").trim();
   if (!name) return { ok: false as const, error: "Nom manquant." };
-  const c = await createChantier({
-    name,
-    address: String(form.get("address") ?? ""),
-    clientName: String(form.get("client") ?? ""),
-  });
-  refresh();
-  return { ok: true as const, slug: c.slug };
+  try {
+    const c = await createChantier({
+      name,
+      address: String(form.get("address") ?? ""),
+      clientName: String(form.get("client") ?? ""),
+    });
+    refresh();
+    return { ok: true as const, slug: c.slug };
+  } catch (err) {
+    console.error("[metier] createChantierAction", err);
+    return { ok: false as const, error: "Impossible de créer le chantier." };
+  }
 }
 
 export async function setChantierStatusAction(id: string, status: ChantierStatus) {
@@ -170,10 +199,29 @@ export async function transformQuoteAction(form: FormData) {
   const markup = fromMargin ?? Number(form.get("markup") ?? defaultMarkup);
   const clientId = String(form.get("clientId") ?? "") || null;
   if (!sourceId) return { ok: false as const, error: "Document source manquant." };
-  const doc = await transformImportedDocument(sourceId, markup > 0 ? markup : defaultMarkup, clientId, kind);
-  if (!doc) return { ok: false as const, error: "Transformation impossible." };
-  refresh();
-  return { ok: true as const, id: doc.id, kind: doc.kind };
+  const src = await getDocument(sourceId);
+  if (!src) return { ok: false as const, error: "Document source manquant." };
+  try {
+    if (src.direction === "out") {
+      const fromDevis = src.kind === "devis" && CLIENT_DEVIS_NEXT_KINDS.includes(kind as (typeof CLIENT_DEVIS_NEXT_KINDS)[number]);
+      const fromCommande = src.kind === "bon_commande" && kind === "facture";
+      if (!fromDevis && !fromCommande) {
+        return { ok: false as const, error: "Choisissez une commande ou une facture client." };
+      }
+      const doc = await transformImportedDocument(sourceId, 1, clientId || src.party_id, kind, true);
+      if (!doc) return { ok: false as const, error: "Transformation impossible." };
+      refresh();
+      return { ok: true as const, id: doc.id, kind: doc.kind };
+    }
+    const doc = await transformImportedDocument(sourceId, markup > 0 ? markup : defaultMarkup, clientId, kind);
+    if (!doc) return { ok: false as const, error: "Transformation impossible." };
+    refresh();
+    return { ok: true as const, id: doc.id, kind: doc.kind };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Transformation impossible.";
+    console.error("[metier] transformQuoteAction", err);
+    return { ok: false as const, error: message };
+  }
 }
 
 export async function draftDocumentMailAction(documentId: string) {
@@ -190,36 +238,92 @@ export async function sendDocumentAction(form: FormData) {
   const subjectIn = String(form.get("subject") ?? "").trim();
   if (!id) return { ok: false as const, error: "Document manquant." };
   if (!to.includes("@")) return { ok: false as const, error: "E-mail invalide." };
-  const [doc, viewer, company, logo] = await Promise.all([
-    getDocument(id),
-    getViewer(),
-    getCompanyProfile(),
-    loadCompanyLogo(),
-  ]);
+  const doc = await getDocument(id);
   if (!doc) return { ok: false as const, error: "Pièce introuvable." };
   const draft = await draftDocumentMail(doc);
-  const text = note || draft.body;
-  const subject = subjectIn || draft.subject;
-  const { buffer, filename } = await pdfFromDocument(doc, viewer?.email);
-  const html = pieceMailHtml({
-    body: text,
-    company: company?.raison_sociale || "L’entreprise",
-    phone: company?.telephone,
-    email: company?.email_contact || viewer?.email || undefined,
-    address: [company?.adresse_rue, company?.adresse_code_postal, company?.adresse_ville].filter(Boolean).join(", "),
-    logoCid: logo?.cid,
-  });
-  const res = await sendEmailWithPdf({
+  const res = await sendDocumentMail({
+    documentId: id,
     to,
-    subject,
-    text,
-    html,
-    filename,
-    pdf: buffer,
-    replyTo: company?.email_contact || viewer?.email,
-    inline: logo ? [{ filename: logo.filename, content: logo.buffer, contentId: logo.cid }] : undefined,
+    subject: subjectIn || draft.subject,
+    body: note || draft.body,
   });
-  if (!res.ok) return { ok: false as const, error: res.error ?? "Envoi impossible." };
+  if (!res.ok) return res;
+  refresh();
+  return { ok: true as const };
+}
+
+export async function sendFollowUpNowAction(form: FormData) {
+  const id = String(form.get("documentId") ?? "");
+  const to = String(form.get("to") ?? "").trim();
+  const note = String(form.get("note") ?? "").trim();
+  const subject = String(form.get("subject") ?? "").trim();
+  const followUpId = String(form.get("followUpId") ?? "");
+  if (!id) return { ok: false as const, error: "Document manquant." };
+  if (!to.includes("@")) return { ok: false as const, error: "E-mail invalide." };
+  const all = await listDocuments();
+  const doc = all.find((d) => d.id === id);
+  if (!doc) return { ok: false as const, error: "Pièce introuvable." };
+  if (doc.status !== "ready") return { ok: false as const, error: "Document invalide." };
+  if (isDocumentTransformed(doc, all)) {
+    return { ok: false as const, error: "Ce document a déjà une suite. Relance non envoyée." };
+  }
+  const gate = followUpStillEligible(doc, all, {
+    id: followUpId || "tmp",
+    document_id: doc.id,
+    chantier_id: doc.chantier_id,
+    audience: doc.direction === "out" ? "client" : "fournisseur",
+    status: "due",
+    scheduled_at: null,
+    last_action_at: null,
+    sent_at: null,
+    to_email: to,
+    subject,
+    body: note,
+    created_at: doc.created_at,
+  });
+  if (!gate.ok) {
+    const msg =
+      gate.reason === "email-missing"
+        ? "E-mail invalide."
+        : gate.reason === "transformed"
+          ? "Ce document a déjà une suite. Relance non envoyée."
+          : "Relance impossible.";
+    return { ok: false as const, error: msg };
+  }
+  const mail = await sendDocumentMail({ documentId: id, to, subject, body: note });
+  if (!mail.ok) return mail;
+  const saved = await upsertFollowUp({
+    id: followUpId && !followUpId.startsWith("virtual:") ? followUpId : undefined,
+    documentId: id,
+    status: "sent",
+    toEmail: to,
+    subject,
+    body: note,
+  });
+  if (!saved.ok) return saved;
+  refresh();
+  return { ok: true as const };
+}
+
+export async function scheduleFollowUpAction(form: FormData) {
+  const days = Number(form.get("days") ?? 3);
+  const followUpId = String(form.get("followUpId") ?? "");
+  const res = await scheduleFollowUpForDocument({
+    documentId: String(form.get("documentId") ?? ""),
+    to: String(form.get("to") ?? "").trim(),
+    subject: String(form.get("subject") ?? "").trim(),
+    body: String(form.get("note") ?? "").trim(),
+    days: days === 1 || days === 7 ? days : 3,
+    id: followUpId && !followUpId.startsWith("virtual:") ? followUpId : undefined,
+  });
+  if (!res.ok) return res;
+  refresh();
+  return { ok: true as const };
+}
+
+export async function markFollowUpStatusAction(id: string, status: FollowUpStatus) {
+  const res = await setFollowUpStatus(id, status);
+  if (!res.ok) return res;
   refresh();
   return { ok: true as const };
 }
@@ -247,7 +351,11 @@ export async function createFromTemplateAction(form: FormData) {
       buy_price: 0,
       sell_price: l.sell,
     })),
+  }).catch((err: unknown) => {
+    console.error("[metier] createFromTemplateAction", err);
+    return null;
   });
+  if (!doc) return { ok: false as const, error: "Le devis n’a pas pu être créé." };
   refresh();
   return { ok: true as const, id: doc.id };
 }

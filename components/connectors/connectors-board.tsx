@@ -205,7 +205,7 @@ export function ConnectorsBoard({
         setError(res.error);
         return;
       }
-      markLocal(tool.id, true, "Navpit");
+      markLocal(tool.id, true, "TARINEO");
     });
   }
 
@@ -337,7 +337,7 @@ export function ConnectorsBoard({
 
               {picked.id === "stripe" && initial.stripeBilling ? (
                 <p className="rounded-lg bg-st-focus-soft px-3 py-2 text-[13px] text-st-focus-ink">
-                  Tu paies déjà Navpit via Stripe. Ajoute une clé restreinte pour lier
+                  Tu paies déjà TARINEO via Stripe. Ajoute une clé restreinte pour lier
                   le Stripe de ton produit.
                 </p>
               ) : null}
@@ -364,7 +364,7 @@ export function ConnectorsBoard({
                 <div className="flex flex-col gap-2">
                   {mcpKey ? (
                     <p className="text-[13px] text-ink/80">
-                      Clé créée. Copie-la une fois, puis continue dans Navpit.
+                      Clé créée. Copie-la une fois, puis continue dans TARINEO.
                     </p>
                   ) : (
                     <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
@@ -433,7 +433,7 @@ export function ConnectorsBoard({
                       )}
                       {picked.meta.kind === "oauth" && !bind.trim() && picked.id !== "gmail"
                         ? "Continuer"
-                        : "Lier à Navpit"}
+                        : "Lier à TARINEO"}
                     </Button>
                   </>
                 )}

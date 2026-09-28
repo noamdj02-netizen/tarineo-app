@@ -8,15 +8,15 @@ import { siteMetadata } from "@/lib/seo";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { LANDING_TESTIMONIALS } from "@/lib/site/content";
 
-const AVIS_TITLE = "Avis fondateurs";
+const AVIS_TITLE = "Ils protègent leur marge";
 const AVIS_DESCRIPTION =
-  "Ce que des fondateurs solo disent de Navpit : un projet en Focus, la prochaine action, plus le chaos d’onglets.";
+  "Ce que des artisans disent de TARINEO : devis, hausses, chantier, pièces client.";
 
 export const metadata = {
   title: AVIS_TITLE,
   description: AVIS_DESCRIPTION,
   ...siteMetadata({
-    title: "Avis Navpit",
+    title: "Avis TARINEO",
     description: AVIS_DESCRIPTION,
     path: "/avis",
   }),
@@ -37,8 +37,8 @@ export default function AvisPage() {
         </Reveal>
         <Reveal>
           <h1 className="font-display text-[clamp(34px,6vw,56px)] leading-[1.02] font-semibold tracking-tightest text-balance">
-            Fondateurs solo,{" "}
-            <span className="text-accent-2">ils avancent avec Navpit.</span>
+            Artisans,{" "}
+            <span className="text-accent-2">ils voient ce qui mange la marge.</span>
           </h1>
         </Reveal>
         <Reveal>

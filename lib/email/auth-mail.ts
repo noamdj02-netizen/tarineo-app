@@ -18,9 +18,16 @@ function originFrom(host: string | null) {
   if (!host) return getSiteUrl();
   const value = host.split(",")[0]?.trim() ?? "";
   const bare = value.split(":")[0];
-  const local = bare === "localhost" || bare === "127.0.0.1";
+  const deployed = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production" || process.env.VERCEL_ENV === "preview";
+  const local = !deployed && (bare === "localhost" || bare === "127.0.0.1");
   const allowed =
-    local || bare === "navpit.com" || bare.endsWith(".navpit.com") || bare.endsWith(".vercel.app");
+    local ||
+    bare === "tarineo.fr" ||
+    bare.endsWith(".tarineo.fr") ||
+    bare === "tarineo.com" ||
+    bare.endsWith(".tarineo.com") ||
+    bare === "app.tarineo.com" ||
+    bare.endsWith(".vercel.app");
   if (!allowed) return getSiteUrl();
   return `${local ? "http" : "https"}://${value}`;
 }
@@ -84,7 +91,7 @@ export async function sendLoginCode(emailRaw: string, next: string): Promise<Aut
   }
   const sent = await sendEmail(
     email,
-    "Ton code de connexion Navpit",
+    "Votre code de connexion TARINEO",
     AuthMagicLinkEmail({
       appUrl: getSiteUrl(),
       confirmationUrl,
@@ -95,7 +102,12 @@ export async function sendLoginCode(emailRaw: string, next: string): Promise<Aut
   if (!sent.ok) {
     return {
       ok: false,
-      error: sent.skipped ? "fallback" : "L’email n’est pas parti. Réessaie dans un moment.",
+      error:
+        sent.skipped && process.env.NODE_ENV !== "production"
+          ? "fallback"
+          : sent.skipped
+            ? "L’envoi d’e-mail n’est pas configuré."
+            : sent.error ?? "L’email n’est pas parti. Réessaie dans un moment.",
     };
   }
   return { ok: true, mode: "email" };
@@ -122,7 +134,7 @@ export async function sendRecoveryCode(emailRaw: string): Promise<AuthMailResult
   }
   const sent = await sendEmail(
     email,
-    "Nouveau mot de passe Navpit",
+    "Nouveau mot de passe TARINEO",
     AuthResetPasswordEmail({
       appUrl: getSiteUrl(),
       confirmationUrl,
@@ -133,13 +145,18 @@ export async function sendRecoveryCode(emailRaw: string): Promise<AuthMailResult
   if (!sent.ok) {
     return {
       ok: false,
-      error: sent.skipped ? "fallback" : "L’email n’est pas parti. Réessaie dans un moment.",
+      error:
+        sent.skipped && process.env.NODE_ENV !== "production"
+          ? "fallback"
+          : sent.skipped
+            ? "L’envoi d’e-mail n’est pas configuré."
+            : sent.error ?? "L’email n’est pas parti. Réessaie dans un moment.",
     };
   }
   return { ok: true, mode: "recovery" };
 }
 
-/** Crée le compte et envoie le mail Navpit (code + bouton). */
+/** Crée le compte et envoie le mail TARINEO (code + bouton). */
 export async function sendSignupCode(input: {
   email: string;
   password: string;
@@ -178,7 +195,7 @@ export async function sendSignupCode(input: {
 
   const sent = await sendEmail(
     email,
-    "Confirme ton compte Navpit",
+    "Confirmez votre compte TARINEO",
     AuthSignupEmail({
       appUrl: getSiteUrl(),
       confirmationUrl,
@@ -190,7 +207,12 @@ export async function sendSignupCode(input: {
     if (data.user?.id) await admin.auth.admin.deleteUser(data.user.id);
     return {
       ok: false,
-      error: sent.skipped ? "fallback" : "L’email n’est pas parti. Réessaie dans un moment.",
+      error:
+        sent.skipped && process.env.NODE_ENV !== "production"
+          ? "fallback"
+          : sent.skipped
+            ? "L’envoi d’e-mail n’est pas configuré."
+            : sent.error ?? "L’email n’est pas parti. Réessaie dans un moment.",
     };
   }
   return { ok: true, mode: "signup" };

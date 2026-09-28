@@ -58,7 +58,7 @@ async function welcomeOnce(supabase: Sb, origin: string) {
   );
   await sendEmail(
     user.email,
-    "Bienvenue sur Navpit",
+    "Bienvenue sur TARINEO",
     WelcomeEmail({ firstName: name?.trim().split(/\s+/)[0] ?? "", appUrl: origin }),
   );
 }

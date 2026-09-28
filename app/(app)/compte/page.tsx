@@ -1,4 +1,4 @@
-import { ArrowLeft, CreditCard, Languages, Shield } from "lucide-react";
+import { ArrowLeft, CreditCard, Languages, Palette, Shield } from "lucide-react";
 import Link from "next/link";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PageHead } from "@/components/shell/page-head";
@@ -8,6 +8,7 @@ import { FOUNDER, PLAN_LABEL, PRO, STARTER } from "@/lib/billing/plans";
 import { getViewer } from "@/lib/session";
 import { WIZARD_STEPS } from "@/lib/onboarding-wizard";
 import { ApiKeysCard } from "@/components/account/api-keys-card";
+import { AppearanceSettings } from "@/components/theme/appearance-settings";
 import { AvatarForm, LocaleForm, NameForm, PasswordForm } from "./forms";
 import { OnboardingLaunch } from "./onboarding-launch";
 
@@ -48,8 +49,15 @@ export default async function ComptePage() {
         <ArrowLeft className="size-4" aria-hidden />
         Retour à l’accueil
       </Link>
-      <PageHead mascot="05-bras-croises" label="Compte" title="Ton profil," tail="tes réglages.">
-        Photo, prénom, langue, mot de passe et abonnement. Tout est ici.
+      <PageHead
+        label="Compte"
+        title="Compte"
+        crumbs={[
+          { href: "/accueil", label: "Accueil" },
+          { label: "Compte" },
+        ]}
+      >
+        Profil, apparence, abonnement et accès.
       </PageHead>
 
       <div className="flex flex-col gap-4">
@@ -59,6 +67,13 @@ export default async function ComptePage() {
         >
           Mon entreprise
           <span className="text-[13px] font-normal text-muted-foreground">SIRET, TVA, logo sur les PDF</span>
+        </Link>
+        <Link
+          href="/support"
+          className="card-soft flex min-h-14 items-center justify-between px-5 text-[15px] font-medium"
+        >
+          Support
+          <span className="text-[13px] font-normal text-muted-foreground">FAQ et contact</span>
         </Link>
         {owner ? (
           <Link
@@ -107,6 +122,14 @@ export default async function ComptePage() {
 
         <div className="card-soft p-5 sm:p-6">
           <p className="mb-4 flex items-center gap-2">
+            <Palette className="size-4 text-muted-foreground" aria-hidden />
+            <span className="mono-label mb-0">/ Apparence ///</span>
+          </p>
+          <AppearanceSettings />
+        </div>
+
+        <div className="card-soft p-5 sm:p-6">
+          <p className="mb-4 flex items-center gap-2">
             <Shield className="size-4 text-muted-foreground" aria-hidden />
             <span className="mono-label mb-0">/ Mot de passe ///</span>
           </p>
@@ -140,7 +163,7 @@ export default async function ComptePage() {
           </Link>
         </div>
 
-        <ApiKeysCard />
+        {owner ? <ApiKeysCard /> : null}
 
         <div className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-3">/ Conseils ///</p>

@@ -6,7 +6,7 @@ export function BillingProWelcomeEmail({ appUrl }: BillingProWelcomeEmailProps) 
   const base = appUrl.replace(/\/$/, "");
   return (
     <TarineoEmailShell
-      preview="Bienvenue en Tarinéo Pro"
+      preview="Bienvenue en TARINEO Pro"
       label="Pro"
       title="Bienvenue en Pro"
       appUrl={appUrl}
@@ -14,10 +14,10 @@ export function BillingProWelcomeEmail({ appUrl }: BillingProWelcomeEmailProps) 
       <EmailParagraph>
         Chantiers, analyses et pièces client sans plafond de démo. Votre prix baisse à chaque anniversaire d’abonnement.
       </EmailParagraph>
-      <EmailCta href={`${base}/accueil`}>Ouvrir Tarinéo</EmailCta>
+      <EmailCta href={`${base}/accueil`}>Ouvrir TARINEO</EmailCta>
     </TarineoEmailShell>
   );
 }
 
-BillingProWelcomeEmail.PreviewProps = { appUrl: "https://www.tarineo.fr" } satisfies BillingProWelcomeEmailProps;
+BillingProWelcomeEmail.PreviewProps = { appUrl: "https://app.tarineo.com" } satisfies BillingProWelcomeEmailProps;
 export default BillingProWelcomeEmail;

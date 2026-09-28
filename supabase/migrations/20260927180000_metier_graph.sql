@@ -1,4 +1,4 @@
--- Graphe métier Tarinéo. Autonome : ne dépend pas de public.projects (Navpit).
+-- Graphe métier TARINEO. Autonome : ne dépend pas de public.projects (Navpit).
 
 create or replace function public.touch_updated_at()
 returns trigger

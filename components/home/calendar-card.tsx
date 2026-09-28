@@ -331,7 +331,7 @@ export function CalendarCard({
                         ? data?.feed.connected
                           ? data.feed.provider
                           : "Agenda"
-                        : (e.project ?? "Tarinéo")}
+                        : (e.project ?? "TARINEO")}
                     </span>
                   </span>
                   {e.source === "navpit" ? (

@@ -1,7 +1,7 @@
 import { PieceKindPage } from "@/components/metier/piece-kind-page";
 import { R } from "@/lib/routes";
 
-export const metadata = { title: "Bon d’enlèvement" };
+export const metadata = { title: "Bons d’enlèvement" };
 
 export default async function Page({
   searchParams,
@@ -16,11 +16,9 @@ export default async function Page({
       base={R.distributeurBe}
       label="Distributeur"
       title="Bons d’enlèvement"
-      tail="à retirer."
-      text="Le bon d’enlèvement reste côté achat. Déposez-le ici, pas avec les devis."
-      empty="Aucun bon d’enlèvement."
+      text="Retrouvez les bons d’enlèvement reçus de vos fournisseurs."
+      empty="Aucun bon d’enlèvement. Importez un PDF pour commencer."
       dropHint="PDF bon d’enlèvement."
-      mascot="09-devis-valide"
       chantierSlug={q.chantier}
       partyId={q.party}
     />

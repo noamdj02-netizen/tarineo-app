@@ -20,7 +20,7 @@ export function TypingPlaceholder({
   paused,
   onExample,
   className,
-  onDark: _onDark,
+  onDark,
 }: {
   examples: string[];
   paused: boolean;
@@ -28,6 +28,7 @@ export function TypingPlaceholder({
   className?: string;
   onDark?: boolean;
 }) {
+  void onDark;
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [count, setCount] = useState(0);

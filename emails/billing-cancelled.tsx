@@ -6,7 +6,7 @@ export function BillingCancelledEmail({ appUrl, endDate }: BillingCancelledEmail
   const base = appUrl.replace(/\/$/, "");
   return (
     <TarineoEmailShell
-      preview="Ton abonnement Tarinéo Pro se termine"
+      preview="Ton abonnement TARINEO Pro se termine"
       label="Abonnement"
       title="Abonnement annulé"
       appUrl={appUrl}
@@ -14,7 +14,7 @@ export function BillingCancelledEmail({ appUrl, endDate }: BillingCancelledEmail
       <EmailParagraph>
         {endDate
           ? `Ton accès Pro reste actif jusqu’au ${endDate}. Ensuite tu repasses sur le plan gratuit.`
-          : "Ton abonnement Pro est terminé. Tu peux toujours utiliser Tarinéo en version gratuite."}
+          : "Ton abonnement Pro est terminé. Tu peux toujours utiliser TARINEO en version gratuite."}
       </EmailParagraph>
       <EmailCta href={`${base}/abonnement`}>Gérer mon abonnement</EmailCta>
     </TarineoEmailShell>
@@ -22,7 +22,7 @@ export function BillingCancelledEmail({ appUrl, endDate }: BillingCancelledEmail
 }
 
 BillingCancelledEmail.PreviewProps = {
-  appUrl: "https://www.tarineo.fr",
+  appUrl: "https://app.tarineo.com",
   endDate: "12 avril 2026",
 } satisfies BillingCancelledEmailProps;
 
