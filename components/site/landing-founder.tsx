@@ -15,7 +15,7 @@ export function LandingFounder() {
   return (
     <InView className="mx-auto max-w-[920px]">
       <Reveal>
-        <Card className="grid gap-0 overflow-hidden rounded-2xl py-0 shadow-lift sm:grid-cols-[260px_minmax(0,1fr)]">
+        <Card className="grid gap-0 overflow-hidden rounded-[20px] border-[rgba(10,10,10,0.06)] bg-[#FFFFFF] py-0 shadow-[0_1px_1px_rgba(10,10,10,0.03),0_8px_24px_rgba(10,10,10,0.06)] sm:grid-cols-[260px_minmax(0,1fr)]">
           <div className={`relative bg-muted sm:aspect-auto sm:min-h-[300px] ${hasPhoto ? "aspect-[4/3]" : "aspect-[16/7]"}`}>
             {hasPhoto ? (
               <Image

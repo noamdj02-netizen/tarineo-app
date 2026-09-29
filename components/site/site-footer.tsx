@@ -3,7 +3,7 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Mail } from "lucide-react";
 import Link from "next/link";
-import { EASE } from "@/components/motion/reveal";
+import { APPLE_SPRING, APPLE_SPRING_FAST } from "@/components/motion/reveal";
 import { InView } from "@/components/site/in-view";
 import { LandingButton } from "@/components/site/landing-button";
 import { SiteLogo } from "@/components/site/site-logo";
@@ -17,12 +17,12 @@ import { cn } from "@/lib/utils";
 
 
 const rise = {
-  hidden: { opacity: 0, y: 14, scale: 0.98 },
+  hidden: { opacity: 0, y: 12, scale: 0.985 },
   show: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.55, ease: EASE },
+    transition: APPLE_SPRING,
   },
 } as const;
 
@@ -42,8 +42,8 @@ export function SiteFooter() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.18fr)] lg:gap-5">
           <motion.article
             variants={variants}
-            whileHover={reduce ? undefined : { y: -3 }}
-            transition={{ duration: 0.35, ease: EASE }}
+            whileHover={reduce ? undefined : { y: -2 }}
+            transition={APPLE_SPRING_FAST}
             className="relative isolate flex h-full min-h-[280px] flex-col overflow-hidden rounded-[22px] border border-line bg-surface px-6 py-7 text-white shadow-lift sm:min-h-[300px] sm:rounded-[28px] sm:px-8 sm:py-8"
           >
             <div
@@ -90,8 +90,8 @@ export function SiteFooter() {
 
           <motion.article
             variants={variants}
-            whileHover={reduce ? undefined : { y: -3 }}
-            transition={{ duration: 0.35, ease: EASE }}
+            whileHover={reduce ? undefined : { y: -2 }}
+            transition={APPLE_SPRING_FAST}
             className="h-full rounded-[22px] border border-line bg-surface px-6 py-7 shadow-soft ring-1 ring-line sm:rounded-[28px] sm:px-8 sm:py-8"
           >
             <p className="mono-label mb-5">{`/ Aller plus loin ///`}</p>

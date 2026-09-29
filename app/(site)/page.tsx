@@ -1,19 +1,18 @@
 import { JsonLd } from "@/components/site/json-ld";
 import { LandingAudience } from "@/components/site/landing-audience";
-import { LandingChantiers } from "@/components/site/landing-chantiers";
-import { LandingFeatureGrid } from "@/components/site/landing-feature-grid";
 import { LandingClosingCta } from "@/components/site/landing-cta";
 import {
-  DeferredDashboard,
-  DeferredDocument,
   DeferredFaqTabs,
   DeferredPricing,
-  DeferredSuppliers,
+  DeferredProductChantier,
+  DeferredProductCopilote,
+  DeferredProductDevisIa,
+  DeferredProductDocuments,
+  DeferredProductFeatures,
+  DeferredProductPipeline,
 } from "@/components/site/landing-deferred";
 import { LandingFounder } from "@/components/site/landing-founder";
 import { LandingHero } from "@/components/site/landing-hero";
-import { LandingHow } from "@/components/site/landing-how";
-import { LandingProblem } from "@/components/site/landing-problem";
 import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
 import { BRAND } from "@/lib/brand";
 import { siteMetadata } from "@/lib/seo";
@@ -30,92 +29,95 @@ export const metadata = {
 
 export default function LandingPage() {
   return (
-    <>
+    <div className="theme-light bg-[#F5F5F3] text-[#0A0A0A]">
       <JsonLd data={[softwareApplicationJsonLd(), faqPageJsonLd()]} />
 
       <LandingHero />
-      <LandingProblem />
-      <LandingHow />
 
-      <LandingSection id="analyse" className="border-t border-line">
+      <LandingSection id="devis-ia" className="bg-[#FFFFFF]">
         <LandingSectionHead
-          label="Analyse de document"
-          title="Chaque ligne,"
-          tail="comparée à ce que vous payiez avant."
-          text="TARINEO lit le document, retrouve chaque produit dans votre historique et met en évidence ce qui a bougé."
+          label="Devis IA"
+          title="Créez et analysez vos devis avec l’IA."
+          text="Transformez vos documents et vos idées en devis structurés, sans repartir de zéro."
         />
-        <DeferredDocument />
+        <DeferredProductDevisIa />
       </LandingSection>
 
-      <LandingSection id="tableau-de-bord" className="border-t border-line bg-[#070707]">
+      <LandingSection id="documents" className="bg-[#F5F5F3]">
         <LandingSectionHead
-          label="Tableau de bord"
-          title="Vos prix fournisseurs,"
-          tail="sur un seul tableau de bord."
-          text="Documents analysés, hausses détectées, impact estimé : l’essentiel en un coup d’œil, sans tableur."
+          label="Documents fournisseurs"
+          title="Ne laissez plus une hausse passer inaperçue."
+          text="TARINEO analyse vos documents fournisseurs et vous aide à repérer les variations de prix."
         />
-        <DeferredDashboard />
+        <DeferredProductDocuments />
       </LandingSection>
 
-      <LandingSection id="chantiers" className="border-t border-line">
+      <LandingSection id="chantiers" className="bg-[#FFFFFF]">
         <LandingSectionHead
           label="Chantiers"
-          title="Tous vos documents,"
-          tail="rangés par chantier."
-          text="Achats, devis client, facture : chaque document est rattaché à son chantier, avec l’étape en cours et votre marge."
+          title="Un chantier. Tous vos documents."
+          text="Devis, achats, documents et marge réunis dans le même contexte."
         />
-        <LandingChantiers />
+        <DeferredProductChantier />
       </LandingSection>
 
-      <LandingSection id="fournisseurs" className="border-t border-line">
+      <LandingSection id="comment-ca-marche" className="bg-[#F5F5F3]">
         <LandingSectionHead
-          label="Fournisseurs"
-          title="Une vision claire"
-          tail="de vos achats."
-          text="Classez vos achats par fournisseur et repérez ceux dont les prix augmentent le plus."
+          label="Cycle documentaire"
+          title="Devis → commande → facture."
+          text="Faites évoluer vos documents sans ressaisie inutile."
         />
-        <DeferredSuppliers />
+        <DeferredProductPipeline />
       </LandingSection>
 
-      <LandingSection id="fonctionnalites" className="border-t border-line">
+      <LandingSection id="copilote" className="bg-[#FFFFFF]">
         <LandingSectionHead
-          label="Dans l’app"
-          title="Tout ce que fait TARINEO,"
-          tail="déjà disponible."
-          text="Des achats fournisseurs jusqu’au devis de votre client : les outils livrés aujourd’hui dans l’application."
+          label="Copilote"
+          title="Votre copilote connaît vos chantiers."
+          text="Posez une question sur votre activité. TARINEO vous aide à retrouver l’information utile."
         />
-        <LandingFeatureGrid />
+        <DeferredProductCopilote />
       </LandingSection>
 
-      <LandingSection id="pour-qui" tone="light">
+      <LandingSection id="fonctionnalites" className="bg-[#F5F5F3]">
+        <LandingSectionHead
+          label="Produit"
+          title="Tout votre métier au même endroit."
+          text="Devis, documents, chantiers, achats, prix, facturation et copilote — le même design que dans l’app."
+        />
+        <DeferredProductFeatures />
+      </LandingSection>
+
+      <LandingSection id="artisans" className="bg-[#FFFFFF]">
         <LandingSectionHead
           label="Pour qui"
-          title="Pensé pour ceux"
-          tail="qui construisent."
-          text="Artisans et petites entreprises du bâtiment qui achètent chez plusieurs fournisseurs."
+          title="Pensé pour la réalité des artisans."
+          text="Les corps d’état qui achètent chez les distributeurs et facturent au chantier."
         />
         <LandingAudience />
       </LandingSection>
 
-      <LandingSection id="qui" className="border-t border-line">
-        <LandingSectionHead label="Qui est derrière" title="Un ancien des chantiers," tail="pas une start-up hors-sol." />
+      <LandingSection id="qui" className="bg-[#F5F5F3]">
+        <LandingSectionHead
+          label="Fondateur"
+          title="Un ancien des chantiers, pas une start-up hors-sol."
+        />
         <LandingFounder />
       </LandingSection>
 
-      <LandingSection id="tarifs" className="border-t border-line">
+      <LandingSection id="tarifs" className="bg-[#FFFFFF]">
         <LandingSectionHead
           label="Tarifs"
-          title="Le 1er mois est offert."
-          tail="Ensuite, dès 17 € par mois."
+          title="Le 1er mois est offert. Ensuite, dès 17 € par mois."
         />
         <DeferredPricing />
       </LandingSection>
 
-      <LandingSection id="faq" tone="light">
+      <LandingSection id="faq" className="bg-[#F5F5F3]">
         <LandingSectionHead
           label="FAQ"
           title="Questions fréquentes"
-          text={`Une autre question ? Écrivez-nous : ${BRAND.contactEmail}`}
+          text={`Une autre question ? ${BRAND.contactEmail}`}
         />
         <div className="mx-auto max-w-[760px]">
           <DeferredFaqTabs groups={FAQ_GROUPS} />
@@ -123,6 +125,6 @@ export default function LandingPage() {
       </LandingSection>
 
       <LandingClosingCta />
-    </>
+    </div>
   );
 }

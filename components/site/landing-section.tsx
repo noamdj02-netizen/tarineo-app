@@ -16,7 +16,7 @@ export function LandingSection({ id, children, className, tone = "default" }: La
     <section
       id={id}
       className={cn(
-        "scroll-mt-24 px-4 py-16 sm:px-8 sm:py-24",
+        "scroll-mt-28 px-4 py-20 sm:px-8 sm:py-28",
         tone === "muted" && "bg-background",
         tone === "light" && "theme-light",
         className,
@@ -39,35 +39,39 @@ export function LandingSectionHead({
   title: string;
   tail?: string;
   text?: string;
-  /** Centré (défaut) ou aligné à gauche sur la grille 1080px. */
   align?: "center" | "start";
   className?: string;
 }) {
   return (
     <InView
+      stagger={0.05}
       className={cn(
-        "mx-auto mb-8 flex max-w-[1080px] flex-col gap-2.5 sm:mb-10 sm:gap-3",
-        align === "center" && "max-w-[640px] items-center text-center",
+        "mx-auto mb-12 flex max-w-[1080px] flex-col gap-3 sm:mb-14 sm:gap-4",
+        align === "center" && "max-w-[760px] items-center text-center",
         align === "start" && "w-full items-start text-left",
         className,
       )}
     >
       <Reveal>
-        <p className="mono-label">{`/ ${label} ///`}</p>
+        <p className="text-[13px] font-medium tracking-[-0.01em] text-[#6E6E6E] sm:text-[14px]">
+          {label}
+        </p>
       </Reveal>
       <Reveal>
         <h2
           className={cn(
-            "font-display text-[clamp(26px,6.2vw,42px)] leading-[1.06] font-semibold tracking-tightest text-balance text-foreground",
+            "font-display text-[clamp(28px,5.5vw,48px)] leading-[1.05] font-semibold tracking-[-0.03em] text-balance text-[#0A0A0A]",
           )}
         >
           {title}
-          {tail ? <span className="text-muted-foreground"> {tail}</span> : null}
+          {tail ? <> {tail}</> : null}
         </h2>
       </Reveal>
       {text ? (
         <Reveal>
-          <p className="text-[15px] leading-relaxed text-muted-foreground sm:text-[17px]">{text}</p>
+          <p className="max-w-[52ch] text-[16px] leading-[1.55] text-[#6E6E6E] text-pretty sm:text-[18px]">
+            {text}
+          </p>
         </Reveal>
       ) : null}
     </InView>

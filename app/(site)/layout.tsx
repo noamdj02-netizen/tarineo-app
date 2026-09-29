@@ -8,7 +8,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#050505",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F5F5F3" },
+    { media: "(prefers-color-scheme: dark)", color: "#050505" },
+  ],
 };
 
 export default function SiteLayout({ children }: { children: React.ReactNode }) {

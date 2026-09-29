@@ -39,6 +39,10 @@
     "node_modules",
     "supabase/functions",
     "navpit",
-    "promo"
+    "promo",
+    "remotion",
+    "remotion.config.ts",
+    "components/motion/TarineoMotion.tsx",
+    "components/site/landing-motion-film.tsx"
   ]
 }

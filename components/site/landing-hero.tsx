@@ -1,114 +1,85 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { ArrowDownRight, ArrowUpRight, HardHat } from "lucide-react";
-import { Reveal, RevealGroup } from "@/components/motion/reveal";
-import { HeroBackdrop } from "@/components/site/hero-backdrop";
-import { DeltaBadge } from "@/components/site/delta-badge";
+"use client";
+
+import { ArrowUpRight, HardHat } from "lucide-react";
+import { AnimatedBorderTrail, CycleText } from "@/components/animata";
+import { Reveal, RevealGroup, SectionEnter } from "@/components/motion/reveal";
+import { HeroMotionStage } from "@/components/site/hero-motion-stage";
 import { LandingButton } from "@/components/site/landing-button";
-import { SupplierLogo } from "@/components/site/supplier-logo";
-import { DEMO_MARK, HERO, HERO_SAMPLE, euro, variation } from "@/lib/site/tarineo";
+import { HERO } from "@/lib/site/tarineo";
 
-/** L'image n'est utilisée que si le fichier existe dans /public (sinon : scène de chantier vectorielle). */
-function publicFile(src: string | null) {
-  if (!src) return null;
-  return existsSync(join(process.cwd(), "public", src)) ? src : null;
-}
+const HERO_CYCLES = [
+  "Analysez vos devis.",
+  "Détectez les hausses.",
+  "Pilotez vos chantiers.",
+] as const;
 
-/** Hero plein cadre : photo de chantier + voile 60 %, promesse, deux CTA, une ligne analysée en exemple. */
+/**
+ * Hero parallèle Mosey + touches Animata (cycle texte, bordure trail).
+ */
 export function LandingHero() {
-  const change = variation(HERO_SAMPLE.before, HERO_SAMPLE.after);
-  const image = publicFile(HERO.image);
-
   return (
     <section
       id="top"
-      className="relative isolate -mt-[72px] flex min-h-[min(100svh,980px)] scroll-mt-24 flex-col justify-center overflow-clip px-4 pt-[120px] pb-16 text-white sm:px-8 sm:pt-[140px] sm:pb-24"
+      className="theme-light relative isolate scroll-mt-24 overflow-clip bg-[#FFFFFF] px-4 pt-[112px] pb-10 text-[#0A0A0A] sm:px-8 sm:pt-[120px] sm:pb-14"
     >
-      <HeroBackdrop video={HERO.video} image={image} alt={HERO.imageAlt} />
-
       <RevealGroup
-        stagger={0.1}
-        delay={0.1}
-        className="mx-auto flex w-full max-w-[1060px] flex-col items-center gap-5 text-center [text-shadow:0_1px_2px_rgba(0,0,0,0.35),0_2px_24px_rgba(0,0,0,0.45)] sm:gap-6"
+        stagger={0.04}
+        delay={0.02}
+        className="relative mx-auto grid w-full max-w-[1080px] gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-end lg:gap-10"
       >
-        <Reveal>
-          <p className="liquid-glass inline-flex items-center gap-2 rounded-pill py-1.5 pr-3.5 pl-2.5 font-mono text-[10.5px] font-medium tracking-[0.08em] text-white uppercase [text-shadow:none] sm:text-[11px] sm:tracking-[0.12em]">
-            <span className="relative flex size-2">
-              <span className="absolute inset-0 animate-[beacon_2.4s_ease-in-out_infinite] rounded-full bg-brand-orange/60 blur-[3px] motion-reduce:hidden" />
-              <span className="relative size-2 rounded-full bg-brand-orange" />
-            </span>
+        <Reveal className="text-left">
+          <p className="mb-3 font-display text-[13px] font-semibold tracking-[0.04em] text-[#FF6B1A] uppercase sm:text-[14px]">
             {HERO.badge}
           </p>
-        </Reveal>
-
-        <Reveal>
-          <h1 className="font-display text-[clamp(36px,8.4vw,80px)] leading-[1.0] font-semibold tracking-tightest text-balance">
+          <h1 className="font-display text-[clamp(36px,6.5vw,64px)] leading-[1.02] font-semibold tracking-[-0.035em] text-balance">
             {HERO.title}
             <br />
-            {HERO.titleTail}
+            <span className="text-[#FF6B1A]">{HERO.titleTail}</span>
           </h1>
-        </Reveal>
-
-        <Reveal>
-          <p className="max-w-[58ch] text-[16px] leading-relaxed font-medium text-white sm:text-[19px]">{HERO.text}</p>
-        </Reveal>
-
-        <Reveal className="flex w-full max-w-[min(100%,360px)] flex-col gap-2.5 sm:max-w-none sm:flex-row sm:justify-center sm:gap-3">
-          <LandingButton
-            href={HERO.primary.href}
-            variant="orange"
-            icon={<ArrowUpRight aria-hidden />}
-            fullWidth
-            className="sm:w-auto"
-          >
-            {HERO.primary.label}
-          </LandingButton>
-          <LandingButton
-            href={HERO.secondary.href}
-            variant="glass"
-            icon={<ArrowDownRight aria-hidden />}
-            fullWidth
-            prefetch={false}
-            className="sm:w-auto"
-          >
-            {HERO.secondary.label}
-          </LandingButton>
-        </Reveal>
-
-        <Reveal>
-          <p className="flex items-center justify-center gap-2 text-[15px] font-medium text-white sm:text-base">
-            <HardHat className="size-4 text-brand-orange-light" aria-hidden />
+          <div className="mt-6 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+            <LandingButton
+              href={HERO.primary.href}
+              variant="orange"
+              icon={<ArrowUpRight aria-hidden strokeWidth={2.25} />}
+              className="min-h-11 w-full sm:w-auto"
+            >
+              {HERO.primary.label}
+            </LandingButton>
+            <LandingButton
+              href={HERO.secondary.href}
+              variant="secondary"
+              prefetch={false}
+              className="min-h-11 w-full border-[rgba(10,10,10,0.08)] bg-transparent text-[#0A0A0A] shadow-none hover:bg-[#F5F5F3] sm:w-auto"
+            >
+              {HERO.secondary.label}
+            </LandingButton>
+          </div>
+          <p className="mt-4 flex items-center gap-2 text-[13px] text-[#6E6E6E]">
+            <HardHat className="size-3.5 shrink-0 text-[#FF6B1A]" strokeWidth={2} aria-hidden />
             {HERO.founderLine}
           </p>
         </Reveal>
 
-        {/* Exemple de ligne analysée : le produit compris en un coup d'œil */}
-        <Reveal className="mt-4 w-full max-w-[640px] sm:mt-8">
-          <figure className="liquid-glass rounded-[20px] border border-white/20 bg-black/55! p-2 text-left [text-shadow:none]">
-            <div className="flex items-center justify-between gap-3 px-3 pt-1.5 pb-2.5">
-              <p className="flex items-center gap-2 font-mono text-[10.5px] tracking-[0.12em] text-white/75 uppercase">
-                <SupplierLogo name={HERO_SAMPLE.supplier} size={22} priority className="rounded-md" />
-                {HERO_SAMPLE.supplier} · Devis analysé
-              </p>
-              <span className="rounded-pill border border-white/20 px-2 py-0.5 font-mono text-[9.5px] tracking-[0.12em] text-white/70 uppercase">
-                {DEMO_MARK}
-              </span>
-            </div>
-            <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 rounded-[14px] border border-white/10 bg-white/[0.06] px-4 py-3.5 sm:grid-cols-[1fr_auto_auto]">
-              <p className="text-[15px] font-medium text-white">{HERO_SAMPLE.product}</p>
-              <p className="order-3 col-span-2 flex items-center gap-2 font-mono text-[13px] text-white/70 tabular-nums sm:order-none sm:col-span-1">
-                <span className="line-through decoration-white/50">{euro(HERO_SAMPLE.before)}</span>
-                <span aria-hidden>→</span>
-                <span className="text-white">{euro(HERO_SAMPLE.after)}</span>
-              </p>
-              <DeltaBadge value={change} size="lg" solid />
-            </div>
-            <figcaption className="sr-only">
-              Exemple : {HERO_SAMPLE.product} passe de {euro(HERO_SAMPLE.before)} à {euro(HERO_SAMPLE.after)}.
-            </figcaption>
-          </figure>
+        <Reveal className="text-left lg:text-right">
+          <p className="max-w-[36ch] text-[15px] leading-[1.55] text-[#6E6E6E] text-pretty lg:ml-auto sm:text-[16px]">
+            {HERO.text}
+          </p>
+          <p className="mt-3 font-display text-[18px] font-semibold tracking-[-0.02em] text-[#0A0A0A] lg:text-right sm:text-[20px]">
+            <CycleText words={HERO_CYCLES} className="text-[#FF6B1A]" />
+          </p>
         </Reveal>
       </RevealGroup>
+
+      <SectionEnter className="relative mx-auto mt-10 max-w-[1080px] sm:mt-12" delay={0.06}>
+        <AnimatedBorderTrail
+          trailColor="#FF6B1A"
+          trailSize="sm"
+          duration="12s"
+          contentClassName="bg-[#FFFFFF] p-1 sm:p-2"
+        >
+          <HeroMotionStage />
+        </AnimatedBorderTrail>
+      </SectionEnter>
     </section>
   );
 }

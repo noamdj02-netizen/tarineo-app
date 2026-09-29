@@ -4,27 +4,43 @@ import {
   motion,
   useReducedMotion,
   type HTMLMotionProps,
+  type Transition,
   type Variants,
 } from "framer-motion";
 
-/** Courbe Framer / Figma : expo-out, masse puis arrêt net. */
-export const EASE = [0.16, 1, 0.3, 1] as const;
+/**
+ * Motion Apple (WWDC Designing Fluid Interfaces) :
+ * springs critically damped — pas de bounce sur les entrées marketing.
+ * Response ~0.35–0.4s. Reduced motion = cross-fade only.
+ */
+export const APPLE_SPRING: Transition = {
+  type: "spring",
+  bounce: 0,
+  duration: 0.4,
+};
 
-/** Viewport partagé : une fois dans l'écran, on ne rejoue pas. */
+export const APPLE_SPRING_FAST: Transition = {
+  type: "spring",
+  bounce: 0,
+  duration: 0.3,
+};
+
+/** @deprecated Prefer APPLE_SPRING — kept for nav/legacy cubic easings. */
+export const EASE = [0.2, 0.8, 0.2, 1] as const;
+
 export const SECTION_VIEW = {
   once: true,
   amount: 0.18,
   margin: "0px 0px -6% 0px",
 } as const;
 
-/** Entrée marketing : opacity + y + scale (GPU). Pas de blur. */
 const item: Variants = {
-  hidden: { opacity: 0, y: 16, scale: 0.98 },
+  hidden: { opacity: 0, y: 14, scale: 0.985 },
   show: {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.55, ease: EASE },
+    transition: APPLE_SPRING,
   },
 };
 
@@ -33,9 +49,8 @@ const itemReduced: Variants = {
   show: { opacity: 1, transition: { duration: 0.2 } },
 };
 
-/** Conteneur qui décale l'apparition de ses enfants <Reveal>. */
 export function RevealGroup({
-  stagger = 0.07,
+  stagger = 0.06,
   delay = 0,
   ...props
 }: HTMLMotionProps<"div"> & { stagger?: number; delay?: number }) {
@@ -58,7 +73,6 @@ export function Reveal(props: HTMLMotionProps<"div">) {
   return <motion.div variants={reduce ? itemReduced : item} {...props} />;
 }
 
-/** Entrée autonome d'un bloc (démos différées, grilles) — ne dépend pas d'un parent InView. */
 export function SectionEnter({
   delay = 0,
   ...props
@@ -66,10 +80,14 @@ export function SectionEnter({
   const reduce = useReducedMotion();
   return (
     <motion.div
-      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.985 }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.985 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={SECTION_VIEW}
-      transition={{ duration: reduce ? 0.2 : 0.6, ease: EASE, delay }}
+      transition={
+        reduce
+          ? { duration: 0.2 }
+          : { ...APPLE_SPRING, delay }
+      }
       {...props}
     />
   );

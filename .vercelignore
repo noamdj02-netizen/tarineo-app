@@ -1,6 +1,14 @@
 promo/node_modules
 promo/.remotion
+promo
+remotion
+remotion.config.ts
 navpit
 .next-dev
 .cursor
+.agents
 **/.DS_Store
+public/landing/hero-motion.mp4
+public/landing/hero-motion-poster.jpg
+components/motion/TarineoMotion.tsx
+components/site/landing-motion-film.tsx

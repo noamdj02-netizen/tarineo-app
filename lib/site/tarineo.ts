@@ -24,8 +24,8 @@ export const OFFER = "1er mois offert, sans carte bancaire";
 
 /** CTA essai : court dans la nav / le footer, long dans le hero et le bandeau final. */
 export const CTA_TRIAL = {
-  short: "Essai gratuit",
-  long: "Essayer gratuitement",
+  short: "Commencer",
+  long: "Essayer TARINEO gratuitement",
 } as const;
 
 /** Mention unique pour toute démo chiffrée. */
@@ -33,16 +33,15 @@ export const DEMO_MARK = "Exemple";
 export const DEMO_NOTE = "Données fictives.";
 
 export const HERO = {
-  badge: OFFER,
-  title: "Déposez vos devis.",
-  titleTail: "TARINEO fait le reste.",
-  text: "Hausses de prix détectées, documents rangés par chantier, devis client prêt en 2 minutes.",
-  primary: { label: CTA_TRIAL.long, href: "/inscription" },
-  secondary: { label: "Voir comment ça marche", href: "/#comment" },
+  badge: "TARINEO — LE COPILOTE DES ARTISANS",
+  title: "Votre marge,",
+  titleTail: "enfin sous contrôle.",
+  text: "Analysez vos devis, surveillez vos achats et pilotez vos chantiers depuis un seul endroit.",
+  primary: { label: "Essayer TARINEO gratuitement", href: "/inscription" },
+  secondary: { label: "Découvrir TARINEO", href: "/#devis-ia" },
   founderLine: "Créé par un ancien des Travaux Publics.",
   /**
-   * Vidéo de fond (desktop uniquement, prioritaire sur l'image). Sur mobile, et si
-   * l'utilisateur réduit les animations, seul le poster s'affiche. `null` = image.
+   * Film chantier conservé pour d’autres usages — le hero Mosey-parallèle n’en dépend pas.
    */
   video: {
     webm: "/landing/hero.webm",
@@ -50,10 +49,6 @@ export const HERO = {
     poster: "/landing/hero-poster.webp",
     posterMobile: "/landing/hero-poster-mobile.webp",
   } as HeroVideo | null,
-  /**
-   * Photo du hero, à déposer dans /public. Tant que le fichier est absent,
-   * le hero affiche la scène de chantier vectorielle (même voile, même lisibilité).
-   */
   image: "/landing/hero-chantier.webp" as string | null,
   imageAlt: "Chantier de construction",
 } as const;
@@ -719,9 +714,10 @@ export const FAQ = FAQ_GROUPS.flatMap((g) => g.items);
 
 export const FINAL_CTA = {
   label: "Commencer",
-  title: "Ne découvrez pas vos hausses de prix",
-  tail: "trop tard.",
-  cta: CTA_TRIAL.long,
+  title: "Construisez mieux.",
+  tail: "Protégez votre marge.",
+  text: "TARINEO centralise vos documents, vos achats et vos chantiers.",
+  cta: "Commencer avec TARINEO",
   href: "/inscription",
   note: `${OFFER}.`,
 } as const;
@@ -731,19 +727,20 @@ export const FINAL_CTA = {
 /* ------------------------------------------------------------------ */
 
 export const NAV_LINKS = [
+  { href: "/#devis-ia", label: "Produit" },
   { href: "/#fonctionnalites", label: "Fonctionnalités" },
-  { href: "/#comment", label: "Comment ça marche" },
+  { href: "/#comment-ca-marche", label: "Comment ça marche" },
   { href: "/#tarifs", label: "Tarifs" },
-  { href: "/#faq", label: "FAQ" },
 ] as const;
 
 export const FOOTER_COLS = [
   {
     title: "Produit",
     links: [
+      { href: "/#devis-ia", label: "Produit" },
       { href: "/#fonctionnalites", label: "Fonctionnalités" },
+      { href: "/#comment-ca-marche", label: "Comment ça marche" },
       { href: "/#tarifs", label: "Tarifs" },
-      { href: "/#comment", label: "Comment ça marche" },
     ],
   },
   {
