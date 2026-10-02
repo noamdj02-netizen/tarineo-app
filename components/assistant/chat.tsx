@@ -186,7 +186,7 @@ export function Chat({
         aria-busy={busy}
       >
         {keyMissing ? (
-          <p role="status" className="rounded-[12px] border border-[rgba(10,10,10,0.08)] bg-[#F7F7F5] p-3 text-[13px] dark:border-white/8 dark:bg-[#151515]">
+          <p role="status" className="rounded-[12px] border border-line bg-surface-2 p-3 text-[13px]">
             <b className="font-semibold">Le copilote n’est pas encore branché.</b> Ajoute{" "}
             <code className="font-mono text-[12px]">ANTHROPIC_API_KEY</code> côté serveur.
           </p>
@@ -232,7 +232,7 @@ export function Chat({
               )}
             >
               {m.role === "user" ? (
-                <div className="rounded-[12px] border border-[rgba(10,10,10,0.08)] bg-[#F5F5F3] px-3 py-2 whitespace-pre-wrap dark:border-white/8 dark:bg-[#171717]">
+                <div className="rounded-[12px] border border-line bg-surface-2 px-3 py-2 whitespace-pre-wrap">
                   {m.content}
                 </div>
               ) : (
@@ -305,7 +305,7 @@ export function Chat({
               type="button"
               onClick={() => abortRef.current?.abort()}
               aria-label="Arrêter la réponse"
-              className="grid size-9 flex-none place-items-center rounded-full bg-[#F7F7F5] text-ink hover:bg-[#ecece8] dark:bg-[#151515]"
+              className="grid size-9 flex-none place-items-center rounded-full bg-surface-2 text-ink hover:bg-muted"
             >
               <Square className="size-3.5 fill-current" aria-hidden />
             </button>

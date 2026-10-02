@@ -29,12 +29,24 @@ export function EntrepriseForm({
   const [seed, setSeed] = useState(() => draftFromProfile(profil, logoUrl));
 
   function applyLookup(draft: EntrepriseDraft) {
-    setSeed({
-      ...seed,
-      ...draft,
-      logoPath: seed.logoPath ?? profil.logo_path,
-    });
-    if (draft.logoUrl) setPreview(draft.logoUrl);
+    // Complète les champs publics sans écraser logo / email / TVA déjà valides.
+    setSeed((prev) => ({
+      ...prev,
+      raisonSociale: draft.raisonSociale || prev.raisonSociale,
+      formeJuridique: draft.formeJuridique || prev.formeJuridique,
+      siret: draft.siret || prev.siret,
+      adresseRue: draft.adresseRue || prev.adresseRue,
+      adresseCodePostal: draft.adresseCodePostal || prev.adresseCodePostal,
+      adresseVille: draft.adresseVille || prev.adresseVille,
+      emailContact: prev.emailContact || draft.emailContact || profil.email_contact,
+      regimeTva: prev.regimeTva ?? draft.regimeTva ?? profil.regime_tva,
+      logoUrl: prev.logoUrl ?? draft.logoUrl ?? logoUrl,
+      logoPath: prev.logoPath || profil.logo_path,
+      margeParDefautPct: prev.margeParDefautPct ?? draft.margeParDefautPct ?? 35,
+      activity: draft.activity || prev.activity,
+      fromLookup: true,
+    }));
+    if (draft.logoUrl && !preview) setPreview(draft.logoUrl);
     setFormKey((k) => k + 1);
     setMsg("Informations récupérées — vérifiez puis enregistrez.");
   }
@@ -93,39 +105,39 @@ export function EntrepriseForm({
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               Raison sociale
               <Input name="raisonSociale" required defaultValue={seed.raisonSociale ?? ""} className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               Forme juridique
               <Input name="formeJuridique" defaultValue={seed.formeJuridique ?? ""} placeholder="EI, EURL…" className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               SIRET
               <Input name="siret" required inputMode="numeric" defaultValue={seed.siret ?? ""} className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               RCS / RM
               <Input name="registreImmatriculation" defaultValue={profil.registre_immatriculation} className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px] sm:col-span-2">
+            <label className="text-[13px] text-ink sm:col-span-2">
               Adresse
               <Input name="adresseRue" required defaultValue={seed.adresseRue ?? ""} className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               Code postal
               <Input name="adresseCodePostal" required defaultValue={seed.adresseCodePostal ?? ""} className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               Ville
               <Input name="adresseVille" required defaultValue={seed.adresseVille ?? ""} className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               Téléphone
               <Input name="telephone" defaultValue={profil.telephone} className={`mt-1 ${field}`} />
             </label>
-            <label className="text-[13px]">
+            <label className="text-[13px] text-ink">
               Email
               <Input name="emailContact" type="email" defaultValue={seed.emailContact ?? ""} className={`mt-1 ${field}`} />
             </label>
@@ -135,7 +147,7 @@ export function EntrepriseForm({
         <section className="card-soft flex flex-col gap-3 p-5">
           <p className="text-[12px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">TVA & marge</p>
           {(["FRANCHISE_293B", "NORMAL"] as const).map((v) => (
-            <label key={v} className="flex min-h-12 items-start gap-2 text-[14px]">
+            <label key={v} className="flex min-h-12 items-start gap-2 text-[14px] text-ink">
               <input
                 type="radio"
                 name="regimeTva"
@@ -146,7 +158,7 @@ export function EntrepriseForm({
               {LABELS_REGIME_TVA[v]}
             </label>
           ))}
-          <label className="mt-2 max-w-[10rem] text-[13px]">
+          <label className="mt-2 max-w-[10rem] text-[13px] text-ink">
             Marge par défaut (%)
             <Input
               name="margeParDefautPct"
@@ -160,28 +172,28 @@ export function EntrepriseForm({
         </section>
 
         <section className="card-soft p-5">
-          <button type="button" className="text-left text-[14px] font-medium" onClick={() => setAssurance((v) => !v)}>
+          <button type="button" className="text-left text-[14px] font-medium text-ink" onClick={() => setAssurance((v) => !v)}>
             Assurance décennale {assurance ? "— masquer" : "— renseigner (optionnel)"}
           </button>
           {assurance ? (
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="text-[13px] sm:col-span-2">
+              <label className="text-[13px] text-ink sm:col-span-2">
                 Assureur
                 <Input name="assuranceNom" defaultValue={profil.assurance_nom} className={`mt-1 ${field}`} />
               </label>
-              <label className="text-[13px] sm:col-span-2">
+              <label className="text-[13px] text-ink sm:col-span-2">
                 Adresse assureur
                 <Input name="assuranceAdresse" defaultValue={profil.assurance_adresse} className={`mt-1 ${field}`} />
               </label>
-              <label className="text-[13px]">
+              <label className="text-[13px] text-ink">
                 N° contrat
                 <Input name="assuranceNumeroContrat" defaultValue={profil.assurance_numero_contrat} className={`mt-1 ${field}`} />
               </label>
-              <label className="text-[13px]">
+              <label className="text-[13px] text-ink">
                 Zone
                 <Input name="assuranceZoneGeographique" defaultValue={profil.assurance_zone_geographique} className={`mt-1 ${field}`} />
               </label>
-              <label className="text-[13px] sm:col-span-2">
+              <label className="text-[13px] text-ink sm:col-span-2">
                 Activités garanties
                 <Input name="assuranceActivitesGaranties" defaultValue={profil.assurance_activites_garanties} className={`mt-1 ${field}`} />
               </label>

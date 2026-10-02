@@ -79,7 +79,9 @@ function PlanCard({ plan, period }: { plan: TarineoPlan; period: Period }) {
     <Card
       className={cn(
         "card-lift relative h-full gap-0 rounded-2xl py-0",
-        featured ? "bg-alert-wash shadow-lift ring-brand-orange/40 lg:scale-[1.02]" : "shadow-soft",
+        featured
+          ? "bg-alert-wash text-white shadow-lift ring-brand-orange/40 lg:scale-[1.02]"
+          : "shadow-soft",
       )}
     >
       {featured ? (
@@ -89,9 +91,19 @@ function PlanCard({ plan, period }: { plan: TarineoPlan; period: Period }) {
         />
       ) : null}
 
-      <CardHeader className="relative gap-3 border-b px-6 pt-6 pb-5">
+      <CardHeader
+        className={cn(
+          "relative gap-3 border-b px-6 pt-6 pb-5",
+          featured && "border-white/10",
+        )}
+      >
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-[15px] font-semibold tracking-[0.06em] uppercase">
+          <CardTitle
+            className={cn(
+              "text-[15px] font-semibold tracking-[0.06em] uppercase",
+              featured && "text-white/90",
+            )}
+          >
             {plan.name}
           </CardTitle>
           {plan.badge ? (
@@ -104,19 +116,36 @@ function PlanCard({ plan, period }: { plan: TarineoPlan; period: Period }) {
             initial={reduce ? false : { opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.28, ease: EASE }}
-            className="font-display text-[44px] leading-none font-semibold tabular-nums"
+            className={cn(
+              "font-display text-[44px] leading-none font-semibold tabular-nums",
+              featured && "text-white",
+            )}
           >
             {price}
           </motion.span>
-          <span className="text-[14px] text-muted-foreground">HT / mois</span>
+          <span
+            className={cn(
+              "text-[14px]",
+              featured ? "text-white/60" : "text-muted-foreground",
+            )}
+          >
+            HT / mois
+          </span>
         </div>
-        <CardDescription className="text-[15px] sm:text-base">
+        <CardDescription
+          className={cn("text-[15px] sm:text-base", featured && "text-white/75")}
+        >
           {period === "year" ? `Facturé ${euroInt(plan.year)} HT par an. ` : ""}
           {plan.text}
         </CardDescription>
         <Badge
           variant="outline"
-          className="w-fit border-brand-orange/35 bg-brand-orange/10 text-brand-orange-light"
+          className={cn(
+            "w-fit",
+            featured
+              ? "border-white/20 bg-white/10 text-[#FFB37A]"
+              : "border-brand-orange/35 bg-brand-orange/10 text-brand-orange-light",
+          )}
         >
           1er mois offert
         </Badge>
@@ -129,23 +158,32 @@ function PlanCard({ plan, period }: { plan: TarineoPlan; period: Period }) {
               key={f.label}
               className={cn(
                 "flex items-start gap-2.5 text-[15px] leading-snug sm:text-base",
-                f.soon && "text-muted-foreground",
+                featured && !f.soon && "text-white/92",
+                !featured && f.soon && "text-muted-foreground",
+                featured && f.soon && "text-white/55",
               )}
             >
               {f.soon ? (
-                <Clock className="mt-0.5 size-4 flex-none" aria-hidden />
+                <Clock
+                  className={cn("mt-0.5 size-4 flex-none", featured && "text-white/45")}
+                  aria-hidden
+                />
               ) : (
                 <Check
                   className={cn(
                     "mt-0.5 size-4 flex-none",
-                    featured ? "text-brand-orange" : "text-foreground/70",
+                    featured ? "text-brand-orange-light" : "text-foreground/70",
                   )}
                   aria-hidden
                 />
               )}
               <span>
                 {f.label}
-                {f.soon ? <span className="ml-1.5 text-[12px]">(bientôt)</span> : null}
+                {f.soon ? (
+                  <span className={cn("ml-1.5 text-[12px]", featured && "text-white/45")}>
+                    (bientôt)
+                  </span>
+                ) : null}
               </span>
             </li>
           ))}

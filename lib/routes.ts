@@ -1,8 +1,10 @@
 /** Chemins produit. Les anciennes URL Navpit redirigent ici. */
 export const R = {
   accueil: "/accueil",
+  /** Chat contextuel (⌘J) — pas l’import de documents (/devis/analyser). */
   analyse: "/copilote",
   devisAnalyser: "/devis/analyser",
+  devisNouveau: "/devis/nouveau",
   chantiers: "/chantiers",
   chantier: (slug: string) => `/chantiers/${slug}`,
   nouveauChantier: "/chantiers#nouveau",
@@ -20,7 +22,9 @@ export const R = {
   comparateur: "/comparateur",
   fournisseurs: "/fournisseurs",
   achats: "/achats",
-  entreprise: "/entreprise",
+  achatsExport: "/achats/export",
+  entreprise: "/parametres/entreprise",
+  parametres: "/parametres",
   piece: (id: string) => `/pieces/${id}`,
 } as const;
 

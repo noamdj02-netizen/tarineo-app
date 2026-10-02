@@ -48,18 +48,18 @@ export function DocumentList({
             key={d.id}
             className={cn(
               "card-soft flex h-full flex-col overflow-hidden transition-[border-color,background-color] duration-150 hover:border-[rgba(255,107,26,0.16)]",
-              d.direction === "in" ? "bg-[#FFFAF6]" : "bg-surface",
+              d.direction === "in" ? "bg-wash-orange-strong" : "bg-surface",
             )}
           >
             <Link href={`/pieces/${d.id}`} className="group flex min-h-11 flex-1 flex-col md:min-h-0">
-              <div className="relative hidden bg-[#efe8e0] px-3 py-3 md:block">
+              <div className="relative bg-wash-paper px-3 py-3">
                 <div className="mx-auto w-[min(100%,176px)] overflow-hidden rounded-[6px] shadow-sm">
                   <DocumentPreview doc={d} company={company} size="thumb" />
                 </div>
                 <span
                   className={cn(
                     "absolute top-3 left-3 rounded-full px-2.5 py-1 text-[11px] font-medium",
-                    "bg-[#FFF1E8] text-[#C94F12]",
+                    "bg-wash-badge text-wash-badge-ink",
                   )}
                 >
                   {KIND_LABEL[d.kind]}

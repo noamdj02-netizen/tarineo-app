@@ -1,6 +1,6 @@
 "use client";
 
-import { DocumentDrop } from "@/components/metier/document-drop";
+import { DocumentImportPanels } from "@/components/metier/document-import-dialog";
 import {
   Dialog,
   DialogContent,
@@ -36,14 +36,14 @@ export function HomeImportButton({
       >
         Importer
       </DialogTrigger>
-      <DialogContent className="max-h-[min(90dvh,760px)] overflow-y-auto sm:max-w-xl" showCloseButton>
+      <DialogContent className="max-h-[min(92dvh,880px)] overflow-y-auto sm:max-w-3xl" showCloseButton>
         <DialogHeader>
-          <DialogTitle>Importer un document</DialogTitle>
+          <DialogTitle>Importer des documents</DialogTitle>
           <DialogDescription>
-            Même lecture qu’ailleurs : type, total HT, éco-contribution si le document les porte.
+            Un fichier avec relecture complète, ou un lot jusqu’à 150 documents en enregistrement automatique.
           </DialogDescription>
         </DialogHeader>
-        <DocumentDrop chantiers={chantiers} clients={clients} compact />
+        <DocumentImportPanels chantiers={chantiers} clients={clients} compact showAgentMeta />
       </DialogContent>
     </Dialog>
   );

@@ -3,14 +3,14 @@ import {
   Bell,
   Building2,
   CreditCard,
-  FileSearch,
   FileSpreadsheet,
   FileText,
   FolderTree,
   HardHat,
   House,
+  Sparkles,
   LifeBuoy,
-  MessageSquare,
+  Mail,
   Receipt,
   Store,
   Truck,
@@ -52,17 +52,12 @@ const accueil: Tab = {
   short: "Accueil",
   icon: House,
 };
-const analyse: Tab = {
+/** Import & lecture de documents (PDF, photos) — distinct du Copilote (⌘J, chat). */
+export const analyseIa: Tab = {
   href: R.devisAnalyser,
-  label: "Devis IA",
-  short: "Devis",
-  icon: FileSearch,
-};
-const copilote: Tab = {
-  href: "/copilote",
-  label: "Copilote",
-  short: "IA",
-  icon: MessageSquare,
+  label: "Analyse IA",
+  short: "Analyse",
+  icon: Sparkles,
 };
 const alertes: Tab = {
   href: R.hausses,
@@ -75,6 +70,12 @@ const classement: Tab = {
   label: "Achats",
   short: "Achats",
   icon: FolderTree,
+};
+const exportComptable: Tab = {
+  href: R.achatsExport,
+  label: "Export comptable",
+  short: "Export",
+  icon: FileSpreadsheet,
 };
 const chantiers: Tab = {
   href: R.chantiers,
@@ -102,8 +103,8 @@ const tarifs: Tab = {
 };
 
 const docsDistributeur: NavDrawer = {
-  id: "docs-distributeur",
-  label: "Documents distributeur",
+  id: "docs-fournisseur",
+  label: "Documents fournisseur",
   icon: Truck,
   items: [
     { href: R.distributeurDevis, label: "Devis", short: "Devis", icon: FileText },
@@ -117,26 +118,31 @@ const docsEntreprise: NavDrawer = {
   label: "Documents entreprise",
   icon: Building2,
   items: [
-    { href: R.clientDevis, label: "Devis client", short: "Devis", icon: FileSpreadsheet },
-    { href: R.clientBc, label: "Bons de commande client", short: "BC client", icon: FileText },
-    { href: R.clientFacture, label: "Factures client", short: "Facture", icon: Receipt },
+    { href: R.clientDevis, label: "Devis", short: "Devis", icon: FileSpreadsheet },
+    { href: R.clientBc, label: "Bons de commande", short: "BC", icon: FileText },
+    { href: R.clientFacture, label: "Factures", short: "Facture", icon: Receipt },
   ],
 };
-
-/** Sections de la barre latérale — mêmes thèmes que la landing. */
-export const NAV_SECTIONS: NavSection[] = [
-  { id: "aujourd-hui", label: "Aujourd’hui", items: [accueil, analyse, copilote] },
-  { id: "documents", label: "Documents", items: [docsDistributeur, docsEntreprise] },
-  { id: "chantiers", label: "Chantiers", items: [chantiers] },
-  { id: "achats", label: "Achats", items: [fournisseurs, comparateur, alertes, classement] },
-];
 
 const relances: Tab = {
   href: R.relances,
   label: "Relances",
   short: "Relances",
-  icon: Bell,
+  icon: Mail,
 };
+
+/** Sections de la barre latérale — orientée métier (pas Devis IA / Copilote). */
+export const NAV_SECTIONS: NavSection[] = [
+  { id: "aujourd-hui", label: "Aujourd’hui", items: [accueil, analyseIa] },
+  { id: "documents", label: "Documents", items: [docsDistributeur, docsEntreprise] },
+  { id: "chantiers", label: "Chantiers", items: [chantiers] },
+  {
+    id: "achats",
+    label: "Achats",
+    items: [fournisseurs, comparateur, alertes, relances, exportComptable, classement],
+  },
+];
+
 const entreprise: Tab = {
   href: R.entreprise,
   label: "Mon entreprise",
@@ -151,9 +157,9 @@ const support: Tab = {
 };
 
 export const MOBILE_MORE_SECTIONS: { id: string; label: string; items: Tab[] }[] = [
-  { id: "docs-distributeur", label: "Documents distributeur", items: docsDistributeur.items },
+  { id: "docs-fournisseur", label: "Documents fournisseur", items: docsDistributeur.items },
   { id: "docs-entreprise", label: "Documents entreprise", items: docsEntreprise.items },
-  { id: "suivi", label: "Suivi", items: [fournisseurs, comparateur, alertes, classement, relances] },
+  { id: "suivi", label: "Suivi", items: [fournisseurs, comparateur, alertes, exportComptable, classement, relances] },
   { id: "compte", label: "Compte", items: [entreprise, tarifs, support] },
 ];
 

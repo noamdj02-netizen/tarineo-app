@@ -12,7 +12,7 @@ export async function lookupCompanyAction(query: string): Promise<CompanyLookupR
   }
   const q = String(query ?? "").trim();
   if (q.length < 2) {
-    return { status: "error", message: "Indiquez un nom d’entreprise ou un site web." };
+    return { status: "error", message: "Indiquez un nom d’entreprise ou un SIRET." };
   }
   try {
     return await lookupCompany(q);

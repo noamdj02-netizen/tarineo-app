@@ -229,7 +229,7 @@ export function ChantierFiche({
                     </span>
                   );
                   return (
-                    <li key={item.key} className="rounded-[10px] transition-colors duration-150 hover:bg-[#FAFAF9]">
+                    <li key={item.key} className="rounded-[10px] transition-colors duration-150 hover:bg-wash-row-hover">
                       {item.href ? (
                         <Link href={item.href} className="block">
                           {row}
@@ -312,7 +312,7 @@ export function ChantierFiche({
               <DocGroup title="Devis" docs={devis} all={documents} />
               <DocGroup title="Commandes" docs={commandes} all={documents} />
               <DocGroup title="Factures" docs={factures} all={documents} />
-              <DocGroup title="Documents distributeur" docs={inbound} all={documents} inbound />
+              <DocGroup title="Documents fournisseur" docs={inbound} all={documents} inbound />
             </>
           )}
           <p className="text-[13px] text-muted-foreground">
@@ -325,7 +325,7 @@ export function ChantierFiche({
             </Link>
             {" · "}
             <Link href={`${R.distributeurDevis}?chantier=${chantier.slug}`} className="underline underline-offset-2">
-              Documents distributeur
+              Documents fournisseur
             </Link>
           </p>
         </div>
@@ -345,7 +345,7 @@ export function ChantierFiche({
                   <li key={d.id}>
                     <Link
                       href={`/pieces/${d.id}`}
-                      className="flex items-center justify-between gap-3 rounded-[14px] border border-[rgba(255,107,26,0.10)] bg-[#FFFAF6] px-4 py-3 transition-colors duration-150 hover:bg-[#FFF4EC]"
+                      className="flex items-center justify-between gap-3 rounded-[14px] border border-brand-orange/20 bg-wash-orange-strong px-4 py-3 transition-colors duration-150 hover:bg-wash-orange-hover"
                     >
                       <span className="flex min-w-0 items-center gap-2">
                         {d.party_name ? <SupplierLogo name={d.party_name} size={28} /> : null}
@@ -445,7 +445,7 @@ function ChantierKpis({
       value: sellHt ? euro(sellHt) : "—",
       hint: `${devisCount} devis`,
       dot: "bg-nav-orange",
-      className: "border-[rgba(255,107,26,0.12)] bg-[#FFF8F3]",
+      className: "border-brand-orange/20 bg-wash-orange",
     },
     {
       key: "achats",
@@ -453,15 +453,15 @@ function ChantierKpis({
       value: buyHt ? euro(buyHt) : "—",
       hint: `${buyCount} achat${buyCount > 1 ? "s" : ""}`,
       dot: "bg-muted-foreground/50",
-      className: "border-line bg-[#F8F8F7]",
+      className: "border-line bg-wash-neutral",
     },
     {
       key: "marge",
       label: "Marge",
       value: sellHt ? euro(marginHt) : "—",
       hint: marginPct != null ? `${marginPct} %` : "—",
-      dot: "bg-[#16A34A]",
-      className: "border-[rgba(22,163,74,0.14)] bg-[#F4FBF6] sm:col-span-1 lg:col-span-1",
+      dot: "bg-st-focus",
+      className: "border-st-focus/25 bg-wash-success sm:col-span-1 lg:col-span-1",
       bar: marginPct,
     },
     {
@@ -470,7 +470,7 @@ function ChantierKpis({
       value: String(docsCount),
       hint: "documents liés",
       dot: "bg-muted-foreground/40",
-      className: "border-line bg-[#F7F7F6]",
+      className: "border-line bg-wash-neutral-2",
     },
   ];
   return (
@@ -481,14 +481,14 @@ function ChantierKpis({
             <span aria-hidden className={cn("size-1.5 rounded-full", c.dot)} />
             {c.label}
           </p>
-          <p className="mt-1 font-display text-[20px] font-semibold tabular-nums tracking-[-0.02em] sm:text-[22px]">
+          <p className="mt-1 font-display text-[20px] font-semibold tabular-nums tracking-[-0.02em] text-ink sm:text-[22px]">
             {c.value}
           </p>
           <p className="mt-0.5 text-[12.5px] text-muted-foreground">{c.hint}</p>
           {c.bar != null ? (
-            <span className="mt-3 block h-1 overflow-hidden rounded-full bg-[#E8F5EC]" aria-hidden>
+            <span className="mt-3 block h-1 overflow-hidden rounded-full bg-wash-success-track" aria-hidden>
               <span
-                className="block h-full rounded-full bg-[#86C99A]"
+                className="block h-full rounded-full bg-wash-success-bar"
                 style={{ width: `${Math.max(0, Math.min(100, c.bar))}%` }}
               />
             </span>
@@ -530,7 +530,7 @@ function DocGroup({
                 className={cn(
                   "flex items-center justify-between gap-3 rounded-[14px] border px-4 py-3 transition-colors duration-150",
                   inbound
-                    ? "border-[rgba(255,107,26,0.10)] bg-[#FFFAF6] hover:bg-[#FFF4EC]"
+                    ? "border-brand-orange/20 bg-wash-orange-strong hover:bg-wash-orange-hover"
                     : "border-line bg-surface hover:bg-surface-2",
                 )}
               >

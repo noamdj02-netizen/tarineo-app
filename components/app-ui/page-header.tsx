@@ -21,7 +21,7 @@ export function PageHeader({
   return (
     <header className={cn("mb-8 flex flex-col", dense ? "mb-0 gap-3" : "gap-4", className)}>
       {crumbs?.length ? (
-        <nav aria-label="Fil d’Ariane" className="flex flex-wrap items-center gap-1.5 text-[12px] text-[#8A8A8A]">
+        <nav aria-label="Fil d’Ariane" className="flex flex-wrap items-center gap-1.5 text-[12px] text-muted-foreground">
           {crumbs.map((c, i) => (
             <span key={`${c.label}-${i}`} className="inline-flex items-center gap-1.5">
               {i > 0 ? <span aria-hidden className="text-ink/20">/</span> : null}
@@ -30,7 +30,7 @@ export function PageHeader({
                   {c.label}
                 </Link>
               ) : (
-                <span className={i === crumbs.length - 1 ? "text-[#6E6E6E]" : undefined}>{c.label}</span>
+                <span className={i === crumbs.length - 1 ? "text-ink" : undefined}>{c.label}</span>
               )}
             </span>
           ))}
@@ -49,7 +49,7 @@ export function PageHeader({
             {title}
           </h1>
           {description ? (
-            <p className={cn("mt-2 text-[14px] leading-relaxed", dense ? "text-[#6E6E6E]" : "text-muted-foreground")}>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
               {description}
             </p>
           ) : null}

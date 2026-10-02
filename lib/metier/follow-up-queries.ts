@@ -20,13 +20,13 @@ import { getDocument, listDocuments } from "@/lib/metier/queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { DocumentCard } from "@/lib/metier/types";
-import type { CompanyProfile } from "@/lib/metier/company";
 import { loadCompanyLogo } from "@/lib/metier/brand-assets";
 import { pieceMailHtml } from "@/lib/metier/draft-mail";
 import { pdfFromDocument } from "@/lib/metier/pdf/from-document";
 import { sendEmailWithPdf } from "@/lib/email/send";
 import { getViewer } from "@/lib/session";
 import { getCompanyProfile } from "@/lib/metier/queries";
+import { getCompanyProfileForUser, listDocumentsForUser } from "@/lib/metier/documents-for-user";
 
 function allowLocalMemory() {
   return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "preview" && process.env.VERCEL_ENV !== "production";
@@ -350,47 +350,13 @@ export async function processScheduledFollowUps() {
   return { processed: sent };
 }
 
-async function listDocumentsForUser(
-  admin: ReturnType<typeof createAdminClient>,
-  userId: string,
-): Promise<DocumentCard[]> {
-  const { data: docs } = await admin
-    .from("documents")
-    .select("id, direction, kind, title, party_id, chantier_id, source_document_id, file_path, extract, status, error, seed_key, created_at")
-    .eq("user_id", userId);
-  const rows = docs ?? [];
-  if (!rows.length) return [];
-  const [{ data: parties }, { data: chantiers }, { data: lines }] = await Promise.all([
-    admin.from("parties").select("id, name, kind, address").eq("user_id", userId),
-    admin.from("chantiers").select("id, name, slug").eq("user_id", userId),
-    admin.from("document_lines").select("*").eq("user_id", userId),
-  ]);
-  const pMap = new Map((parties ?? []).map((p) => [p.id, p]));
-  const cMap = new Map((chantiers ?? []).map((c) => [c.id, c]));
-  return rows.map((d) => {
-    const p = d.party_id ? pMap.get(d.party_id) : undefined;
-    const c = d.chantier_id ? cMap.get(d.chantier_id) : undefined;
-    return {
-      ...d,
-      extract: (d.extract ?? {}) as Record<string, unknown>,
-      party_name: p?.name ?? null,
-      party_address: p?.address ?? null,
-      party_kind: p?.kind ?? null,
-      chantier_name: c?.name ?? null,
-      chantier_slug: c?.slug ?? null,
-      lines: (lines ?? []).filter((l) => l.document_id === d.id),
-    } as DocumentCard;
-  });
-}
-
 async function sendFollowUpAsUser(
   admin: ReturnType<typeof createAdminClient>,
   userId: string,
   doc: DocumentCard,
   fu: FollowUp,
 ) {
-  const { data: company } = await admin.from("company_profiles").select("*").eq("user_id", userId).maybeSingle();
-  const profile = (company as CompanyProfile | null) ?? null;
+  const profile = await getCompanyProfileForUser(admin, userId);
   const { buffer, filename } = await pdfFromDocument(doc, profile?.email_contact, profile);
   const html = pieceMailHtml({
     body: fu.body,

@@ -94,17 +94,18 @@ const DEFAULT_COLUMN: Record<WidgetKey, "left" | "right"> = {
   metier: "left",
 };
 
-/** Chaque widget apparaît une seule fois : gauche ou droite. */
+/** Chaque widget actif apparaît une seule fois : gauche ou droite. */
 function partitionColumns(
   left: WidgetKey[] | undefined,
   right: WidgetKey[] | undefined,
+  widgets: Record<WidgetKey, boolean>,
 ): { leftColumn: WidgetKey[]; rightColumn: WidgetKey[] } {
   const seen = new Set<WidgetKey>();
   const leftOut: WidgetKey[] = [];
   const rightOut: WidgetKey[] = [];
 
   const push = (col: "left" | "right", k: WidgetKey) => {
-    if (!ALL_WIDGETS.includes(k) || seen.has(k)) return;
+    if (!ALL_WIDGETS.includes(k) || seen.has(k) || !widgets[k]) return;
     seen.add(k);
     (col === "left" ? leftOut : rightOut).push(k);
   };
@@ -120,6 +121,15 @@ function partitionColumns(
   }
 
   return { leftColumn: leftOut, rightColumn: rightOut };
+}
+
+function mergeWidgets(raw: Partial<Record<WidgetKey, boolean>> | undefined): Record<WidgetKey, boolean> {
+  const widgets = { ...DEFAULT_DASHBOARD_PREFS.widgets };
+  if (!raw) return widgets;
+  for (const k of ALL_WIDGETS) {
+    if (k in raw && typeof raw[k] === "boolean") widgets[k] = raw[k]!;
+  }
+  return widgets;
 }
 
 /** Retire les blocs désactivés et rattache les blocs actifs oubliés à leur colonne par défaut. */
@@ -184,8 +194,8 @@ export function activeWidgetsInColumn(
 export function normalizeDashboardPrefs(raw: Partial<DashboardPrefs> | null | undefined): DashboardPrefs {
   if (!raw) return DEFAULT_DASHBOARD_PREFS;
   const split = raw.columnSplit;
-  const widgets = { ...DEFAULT_DASHBOARD_PREFS.widgets, ...raw.widgets };
-  const partitioned = partitionColumns(raw.leftColumn, raw.rightColumn);
+  const widgets = mergeWidgets(raw.widgets);
+  const partitioned = partitionColumns(raw.leftColumn, raw.rightColumn, widgets);
   const synced = syncColumnsWithWidgets(
     widgets,
     partitioned.leftColumn,
@@ -269,7 +279,9 @@ export function activateWidget(
 
 export function deactivateWidget(prefs: DashboardPrefs, key: WidgetKey): DashboardPrefs {
   const widgets = { ...prefs.widgets, [key]: false };
-  return normalizeDashboardPrefs({ ...prefs, widgets });
+  const leftColumn = prefs.leftColumn.filter((k) => k !== key);
+  const rightColumn = prefs.rightColumn.filter((k) => k !== key);
+  return normalizeDashboardPrefs({ ...prefs, widgets, leftColumn, rightColumn });
 }
 
 /** Replace les colonnes par l’ordre par défaut, en gardant uniquement les blocs actifs. */

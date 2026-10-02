@@ -26,12 +26,20 @@ export default async function ClassementPage() {
           { label: "Achats" },
         ]}
         action={
-          <Link
-            href={`${R.distributeurDevis}#import`}
-            className="btn-orange inline-flex h-9 items-center px-4 text-[13.5px] font-medium"
-          >
-            Importer un document
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`${R.distributeurDevis}#import`}
+              className="btn-orange inline-flex h-9 items-center px-4 text-[13.5px] font-medium"
+            >
+              Importer un document
+            </Link>
+            <Link
+              href="/achats/export"
+              className="inline-flex h-9 items-center rounded-[10px] border border-line bg-surface px-4 text-[13.5px] font-medium text-ink hover:bg-surface-2"
+            >
+              Export comptable
+            </Link>
+          </div>
         }
       >
         Suivez vos achats par fournisseur et par article.

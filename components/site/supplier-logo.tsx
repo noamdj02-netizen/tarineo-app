@@ -3,7 +3,9 @@
 import Image from "next/image";
 import { useState } from "react";
 import { brandLogoUrl } from "@/lib/resources/logo";
-import { SUPPLIER_DOMAINS } from "@/lib/site/tarineo";
+import { supplierDomains } from "@/lib/metier/suppliers";
+
+const SUPPLIER_DOMAINS = supplierDomains();
 import { cn } from "@/lib/utils";
 
 /**

@@ -25,12 +25,26 @@ export const LABELS_REGIME_TVA: Record<RegimeTva, string> = {
   FRANCHISE_293B: "Franchise en base — TVA non applicable, art. 293 B du CGI",
 };
 
+/**
+ * Valide un SIRET (14 chiffres) via Luhn depuis la droite.
+ * Important : la parité dépend de la longueur — un algo calqué sur le SIREN
+ * (9 chiffres) rejette une grande partie des SIRET officiels (ex. API gouv).
+ * Exception La Poste (356000000…) : somme simple des chiffres % 5 === 0.
+ */
 export function siretValide(siret: string) {
   const chiffres = siret.replace(/\s/g, "");
   if (!/^\d{14}$/.test(chiffres)) return false;
+  // Établissements La Poste : règle spécifique INSEE
+  if (chiffres.startsWith("356000000")) {
+    let somme = 0;
+    for (const c of chiffres) somme += Number(c);
+    return somme % 5 === 0;
+  }
   let somme = 0;
   for (let i = 0; i < 14; i++) {
-    let n = Number(chiffres[i]) * (i % 2 === 0 ? 1 : 2);
+    // Depuis la droite : le chiffre des unités (index 13) n’est pas doublé.
+    const fromRight = 13 - i;
+    let n = Number(chiffres[i]) * (fromRight % 2 === 0 ? 1 : 2);
     if (n > 9) n -= 9;
     somme += n;
   }

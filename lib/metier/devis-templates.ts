@@ -1,3 +1,29 @@
+/**
+ * Source de vérité : modèles système de devis.
+ * Disponibles pour tous les utilisateurs — pas de user_id, pas de table Supabase.
+ */
+import type { DevisDraft, DevisLine } from "@/lib/metier/devis/types";
+
+export type SystemDevisTemplateType = "blank" | "structured";
+
+export type SystemDevisTemplateLine = {
+  description: string;
+  quantity: number;
+  unit: string;
+  /** Toujours 0 sauf si le modèle possède un prix réel (jamais inventé). */
+  unitPriceHT: number;
+  vatRate: number;
+};
+
+export type SystemDevisTemplate = {
+  id: "blank" | "plumbing" | "electrical" | "earthworks";
+  title: string;
+  description: string;
+  type: SystemDevisTemplateType;
+  lines: SystemDevisTemplateLine[];
+};
+
+/** @deprecated Utiliser getSystemTemplates() — alias rétrocompatible. */
 export type DevisTemplate = {
   id: string;
   title: string;
@@ -5,38 +31,114 @@ export type DevisTemplate = {
   lines: { label: string; qty: number; unit: string; sell: number }[];
 };
 
-export const DEVIS_TEMPLATES: DevisTemplate[] = [
+const SYSTEM_TEMPLATES: SystemDevisTemplate[] = [
   {
-    id: "vide",
+    id: "blank",
     title: "Devis vide",
-    text: "Titre + client, vous ajoutez les lignes.",
-    lines: [{ label: "Prestation", qty: 1, unit: "ens", sell: 0 }],
+    description: "Titre + client, vous ajoutez les lignes.",
+    type: "blank",
+    lines: [],
   },
   {
-    id: "plomberie",
+    id: "plumbing",
     title: "Plomberie / sanitaire",
-    text: "Fourniture et pose, à ajuster.",
+    description: "Fourniture et pose, à ajuster.",
+    type: "structured",
     lines: [
-      { label: "Main-d’œuvre plomberie", qty: 1, unit: "ens", sell: 480 },
-      { label: "Fournitures sanitaires", qty: 1, unit: "ens", sell: 320 },
+      { description: "Fourniture plomberie", quantity: 1, unit: "forfait", unitPriceHT: 0, vatRate: 20 },
+      { description: "Pose plomberie", quantity: 1, unit: "forfait", unitPriceHT: 0, vatRate: 20 },
     ],
   },
   {
-    id: "elec",
+    id: "electrical",
     title: "Électricité",
-    text: "Tableau, prises, éclairage.",
+    description: "Tableau, prises, éclairage.",
+    type: "structured",
     lines: [
-      { label: "Main-d’œuvre électricité", qty: 1, unit: "ens", sell: 560 },
-      { label: "Matériel électrique", qty: 1, unit: "ens", sell: 210 },
+      { description: "Tableau électrique", quantity: 1, unit: "forfait", unitPriceHT: 0, vatRate: 20 },
+      { description: "Prises électriques", quantity: 1, unit: "forfait", unitPriceHT: 0, vatRate: 20 },
+      { description: "Éclairage", quantity: 1, unit: "forfait", unitPriceHT: 0, vatRate: 20 },
     ],
   },
   {
-    id: "tp",
+    id: "earthworks",
     title: "Terrassement / TP",
-    text: "Forfait chantier type.",
+    description: "Forfait chantier type.",
+    type: "structured",
     lines: [
-      { label: "Terrassement", qty: 1, unit: "ens", sell: 1800 },
-      { label: "Évacuation déblais", qty: 1, unit: "ens", sell: 420 },
+      { description: "Terrassement", quantity: 1, unit: "forfait", unitPriceHT: 0, vatRate: 20 },
+      { description: "Évacuation des terres", quantity: 1, unit: "forfait", unitPriceHT: 0, vatRate: 20 },
     ],
   },
 ];
+
+/** Modèles système — même liste pour tous les comptes. */
+export function getSystemTemplates(): SystemDevisTemplate[] {
+  return SYSTEM_TEMPLATES.map((t) => ({
+    ...t,
+    lines: t.lines.map((l) => ({ ...l })),
+  }));
+}
+
+export function getSystemTemplate(id: string): SystemDevisTemplate | null {
+  return getSystemTemplates().find((t) => t.id === id) ?? null;
+}
+
+function lineToDraft(l: SystemDevisTemplateLine): DevisLine {
+  const missing = l.unitPriceHT <= 0 ? ["prix"] : undefined;
+  return {
+    description: l.description,
+    quantity: l.quantity,
+    unit: l.unit,
+    unitPriceHT: l.unitPriceHT,
+    vatRate: l.vatRate,
+    missing,
+  };
+}
+
+/** Construit un DevisDraft depuis un modèle système + sélection client/chantier. */
+export function draftFromSystemTemplate(
+  template: SystemDevisTemplate,
+  opts: {
+    clientId?: string | null;
+    clientName?: string | null;
+    chantierId?: string | null;
+    chantierName?: string | null;
+    idempotencyKey?: string;
+  } = {},
+): DevisDraft {
+  const clientName = opts.clientName?.trim() || "Client";
+  return {
+    client: {
+      id: opts.clientId ?? null,
+      name: clientName,
+    },
+    chantier:
+      opts.chantierId || opts.chantierName
+        ? { id: opts.chantierId ?? null, name: opts.chantierName ?? null }
+        : undefined,
+    lines: template.lines.map(lineToDraft),
+    source: template.type === "blank" ? "manual" : "template",
+    title: template.type === "blank" ? "Devis" : `Devis — ${template.title}`,
+    vatMode: "standard",
+    validityDays: 30,
+    idempotencyKey: opts.idempotencyKey,
+    warnings:
+      template.lines.some((l) => l.unitPriceHT <= 0)
+        ? ["Prix à renseigner sur une ou plusieurs lignes."]
+        : undefined,
+  };
+}
+
+/** Alias UI rétrocompatible (id / text / sell). */
+export const DEVIS_TEMPLATES: DevisTemplate[] = getSystemTemplates().map((t) => ({
+  id: t.id,
+  title: t.title,
+  text: t.description,
+  lines: t.lines.map((l) => ({
+    label: l.description,
+    qty: l.quantity,
+    unit: l.unit,
+    sell: l.unitPriceHT,
+  })),
+}));

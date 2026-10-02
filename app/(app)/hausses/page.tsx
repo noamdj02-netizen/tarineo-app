@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { EmptyState } from "@/components/app-ui/empty-state";
+import { TarineoSection } from "@/components/tarineo/cards/tarineo-section";
+import { PriceIncreaseList } from "@/components/tarineo/analytics/price-increase-list";
 import { StatusBadge } from "@/components/tarineo/status-badge";
+import { adaptTopPriceIncreases } from "@/lib/tarineo/adapters";
 import { PageHead } from "@/components/shell/page-head";
 import { DEMO_IDS } from "@/lib/metier/demo";
 import { listAlerts } from "@/lib/metier/queries";
@@ -23,6 +26,10 @@ export default async function AlertesPage() {
       >
         Identifiez les augmentations qui peuvent réduire votre marge.
       </PageHead>
+      <TarineoSection title="Principales hausses">
+        <PriceIncreaseList items={adaptTopPriceIncreases(alerts)} />
+      </TarineoSection>
+
       {alerts.length ? (
         <ul className="grid gap-3 sm:grid-cols-2">
           {alerts.map((a) => {

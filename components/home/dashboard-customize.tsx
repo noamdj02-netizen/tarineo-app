@@ -79,18 +79,25 @@ const CATALOG: CatalogItem[] = [
   },
 ];
 
+const HEADER_BTN =
+  "inline-flex h-11 items-center gap-1.5 rounded-[12px] border border-line bg-surface px-3.5 text-[13px] font-medium text-ink transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/35 md:h-[38px] md:rounded-[10px]";
+const HEADER_BTN_ACTIVE = "border-ink/20 bg-ink text-white hover:bg-ink/90";
+
 export function DashboardCustomize({
   prefs,
   editMode,
   onEditMode,
   onPrefs,
+  variant = "chip",
 }: {
   prefs: DashboardPrefs;
   editMode: boolean;
   onEditMode: (v: boolean) => void;
-  onPrefs: (p: DashboardPrefs) => void;
+  onPrefs: (p: DashboardPrefs | ((prev: DashboardPrefs) => DashboardPrefs)) => void;
+  variant?: "chip" | "header";
 }) {
   const [open, setOpen] = useState(false);
+  const isHeader = variant === "header";
 
   function reset() {
     onPrefs(normalizeDashboardPrefs(DEFAULT_DASHBOARD_PREFS));
@@ -104,9 +111,11 @@ export function DashboardCustomize({
         type="button"
         onClick={() => onEditMode(!editMode)}
         className={
-          editMode
-            ? "pressable btn-dark rounded-pill px-3.5 text-[13px] font-medium"
-            : "dash-chip pressable"
+          isHeader
+            ? cn(HEADER_BTN, editMode && HEADER_BTN_ACTIVE)
+            : editMode
+              ? "pressable btn-dark rounded-pill px-3.5 text-[13px] font-medium"
+              : "dash-chip pressable"
         }
       >
         <LayoutGrid className="size-3.5" aria-hidden />
@@ -115,7 +124,12 @@ export function DashboardCustomize({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger
-          render={<button type="button" className="dash-chip pressable" />}
+          render={
+            <button
+              type="button"
+              className={isHeader ? HEADER_BTN : "dash-chip pressable"}
+            />
+          }
         >
           <Sparkles className="size-3.5" aria-hidden />
           Ajouter
@@ -179,7 +193,7 @@ export function DashboardCustomize({
                                     variant="default"
                                     className="h-8 rounded-full text-xs"
                                     onClick={() => {
-                                      onPrefs(activateWidget(prefs, item.key, { front: true }));
+                                      onPrefs((p) => activateWidget(p, item.key, { front: true }));
                                       onEditMode(true);
                                     }}
                                   >
@@ -190,7 +204,7 @@ export function DashboardCustomize({
                                     size="sm"
                                     variant="outline"
                                     className="h-8 rounded-full text-xs"
-                                    onClick={() => onPrefs(deactivateWidget(prefs, item.key))}
+                                    onClick={() => onPrefs((p) => deactivateWidget(p, item.key))}
                                   >
                                     Retirer
                                   </Button>
@@ -201,7 +215,7 @@ export function DashboardCustomize({
                                   size="sm"
                                   className="h-8 rounded-full text-xs"
                                   onClick={() => {
-                                    onPrefs(activateWidget(prefs, item.key, { front: true }));
+                                    onPrefs((p) => activateWidget(p, item.key, { front: true }));
                                     onEditMode(true);
                                   }}
                                 >
@@ -226,7 +240,7 @@ export function DashboardCustomize({
                 variant="ghost"
                 size="sm"
                 className="rounded-full"
-                onClick={() => onPrefs(autoArrangeDashboard(prefs))}
+                onClick={() => onPrefs((p) => autoArrangeDashboard(p))}
               >
                 Disposition auto
               </Button>

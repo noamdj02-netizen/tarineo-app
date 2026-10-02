@@ -24,6 +24,9 @@
 # misc
 .DS_Store
 /navpit/
+/my-video/
+.agents/
+skills-lock.json
 *.pem
 
 # debug

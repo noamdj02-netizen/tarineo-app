@@ -20,6 +20,7 @@ type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
 function refresh() {
   revalidatePath("/outils");
+  revalidatePath("/parametres/integrations");
   revalidatePath("/audit");
   revalidatePath("/accueil");
   revalidatePath("/copilote");

@@ -8,6 +8,8 @@ import { confirmDocument, ingestDocument, transformQuoteAction } from "@/app/(ap
 import { ExtractTotalsGrid } from "@/components/metier/extract-totals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DocumentReadRecap } from "@/components/metier/document-read-recap";
+import type { DocumentAgentMeta, DocumentRecap } from "@/lib/metier/document-agent/types";
 import type { ChantierCard, ClientOutKind, ExtractResult, Party } from "@/lib/metier/types";
 import { CLIENT_OUT_KINDS, CLIENT_OUT_LABEL, emptyTotals } from "@/lib/metier/types";
 import { DIRECTION_LABEL, KIND_LABEL, PARTY_LABEL, type DocDirection, type DocKind, type PartyKind } from "@/lib/metier/types";
@@ -29,6 +31,8 @@ export function DocumentDrop({
   lockKind,
   lockDirection,
   hint,
+  showAgentMeta,
+  onAgentMetaChange,
 }: {
   chantiers: ChantierCard[];
   clients?: Party[];
@@ -37,6 +41,8 @@ export function DocumentDrop({
   lockKind?: DocKind;
   lockDirection?: DocDirection;
   hint?: string;
+  showAgentMeta?: boolean;
+  onAgentMetaChange?: (meta: DocumentAgentMeta | null) => void;
 }) {
   const reduce = useReducedMotion();
   const router = useRouter();
@@ -45,7 +51,11 @@ export function DocumentDrop({
   const [over, setOver] = useState(false);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [draft, setDraft] = useState<(ExtractResult & { filePath?: string; fileSha256?: string }) | null>(null);
+  const [draft, setDraft] = useState<
+    (ExtractResult & { filePath?: string; fileSha256?: string; agent?: DocumentAgentMeta }) | null
+  >(null);
+  const [rawExtract, setRawExtract] = useState<ExtractResult | null>(null);
+  const [recap, setRecap] = useState<DocumentRecap | null>(null);
   const [saving, setSaving] = useState(false);
   const suggestedChantier = draft
     ? suggestChantierFromHint([draft.chantier_hint, draft.title].filter(Boolean).join(" "), chantiers)
@@ -66,34 +76,46 @@ export function DocumentDrop({
         setError(res.error);
         return;
       }
-      setDraft({ ...res.extracted, filePath: res.filePath, fileSha256: res.fileSha256 });
+      setRawExtract(res.extracted);
+      const agent = res.agent;
+      setRecap(res.recap ?? null);
+      setDraft({ ...res.extracted, filePath: res.filePath, fileSha256: res.fileSha256, agent });
+      onAgentMetaChange?.(agent ?? null);
     });
   }
 
   function payloadFromForm(form: FormData, asSource: boolean) {
     if (!draft) return null;
+    const direction = (asSource ? "in" : lockDirection ?? String(form.get("direction"))) as DocDirection;
     return {
       title: String(form.get("title") || draft.title),
-      direction: (asSource ? "in" : lockDirection ?? String(form.get("direction"))) as DocDirection,
+      direction,
       kind: (lockKind ?? String(form.get("kind"))) as DocKind,
       partyName: String(form.get("partyName") || draft.party_name),
       partyKind: String(form.get("partyKind")) as PartyKind,
       chantierId: String(form.get("chantierId") || "") || null,
       filePath: draft.filePath,
       fileSha256: draft.fileSha256,
+      documentNumber: draft.document_number ?? null,
+      issueDate: draft.issue_date ?? null,
+      partyAddress: draft.party_address ?? null,
       totals: {
         ht: numField(form.get("ht"), draft.totals?.ht),
         eco_contribution: numField(form.get("eco"), draft.totals?.eco_contribution),
         pmcb: numField(form.get("pmcb"), draft.totals?.pmcb),
         weight_kg: numField(form.get("weight"), draft.totals?.weight_kg),
       },
-      lines: draft.lines.map((l, i) => ({
-        ...l,
-        label: String(form.get(`line-label-${i}`) || l.label),
-        qty: numField(form.get(`line-qty-${i}`), l.qty) ?? l.qty,
-        unit: String(form.get(`line-unit-${i}`) || l.unit),
-        buy_price: numField(form.get(`line-price-${i}`), l.buy_price) ?? l.buy_price,
-      })),
+      lines: draft.lines.map((l, i) => {
+        const price = numField(form.get(`line-price-${i}`), l.buy_price ?? l.sell_price) ?? l.buy_price ?? 0;
+        return {
+          ...l,
+          label: String(form.get(`line-label-${i}`) || l.label),
+          qty: numField(form.get(`line-qty-${i}`), l.qty) ?? l.qty,
+          unit: String(form.get(`line-unit-${i}`) || l.unit),
+          buy_price: direction === "in" ? price : 0,
+          sell_price: direction === "out" ? price : (l.sell_price ?? 0),
+        };
+      }),
     };
   }
 
@@ -104,10 +126,18 @@ export function DocumentDrop({
     const payload = payloadFromForm(form, false);
     if (!payload) return;
     setSaving(true);
-    const res = await confirmDocument(payload);
+    const res = await confirmDocument({
+      ...payload,
+      rawExtract,
+      agentMeta: draft.agent ?? null,
+      readRecap: recap,
+    });
     setSaving(false);
     if (res.ok) {
       setDraft(null);
+      setRawExtract(null);
+      setRecap(null);
+      onAgentMetaChange?.(null);
       router.refresh();
     } else {
       setError("error" in res ? res.error : "Enregistrement impossible.");
@@ -120,7 +150,12 @@ export function DocumentDrop({
     const payload = payloadFromForm(form, true);
     if (!payload) return;
     setSaving(true);
-    const saved = await confirmDocument(payload);
+    const saved = await confirmDocument({
+      ...payload,
+      rawExtract,
+      agentMeta: draft.agent ?? null,
+      readRecap: recap,
+    });
     if (!saved.ok) {
       setSaving(false);
       setError("Enregistrement impossible.");
@@ -169,7 +204,7 @@ export function DocumentDrop({
         className={cn(
           "relative flex w-full flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed px-4 text-center transition-[border-color,background-color,transform] duration-200 md:rounded-[28px]",
           compact ? "min-h-[140px] py-6" : "min-h-[180px] py-8 md:min-h-[220px] md:py-10",
-          over ? "border-brand-orange bg-[#fff0e9]" : "border-line bg-surface-2",
+          over ? "border-brand-orange bg-wash-orange" : "border-line bg-surface-2",
         )}
       >
         <input
@@ -236,6 +271,14 @@ export function DocumentDrop({
         <p role="alert" className="text-[14px] text-destructive">
           {error}
         </p>
+      ) : null}
+
+      {showAgentMeta && recap && draft?.agent ? (
+        <DocumentReadRecap
+          recap={recap}
+          vendorName={draft.agent.vendor_display_name}
+          profileVersion={draft.agent.profile_version}
+        />
       ) : null}
 
       {draft ? (

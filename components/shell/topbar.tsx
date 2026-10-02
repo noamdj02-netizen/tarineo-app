@@ -1,8 +1,7 @@
 "use client";
 
-import { CreditCard, LogOut, Search, User } from "lucide-react";
+import { CreditCard, LogOut, Search, Settings, User } from "lucide-react";
 import Link from "next/link";
-import { CopilotTrigger } from "@/components/assistant/copilot-trigger";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { PLAN_LABEL, type PlanId } from "@/lib/billing/plans";
+import { NotificationsBell } from "@/components/shell/notifications-bell";
+import type { AppNotification } from "@/lib/notifications/types";
 import type { Viewer } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -24,8 +25,18 @@ import { useTheme } from "@/components/theme/theme-provider";
 import { CommandPalette, useCommandPalette } from "./command-palette";
 import { Logo } from "./logo";
 
-/** Barre du haut : recherche ⌘K, pastille du plan (vers /abonnement), avatar. */
-export function Topbar({ viewer, planId }: { viewer: Viewer | null; planId: PlanId }) {
+/** Barre du haut : recherche ⌘K, cloche, pastille du plan, avatar. */
+export function Topbar({
+  viewer,
+  planId,
+  unreadCount = 0,
+  recentNotifications = [],
+}: {
+  viewer: Viewer | null;
+  planId: PlanId;
+  unreadCount?: number;
+  recentNotifications?: AppNotification[];
+}) {
   const palette = useCommandPalette();
   const { resolved } = useTheme();
 
@@ -71,8 +82,10 @@ export function Topbar({ viewer, planId }: { viewer: Viewer | null; planId: Plan
           >
             <Search className="size-5" strokeWidth={1.75} aria-hidden />
           </Button>
-          <CopilotTrigger variant="compact" className="size-9 lg:size-10" />
           <ThemeToggle />
+          {viewer ? (
+            <NotificationsBell initialUnread={unreadCount} initialItems={recentNotifications} />
+          ) : null}
           <PlanBadge planId={planId} />
           <AvatarMenu viewer={viewer} />
         </div>
@@ -136,11 +149,15 @@ function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem render={<Link href="/compte" />}>
+          <DropdownMenuItem render={<Link href="/parametres/compte" />}>
             <User />
             Compte
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link href="/abonnement" />}>
+          <DropdownMenuItem render={<Link href="/parametres" />}>
+            <Settings />
+            Paramètres
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/parametres/abonnement" />}>
             <CreditCard />
             Abonnement
           </DropdownMenuItem>

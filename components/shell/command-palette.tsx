@@ -69,9 +69,10 @@ export function CommandPalette({
     () => [
       { id: "new-chantier", href: "/chantiers#nouveau", label: "Nouveau chantier", icon: User },
       { id: "relances", href: "/relances", label: "Relances", icon: User },
-      { id: "compte", href: "/compte", label: "Compte", icon: User },
-      { id: "entreprise", href: "/entreprise", label: "Mon entreprise", icon: User },
-      { id: "tarifs", href: "/abonnement", label: "Tarifs", icon: CreditCard },
+      { id: "compte", href: "/parametres/compte", label: "Compte", icon: User },
+      { id: "parametres", href: "/parametres", label: "Paramètres", icon: User },
+      { id: "entreprise", href: "/parametres/entreprise", label: "Mon entreprise", icon: User },
+      { id: "tarifs", href: "/parametres/abonnement", label: "Abonnement", icon: CreditCard },
       { id: "onboarding", href: "/onboarding", label: "Onboarding guidé", icon: User },
       { id: "theme-dark", label: "Passer en mode sombre", icon: Moon, run: () => setTheme("dark") },
       { id: "theme-light", label: "Passer en mode clair", icon: Sun, run: () => setTheme("light") },

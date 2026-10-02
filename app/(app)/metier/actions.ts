@@ -2,12 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db";
-import { extractDocument } from "@/lib/metier/extract";
+import { ingestDocumentWithAgent } from "@/lib/metier/document-agent/extract-with-agent";
+import { learnFromConfirmation } from "@/lib/metier/document-agent/learn";
+import type { DocumentAgentMeta, DocumentRecap } from "@/lib/metier/document-agent/types";
+import type { ExtractResult } from "@/lib/metier/types";
 import {
   addDocumentLine,
   createChantier,
   createParty,
   getDocument,
+  listChantiers,
   listDocuments,
   listParties,
   recordPriceAlerts,
@@ -16,7 +20,6 @@ import {
   transformImportedDocument,
   updateDocument,
 } from "@/lib/metier/queries";
-import { DEVIS_TEMPLATES } from "@/lib/metier/devis-templates";
 import {
   scheduleFollowUpForDocument,
   sendDocumentMail,
@@ -35,6 +38,7 @@ function refresh() {
     "/distributeur",
     "/hausses",
     "/achats",
+    "/achats/export",
     "/chantiers",
     "/client",
     "/client/devis",
@@ -48,6 +52,8 @@ function refresh() {
     "/comparateur",
     "/pieces",
     "/relances",
+    "/devis/analyser",
+    "/devis/nouveau",
   ]) {
     revalidatePath(p);
   }
@@ -76,12 +82,12 @@ export async function ingestDocument(form: FormData) {
   }
 
   try {
-    const extracted = await extractDocument({
+    const { extracted, agent, recap } = await ingestDocumentWithAgent({
       fileName: file.name,
       mime: file.type || "application/octet-stream",
       base64: buf.toString("base64"),
     });
-    return { ok: true as const, extracted, filePath, fileName: file.name, fileSha256 };
+    return { ok: true as const, extracted, agent, recap, filePath, fileName: file.name, fileSha256 };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Extraction impossible.";
     return { ok: false as const, error: message };
@@ -98,11 +104,18 @@ export async function confirmDocument(input: {
   filePath?: string;
   fileSha256?: string;
   totals?: ExtractTotals;
+  documentNumber?: string | null;
+  issueDate?: string | null;
+  partyAddress?: string | null;
+  rawExtract?: ExtractResult | null;
+  agentMeta?: DocumentAgentMeta | null;
+  readRecap?: DocumentRecap | null;
   lines: Array<{
     label: string;
     qty: number;
     unit: string;
     buy_price: number;
+    sell_price?: number;
     eco_contribution?: number | null;
     pmcb?: number | null;
     weight_kg?: number | null;
@@ -110,18 +123,98 @@ export async function confirmDocument(input: {
 }) {
   const doc = await saveExtractedDocument({
     ...input,
+    lines: input.lines.map((l) => ({
+      label: l.label,
+      qty: l.qty,
+      unit: l.unit,
+      buy_price: l.buy_price,
+      sell_price:
+        l.sell_price ??
+        (input.direction === "out" ? l.buy_price : 0),
+    })),
     extract: {
       confirmed: true,
       totals: input.totals ?? null,
       lines: input.lines,
       file_sha256: input.fileSha256 || null,
+      document_number: input.documentNumber || null,
+      issue_date: input.issueDate || null,
+      party_address: input.partyAddress || null,
+      raw_model: input.rawExtract ?? null,
+      vendor_key: input.agentMeta?.vendor_key ?? null,
+      profile_version: input.agentMeta?.profile_version ?? null,
+      read_recap: input.readRecap ?? null,
     },
   }).catch((err: unknown) => {
     console.error("[metier] confirmDocument", err);
     return null;
   });
   if (!doc) return { ok: false as const, error: "Le document n’a pas pu être enregistré." };
+  try {
+    await learnFromConfirmation({
+      vendorKey: input.agentMeta?.vendor_key ?? "unknown",
+      rawExtract: input.rawExtract,
+      confirmed: {
+        kind: input.kind,
+        direction: input.direction,
+        partyKind: input.partyKind,
+        totals: input.totals,
+        lines: input.lines,
+      },
+    });
+  } catch (err) {
+    console.error("[confirmDocument] learnFromConfirmation", err);
+  }
   await recordPriceAlerts(doc);
+  try {
+    const rises = doc.direction === "in" ? 1 : 0;
+    const { notifyDocumentAnalyzed, notifySiteActivity, notifyInvoiceAnomaly } = await import(
+      "@/lib/notifications/emitters"
+    );
+    await notifyDocumentAnalyzed(doc, rises);
+    if (doc.chantier_id && doc.chantier_slug && doc.direction === "in") {
+      await notifySiteActivity({
+        chantierId: doc.chantier_id,
+        chantierSlug: doc.chantier_slug,
+        chantierName: doc.chantier_name || "Chantier",
+        message: `Une nouvelle ${doc.kind === "facture" ? "facture" : "pièce"} fournisseur vient d’être associée au chantier.`,
+        documentId: doc.id,
+      });
+    }
+    // Anomalies facture : prix > dernier achat (même logique que hausses, message explicite)
+    if (doc.kind === "facture" && doc.direction === "in") {
+      const { listDocuments } = await import("@/lib/metier/queries");
+      const others = (await listDocuments({ direction: "in" })).filter((d) => d.id !== doc.id);
+      const reasons: string[] = [];
+      for (const line of doc.lines) {
+        const prev = others
+          .flatMap((d) => d.lines.map((l) => ({ l, d })))
+          .filter((x) => x.l.label.toLowerCase() === line.label.toLowerCase())
+          .sort((a, b) => b.d.created_at.localeCompare(a.d.created_at))[0];
+        if (!prev) continue;
+        const oldP = Number(prev.l.buy_price);
+        const newP = Number(line.buy_price);
+        if (oldP > 0 && newP > oldP) {
+          const pct = ((newP - oldP) / oldP) * 100;
+          reasons.push(
+            `${line.label} : prix supérieur au dernier achat (+${pct.toFixed(1)} %).`,
+          );
+        }
+      }
+      if (reasons.length) {
+        await notifyInvoiceAnomaly({
+          documentId: doc.id,
+          partyName: doc.party_name,
+          reasons: [
+            `${reasons.length} ligne${reasons.length > 1 ? "s présentent" : " présente"} un prix supérieur au dernier achat enregistré.`,
+            ...reasons.slice(0, 2),
+          ],
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[confirmDocument] notifications", err);
+  }
   refresh();
   return { ok: true as const, id: doc.id };
 }
@@ -328,36 +421,61 @@ export async function markFollowUpStatusAction(id: string, status: FollowUpStatu
   return { ok: true as const };
 }
 
+export async function createDevisFromSavedProductAction(input: {
+  name: string;
+  unitPriceHT: number | null;
+}) {
+  const label = input.name.trim();
+  if (!label) return { ok: false as const, error: "Produit manquant." };
+  const { draftFromSystemTemplate, getSystemTemplate } = await import("@/lib/metier/devis-templates");
+  const tpl = getSystemTemplate("blank");
+  if (!tpl) return { ok: false as const, error: "Modèle indisponible." };
+  const price = input.unitPriceHT != null && Number.isFinite(input.unitPriceHT) ? input.unitPriceHT : 0;
+  const draft = draftFromSystemTemplate(tpl, {
+    idempotencyKey: `product:${label}:${Date.now()}`,
+  });
+  draft.lines.push({
+    description: label,
+    quantity: 1,
+    unit: "u",
+    unitPriceHT: price,
+    vatRate: 20,
+    missing: price <= 0 ? ["prix"] : undefined,
+  });
+  if (price <= 0) {
+    draft.warnings = ["Prix à renseigner sur une ou plusieurs lignes."];
+  }
+  const { persistDevisDraft } = await import("@/lib/metier/devis/persist");
+  const result = await persistDevisDraft(draft);
+  if (!result.ok) return { ok: false as const, error: result.error };
+  refresh();
+  return { ok: true as const, id: result.id, reused: result.reused };
+}
+
 export async function createFromTemplateAction(form: FormData) {
   const templateId = String(form.get("templateId") ?? "");
-  const tpl = DEVIS_TEMPLATES.find((t) => t.id === templateId);
+  const { draftFromSystemTemplate, getSystemTemplate } = await import("@/lib/metier/devis-templates");
+  const tpl = getSystemTemplate(templateId);
   if (!tpl) return { ok: false as const, error: "Modèle inconnu." };
   const chantierId = String(form.get("chantierId") || "") || null;
-  const clientId = String(form.get("clientId") || "");
+  const clientId = String(form.get("clientId") || "") || null;
+  const idempotencyKey = String(form.get("idempotencyKey") || "").trim() || undefined;
   const clients = await listParties("client");
-  const client = clients.find((c) => c.id === clientId);
-  const doc = await saveExtractedDocument({
-    title: tpl.id === "vide" ? "Devis" : `Devis — ${tpl.title}`,
-    direction: "out",
-    kind: "devis",
-    partyName: client?.name || "Client",
-    partyKind: "client",
-    chantierId,
-    extract: { source: "template", templateId },
-    lines: tpl.lines.map((l) => ({
-      label: l.label,
-      qty: l.qty,
-      unit: l.unit,
-      buy_price: 0,
-      sell_price: l.sell,
-    })),
-  }).catch((err: unknown) => {
-    console.error("[metier] createFromTemplateAction", err);
-    return null;
+  const chantiers = await listChantiers();
+  const client = clientId ? clients.find((c) => c.id === clientId) : null;
+  const chantier = chantierId ? chantiers.find((c) => c.id === chantierId) : null;
+  const draft = draftFromSystemTemplate(tpl, {
+    clientId: client?.id ?? null,
+    clientName: client?.name ?? "Client",
+    chantierId: chantier?.id ?? null,
+    chantierName: chantier?.name ?? null,
+    idempotencyKey,
   });
-  if (!doc) return { ok: false as const, error: "Le devis n’a pas pu être créé." };
+  const { persistDevisDraft } = await import("@/lib/metier/devis/persist");
+  const result = await persistDevisDraft(draft);
+  if (!result.ok) return { ok: false as const, error: result.error };
   refresh();
-  return { ok: true as const, id: doc.id };
+  return { ok: true as const, id: result.id, reused: result.reused };
 }
 
 export async function addDocumentLineAction(documentId: string) {
@@ -365,4 +483,51 @@ export async function addDocumentLineAction(documentId: string) {
   if (!res.ok) return res;
   refresh();
   return { ok: true as const };
+}
+
+export async function saveAccountingExportScheduleAction(input: {
+  id?: string;
+  enabled: boolean;
+  frequency: "monthly" | "quarterly" | "yearly";
+  dayOfMonth: number;
+  invoiceKinds: ("distributor" | "client")[];
+  distributorNames: string[];
+  emailTo: string | null;
+}) {
+  const { upsertAccountingExportSchedule } = await import("@/lib/metier/accounting-export-queries");
+  const res = await upsertAccountingExportSchedule(input);
+  if (res.ok) refresh();
+  return res;
+}
+
+export async function deleteAccountingExportScheduleAction(id: string) {
+  const { deleteAccountingExportSchedule } = await import("@/lib/metier/accounting-export-queries");
+  const res = await deleteAccountingExportSchedule(id);
+  if (res.ok) refresh();
+  return res;
+}
+
+export async function toggleAccountingExportScheduleAction(id: string, enabled: boolean) {
+  const { toggleAccountingExportSchedule } = await import("@/lib/metier/accounting-export-queries");
+  const res = await toggleAccountingExportSchedule(id, enabled);
+  if (res.ok) refresh();
+  return res;
+}
+
+export async function runAccountingExportNowAction(input: {
+  periodStart: string;
+  periodEnd: string;
+  invoiceKinds: ("distributor" | "client")[];
+  distributorNames: string[];
+  emailTo?: string | null;
+}) {
+  const { runManualAccountingExport } = await import("@/lib/metier/accounting-export-queries");
+  const res = await runManualAccountingExport(input);
+  if (res.ok) refresh();
+  return res;
+}
+
+export async function getAccountingExportDownloadUrlAction(runId: string) {
+  const { getAccountingExportDownloadUrl } = await import("@/lib/metier/accounting-export-queries");
+  return getAccountingExportDownloadUrl(runId);
 }

@@ -14,21 +14,50 @@ import { cn } from "@/lib/utils";
 
 /**
  * Nav site public — matériau translucide Apple.
- * Landing claire (`/`) : verre blanc. Autres pages : verre sombre.
+ * Home : verre noir chaud sur le hero ivoire ; clair une fois le hero dépassé.
+ * Pages avis / prix : verre sombre tant que le hero foncé affleure.
  */
 export function SiteNav() {
   const pathname = usePathname();
   const reduce = useReducedMotion();
   const [scrolled, setScrolled] = useState(false);
+  const isHome = pathname === "/";
+  const [overHero, setOverHero] = useState(
+    isHome || pathname === "/avis" || pathname === "/prix",
+  );
   const [open, setOpen] = useState(false);
-  const light = pathname === "/" || pathname === "/avis" || pathname === "/prix";
+  const light = isHome
+    ? !overHero && !open
+    : (pathname === "/avis" || pathname === "/prix") && !(overHero && !open);
 
+  /**
+   * La nav reste en verre sombre tant que le hero foncé affleure sous elle (avis / prix).
+   * Le rect est relu à chaque scroll : la hauteur du hero bouge après
+   * l’hydratation (scène animée, polices), une mesure gardée en mémoire serait fausse.
+   * La nav vient du layout, le hero du segment de page : il peut manquer au montage,
+   * on boucle en rAF jusqu’à le trouver.
+   */
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    let frame = 0;
+    const update = () => {
+      setScrolled(window.scrollY > 8);
+      if (!isHome) {
+        setOverHero(false);
+        return;
+      }
+      const hero = document.getElementById("top");
+      if (hero) setOverHero(hero.getBoundingClientRect().bottom > 88);
+      else frame = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [isHome]);
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -50,13 +79,14 @@ export function SiteNav() {
               ? "border-[rgba(10,10,10,0.08)] bg-[rgba(245,245,243,0.72)] shadow-[0_1px_2px_rgba(10,10,10,0.04)] backdrop-blur-xl backdrop-saturate-150"
               : "border-[rgba(10,10,10,0.06)] bg-[rgba(245,245,243,0.55)] backdrop-blur-xl backdrop-saturate-150"
             : scrolled || open
-              ? "border-line bg-black/70 shadow-soft backdrop-blur-xl"
-              : "liquid-glass border-white/15 bg-black/35",
+              ? "border-[rgba(255,255,255,0.07)] bg-[rgba(18,16,15,0.88)] shadow-[0_1px_2px_rgba(0,0,0,0.2)] backdrop-blur-xl"
+              : "border-[rgba(255,255,255,0.06)] bg-[rgba(20,18,16,0.74)] backdrop-blur-xl backdrop-saturate-150",
         )}
       >
         <SiteLogo
           className="shrink-0"
           imageClassName="size-8 sm:size-9"
+          lightNav={light}
         />
 
         <ul className="hidden items-center gap-1 md:flex">

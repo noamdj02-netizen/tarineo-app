@@ -40,6 +40,7 @@ export function TarineoLogo({
       width={px * 3}
       height={px * 3}
       priority={priority}
+      unoptimized
       aria-hidden={decorative || href ? true : undefined}
       className={cn("w-auto shrink-0 object-contain", !href && className)}
       style={{ height: px, width: "auto", imageRendering: "auto" }}

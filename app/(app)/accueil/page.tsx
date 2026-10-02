@@ -1,7 +1,19 @@
+import { loadDashboardLayout } from "@/app/(app)/accueil/dashboard-actions";
 import { HomeDashboard } from "@/components/home/home-dashboard";
+import { getDb } from "@/lib/db";
+import { emptyWeekStats, getWeekStats } from "@/lib/home/week";
 import { buildFollowUpViews, documentSentAt } from "@/lib/metier/follow-ups";
 import { listStoredFollowUps } from "@/lib/metier/follow-up-queries";
-import { listAlerts, listChantiers, listDocuments, listParties, rankingRows, spendByMonth } from "@/lib/metier/queries";
+import {
+  getCompanyProfile,
+  listAlerts,
+  listChantiers,
+  listDocuments,
+  listParties,
+  rankingRows,
+  spendByMonth,
+} from "@/lib/metier/queries";
+import { getEntrepriseConfig } from "@/lib/settings/entreprise-config";
 import { getViewer } from "@/lib/session";
 import { siteMetadata } from "@/lib/seo";
 
@@ -11,7 +23,8 @@ export const metadata = {
 };
 
 export default async function AccueilPage() {
-  const [viewer, chantiers, clients, inbound, outbound, alerts, ranking, stored] = await Promise.all([
+  const [viewer, chantiers, clients, inbound, outbound, alerts, ranking, stored, company, entreprise] =
+    await Promise.all([
     getViewer(),
     listChantiers(),
     listParties("client"),
@@ -20,7 +33,10 @@ export default async function AccueilPage() {
     listAlerts(),
     rankingRows(),
     listStoredFollowUps(),
+    getCompanyProfile(),
+    getEntrepriseConfig(),
   ]);
+  const distributorGoalsHt = entreprise.settings.commercial.distributorGoalsHt;
   const pending = inbound.filter((d) => !outbound.some((o) => o.source_document_id === d.id));
   const nextKinds = new Set(
     outbound.filter((d) => d.kind === "bon_commande" || d.kind === "facture").map((d) => d.source_document_id),
@@ -32,9 +48,39 @@ export default async function AccueilPage() {
   const allDocs = [...inbound, ...outbound];
   const followUps = buildFollowUpViews(allDocs, stored);
   const relancesDue = followUps.filter((f) => f.status === "due");
+  const recentPieces = allDocs
+    .filter((d) => d.kind === "devis" || d.kind === "facture")
+    .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+    .slice(0, 6);
+
+  // Sync notifications opérationnelles (idempotent) — n’échoue jamais le dashboard
+  try {
+    const { syncOperationalNotifications } = await import("@/lib/notifications/emitters");
+    await syncOperationalNotifications({ followUpsDue: relancesDue, devisAEnvoyer });
+  } catch (err) {
+    console.error("[accueil] sync notifications", err);
+  }
+
+  const { listNotifications } = await import("@/lib/notifications/service");
+  const actionNotifs = await listNotifications({ unreadOnly: true, type: "actions", limit: 8 });
+
+  const [initialPrefs, weekStats] = await Promise.all([
+    loadDashboardLayout(),
+    (async () => {
+      const db = await getDb();
+      if (!db) return emptyWeekStats();
+      try {
+        return await getWeekStats(db);
+      } catch {
+        return emptyWeekStats();
+      }
+    })(),
+  ]);
 
   return (
     <HomeDashboard
+      initialPrefs={initialPrefs}
+      weekStats={weekStats}
       firstName={viewer?.firstName}
       chantiers={chantiers}
       clients={clients}
@@ -46,7 +92,13 @@ export default async function AccueilPage() {
       alerts={alerts}
       months={spendByMonth(inbound)}
       enseignes={ranking.enseignes}
+      articles={ranking.articles}
+      outbound={outbound}
       documents={allDocs}
+      recentPieces={recentPieces}
+      company={company}
+      actionNotifications={actionNotifs}
+      distributorGoalsHt={distributorGoalsHt}
     />
   );
 }

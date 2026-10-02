@@ -325,6 +325,32 @@ export type Database = {
         },
         "document_id" | "label"
       >;
+      vendor_document_profiles: Table<
+        {
+          id: string;
+          vendor_key: string;
+          vendor_display_name: string;
+          kind: string | null;
+          layout_hints: Record<string, unknown>;
+          prompt_addon: string;
+          version: number;
+          sample_count: number;
+          updated_at: string;
+        },
+        "vendor_key"
+      >;
+      vendor_profile_contributions: Table<
+        {
+          id: string;
+          user_id: string;
+          vendor_key: string;
+          kind: string;
+          hint_delta: Record<string, unknown>;
+          hint_hash: string;
+          created_at: string;
+        },
+        "vendor_key" | "kind" | "hint_hash"
+      >;
       company_profiles: Table<
         {
           user_id: string;
@@ -345,9 +371,75 @@ export type Database = {
           assurance_zone_geographique: string;
           logo_path: string;
           marge_par_defaut_pct: number;
+          settings: Record<string, unknown>;
           updated_at: string;
         },
         "user_id"
+      >;
+      notification_preferences: Table<
+        {
+          user_id: string;
+          email_quotes: boolean;
+          email_invoices: boolean;
+          email_supplier_increases: boolean;
+          email_followups: boolean;
+          email_copilot: boolean;
+          email_projects: boolean;
+          in_app_quotes: boolean;
+          in_app_invoices: boolean;
+          in_app_supplier_increases: boolean;
+          in_app_followups: boolean;
+          in_app_copilot: boolean;
+          in_app_projects: boolean;
+          push_quotes: boolean;
+          push_invoices: boolean;
+          push_supplier_increases: boolean;
+          push_followups: boolean;
+          push_copilot: boolean;
+          push_projects: boolean;
+          push_enabled: boolean;
+          event_prefs: Record<string, unknown>;
+          supplier_threshold_pct: number;
+          daily_summary_enabled: boolean;
+          daily_summary_time: string;
+          created_at: string;
+          updated_at: string;
+        },
+        "user_id"
+      >;
+      notifications: Table<
+        {
+          id: string;
+          user_id: string;
+          organization_id: string;
+          type: string;
+          title: string;
+          message: string;
+          priority: "critical" | "high" | "normal" | "low";
+          read: boolean;
+          archived: boolean;
+          action_url: string;
+          entity_type: string;
+          entity_id: string;
+          metadata: Record<string, unknown>;
+          idempotency_key: string;
+          created_at: string;
+          read_at: string | null;
+        },
+        "user_id" | "type" | "title"
+      >;
+      push_subscriptions: Table<
+        {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string;
+          created_at: string;
+          last_used_at: string | null;
+        },
+        "user_id" | "endpoint" | "p256dh" | "auth"
       >;
       price_alerts: Table<
         {
@@ -383,6 +475,41 @@ export type Database = {
           attempt_number: number;
         },
         "document_id" | "audience"
+      >;
+      accounting_export_schedules: Table<
+        {
+          id: string;
+          user_id: string;
+          enabled: boolean;
+          frequency: "monthly" | "quarterly" | "yearly";
+          day_of_month: number;
+          invoice_kinds: string[];
+          distributor_names: string[];
+          format: string;
+          email_to: string | null;
+          next_run_at: string | null;
+          last_run_at: string | null;
+          created_at: string;
+          updated_at: string;
+        },
+        "frequency" | "day_of_month"
+      >;
+      accounting_export_runs: Table<
+        {
+          id: string;
+          user_id: string;
+          schedule_id: string | null;
+          trigger: "manual" | "scheduled";
+          period_start: string;
+          period_end: string;
+          filters: Record<string, unknown>;
+          row_count: number;
+          file_path: string | null;
+          email_status: "sent" | "skipped" | "failed";
+          email_error: string | null;
+          created_at: string;
+        },
+        "trigger" | "period_start" | "period_end"
       >;
     };
     Views: Record<string, never>;

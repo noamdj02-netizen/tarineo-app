@@ -9,12 +9,22 @@ import { Topbar } from "@/components/shell/topbar";
 import { getPlan } from "@/lib/billing/plan";
 import { getOnboarding } from "@/lib/onboarding";
 import { getViewer } from "@/lib/session";
+import {
+  countUnreadNotifications,
+  listNotifications,
+} from "@/lib/notifications/service";
 
 // Données propres à l'utilisateur : toujours rendues à la demande, jamais figées au build.
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const [viewer, onboarding, plan] = await Promise.all([getViewer(), getOnboarding(), getPlan()]);
+  const [viewer, onboarding, plan, unreadCount, recentNotifications] = await Promise.all([
+    getViewer(),
+    getOnboarding(),
+    getPlan(),
+    countUnreadNotifications().catch(() => 0),
+    listNotifications({ limit: 8 }).catch(() => []),
+  ]);
 
   return (
     <div className="min-h-dvh bg-bg">
@@ -26,7 +36,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <div
           className="flex min-h-dvh flex-1 flex-col bg-bg lg:min-h-0 lg:max-h-[calc(100dvh-16px)] lg:overflow-hidden lg:rounded-card"
         >
-          <Topbar viewer={viewer} planId={plan?.plan ?? "free"} />
+          <Topbar
+            viewer={viewer}
+            planId={plan?.plan ?? "free"}
+            unreadCount={unreadCount}
+            recentNotifications={recentNotifications}
+          />
           <main
             id="app-main"
             className="mx-auto w-full max-w-[1240px] flex-1 overflow-x-clip px-4 pt-5 pb-[calc(100px+env(safe-area-inset-bottom,0px))] sm:px-6 lg:min-h-0 lg:overflow-x-hidden lg:overflow-y-auto lg:px-8 lg:pt-6 lg:pb-16 lg:overscroll-contain xl:px-10 lg:has-[[data-fill-viewport]]:flex lg:has-[[data-fill-viewport]]:flex-col lg:has-[[data-fill-viewport]]:overflow-hidden lg:has-[[data-fill-viewport]]:pb-4"

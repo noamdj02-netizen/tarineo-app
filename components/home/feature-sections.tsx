@@ -54,7 +54,7 @@ function Shell({
   return (
     <Card className={cn("gap-0 rounded-[28px] border-line py-0 shadow-soft ring-1 ring-line", className)}>
       <CardHeader className="flex-row items-center gap-3 space-y-0 px-5 pt-5 pb-3">
-        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#fff0e9] text-brand-orange">
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-wash-orange text-brand-orange">
           <Icon className="size-6" aria-hidden />
         </span>
         <div className="min-w-0">
@@ -162,7 +162,7 @@ export function FeatDistributeurs() {
       <ul className="grid gap-2 sm:grid-cols-2">
         {DISTS.map((d) => (
           <li key={d.initials} className="flex items-center gap-3 rounded-2xl border border-line px-3 py-2.5">
-            <span className="grid size-10 place-items-center rounded-xl bg-[#fff0e9] text-[12px] font-semibold text-brand-orange">
+            <span className="grid size-10 place-items-center rounded-xl bg-wash-orange text-[12px] font-semibold text-brand-orange">
               {d.initials}
             </span>
             <div>

@@ -151,6 +151,167 @@ export const PRODUCT_MODULES = [
   },
 ] as const;
 
+/* ------------------------------------------------------------------ */
+/* Hero — scènes du flux documentaire                                  */
+/* ------------------------------------------------------------------ */
+
+export type HeroDocLine = {
+  label: string;
+  value?: string;
+  /** Ligne de contexte : rendue en gris, sans emphase. */
+  soft?: boolean;
+};
+
+export type HeroDoc = {
+  /** Type de pièce, affiché en titre de carte. */
+  kind: string;
+  /** Pastille de format ou de statut (PDF, Accepté…). */
+  tag?: string;
+  party: string;
+  partyMeta: string;
+  /** Enseigne reconnue par SupplierLogo, sinon initiale du tiers. */
+  logo?: string;
+  lines: HeroDocLine[];
+  highlight?: { label: string; value: string; tone: "gain" | "alert" };
+  total: { label: string; value: string };
+};
+
+export type HeroScene = {
+  id: string;
+  /** Libellé court pour les contrôles de scène. */
+  label: string;
+  /** Phrase lue par les lecteurs d’écran à la place de l’animation. */
+  summary: string;
+  source: HeroDoc;
+  engine: { title: string; steps: readonly string[] };
+  result: HeroDoc;
+};
+
+/**
+ * Trois scènes du hero. Montants volontairement cohérents entre eux
+ * (coût d’achat → prix de vente, écart en € et en %, TVA) : ce sont des
+ * exemples, affichés comme tels, jamais des statistiques réelles.
+ */
+export const HERO_SCENES: readonly HeroScene[] = [
+  {
+    id: "analyser",
+    label: "Analyser un devis",
+    summary:
+      "TARINEO lit un devis fournisseur Cedeo à 442,80 € HT, en extrait les lignes, puis prépare un devis client à 598,00 € HT avec une marge estimée de 26 %.",
+    source: {
+      kind: "Devis fournisseur",
+      tag: "PDF",
+      party: "Cedeo Lyon",
+      partyMeta: "N° DEV-2026-0842",
+      logo: "Cedeo",
+      lines: [
+        { label: "Tube PVC Ø 500", value: "442,80 €" },
+        { label: "Joint Ø 500", value: "4 u", soft: true },
+        { label: "Collier Ø 500", value: "8 u", soft: true },
+      ],
+      total: { label: "Total HT", value: "442,80 €" },
+    },
+    engine: {
+      title: "Analyse en cours",
+      steps: [
+        "Extraction des données",
+        "Vérification des prix",
+        "Comparaison historique",
+        "Calcul de la marge",
+      ],
+    },
+    result: {
+      kind: "Devis client",
+      tag: "Prêt",
+      party: "Madame Dupont",
+      partyMeta: "12 rue des Acacias, Lyon",
+      lines: [
+        { label: "Tube PVC Ø 500 posé", value: "598,00 €" },
+        { label: "Fourniture et pose", soft: true },
+      ],
+      highlight: { label: "Marge estimée", value: "26 %", tone: "gain" },
+      total: { label: "Total HT", value: "598,00 €" },
+    },
+  },
+  {
+    id: "hausse",
+    label: "Surveiller une hausse",
+    summary:
+      "TARINEO compare un nouveau prix fournisseur de 486,20 € à votre dernier prix payé de 442,80 € et signale une hausse de 43,40 €, soit 9,8 %.",
+    source: {
+      kind: "Votre historique",
+      tag: "12 mois",
+      party: "Cedeo Lyon",
+      partyMeta: "Tube PVC Ø 500",
+      logo: "Cedeo",
+      lines: [
+        { label: "Dernier prix payé", value: "442,80 €" },
+        { label: "Moyenne 12 mois", value: "438,10 €", soft: true },
+      ],
+      total: { label: "Référence", value: "442,80 €" },
+    },
+    engine: {
+      title: "Comparaison des prix",
+      steps: [
+        "Lecture du document",
+        "Rapprochement de la référence",
+        "Écart calculé",
+        "Seuil d’alerte 3 %",
+      ],
+    },
+    result: {
+      kind: "Hausse détectée",
+      tag: "Alerte",
+      party: "Cedeo Lyon",
+      partyMeta: "Devis du 12 mars 2026",
+      logo: "Cedeo",
+      lines: [
+        { label: "Nouveau prix", value: "486,20 €" },
+        { label: "Écart", value: "+ 43,40 €" },
+      ],
+      highlight: { label: "Variation", value: "+ 9,8 %", tone: "alert" },
+      total: { label: "Total HT", value: "486,20 €" },
+    },
+  },
+  {
+    id: "transformer",
+    label: "Transformer un document",
+    summary:
+      "TARINEO reprend un devis client accepté de 7 171,20 € HT et en produit la facture correspondante, soit 8 605,44 € TTC avec 20 % de TVA.",
+    source: {
+      kind: "Devis client",
+      tag: "Accepté",
+      party: "Madame Dupont",
+      partyMeta: "Chantier Madame Dupont",
+      lines: [
+        { label: "Total des lignes", value: "7 171,20 €" },
+        { label: "14 lignes · 3 lots", soft: true },
+      ],
+      total: { label: "Total HT", value: "7 171,20 €" },
+    },
+    engine: {
+      title: "Conversion en cours",
+      steps: [
+        "Reprise des lignes",
+        "Report des quantités",
+        "Report de la TVA",
+        "Numérotation",
+      ],
+    },
+    result: {
+      kind: "Facture client",
+      tag: "Émise",
+      party: "Madame Dupont",
+      partyMeta: "N° FAC-2026-041",
+      lines: [
+        { label: "Total HT", value: "7 171,20 €" },
+        { label: "TVA 20 %", value: "1 434,24 €" },
+      ],
+      total: { label: "Total TTC", value: "8 605,44 €" },
+    },
+  },
+];
+
 /** Critically damped spring — Apple default for UI enter. */
 export const PRODUCT_SPRING = { type: "spring" as const, bounce: 0, duration: 0.4 };
 export const PRODUCT_SPRING_FAST = { type: "spring" as const, bounce: 0, duration: 0.3 };

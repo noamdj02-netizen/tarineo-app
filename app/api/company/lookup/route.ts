@@ -4,28 +4,93 @@ import { getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
 
-/** POST { query: string } — recherche entreprise (serveur, session requise). */
+/**
+ * POST { query?: string, siret?: string }
+ * Recherche entreprise publique (session requise). Pas de user_id client.
+ */
 export async function POST(req: Request) {
   const db = await getDb();
   if (!db) {
-    return NextResponse.json({ status: "error", message: "Connexion requise." }, { status: 401 });
+    return NextResponse.json({ success: false, status: "error", message: "Connexion requise." }, { status: 401 });
   }
 
-  let body: { query?: unknown };
+  let body: { query?: unknown; siret?: unknown };
   try {
-    body = (await req.json()) as { query?: unknown };
+    body = (await req.json()) as { query?: unknown; siret?: unknown };
   } catch {
-    return NextResponse.json({ status: "error", message: "Requête invalide." }, { status: 400 });
+    return NextResponse.json({ success: false, status: "error", message: "Requête invalide." }, { status: 400 });
   }
 
+  const siret = typeof body.siret === "string" ? body.siret.replace(/\D/g, "") : "";
   const query = typeof body.query === "string" ? body.query : "";
-  if (!query.trim()) {
+  const needle = siret || query;
+  if (!needle.trim()) {
     return NextResponse.json(
-      { status: "error", message: "Indiquez un nom ou un site web." },
+      { success: false, status: "error", message: "Indiquez un nom ou un SIRET." },
       { status: 400 },
     );
   }
 
-  const result = await lookupCompany(query);
-  return NextResponse.json(result);
+  const result = await lookupCompany(needle);
+
+  if (result.status === "found") {
+    return NextResponse.json({
+      success: true,
+      status: "found",
+      results: [toPublicResult(result.company)],
+    });
+  }
+  if (result.status === "candidates") {
+    return NextResponse.json({
+      success: true,
+      status: "candidates",
+      query: result.query,
+      results: result.candidates.map(toPublicResult),
+    });
+  }
+  if (result.status === "not_found") {
+    return NextResponse.json({
+      success: true,
+      status: "not_found",
+      query: result.query,
+      results: [],
+    });
+  }
+  return NextResponse.json(
+    { success: false, status: "error", message: result.message },
+    { status: 503 },
+  );
+}
+
+function toPublicResult(c: {
+  legalName: string | null;
+  name: string | null;
+  siren: string | null;
+  siret: string | null;
+  address: string | null;
+  postalCode: string | null;
+  city: string | null;
+  activity: string | null;
+  activityLabel: string | null;
+  legalForm: string | null;
+  active: boolean | null;
+  siretValid: boolean;
+  matchScore: number;
+  logoUrl: string | null;
+}) {
+  return {
+    name: c.legalName ?? c.name,
+    siren: c.siren,
+    siret: c.siret,
+    address: c.address,
+    postalCode: c.postalCode,
+    city: c.city,
+    activity: c.activity,
+    activityLabel: c.activityLabel,
+    legalForm: c.legalForm,
+    active: c.active,
+    siretValid: c.siretValid,
+    matchScore: c.matchScore,
+    logoUrl: c.logoUrl,
+  };
 }

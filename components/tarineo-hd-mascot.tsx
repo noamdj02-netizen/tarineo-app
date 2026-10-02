@@ -7,11 +7,13 @@ import { cn } from "@/lib/utils";
 export function TarineoHdMascot({
   name,
   className,
+  imageClassName,
   label,
   priority,
 }: {
   name: TarineoHdMascotName;
   className?: string;
+  imageClassName?: string;
   label?: string;
   priority?: boolean;
 }) {
@@ -29,7 +31,7 @@ export function TarineoHdMascot({
         width={width}
         height={height}
         sizes="140px"
-        className="h-full w-full object-contain object-bottom"
+        className={cn("h-full w-full object-contain object-bottom", imageClassName)}
         priority={priority}
         loading={priority ? undefined : "lazy"}
       />

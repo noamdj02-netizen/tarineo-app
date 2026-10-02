@@ -1,12 +1,15 @@
 import "server-only";
 import { siretValide } from "@/lib/metier/company";
+import { scoreMatch } from "@/lib/company/match-score";
 import { parseCompanyQuery } from "@/lib/company/parse-query";
 import type { CompanyLookupResponse, CompanyLookupResult } from "@/lib/company/types";
 import { resolveWebsiteLogo } from "@/lib/company/website-logo";
 
 const API = "https://recherche-entreprises.api.gouv.fr/search";
 const TIMEOUT_MS = 8_000;
-const MAX_CANDIDATES = 5;
+const MAX_CANDIDATES = 6;
+const AUTO_MIN_SCORE = 72;
+const AUTO_GAP = 18;
 
 type ApiSiege = {
   siret?: string | null;
@@ -20,6 +23,7 @@ type ApiSiege = {
   liste_enseignes?: string[] | null;
   nom_commercial?: string | null;
   activite_principale?: string | null;
+  etat_administratif?: string | null;
 };
 
 type ApiEntreprise = {
@@ -29,40 +33,76 @@ type ApiEntreprise = {
   sigle?: string | null;
   activite_principale?: string | null;
   nature_juridique?: string | null;
+  etat_administratif?: string | null;
   siege?: ApiSiege | null;
   matching_etablissements?: ApiSiege[] | null;
 };
 
 /**
- * Recherche une entreprise française via l’API officielle
- * recherche-entreprises.api.gouv.fr (pas de clé privée).
- * N’invente jamais de données ; en cas d’ambiguïté, renvoie des candidats.
+ * Recherche entreprise FR via recherche-entreprises.api.gouv.fr (API publique, sans clé).
+ * N’invente jamais de SIRET / adresse. Ambiguïté → candidats.
  */
 export async function lookupCompany(query: string): Promise<CompanyLookupResponse> {
   const parsed = parseCompanyQuery(query);
   if (!parsed) {
-    return { status: "error", message: "Indiquez un nom d’entreprise ou un site web." };
+    return { status: "error", message: "Indiquez un nom d’entreprise ou un SIRET." };
   }
 
   try {
-    const results = await searchApi(parsed.searchText, parsed.digits);
-    if (!results.length) {
+    const rows = await searchApi(parsed.searchText, parsed.digits);
+    if (!rows.length) {
       return { status: "not_found", query: parsed.raw };
     }
 
-    const website = parsed.website;
-    const mapped = results.map((row) => mapEntreprise(row, website));
+    const mapped = dedupeBySiret(
+      rows.flatMap((row) => expandEtablissements(row, parsed.website)),
+    ).map((c) => ({
+      ...c,
+      matchScore: scoreMatch(c, parsed.nameForMatch, parsed.cityHint, parsed.postalHint, parsed.digits),
+    }));
 
-    const exact = pickExact(mapped, parsed.searchText, parsed.digits);
-    if (exact) {
-      return { status: "found", company: await withLogo(exact, parsed.domain, website) };
+    mapped.sort((a, b) => b.matchScore - a.matchScore || (a.legalName ?? "").localeCompare(b.legalName ?? "", "fr"));
+
+    // SIRET / SIREN exact → unique résultat fiable
+    if (parsed.digits) {
+      const exact = mapped.find(
+        (r) => r.siret === parsed.digits || r.siren === parsed.digits,
+      );
+      if (exact?.siret && exact.siretValid) {
+        return { status: "found", company: await withLogo(exact, parsed.domain, parsed.website) };
+      }
+      if (exact && !exact.siretValid) {
+        return {
+          status: "error",
+          message: "SIRET invalide. Vérifiez les informations de l’entreprise.",
+        };
+      }
+      if (mapped.length === 1 && mapped[0].siretValid) {
+        return { status: "found", company: await withLogo(mapped[0], parsed.domain, parsed.website) };
+      }
+      return {
+        status: "candidates",
+        query: parsed.raw,
+        candidates: mapped.slice(0, MAX_CANDIDATES),
+      };
     }
 
-    if (mapped.length === 1 && isConfidentSingle(mapped[0], parsed.searchText)) {
-      return { status: "found", company: await withLogo(mapped[0], parsed.domain, website) };
+    const top = mapped[0];
+    const second = mapped[1];
+    const confidentAlone =
+      top &&
+      top.matchScore >= AUTO_MIN_SCORE &&
+      top.siretValid &&
+      (!second || top.matchScore - second.matchScore >= AUTO_GAP);
+
+    if (confidentAlone) {
+      return { status: "found", company: await withLogo(top, parsed.domain, parsed.website) };
     }
 
-    // Ambiguïté : on ne choisit pas un SIRET à la place de l’utilisateur.
+    if (!mapped.length) {
+      return { status: "not_found", query: parsed.raw };
+    }
+
     return {
       status: "candidates",
       query: parsed.raw,
@@ -72,14 +112,14 @@ export async function lookupCompany(query: string): Promise<CompanyLookupRespons
     console.error("[company-lookup]", err);
     return {
       status: "error",
-      message: "La recherche d’entreprise est temporairement indisponible. Saisissez les infos manuellement.",
+      message: "Le service de recherche est temporairement indisponible. Vous pouvez continuer manuellement.",
     };
   }
 }
 
 async function searchApi(searchText: string, digits: string | null): Promise<ApiEntreprise[]> {
   const q = digits ?? searchText;
-  const url = `${API}?q=${encodeURIComponent(q)}&per_page=${digits ? 5 : 8}&page=1`;
+  const url = `${API}?q=${encodeURIComponent(q)}&per_page=${digits ? 5 : 10}&page=1`;
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
@@ -95,15 +135,33 @@ async function searchApi(searchText: string, digits: string | null): Promise<Api
     return rows.filter((row) => {
       const siren = row.siren ?? "";
       const siret = row.siege?.siret ?? "";
-      return siren === digits || siret === digits || siret.startsWith(digits);
+      const matchEtabs = row.matching_etablissements ?? [];
+      return (
+        siren === digits ||
+        siret === digits ||
+        siret.startsWith(digits) ||
+        matchEtabs.some((e) => e.siret === digits)
+      );
     });
   } finally {
     clearTimeout(timer);
   }
 }
 
-function mapEntreprise(row: ApiEntreprise, website: string | null): CompanyLookupResult {
-  const siege = row.siege ?? row.matching_etablissements?.[0] ?? null;
+function expandEtablissements(row: ApiEntreprise, website: string | null): CompanyLookupResult[] {
+  const base = mapEntreprise(row, row.siege ?? null, website);
+  const extras = (row.matching_etablissements ?? [])
+    .filter((e) => e?.siret && e.siret !== row.siege?.siret)
+    .slice(0, 3)
+    .map((e) => mapEntreprise(row, e, website));
+  return [base, ...extras];
+}
+
+function mapEntreprise(
+  row: ApiEntreprise,
+  siege: ApiSiege | null,
+  website: string | null,
+): CompanyLookupResult {
   const siret = digitsOnly(siege?.siret);
   const siren = digitsOnly(row.siren) ?? (siret ? siret.slice(0, 9) : null);
   const legalName = clean(row.nom_raison_sociale) ?? clean(row.nom_complet);
@@ -115,24 +173,43 @@ function mapEntreprise(row: ApiEntreprise, website: string | null): CompanyLooku
   const postalCode = clean(siege?.code_postal);
   const city = clean(siege?.libelle_commune)?.toUpperCase() ?? null;
   const activity = clean(siege?.activite_principale) ?? clean(row.activite_principale);
-  const forme = formeFromNature(row.nature_juridique);
-  const name = legalName ?? (forme ? `${forme}` : null);
+  const legalForm = formeFromNature(row.nature_juridique, legalName);
+  const etat = siege?.etat_administratif ?? row.etat_administratif ?? null;
+  const active = etat == null ? null : etat.toUpperCase() === "A";
 
   return {
-    name,
+    name: legalName,
     legalName,
     tradeName: trade && trade !== legalName ? trade : null,
+    legalForm,
     siren,
     siret,
     address,
     postalCode,
     city,
     activity,
+    activityLabel: activityLabel(activity),
+    active,
     website,
     logoUrl: null,
     siretValid: Boolean(siret && siretValide(siret)),
+    matchScore: 0,
     source: "recherche-entreprises",
   };
+}
+
+/** Score interne 0–100 (non présenté comme probabilité IA). */
+export { scoreMatch } from "@/lib/company/match-score";
+
+async function withLogo(
+  company: CompanyLookupResult,
+  domain: string | null,
+  website: string | null,
+): Promise<CompanyLookupResult> {
+  // Logo uniquement si un site a été fourni / détecté — jamais inventé depuis le nom.
+  if (!website && !domain) return company;
+  const logoUrl = await resolveWebsiteLogo(website ?? company.website, domain);
+  return { ...company, website: website ?? company.website, logoUrl };
 }
 
 function streetFromSiege(siege: ApiSiege | null): string | null {
@@ -150,53 +227,15 @@ function streetFromSiege(siege: ApiSiege | null): string | null {
   const cp = clean(siege.code_postal);
   const city = clean(siege.libelle_commune);
   if (cp && city) {
-    const stripped = full.replace(new RegExp(`\\s*${escapeReg(cp)}\\s+${escapeReg(city)}\\s*$`, "i"), "").trim();
+    const stripped = full
+      .replace(new RegExp(`\\s*${escapeReg(cp)}\\s+${escapeReg(city)}\\s*$`, "i"), "")
+      .trim();
     if (stripped) return stripped;
   }
   return full;
 }
 
-function pickExact(
-  rows: CompanyLookupResult[],
-  searchText: string,
-  digits: string | null,
-): CompanyLookupResult | null {
-  if (digits) {
-    const hit = rows.find((r) => r.siret === digits || r.siren === digits);
-    return hit ?? (rows.length === 1 ? rows[0] : null);
-  }
-  const needle = normalize(searchText);
-  if (needle.length < 4) return null;
-  const exacts = rows.filter((r) => {
-    const names = [r.legalName, r.name, r.tradeName].filter(Boolean).map((n) => normalize(n!));
-    return names.some((n) => n === needle || n.includes(needle) || needle.includes(n));
-  });
-  // Un seul match « fort » (égalité) → trouvé.
-  const equal = exacts.filter((r) => {
-    const names = [r.legalName, r.name].filter(Boolean).map((n) => normalize(n!));
-    return names.includes(needle);
-  });
-  if (equal.length === 1) return equal[0];
-  return null;
-}
-
-function isConfidentSingle(row: CompanyLookupResult, searchText: string) {
-  const needle = normalize(searchText);
-  if (needle.length < 8) return false;
-  const names = [row.legalName, row.name, row.tradeName].filter(Boolean).map((n) => normalize(n!));
-  return names.some((n) => n.includes(needle) || needle.includes(n));
-}
-
-async function withLogo(
-  company: CompanyLookupResult,
-  domain: string | null,
-  website: string | null,
-): Promise<CompanyLookupResult> {
-  const logoUrl = await resolveWebsiteLogo(website ?? company.website, domain);
-  return { ...company, website: website ?? company.website, logoUrl };
-}
-
-function formeFromNature(code: string | null | undefined) {
+function formeFromNature(code: string | null | undefined, legalName?: string | null) {
   const map: Record<string, string> = {
     "1000": "Entrepreneur individuel",
     "5498": "EURL",
@@ -207,7 +246,42 @@ function formeFromNature(code: string | null | undefined) {
     "5202": "SNC",
     "9220": "Association",
   };
-  return code ? map[code] ?? null : null;
+  if (!code) return null;
+  // INSEE code souvent 5499 (SARL) alors que la raison sociale porte « EURL ».
+  if (code === "5499" && legalName && /^\s*EURL\b/i.test(legalName)) return "EURL";
+  return map[code] ?? null;
+}
+
+/** Libellés APE fréquents BTP — sinon on garde le code. */
+function activityLabel(code: string | null) {
+  if (!code) return null;
+  const map: Record<string, string> = {
+    "43.22A": "Travaux d’installation d’eau et de gaz",
+    "43.21A": "Travaux d’installation électrique",
+    "43.29A": "Autres travaux d’installation",
+    "43.31Z": "Travaux de plâtrerie",
+    "43.32A": "Travaux de menuiserie bois",
+    "43.33Z": "Travaux de revêtement des sols et des murs",
+    "43.34Z": "Travaux de peinture et vitrerie",
+    "43.39Z": "Autres travaux de finition",
+    "43.91A": "Travaux de couverture",
+    "41.20A": "Construction de maisons individuelles",
+    "42.11Z": "Construction de routes et autoroutes",
+    "43.12A": "Travaux de terrassement courants",
+  };
+  return map[code] ?? null;
+}
+
+function dedupeBySiret(rows: CompanyLookupResult[]) {
+  const seen = new Set<string>();
+  const out: CompanyLookupResult[] = [];
+  for (const r of rows) {
+    const key = r.siret ?? `${r.siren}-${r.city}-${r.address}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(r);
+  }
+  return out;
 }
 
 function digitsOnly(value: string | null | undefined) {
@@ -219,15 +293,6 @@ function digitsOnly(value: string | null | undefined) {
 function clean(value: string | null | undefined) {
   const t = value?.trim();
   return t ? t : null;
-}
-
-function normalize(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
 }
 
 function escapeReg(value: string) {

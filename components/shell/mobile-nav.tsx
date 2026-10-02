@@ -5,6 +5,7 @@ import {
   BookOpen,
   FolderKanban,
   House,
+  Plus,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -12,7 +13,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { TarineoCopilotAvatar } from "@/components/assistant/copilot-face";
 import { R } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ const SIDES = [
   { href: R.accueil, label: "Accueil", icon: House, match: (p: string) => p === "/accueil" || p.startsWith("/accueil/") },
   {
     href: R.chantiers,
-    label: "Projets",
+    label: "Chantiers",
     icon: FolderKanban,
     match: (p: string) => p === "/chantiers" || p.startsWith("/chantiers/"),
   },
@@ -32,7 +32,7 @@ const SIDES = [
 const RIGHT = [
   {
     href: R.clientDevis,
-    label: "Bibliothèque",
+    label: "Documents",
     icon: BookOpen,
     match: (p: string) =>
       p.startsWith("/client") || p.startsWith("/distributeur") || p.startsWith("/pieces/") || p.startsWith("/devis/"),
@@ -47,6 +47,7 @@ const RIGHT = [
       p.startsWith("/comparateur") ||
       p.startsWith("/hausses") ||
       p.startsWith("/relances") ||
+      p.startsWith("/parametres") ||
       p.startsWith("/entreprise") ||
       p.startsWith("/abonnement") ||
       p.startsWith("/compte"),
@@ -70,14 +71,14 @@ function NavSideItem({
       aria-current={on ? "page" : undefined}
       aria-label={label}
       className={cn(
-        "relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-[10.5px] font-medium leading-none transition-colors duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] active:scale-[0.98] motion-reduce:transition-none",
-        on ? "text-white" : "text-white/60 hover:text-white/90",
+        "relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 text-[10px] font-medium leading-none tracking-[-0.01em] transition-colors duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] active:scale-[0.98] motion-reduce:transition-none",
+        on ? "text-white" : "text-white/55 hover:text-white/85",
       )}
     >
-      <Icon className="size-[21px]" strokeWidth={on ? 2.05 : 1.65} aria-hidden />
+      <Icon className="size-[20px]" strokeWidth={on ? 2.1 : 1.7} aria-hidden />
       <span className="truncate">{label}</span>
       {on ? (
-        <span className="absolute bottom-1.5 size-1 rounded-full bg-[#FF6B1A]" aria-hidden />
+        <span className="absolute bottom-2 size-1 rounded-full bg-[#FF6B1A]" aria-hidden />
       ) : null}
     </Link>
   );
@@ -163,52 +164,53 @@ function MobileDevisButton({
     <Button
       type="button"
       variant="orange-soft"
-      size="icon-fab"
-      title="Devis IA"
-      aria-label="Créer ou analyser un devis avec TARINEO"
+      size="icon"
+      title="Nouveau devis"
+      aria-label="Nouveau devis"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerEnd}
       onPointerCancel={onPointerCancel}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        "absolute top-[-30px] left-1/2 z-10 -translate-x-1/2",
+        // Aligné au centre du puits, même ligne que les autres onglets
+        "absolute top-1/2 left-1/2 z-10 size-12 -translate-x-1/2 -translate-y-1/2 rounded-full",
         "touch-manipulation select-none",
         "focus-visible:border-tarineo-orange/40 focus-visible:ring-tarineo-orange/30",
-        active && "ring-2 ring-tarineo-orange/35",
+        active && "ring-2 ring-tarineo-orange/40",
       )}
       style={{ WebkitTouchCallout: "none", WebkitUserSelect: "none", userSelect: "none" }}
     >
       <svg
         className="pointer-events-none absolute inset-0 size-full -rotate-90"
-        viewBox="0 0 64 64"
+        viewBox="0 0 48 48"
         aria-hidden
       >
         <circle
-          cx="32"
-          cy="32"
-          r="30"
+          cx="24"
+          cy="24"
+          r="22"
           fill="none"
           stroke="currentColor"
           className="text-white/90"
-          strokeWidth="2.5"
+          strokeWidth="2"
           strokeLinecap="round"
-          strokeDasharray={2 * Math.PI * 30}
-          strokeDashoffset={2 * Math.PI * 30 * (1 - (reduce ? 0 : progress))}
+          strokeDasharray={2 * Math.PI * 22}
+          strokeDashoffset={2 * Math.PI * 22 * (1 - (reduce ? 0 : progress))}
           style={{
             opacity: progress > 0.02 ? 1 : 0,
             transition: "stroke-dashoffset 75ms linear",
           }}
         />
       </svg>
-      <TarineoCopilotAvatar variant="nav" />
+      <Plus className="relative size-5 text-white" strokeWidth={2.4} aria-hidden />
     </Button>
   );
 }
 
 /**
- * Navbar mobile : Accueil · Projets · [Devis IA] · Bibliothèque · Outils.
- * Tap → /devis/analyser · appui long → mode vocal devis.
+ * Navbar mobile : Accueil · Chantiers · [Nouveau devis] · Documents · Outils.
+ * Tap FAB (centré) → /devis/nouveau · appui long → mode vocal.
  */
 export function MobileNav() {
   const pathname = usePathname();
@@ -224,15 +226,23 @@ export function MobileNav() {
       <div className="pointer-events-auto relative mx-3">
         <div
           className={cn(
-            "relative flex h-16 items-stretch rounded-[22px] border border-white/8 px-1",
-            "bg-[#1C1C1C]/96 shadow-[0_8px_24px_rgba(0,0,0,0.22)] backdrop-blur-[20px]",
+            "relative flex h-[68px] items-stretch rounded-[24px] border border-white/[0.09] px-1.5",
+            "bg-[#161616]/94 shadow-[0_12px_40px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-[24px]",
           )}
         >
           {SIDES.map((t) => (
             <NavSideItem key={t.href} {...t} on={t.match(pathname)} />
           ))}
 
-          <div className="relative w-[72px] shrink-0" aria-hidden />
+          <div className="relative flex w-[76px] shrink-0 items-center justify-center" aria-hidden>
+            <div
+              className={cn(
+                "absolute top-1/2 size-[52px] -translate-y-1/2 rounded-full",
+                "bg-black/40 shadow-[inset_0_2px_8px_rgba(0,0,0,0.45)]",
+                "ring-1 ring-white/[0.06]",
+              )}
+            />
+          </div>
 
           {RIGHT.map((t) => (
             <NavSideItem key={t.href} {...t} on={t.match(pathname)} />
@@ -240,12 +250,10 @@ export function MobileNav() {
 
           <MobileDevisButton
             active={devisActive}
-            onShortTap={() => router.push(R.devisAnalyser)}
-            onLongPress={() => router.push(`${R.devisAnalyser}?mode=voice`)}
+            onShortTap={() => router.push(R.devisNouveau)}
+            onLongPress={() => router.push(`${R.devisNouveau}?mode=voice`)}
           />
         </div>
-
-        {/* Copilote reste accessible via le panneau (⌘J) et le header. */}
       </div>
     </nav>
   );

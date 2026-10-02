@@ -88,19 +88,19 @@ export default async function AbonnementPage({
   return (
     <section className="mx-auto max-w-[760px]">
       <Link
-        href="/compte"
+        href="/parametres"
         className="mb-4 inline-flex min-h-10 items-center gap-2 text-[14px] text-muted-foreground hover:text-ink"
       >
         <ArrowLeft className="size-4" aria-hidden />
-        Retour au compte
+        Retour aux paramètres
       </Link>
       <PageHead
         label="Abonnement"
         title={headTitle}
         crumbs={[
           { href: "/accueil", label: "Accueil" },
-          { href: "/compte", label: "Compte" },
-          { label: "Tarifs" },
+          { href: "/parametres", label: "Paramètres" },
+          { label: "Abonnement" },
         ]}
       >
         {headDescription}

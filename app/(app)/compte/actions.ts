@@ -14,6 +14,9 @@ const MAX_AVATAR = 2 * 1024 * 1024;
 
 function refresh() {
   revalidatePath("/compte");
+  revalidatePath("/parametres");
+  revalidatePath("/parametres/compte");
+  revalidatePath("/parametres/securite");
   revalidatePath("/onboarding");
   revalidatePath("/", "layout");
 }

@@ -7,6 +7,10 @@ import { PageHead } from "@/components/shell/page-head";
 import { getCompanyProfile, listChantiers, listDocuments, listParties } from "@/lib/metier/queries";
 import type { DocDirection, DocKind } from "@/lib/metier/types";
 import type { TarineoHdMascotName } from "@/components/tarineo-hd-mascot";
+import { DevisInsights } from "@/components/tarineo/panels/devis-insights";
+import { buildFollowUpViews } from "@/lib/metier/follow-ups";
+import { listStoredFollowUps } from "@/lib/metier/follow-up-queries";
+import { rankingRows } from "@/lib/metier/queries";
 import { R } from "@/lib/routes";
 
 export async function PieceKindPage({
@@ -40,13 +44,16 @@ export async function PieceKindPage({
   chantierSlug?: string | null;
   partyId?: string | null;
 }) {
-  const [docs, clients, chantiers, dists, company, allDocs] = await Promise.all([
+  const isClientDevis = direction === "out" && kind === "devis";
+  const [docs, clients, chantiers, dists, company, allDocs, ranking, storedFollowUps] = await Promise.all([
     listDocuments({ direction, kind }),
     listParties("client"),
     listChantiers(),
     listParties("distributeur"),
     getCompanyProfile(),
     listDocuments(),
+    isClientDevis ? rankingRows() : Promise.resolve({ articles: [], enseignes: [] }),
+    isClientDevis ? listStoredFollowUps() : Promise.resolve([]),
   ]);
   const chantier = chantiers.find((c) => c.slug === chantierSlug);
   const filtered = docs.filter((d) => {
@@ -55,8 +62,16 @@ export async function PieceKindPage({
     return true;
   });
   const outbound = direction === "in" ? allDocs.filter((d) => d.direction === "out") : allDocs;
-  const parent = direction === "in" ? "Documents distributeur" : "Documents entreprise";
-  const ctaLabel = direction === "out" && kind === "devis" ? "Nouveau devis" : "Importer un document";
+  const parent = direction === "in" ? "Documents fournisseur" : "Documents entreprise";
+  const ctaLabel = isClientDevis ? "+ Nouveau devis" : "Importer un document";
+  const ctaHref = isClientDevis ? R.devisNouveau : "#import";
+  const importHref = isClientDevis ? R.devisAnalyser : null;
+  const emptyAction = isClientDevis ? "Nouveau devis" : "Importer un document";
+  const emptyHref = isClientDevis
+    ? R.devisNouveau
+    : direction === "out"
+      ? `${R.clientDevis}#import`
+      : `${R.distributeurDevis}#import`;
 
   return (
     <section className="flex flex-col gap-6">
@@ -71,12 +86,22 @@ export async function PieceKindPage({
           { label: title },
         ]}
         action={
-          <Link
-            href="#import"
-            className="btn-orange inline-flex h-11 items-center rounded-[12px] px-4 text-[13.5px] font-medium md:h-9 md:rounded-[10px]"
-          >
-            {ctaLabel}
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={ctaHref}
+              className="btn-orange inline-flex h-11 items-center rounded-[12px] px-4 text-[13.5px] font-medium md:h-9 md:rounded-[10px]"
+            >
+              {ctaLabel}
+            </Link>
+            {importHref ? (
+              <Link
+                href={importHref}
+                className="inline-flex h-11 items-center rounded-[12px] border border-line bg-surface px-4 text-[13.5px] font-medium text-ink transition hover:bg-muted md:h-9 md:rounded-[10px]"
+              >
+                Importer un devis
+              </Link>
+            ) : null}
+          </div>
         }
       >
         {text}
@@ -89,6 +114,14 @@ export async function PieceKindPage({
         party={partyId ?? null}
       />
       {showTemplates ? <DevisTemplates chantiers={chantiers} clients={clients} /> : null}
+      {isClientDevis ? (
+        <DevisInsights
+          outbound={allDocs.filter((d) => d.direction === "out")}
+          followUps={buildFollowUpViews(allDocs, storedFollowUps)}
+          articles={ranking.articles}
+          sourceDoc={allDocs.find((d) => d.direction === "in" && d.kind === "devis") ?? null}
+        />
+      ) : null}
       <DocumentDrop
         chantiers={chantiers}
         clients={clients}
@@ -102,8 +135,8 @@ export async function PieceKindPage({
         direction={direction}
         allDocs={outbound}
         empty={empty}
-        emptyHref={direction === "out" ? `${R.clientDevis}#import` : `${R.distributeurDevis}#import`}
-        emptyAction={ctaLabel}
+        emptyHref={emptyHref}
+        emptyAction={emptyAction}
         company={company}
         transformedSourceIds={
           direction === "in"

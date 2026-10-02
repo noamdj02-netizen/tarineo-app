@@ -13,11 +13,14 @@ export async function GET(request: Request) {
   const tool = url.searchParams.get("tools") === "drive" ? "drive" : "gmail";
   const db = await getDb();
   if (!db) {
-    return NextResponse.redirect(new URL("/login?next=/outils", url.origin));
+    return NextResponse.redirect(new URL("/login?next=/parametres/integrations", url.origin));
   }
 
   const supabase = await createClient();
-  const next = safeNext(`/outils?bound=${tool === "drive" ? "drive" : "gmail"}`, "/outils");
+  const next = safeNext(
+    `/parametres/integrations?bound=${tool === "drive" ? "drive" : "gmail"}`,
+    "/parametres/integrations",
+  );
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -27,7 +30,7 @@ export async function GET(request: Request) {
     },
   });
   if (error || !data.url) {
-    return NextResponse.redirect(new URL("/outils?erreur=google", url.origin));
+    return NextResponse.redirect(new URL("/parametres/integrations?erreur=google", url.origin));
   }
   return NextResponse.redirect(data.url);
 }

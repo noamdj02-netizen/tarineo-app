@@ -128,7 +128,7 @@ export default async function PiecePage({ params }: { params: Promise<{ id: stri
       <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div>
           <SectionHeader title="Aperçu" className="mb-3" />
-          <DocumentViewer doc={doc} />
+          <DocumentViewer doc={doc} company={company} />
         </div>
         <aside className="flex flex-col gap-6">
           <div className="rounded-card border border-line bg-surface p-4 shadow-soft">

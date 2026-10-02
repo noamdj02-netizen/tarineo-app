@@ -18,21 +18,21 @@ const STATUSES: {
     label: "En cours",
     active: "border-st-focus/20 bg-st-focus-soft text-st-focus-ink",
     idle: "border-line bg-surface text-muted-foreground hover:bg-st-focus-soft/70",
-    dot: "bg-[#16A34A]",
+    dot: "bg-st-focus",
   },
   {
     id: "pause",
     label: "Pause",
     active: "border-st-pause/25 bg-st-pause-soft text-st-pause-ink",
     idle: "border-line bg-surface text-muted-foreground hover:bg-st-pause-soft/80",
-    dot: "bg-[#F59E0B]",
+    dot: "bg-st-pause",
   },
   {
     id: "fini",
     label: "Fini",
     active: "border-st-fini/25 bg-st-fini-soft text-st-fini-ink",
     idle: "border-line bg-surface text-muted-foreground hover:bg-st-fini-soft",
-    dot: "bg-[#6B7280]",
+    dot: "bg-st-fini",
   },
 ];
 

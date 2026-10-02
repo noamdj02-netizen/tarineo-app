@@ -2,55 +2,52 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { HardHat } from "lucide-react";
 import Image from "next/image";
-import { Reveal } from "@/components/motion/reveal";
-import { InView } from "@/components/site/in-view";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { SectionEnter } from "@/components/motion/reveal";
+import { LandingBezel } from "@/components/site/landing-bezel";
+import { Separator } from "@/components/ui/separator";
 import { FOUNDER } from "@/lib/site/tarineo";
 
-/** « Qui est derrière » : photo du fondateur (si présente dans /public) et son parcours. */
 export function LandingFounder() {
   const hasPhoto = existsSync(join(process.cwd(), "public", FOUNDER.photo));
 
   return (
-    <InView className="mx-auto max-w-[920px]">
-      <Reveal>
-        <Card className="grid gap-0 overflow-hidden rounded-[20px] border-[rgba(10,10,10,0.06)] bg-[#FFFFFF] py-0 shadow-[0_1px_1px_rgba(10,10,10,0.03),0_8px_24px_rgba(10,10,10,0.06)] sm:grid-cols-[260px_minmax(0,1fr)]">
-          <div className={`relative bg-muted sm:aspect-auto sm:min-h-[300px] ${hasPhoto ? "aspect-[4/3]" : "aspect-[16/7]"}`}>
+    <SectionEnter className="mx-auto max-w-[920px]">
+      <LandingBezel tone="demo" innerClassName="bg-[#FDFCFA]">
+        <div className="grid sm:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+          <div
+            className={`relative bg-[#E8E4DE] sm:min-h-[300px] ${hasPhoto ? "aspect-[4/3] sm:aspect-auto" : "aspect-[16/7] sm:aspect-auto"}`}
+          >
             {hasPhoto ? (
               <Image
                 src={FOUNDER.photo}
                 alt={`${FOUNDER.name}, ${FOUNDER.role.toLowerCase()}`}
                 fill
-                sizes="(min-width: 640px) 260px, 100vw"
+                sizes="(min-width: 640px) 240px, 100vw"
                 className="object-cover"
               />
             ) : (
-              <div className="absolute inset-0 grid place-items-center bg-[linear-gradient(160deg,#1a1410_0%,#0c0c0c_100%)]">
-                <span className="grid size-24 place-items-center rounded-full border border-brand-orange/40 bg-brand-orange/12">
-                  <HardHat className="size-10 text-brand-orange-light" aria-hidden />
-                </span>
+              <div className="absolute inset-0 grid place-items-center bg-[#141414]">
+                <HardHat className="size-10 text-[#FF6B1A]" strokeWidth={1.5} aria-hidden />
               </div>
             )}
           </div>
-          <div className="flex flex-col justify-center gap-4 px-5 py-6 sm:px-8 sm:py-8">
+          <div className="flex flex-col justify-center gap-5 px-6 py-8 sm:px-9 sm:py-10">
             <div>
-              <p className="font-display text-[22px] font-semibold sm:text-[26px]">{FOUNDER.name}</p>
-              <p className="text-[15px] text-muted-foreground sm:text-base">{FOUNDER.role}</p>
+              <p className="font-display text-[22px] font-semibold tracking-[-0.03em] sm:text-[26px]">
+                {FOUNDER.name}
+              </p>
+              <p className="mt-1 font-serif text-[16px] italic text-[#6E6E6E]">{FOUNDER.role}</p>
             </div>
-            <p className="text-[16px] leading-relaxed sm:text-[18px]">{FOUNDER.text}</p>
-            <ul className="flex flex-wrap gap-2">
+            <p className="text-[17px] leading-[1.58] text-[#3D3D3D]">{FOUNDER.text}</p>
+            <Separator className="bg-[rgba(10,10,10,0.08)]" />
+            <ul className="flex flex-wrap gap-x-5 gap-y-2 text-[14px] text-[#6E6E6E]">
               {FOUNDER.facts.map((f) => (
-                <li key={f}>
-                  <Badge variant="outline" className="h-7 rounded-md px-2.5 text-[13px] font-medium">
-                    {f}
-                  </Badge>
-                </li>
+                <li key={f}>{f}</li>
               ))}
             </ul>
           </div>
-        </Card>
-      </Reveal>
-    </InView>
+        </div>
+      </LandingBezel>
+    </SectionEnter>
   );
 }

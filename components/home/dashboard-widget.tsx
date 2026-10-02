@@ -1,6 +1,6 @@
 "use client";
 
-import { GripVertical } from "lucide-react";
+import { GripVertical, X } from "lucide-react";
 import type { WidgetKey } from "@/lib/home/dashboard-prefs";
 import { WIDGET_LABELS } from "@/lib/home/dashboard-prefs";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ export function DashboardWidget({
   onDragStart,
   onDragOver,
   onDrop,
+  onRemove,
 }: {
   id: WidgetKey;
   column: "left" | "right";
@@ -23,6 +24,7 @@ export function DashboardWidget({
   onDragStart: (key: WidgetKey, column: "left" | "right") => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (key: WidgetKey, column: "left" | "right") => void;
+  onRemove?: () => void;
 }) {
   return (
     <div
@@ -53,12 +55,25 @@ export function DashboardWidget({
       )}
     >
       {editMode ? (
-        <div
-          className="mb-1.5 flex cursor-grab items-center gap-1 px-1 text-[11px] text-muted-foreground active:cursor-grabbing"
-          aria-hidden
-        >
-          <GripVertical className="size-3.5" />
-          {WIDGET_LABELS[id]}
+        <div className="mb-1.5 flex items-center gap-1 px-1 text-[11px] text-muted-foreground">
+          <div className="flex min-w-0 flex-1 cursor-grab items-center gap-1 active:cursor-grabbing">
+            <GripVertical className="size-3.5 shrink-0" aria-hidden />
+            <span className="truncate">{WIDGET_LABELS[id]}</span>
+          </div>
+          {onRemove ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-ink transition-colors hover:bg-surface-2"
+              aria-label={`Retirer ${WIDGET_LABELS[id]}`}
+            >
+              <X className="size-3.5" aria-hidden />
+              Retirer
+            </button>
+          ) : null}
         </div>
       ) : null}
       {children}

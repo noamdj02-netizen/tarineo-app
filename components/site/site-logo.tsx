@@ -9,15 +9,17 @@ export function SiteLogo({
   imageClassName,
   showWordmark = true,
   priority = true,
+  /** Nav / fond clair → texte sombre ; nav sombre sur hero → texte clair. */
+  lightNav = false,
+  /** @deprecated Utiliser `lightNav` (inverse). */
   onDark = false,
 }: {
   href?: string;
   className?: string;
   imageClassName?: string;
   showWordmark?: boolean;
-  /** Précharger le logo (header) ; false dans le footer. */
   priority?: boolean;
-  /** Wordmark clair, pour les cartes noires. */
+  lightNav?: boolean;
   onDark?: boolean;
 }) {
   return (
@@ -31,7 +33,7 @@ export function SiteLogo({
         <span
           className={cn(
             "font-display text-[21px] leading-none font-semibold tracking-[-0.035em]",
-            onDark && "text-white",
+            lightNav && !onDark ? "text-ink" : "text-white",
           )}
           translate="no"
         >

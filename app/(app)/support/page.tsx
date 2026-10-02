@@ -7,7 +7,7 @@ export const metadata = { title: "Support" };
 const FAQ = [
   {
     q: "Comment importer un devis fournisseur ?",
-    a: "Ouvrez Documents distributeur, puis Importer un document. Reliez ensuite le PDF au chantier concerné.",
+    a: "Ouvrez Documents fournisseur ou Analyse IA, importez le PDF, puis reliez-le au chantier concerné.",
   },
   {
     q: "Comment créer un devis client ?",
@@ -56,7 +56,7 @@ export default function SupportPage() {
 
       <p className="text-[13px] text-muted-foreground">
         Aussi disponible depuis{" "}
-        <Link href="/compte" className="font-medium text-tarineo-orange hover:underline">
+        <Link href="/parametres/compte" className="font-medium text-tarineo-orange hover:underline">
           votre compte
         </Link>
         .

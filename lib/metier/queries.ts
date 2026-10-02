@@ -522,7 +522,10 @@ export async function recordPriceAlerts(doc: DocumentCard) {
   if (doc.direction !== "in") return;
   const others = (await listDocuments({ direction: "in" })).filter((d) => d.id !== doc.id);
   const db = await getRemote();
-  const ALERT_THRESHOLD = 3;
+  const { getNotificationPreferences } = await import("@/lib/settings/notification-store");
+  const prefs = await getNotificationPreferences();
+  const ALERT_THRESHOLD = prefs.supplierThresholdPct ?? 5;
+  const rises: { label: string; oldPrice: number; newPrice: number; pct: number }[] = [];
   for (const line of doc.lines) {
     const prev = others
       .flatMap((d) => d.lines.map((l) => ({ l, d })))
@@ -534,6 +537,7 @@ export async function recordPriceAlerts(doc: DocumentCard) {
     if (!oldP || !newP) continue;
     const pct = ((newP - oldP) / oldP) * 100;
     if (pct < ALERT_THRESHOLD) continue;
+    rises.push({ label: line.label, oldPrice: oldP, newPrice: newP, pct });
     const alert: PriceAlert = {
       id: `a-${Math.random().toString(36).slice(2, 8)}`,
       product_id: null,
@@ -557,6 +561,14 @@ export async function recordPriceAlerts(doc: DocumentCard) {
       label: line.label,
       old_price: oldP,
       new_price: newP,
+    });
+  }
+  if (rises.length) {
+    const { notifySupplierIncreases } = await import("@/lib/notifications/emitters");
+    await notifySupplierIncreases({
+      documentId: doc.id,
+      partyName: doc.party_name,
+      items: rises,
     });
   }
 }

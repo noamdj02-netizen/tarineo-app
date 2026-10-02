@@ -32,6 +32,8 @@ export type PiecePdfDonnees = {
   totalTva: number;
   totalTtc: number;
   numeroOrigine?: string | null;
+  /** Mention courte optionnelle (paramètres documents). */
+  mentionPiedPage?: string;
 };
 
 const TITRES: Record<PiecePdfKind, string> = {
@@ -76,6 +78,11 @@ function PieceDocument({ entreprise, piece }: { entreprise: EntrepriseInfoPdf; p
         <BlocTotaux entreprise={entreprise} totalHt={piece.totalHt} totalTva={piece.totalTva} totalTtc={piece.totalTtc} />
         <BlocAssurance entreprise={entreprise} />
         <BlocConditionsPaiement conditionsPaiement={piece.conditionsPaiement} />
+        {piece.mentionPiedPage ? (
+          <View style={stylesPdfCommun.sectionConditions}>
+            <Text>{piece.mentionPiedPage}</Text>
+          </View>
+        ) : null}
         {avecRetard ? (
           <View style={stylesPdfCommun.sectionConditions}>
             <Text style={{ fontFamily: "Helvetica-Bold" }}>Retard de paiement</Text>

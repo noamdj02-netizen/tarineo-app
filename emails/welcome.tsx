@@ -16,7 +16,7 @@ export function WelcomeEmail({ firstName, appUrl }: WelcomeEmailProps) {
         {
           title: "Renseignez l’entreprise",
           text: "SIRET et mentions légales : elles iront sur chaque PDF.",
-          href: `${base}/entreprise`,
+          href: `${base}/parametres/entreprise`,
           linkLabel: "Mon entreprise",
         },
         {

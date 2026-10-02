@@ -7,6 +7,7 @@
  */
 
 import { BRAND } from "@/lib/brand";
+import { supplierDomains } from "@/lib/metier/suppliers";
 
 /* ------------------------------------------------------------------ */
 /* Hero                                                                */
@@ -33,25 +34,42 @@ export const DEMO_MARK = "Exemple";
 export const DEMO_NOTE = "Données fictives.";
 
 export const HERO = {
-  badge: "TARINEO — LE COPILOTE DES ARTISANS",
+  badge: "Assistant marge · artisans BTP",
   title: "Votre marge,",
   titleTail: "enfin sous contrôle.",
   text: "Analysez vos devis, surveillez vos achats et pilotez vos chantiers depuis un seul endroit.",
   primary: { label: "Essayer TARINEO gratuitement", href: "/inscription" },
   secondary: { label: "Découvrir TARINEO", href: "/#devis-ia" },
   founderLine: "Créé par un ancien des Travaux Publics.",
-  /**
-   * Film chantier conservé pour d’autres usages — le hero Mosey-parallèle n’en dépend pas.
-   */
-  video: {
-    webm: "/landing/hero.webm",
-    mp4: "/landing/hero.mp4",
-    poster: "/landing/hero-poster.webp",
-    posterMobile: "/landing/hero-poster-mobile.webp",
-  } as HeroVideo | null,
+  /** Hero sans vidéo — fichiers conservés dans /public/landing pour d’autres surfaces. */
+  video: null as HeroVideo | null,
   image: "/landing/hero-chantier.webp" as string | null,
   imageAlt: "Chantier de construction",
 } as const;
+
+/** Bandeau sous le hero : 4 preuves, pas une grille de cartes. */
+export const HERO_BENEFITS = [
+  {
+    title: "Vos marges sous contrôle",
+    text: "Détection des hausses fournisseurs",
+    icon: "shield",
+  },
+  {
+    title: "Devis plus rapides",
+    text: "IA, voix ou manuel",
+    icon: "file",
+  },
+  {
+    title: "Chantiers centralisés",
+    text: "Tous vos documents au même endroit",
+    icon: "chart",
+  },
+  {
+    title: "Données sécurisées",
+    text: "Hébergement en France",
+    icon: "lock",
+  },
+] as const;
 
 /** Ligne d’exemple affichée sous le hero (démo). */
 export const HERO_SAMPLE = {
@@ -66,19 +84,10 @@ export const HERO_SAMPLE = {
 /* ------------------------------------------------------------------ */
 
 /**
- * Domaine de chaque enseigne citée, pour afficher son logo via logo.dev.
+ * Domaines logo.dev — dérivés du répertoire métier [`KNOWN_SUPPLIERS`](../metier/suppliers.ts).
  * Les logos restent la propriété de leurs titulaires ; aucun partenariat n'est affiché.
  */
-export const SUPPLIER_DOMAINS: Record<string, string> = {
-  Cedeo: "cedeo.fr",
-  "Point.P": "pointp.fr",
-  Rexel: "rexel.fr",
-  Brossette: "brossette.fr",
-  Richardson: "richardson.fr",
-  Aubade: "aubade.fr",
-  Zima: "zima.fr",
-  Marlin: "marlin.fr",
-};
+export const SUPPLIER_DOMAINS: Record<string, string> = supplierDomains();
 
 /** Seuil d'alerte de l'app : une hausse compte à partir de +3 % (voir CLAUDE.md de l'app). */
 export const ALERT_THRESHOLD = 3;

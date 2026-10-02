@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/follow-ups",
       "schedule": "15 7 * * *"
+    },
+    {
+      "path": "/api/cron/accounting-exports",
+      "schedule": "0 8 * * *"
     }
   ],
   "redirects": [

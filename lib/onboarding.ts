@@ -18,7 +18,7 @@ export async function getOnboarding(): Promise<OnboardingStep[]> {
 
   const checklist: OnboardingStep[] = [
     { label: "Créer votre compte", href: "/accueil", done: db !== null },
-    { label: "Renseigner l’entreprise", href: "/entreprise", done: Boolean(company?.raison_sociale && company.siret) },
+    { label: "Renseigner l’entreprise", href: "/parametres/entreprise", done: Boolean(company?.raison_sociale && company.siret) },
     { label: "Ouvrir un chantier", href: "/chantiers", done: chantiers.length > 0 },
     { label: "Importer un devis distributeur", href: "/distributeur/devis", done: docs.some((d) => d.direction === "in") },
     { label: "Envoyer une pièce client", href: "/client/devis", done: out.length > 0 },

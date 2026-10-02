@@ -14,6 +14,7 @@ export function TarineoMark({ className, priority = true }: { className?: string
       width={64}
       height={64}
       priority={priority}
+      unoptimized
       className={cn(
         "size-9 shrink-0 object-contain [filter:drop-shadow(0_0_0.6px_rgba(255,255,255,0.55))]",
         className,

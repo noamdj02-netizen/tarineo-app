@@ -2,7 +2,7 @@
 // - Fichiers de build (/_next/static), icônes, polices : cache d'abord (ils ne changent jamais d'URL).
 // - Pages : réseau d'abord, copie en cache pour les rouvrir hors ligne.
 // - Jamais de cache pour l'API, l'authentification, ni les requêtes vers d'autres domaines (Supabase, Claude).
-const VERSION = "navpit-v3";
+const VERSION = "tarineo-v4";
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 
@@ -56,7 +56,6 @@ self.addEventListener("fetch", (event) => {
         try {
           const res = await fetch(request);
           if (new URL(res.url).pathname === "/login") {
-            // déconnecté : on efface les pages gardées pour le hors-ligne
             await caches.delete(PAGES);
           } else if (res.ok && !res.redirected) {
             cache.put(request, res.clone());
@@ -71,4 +70,40 @@ self.addEventListener("fetch", (event) => {
       })(),
     );
   }
+});
+
+self.addEventListener("push", (event) => {
+  let data = { title: "TARINEO", body: "", url: "/notifications", tag: "tarineo" };
+  try {
+    if (event.data) data = { ...data, ...event.data.json() };
+  } catch {
+    /* ignore */
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || "TARINEO", {
+      body: data.body || "",
+      icon: "/brand/favicon/icon-192.png",
+      badge: "/brand/favicon/icon-192.png",
+      tag: data.tag || "tarineo",
+      data: { url: data.url || "/notifications" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || "/notifications";
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of all) {
+        if ("focus" in client) {
+          await client.focus();
+          if ("navigate" in client) await client.navigate(target);
+          return;
+        }
+      }
+      await self.clients.openWindow(target);
+    })(),
+  );
 });

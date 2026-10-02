@@ -6,8 +6,14 @@ import { getDb } from "@/lib/db";
 import { emptyCompany, siretValide, type CompanyProfile } from "@/lib/metier/company";
 import { saveCompanyProfile } from "@/lib/metier/queries";
 import type { RegimeTva } from "@/lib/metier/pdf/mentions";
+import { getEntrepriseConfig } from "@/lib/settings/entreprise-config";
+import { canEditSection } from "@/lib/settings/roles";
 
 export async function enregistrerEntreprise(form: FormData) {
+  const { role } = await getEntrepriseConfig();
+  if (!canEditSection(role, "entreprise")) {
+    return { ok: false as const, error: "Permission refusée." };
+  }
   const db = await getDb();
   const siret = String(form.get("siret") ?? "").replace(/\s/g, "");
   if (!siretValide(siret)) return { ok: false as const, error: "SIRET invalide (14 chiffres, clé de Luhn)." };
@@ -55,6 +61,8 @@ export async function enregistrerEntreprise(form: FormData) {
     return { ok: false as const, error: "Profil non enregistré." };
   }
   revalidatePath("/entreprise");
+  revalidatePath("/parametres");
+  revalidatePath("/parametres/entreprise");
   revalidatePath("/onboarding");
   return { ok: true as const };
 }

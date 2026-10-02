@@ -92,7 +92,7 @@ function ConfirmationCard({ action }: { action: CopilotAction }) {
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-        className="rounded-[12px] border border-[rgba(10,10,10,0.08)] bg-[#F7F7F5] px-3.5 py-3 dark:border-white/8 dark:bg-[#151515]"
+        className="rounded-[12px] border border-line bg-surface-2 px-3.5 py-3"
       >
         <ToolLine label={done.message} tone="success" />
         {done.href ? (
@@ -108,7 +108,7 @@ function ConfirmationCard({ action }: { action: CopilotAction }) {
   }
 
   return (
-    <div className="rounded-[12px] border border-[rgba(10,10,10,0.08)] bg-[#F7F7F5] px-3.5 py-3 dark:border-white/8 dark:bg-[#151515]">
+    <div className="rounded-[12px] border border-line bg-surface-2 px-3.5 py-3">
       <p className="font-mono text-[10px] tracking-[0.12em] text-[#6E6E6E] uppercase dark:text-[#A1A1A1]">
         Confirmation
       </p>

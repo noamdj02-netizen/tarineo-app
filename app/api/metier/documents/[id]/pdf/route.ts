@@ -1,5 +1,5 @@
 import { getDocument } from "@/lib/metier/queries";
-import { pdfFromDocument } from "@/lib/metier/pdf/from-document";
+import { pdfContentDisposition, pdfFromDocument } from "@/lib/metier/pdf/from-document";
 import { getViewer } from "@/lib/session";
 
 export const runtime = "nodejs";
@@ -19,7 +19,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${filename.replace(/"/g, "")}"`,
+        "Content-Disposition": pdfContentDisposition(filename, download),
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (err) {

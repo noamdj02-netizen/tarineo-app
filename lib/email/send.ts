@@ -127,6 +127,39 @@ export async function sendEmailWithPdf(input: {
   return { ok: true as const, skipped: false as const, id: data?.id ?? null };
 }
 
+export async function sendEmailWithAttachment(input: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+  replyTo?: string;
+  idempotencyKey?: string;
+}) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) {
+    if (process.env.NODE_ENV === "production") console.error("[email] RESEND_API_KEY manquant");
+    return { ok: false as const, skipped: true as const, error: "E-mail non configuré (RESEND_API_KEY)." };
+  }
+  client ??= new Resend(key);
+  const { data, error } = await client.emails.send(
+    {
+      from: fromAddress(),
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html: input.html ?? `<p style="font:15px/1.5 sans-serif;white-space:pre-wrap">${escapeHtml(input.text)}</p>`,
+      replyTo: input.replyTo,
+      attachments: [{ filename: input.filename, content: input.content }],
+    } as Parameters<Resend["emails"]["send"]>[0],
+    input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
+  );
+  if (error) return { ok: false as const, skipped: false as const, error: error.message };
+  return { ok: true as const, skipped: false as const, id: data?.id ?? null };
+}
+
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, "&amp;")

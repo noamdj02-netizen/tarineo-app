@@ -1,23 +1,27 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
+import { revalidatePath } from "next/cache";
 import { DEFAULT_MODEL, isModelId } from "@/lib/models";
 import { getDb } from "@/lib/db";
+import { DEVIS_BTP_JSON_SHAPE, DEVIS_BTP_SYSTEM } from "@/lib/metier/devis/btp-prompt";
+import { draftFromProposal, type DevisProposal, type DevisProposalLine } from "@/lib/metier/devis/from-proposal";
+import { matchChantiers, matchClients } from "@/lib/metier/devis/match";
+import { persistDevisDraft } from "@/lib/metier/devis/persist";
+import { calculateQuoteTotals, formatEuro } from "@/lib/metier/devis/totals";
+import { listChantiers, listParties } from "@/lib/metier/queries";
+import type { ChantierCard, Party } from "@/lib/metier/types";
 
-export type DevisProposalLine = {
-  label: string;
-  qty: number | null;
-  unit: string | null;
-  unitPrice: number | null;
-  note: string | null;
-  missing: string[];
-};
+export type { DevisProposal, DevisProposalLine };
 
-export type DevisProposal = {
-  summary: string;
-  lines: DevisProposalLine[];
-  questions: string[];
-  warnings: string[];
+export type DevisMatchResult = {
+  client: { exact: Party | null; candidates: { id: string; name: string; score: number }[]; ambiguous: boolean };
+  chantier: {
+    exact: ChantierCard | null;
+    candidates: { id: string; name: string; label: string; score: number }[];
+    ambiguous: boolean;
+  };
 };
 
 function model() {
@@ -25,15 +29,21 @@ function model() {
   return isModelId(env) ? env : DEFAULT_MODEL;
 }
 
+function refresh() {
+  revalidatePath("/accueil");
+  revalidatePath("/client/devis");
+  revalidatePath("/devis/analyser");
+}
+
 /**
- * Structure une description de chantier en proposition de devis.
+ * Structure une description orale / écrite en proposition de devis.
  * N’invente jamais de prix : unitPrice reste null si non dit explicitement.
  */
 export async function structureDevisFromSpeech(input: {
   transcript: string;
   chantierName?: string | null;
   chantierAddress?: string | null;
-}): Promise<{ ok: true; proposal: DevisProposal } | { ok: false; error: string }> {
+}): Promise<{ ok: true; proposal: DevisProposal; match: DevisMatchResult } | { ok: false; error: string }> {
   const db = await getDb();
   if (!db) return { ok: false, error: "Connexion requise." };
 
@@ -55,13 +65,12 @@ export async function structureDevisFromSpeech(input: {
   try {
     const res = await new Anthropic().messages.create({
       model: model(),
-      max_tokens: 1200,
+      max_tokens: 2500,
+      system: DEVIS_BTP_SYSTEM,
       messages: [
         {
           role: "user",
-          content: `Tu es l’Assistant BTP TARINEO. Transforme la description orale d’un artisan en proposition de devis STRUCTURÉE.
-
-Contexte chantier (déjà connu, ne pas redemander) :
+          content: `Contexte chantier (déjà connu, ne pas redemander) :
 ${context || "(aucun chantier sélectionné)"}
 
 Description :
@@ -70,28 +79,7 @@ ${text}
 """
 
 Réponds UNIQUEMENT en JSON :
-{
-  "summary": "une phrase",
-  "lines": [
-    {
-      "label": "intitulé prestation",
-      "qty": number|null,
-      "unit": "m²"|"ml"|"u"|"h"|null,
-      "unitPrice": null,
-      "note": null,
-      "missing": ["prix"|"quantité"|"unité"|"matériau"|"main-d'œuvre"]
-    }
-  ],
-  "questions": ["questions précises à confirmer"],
-  "warnings": ["avertissements courts"]
-}
-
-Règles STRICTES :
-- Vocabulaire bâtiment (plomberie, électricité, carrelage, peinture, maçonnerie, etc.).
-- N’invente AUCUN prix : unitPrice doit toujours être null sauf si un prix est EXPLICITEMENT dit dans la description.
-- Si quantité / unité / matériau manquent → mets-les dans missing et questions.
-- Ne crée pas de lignes qui ne sont pas dans la description.
-- Maximum 12 lignes.`,
+${DEVIS_BTP_JSON_SHAPE}`,
         },
       ],
     });
@@ -99,29 +87,158 @@ Règles STRICTES :
     const raw = res.content.find((b) => b.type === "text")?.text ?? "";
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return { ok: false, error: "Réponse IA illisible. Réessayez." };
-    const parsed = JSON.parse(jsonMatch[0]) as DevisProposal;
+    const parsed = JSON.parse(jsonMatch[0]) as Partial<DevisProposal> & {
+      clientQuery?: string | null;
+      chantierQuery?: string | null;
+      defaultVatRate?: number;
+      lines?: Array<Partial<DevisProposalLine> & { vatRate?: number | null }>;
+    };
     if (!Array.isArray(parsed.lines) || parsed.lines.length === 0) {
       return { ok: false, error: "Aucune prestation identifiée. Reformulez la description." };
     }
 
+    const defaultVatRate =
+      typeof parsed.defaultVatRate === "number" && Number.isFinite(parsed.defaultVatRate)
+        ? parsed.defaultVatRate
+        : 20;
+
     const proposal: DevisProposal = {
       summary: String(parsed.summary ?? "").trim() || "Proposition de devis",
-      lines: parsed.lines.slice(0, 12).map((l) => ({
-        label: String(l.label ?? "").trim() || "Prestation",
-        qty: typeof l.qty === "number" && Number.isFinite(l.qty) ? l.qty : null,
-        unit: l.unit ? String(l.unit) : null,
-        // Force null prices unless explicitly numeric AND we trust them — still null by policy unless said
-        unitPrice: null,
-        note: l.note ? String(l.note) : null,
-        missing: Array.isArray(l.missing) ? l.missing.map(String) : ["prix"],
-      })),
+      clientQuery: parsed.clientQuery ? String(parsed.clientQuery).trim() : null,
+      lines: parsed.lines.slice(0, 12).map((l) => {
+        const saidPrice =
+          typeof l.unitPrice === "number" && Number.isFinite(l.unitPrice) && l.unitPrice > 0
+            ? l.unitPrice
+            : null;
+        const missing = Array.isArray(l.missing) ? l.missing.map(String) : [];
+        if (!saidPrice && !missing.includes("prix")) missing.push("prix");
+        const vatRate =
+          typeof l.vatRate === "number" && Number.isFinite(l.vatRate) ? l.vatRate : null;
+        return {
+          label: String(l.label ?? "").trim() || "Prestation",
+          qty: typeof l.qty === "number" && Number.isFinite(l.qty) ? l.qty : null,
+          unit: l.unit ? String(l.unit) : null,
+          unitPrice: saidPrice,
+          vatRate,
+          note: l.note ? String(l.note) : null,
+          missing,
+        };
+      }),
       questions: Array.isArray(parsed.questions) ? parsed.questions.map(String).slice(0, 6) : [],
       warnings: Array.isArray(parsed.warnings) ? parsed.warnings.map(String).slice(0, 6) : [],
+      defaultVatRate,
     };
 
-    return { ok: true, proposal };
+    const [clients, chantiers] = await Promise.all([listParties("client"), listChantiers()]);
+    const clientMatch = matchClients(proposal.clientQuery, clients);
+    const chantierQuery =
+      typeof parsed.chantierQuery === "string" ? parsed.chantierQuery.trim() : input.chantierName ?? null;
+    const chantierMatch = matchChantiers(chantierQuery, chantiers, clientMatch.exact?.id ?? null);
+
+    if (clientMatch.ambiguous) {
+      proposal.questions = [
+        `Plusieurs clients correspondent à « ${proposal.clientQuery} ».`,
+        ...proposal.questions,
+      ].slice(0, 6);
+    }
+    if (chantierMatch.ambiguous) {
+      proposal.questions = [
+        `Plusieurs chantiers correspondent à « ${chantierQuery} ».`,
+        ...proposal.questions,
+      ].slice(0, 6);
+    }
+
+    return {
+      ok: true,
+      proposal,
+      match: {
+        client: {
+          exact: clientMatch.exact,
+          candidates: clientMatch.candidates.map((c) => ({
+            id: c.item.id,
+            name: c.item.name,
+            score: c.score,
+          })),
+          ambiguous: clientMatch.ambiguous,
+        },
+        chantier: {
+          exact: chantierMatch.exact,
+          candidates: chantierMatch.candidates.map((c) => ({
+            id: c.item.id,
+            name: c.item.name,
+            label: c.label,
+            score: c.score,
+          })),
+          ambiguous: chantierMatch.ambiguous,
+        },
+      },
+    };
   } catch (err) {
     console.error("[structureDevisFromSpeech]", err);
     return { ok: false, error: "Structuration impossible. Réessayez dans un moment." };
   }
+}
+
+/** Aperçu des totaux (serveur) sans persistence. */
+export async function previewDevisProposalAction(input: {
+  proposal: DevisProposal;
+}): Promise<
+  | { ok: true; totals: ReturnType<typeof calculateQuoteTotals>; formatted: { ht: string; tva: string; ttc: string } }
+  | { ok: false; error: string }
+> {
+  const db = await getDb();
+  if (!db) return { ok: false, error: "Connexion requise." };
+  if (!input.proposal?.lines?.length) return { ok: false, error: "Aucune ligne." };
+
+  const draft = draftFromProposal(input.proposal, { source: "voice" });
+  const totals = calculateQuoteTotals(draft.lines);
+  return {
+    ok: true,
+    totals,
+    formatted: {
+      ht: formatEuro(totals.totalHT),
+      tva: formatEuro(totals.totalTVA),
+      ttc: formatEuro(totals.totalTTC),
+    },
+  };
+}
+
+/** Enregistre un devis après confirmation utilisateur — via moteur unique. */
+export async function createDevisFromProposalAction(input: {
+  proposal: DevisProposal;
+  chantierId?: string | null;
+  clientId?: string | null;
+  clientName?: string | null;
+  idempotencyKey?: string | null;
+}): Promise<{ ok: true; id: string; reused: boolean } | { ok: false; error: string }> {
+  const db = await getDb();
+  if (!db) return { ok: false, error: "Connexion requise." };
+  if (!input.proposal?.lines?.length) return { ok: false, error: "Aucune ligne à enregistrer." };
+
+  const clients = await listParties("client");
+  const client =
+    (input.clientId ? clients.find((c) => c.id === input.clientId) : null) ??
+    (input.clientName ? clients.find((c) => c.name === input.clientName) : null);
+
+  const key =
+    input.idempotencyKey?.trim() ||
+    createHash("sha256")
+      .update(JSON.stringify({ proposal: input.proposal, chantierId: input.chantierId, clientId: input.clientId }))
+      .digest("hex")
+      .slice(0, 32);
+
+  const draft = draftFromProposal(input.proposal, {
+    source: "voice",
+    clientId: client?.id ?? input.clientId ?? null,
+    clientName: client?.name ?? input.clientName ?? input.proposal.clientQuery,
+    chantierId: input.chantierId ?? null,
+    idempotencyKey: key,
+  });
+
+  const result = await persistDevisDraft(draft);
+  if (!result.ok) return result;
+
+  refresh();
+  revalidatePath(`/pieces/${result.id}`);
+  return { ok: true, id: result.id, reused: result.reused };
 }

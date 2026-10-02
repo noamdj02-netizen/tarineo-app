@@ -73,6 +73,8 @@ export function Reveal(props: HTMLMotionProps<"div">) {
   return <motion.div variants={reduce ? itemReduced : item} {...props} />;
 }
 
+const LANDING_EASE = [0.32, 0.72, 0, 1] as const;
+
 export function SectionEnter({
   delay = 0,
   ...props
@@ -80,13 +82,21 @@ export function SectionEnter({
   const reduce = useReducedMotion();
   return (
     <motion.div
-      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 18, scale: 0.985 }}
-      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      initial={
+        reduce
+          ? { opacity: 0 }
+          : { opacity: 0, y: 28, scale: 0.98, filter: "blur(6px)" }
+      }
+      whileInView={
+        reduce
+          ? { opacity: 1 }
+          : { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }
+      }
       viewport={SECTION_VIEW}
       transition={
         reduce
           ? { duration: 0.2 }
-          : { ...APPLE_SPRING, delay }
+          : { duration: 0.85, ease: LANDING_EASE, delay }
       }
       {...props}
     />

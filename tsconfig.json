@@ -40,6 +40,7 @@
     "supabase/functions",
     "navpit",
     "promo",
+    "my-video",
     "remotion",
     "remotion.config.ts",
     "components/motion/TarineoMotion.tsx",

@@ -3,11 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowUpRight,
-  Building2,
   ChevronRight,
-  CreditCard,
   LifeBuoy,
   LogIn,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -73,18 +72,16 @@ export function Sidebar({
 
         <div className="flex flex-col gap-1 px-1">
           <SideFooterButton
-            href="/entreprise"
-            icon={Building2}
-            label="Mon entreprise"
-            hint="SIRET, TVA, logo, PDF"
-            active={isActive(pathname, "/entreprise")}
-          />
-          <SideFooterButton
-            href="/abonnement"
-            icon={CreditCard}
-            label="Tarifs"
-            hint="Formule et essai"
-            active={isActive(pathname, "/abonnement")}
+            href="/parametres"
+            icon={Settings}
+            label="Paramètres"
+            hint="Entreprise, tarifs, compte"
+            active={
+              isActive(pathname, "/parametres") ||
+              isActive(pathname, "/entreprise") ||
+              isActive(pathname, "/compte") ||
+              isActive(pathname, "/abonnement")
+            }
           />
           <SideFooterButton
             href={`mailto:${SUPPORT_MAIL}?subject=Support%20Tarin%C3%A9o`}

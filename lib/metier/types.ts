@@ -96,6 +96,10 @@ export type PriceAlert = {
 export type ExtractTotals = {
   /** Total hors taxe du document. */
   ht: number | null;
+  /** Total TVA (si calculé / lu). */
+  tva?: number | null;
+  /** Total TTC (si calculé / lu). */
+  ttc?: number | null;
   /** Éco-contribution (REP, etc.). */
   eco_contribution: number | null;
   /** Éco-contribution filière PMCB (produits et matériaux de construction). */
@@ -109,9 +113,18 @@ export type ExtractLine = {
   qty: number;
   unit: string;
   buy_price: number;
+  sell_price?: number;
   eco_contribution?: number | null;
   pmcb?: number | null;
   weight_kg?: number | null;
+};
+
+export type ReadQuality = "fiable" | "partiel" | "incertain";
+
+export type ExtractReadAssessment = {
+  summary: string;
+  quality: ReadQuality;
+  caveats: string[];
 };
 
 export type ExtractResult = {
@@ -123,10 +136,17 @@ export type ExtractResult = {
   chantier_hint: string;
   totals: ExtractTotals;
   lines: ExtractLine[];
+  /** N° document lu sur le fichier, si présent. */
+  document_number?: string;
+  /** Date d’émission AAAA-MM-JJ si lue. */
+  issue_date?: string;
+  party_address?: string;
+  /** Récap et auto-évaluation de lisibilité (modèle). */
+  read_assessment?: ExtractReadAssessment;
 };
 
 export function emptyTotals(): ExtractTotals {
-  return { ht: null, eco_contribution: null, pmcb: null, weight_kg: null };
+  return { ht: null, tva: null, ttc: null, eco_contribution: null, pmcb: null, weight_kg: null };
 }
 
 export function totalsFromExtract(extract: Record<string, unknown> | null | undefined): ExtractTotals {
@@ -139,6 +159,8 @@ export function totalsFromExtract(extract: Record<string, unknown> | null | unde
   };
   return {
     ht: num(raw.ht ?? raw.total_ht),
+    tva: num(raw.tva ?? raw.total_tva),
+    ttc: num(raw.ttc ?? raw.total_ttc),
     eco_contribution: num(raw.eco_contribution ?? raw.eco),
     pmcb: num(raw.pmcb),
     weight_kg: num(raw.weight_kg ?? raw.poids),

@@ -125,13 +125,20 @@ export function DocumentEdit({
                 </td>
                 {out ? (
                   <td className="py-2">
-                    <input
-                      name="lineSell"
-                      type="number"
-                      step="0.01"
-                      defaultValue={l.sell_price}
-                      className="h-10 w-28 rounded-lg border border-line px-2 tabular-nums"
-                    />
+                    <div className="flex flex-col gap-1">
+                      <input
+                        name="lineSell"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        defaultValue={l.sell_price > 0 ? l.sell_price : ""}
+                        placeholder="À renseigner"
+                        className="h-10 w-28 rounded-lg border border-line px-2 tabular-nums"
+                      />
+                      {!(l.sell_price > 0) ? (
+                        <span className="text-[11px] text-[#FF6B1A]">Prix à renseigner</span>
+                      ) : null}
+                    </div>
                   </td>
                 ) : (
                   <input type="hidden" name="lineSell" value={l.sell_price} />

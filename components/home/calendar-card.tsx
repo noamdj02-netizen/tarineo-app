@@ -220,7 +220,7 @@ export function CalendarCard({
                       isToday
                         ? "bg-brand-orange font-semibold text-white"
                         : isSel
-                          ? "bg-[#fff0e9] font-semibold ring-1 ring-brand-orange/30"
+                          ? "bg-wash-orange font-semibold ring-1 ring-brand-orange/30"
                           : inMonth
                             ? "group-hover:bg-accent-soft"
                             : "text-muted-foreground/60 group-hover:bg-accent-soft",

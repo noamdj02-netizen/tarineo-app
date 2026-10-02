@@ -17,6 +17,22 @@ export type WeekStats = {
   tasks: { done: number; total: number };
 };
 
+/** Stats vides pour l’accueil quand la base n’est pas disponible. */
+export function emptyWeekStats(): WeekStats {
+  const now = new Date();
+  const days: WeekDay[] = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getTime() - (6 - i) * 864e5);
+    return {
+      key: dayKey(d),
+      label: new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, weekday: "narrow" }).format(d),
+      ai: 0,
+      schemas: 0,
+      notes: 0,
+    };
+  });
+  return { days, totals: { ai: 0, schemas: 0, notes: 0 }, tasks: { done: 0, total: 0 } };
+}
+
 /** Activité des 7 derniers jours (aujourd'hui compris), au fuseau de Paris. */
 export async function getWeekStats(db: Db): Promise<WeekStats> {
   const now = new Date();

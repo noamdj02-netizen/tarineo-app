@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
+import { APPLE_SPRING } from "@/components/motion/reveal";
 
 export function PageEnter({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -10,9 +11,9 @@ export function PageEnter({ children }: { children: React.ReactNode }) {
     <motion.div
       key={pathname}
       className="w-full"
-      initial={reduce ? false : { opacity: 0, y: 4 }}
+      initial={reduce ? false : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+      transition={reduce ? { duration: 0.2 } : APPLE_SPRING}
     >
       {children}
     </motion.div>

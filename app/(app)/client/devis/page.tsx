@@ -16,9 +16,9 @@ export default async function Page({
       base={R.clientDevis}
       label="Entreprise"
       title="Devis clients"
-      text="Créez, suivez et transformez vos devis clients."
-      empty="Pas encore de devis client. Partez d’un modèle ou importez un PDF."
-      dropHint="PDF devis déjà prêt, ou partez d’un modèle."
+      text="Créez, envoyez et suivez vos devis."
+      empty="Pas encore de devis. Créez-en un ou importez un document."
+      dropHint="Importez un PDF ou une photo de devis existant."
       ornament="mark"
       showTemplates
       chantierSlug={q.chantier}
