@@ -6,6 +6,7 @@ import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { HeroBackdrop } from "@/components/site/hero/hero-backdrop";
 import { HeroBenefits } from "@/components/site/hero/hero-benefits";
 import { HeroDocumentFlow } from "@/components/site/hero/hero-document-flow";
+import { HeroHeadline } from "@/components/site/hero/hero-headline";
 import { LandingButton } from "@/components/site/landing-button";
 import { HERO, OFFER } from "@/lib/site/tarineo";
 
@@ -34,10 +35,7 @@ export function LandingHero() {
           </Reveal>
 
           <Reveal>
-            <h1 className="mt-5 max-w-[20ch] font-display text-[clamp(36px,5.2vw,68px)] leading-[1.02] font-semibold tracking-[-0.038em] text-ink text-balance">
-              {HERO.title}{" "}
-              <span className="italic tracking-[-0.02em] text-tarineo-orange">{HERO.titleTail}</span>
-            </h1>
+            <HeroHeadline lead={HERO.title} highlight={HERO.titleTail} />
           </Reveal>
 
           <Reveal>

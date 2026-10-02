@@ -13,9 +13,7 @@ import { NAV_LINKS } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
 /**
- * Nav site public — matériau translucide Apple.
- * Home : verre noir chaud sur le hero ivoire ; clair une fois le hero dépassé.
- * Pages avis / prix : verre sombre tant que le hero foncé affleure.
+ * Nav site public — verre clair sur la landing ; sombre sur les heroes foncés (avis / prix).
  */
 export function SiteNav() {
   const pathname = usePathname();
@@ -23,12 +21,12 @@ export function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
   const isHome = pathname === "/";
   const [overHero, setOverHero] = useState(
-    isHome || pathname === "/avis" || pathname === "/prix",
+    pathname === "/avis" || pathname === "/prix",
   );
   const [open, setOpen] = useState(false);
-  const light = isHome
-    ? !overHero && !open
-    : (pathname === "/avis" || pathname === "/prix") && !(overHero && !open);
+  const light =
+    isHome ||
+    ((pathname === "/avis" || pathname === "/prix") && !(overHero && !open));
 
   /**
    * La nav reste en verre sombre tant que le hero foncé affleure sous elle (avis / prix).
@@ -41,7 +39,7 @@ export function SiteNav() {
     let frame = 0;
     const update = () => {
       setScrolled(window.scrollY > 8);
-      if (!isHome) {
+      if (pathname !== "/avis" && pathname !== "/prix") {
         setOverHero(false);
         return;
       }
@@ -57,7 +55,7 @@ export function SiteNav() {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [isHome]);
+  }, [pathname]);
 
   useEffect(() => setOpen(false), [pathname]);
 
@@ -73,14 +71,10 @@ export function SiteNav() {
       <nav
         aria-label="Site"
         className={cn(
-          "mx-auto flex max-w-[1120px] items-center justify-between gap-3 rounded-pill border px-2.5 py-2 pl-4 transition-[background-color,border-color,box-shadow] duration-300 ease-out sm:gap-4 sm:px-3 sm:pl-5",
+          "site-nav-bar mx-auto flex max-w-[1120px] items-center justify-between gap-3 rounded-pill border px-2.5 py-2 pl-4 transition-[background-color,border-color,box-shadow] duration-300 ease-out sm:gap-4 sm:px-3 sm:pl-5",
           light
-            ? scrolled || open
-              ? "border-[rgba(10,10,10,0.08)] bg-[rgba(245,245,243,0.72)] shadow-[0_1px_2px_rgba(10,10,10,0.04)] backdrop-blur-xl backdrop-saturate-150"
-              : "border-[rgba(10,10,10,0.06)] bg-[rgba(245,245,243,0.55)] backdrop-blur-xl backdrop-saturate-150"
-            : scrolled || open
-              ? "border-[rgba(255,255,255,0.07)] bg-[rgba(18,16,15,0.88)] shadow-[0_1px_2px_rgba(0,0,0,0.2)] backdrop-blur-xl"
-              : "border-[rgba(255,255,255,0.06)] bg-[rgba(20,18,16,0.74)] backdrop-blur-xl backdrop-saturate-150",
+            ? cn("site-nav-bar--light", (scrolled || open) && "site-nav-bar--light-scrolled")
+            : cn("site-nav-bar--dark", (scrolled || open) && "site-nav-bar--dark-scrolled"),
         )}
       >
         <SiteLogo
@@ -99,7 +93,7 @@ export function SiteNav() {
                   buttonVariants({ variant: "ghost", size: "sm" }),
                   "rounded-pill px-3.5",
                   light
-                    ? "text-[#0A0A0A]/80 hover:bg-[#0A0A0A]/[0.05] hover:text-[#0A0A0A]"
+                    ? "text-ink/80 hover:bg-ink/5 hover:text-ink"
                     : "text-white/90 hover:bg-white/10 hover:text-white",
                 )}
               >
@@ -116,7 +110,7 @@ export function SiteNav() {
             className={cn(
               "hidden lg:inline-flex",
               light
-                ? "text-[#0A0A0A]/75 hover:bg-[#0A0A0A]/[0.05] hover:text-[#0A0A0A]"
+                ? "text-ink/75 hover:bg-ink/5 hover:text-ink"
                 : "text-white/90 hover:bg-white/10 hover:text-white",
             )}
           >
@@ -141,7 +135,7 @@ export function SiteNav() {
             aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
             className={cn(
               "rounded-pill md:hidden",
-              light ? "text-[#0A0A0A] hover:bg-[#0A0A0A]/[0.06]" : "text-white hover:bg-white/10",
+              light ? "text-ink hover:bg-ink/6" : "text-white hover:bg-white/10",
             )}
           >
             {open ? <X aria-hidden /> : <Menu aria-hidden />}
@@ -160,7 +154,7 @@ export function SiteNav() {
             className={cn(
               "mx-auto mt-2 max-w-[1120px] rounded-[22px] border p-2 shadow-[0_8px_30px_rgba(10,10,10,0.08)] backdrop-blur-xl md:hidden",
               light
-                ? "border-[rgba(10,10,10,0.08)] bg-[rgba(255,255,255,0.92)]"
+                ? "site-nav-drawer--light"
                 : "border-line bg-[#0c0c0c]/95",
             )}
           >
@@ -173,9 +167,7 @@ export function SiteNav() {
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "lg" }),
                   "h-12 w-full justify-start rounded-[14px] px-4 text-[15px]",
-                  light
-                    ? "text-[#0A0A0A] hover:bg-[#0A0A0A]/[0.04]"
-                    : "text-white/85 hover:bg-white/8",
+                  light ? "text-ink hover:bg-ink/4" : "text-white/85 hover:bg-white/8",
                 )}
               >
                 {l.label}
@@ -184,7 +176,7 @@ export function SiteNav() {
             <div
               className={cn(
                 "mt-2 flex flex-col gap-2 border-t px-2 pt-3 pb-1",
-                light ? "border-[rgba(10,10,10,0.08)]" : "border-line",
+                light ? "border-line/80" : "border-line",
               )}
             >
               <LandingButton href="/inscription" variant="orange" icon={<ArrowUpRight aria-hidden />} fullWidth>

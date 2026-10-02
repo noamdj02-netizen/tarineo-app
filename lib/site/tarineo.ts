@@ -36,6 +36,7 @@ export const DEMO_NOTE = "Données fictives.";
 export const HERO = {
   badge: "Alertes prix · artisans BTP",
   title: "Vos fournisseurs augmentent leurs prix.",
+  /** Ligne 2 du H1 — surlignée au marqueur dans `HeroHeadline`. */
   titleTail: "Vous le voyez ?",
   text:
     "TARINEO lit vos factures et vous alerte dès qu’une référence augmente, avant que ça mange la marge de vos chantiers.",
