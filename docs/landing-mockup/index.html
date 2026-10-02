@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TARINEO — maquette landing v2</title>
+<style>
+:root{--canvas:#f7f5f0;--hero:#faf8f4;--ink:#0a0a0a;--muted:#5a5a5a;--line:rgba(10,10,10,.08);--surface:#fff;--orange:#ff6b1a;--orange-wash:#fff1e8;--orange-ink:#c94f12;--gain:#16a34a;--alert:#1a100c;
+--r-card:20px;--r-pill:999px;--s:8px;--ease:cubic-bezier(.2,.8,.2,1);--font:"Inter Tight",system-ui,sans-serif;--mono:ui-monospace,Menlo,monospace}
+*{box-sizing:border-box;margin:0}body{font-family:var(--font);background:var(--canvas);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+.w{max-width:1200px;margin:auto;padding:0 20px}section{padding:72px 0}
+.eyebrow{font:600 11px var(--font);letter-spacing:.18em;text-transform:uppercase;color:var(--orange)}
+.eyebrow span{color:var(--muted)}
+h1{font-size:clamp(2.1rem,7vw,4.25rem);line-height:1.02;letter-spacing:-.035em;margin:16px 0}
+h2{font-size:clamp(1.7rem,4.5vw,2.75rem);line-height:1.08;letter-spacing:-.03em;max-width:18ch}
+.mark{background:linear-gradient(transparent 58%,rgba(255,107,26,.35) 58%);padding:0 .1em}
+p.lead{font-size:18px;color:var(--muted);max-width:52ch;margin-top:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 28px;border-radius:var(--r-pill);background:var(--orange);color:#fff;font-weight:600;text-decoration:none;box-shadow:0 10px 28px -16px var(--orange);transition:transform .2s var(--ease)}
+.btn:hover{transform:translateY(-2px)}.btn.ghost{background:none;color:var(--ink);box-shadow:none;border:1px solid var(--line)}
+nav{position:sticky;top:0;z-index:9;background:rgba(247,245,240,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+nav .w{display:flex;justify-content:space-between;align-items:center;height:64px}nav b{font-size:20px;letter-spacing:-.03em}nav .btn{min-height:40px;padding:0 18px;font-size:14px}
+.hero{background:var(--hero);padding-top:48px}.hero .w{display:grid;gap:40px}
+.cta{display:flex;flex-direction:column;gap:12px;margin-top:28px}.small{font-size:14px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;box-shadow:0 20px 40px -30px rgba(0,0,0,.25)}
+.alert{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);font-size:15px}
+.alert:last-child{border:0}.up{font:600 13px var(--mono);color:var(--orange-ink);background:var(--orange-wash);padding:4px 10px;border-radius:var(--r-pill)}
+.tag{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.proof{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:28px 0;border-top:1px solid var(--line);margin-top:40px}.proof b{display:block;font-size:15px}.proof span{font-size:13px;color:var(--muted)}
+.three{display:grid;gap:16px;margin-top:36px}.num{font:600 12px var(--mono);color:var(--orange)}
+.dark{background:var(--alert);color:#f4f1ea}.dark .lead{color:#b9b2a8}.dark .card{background:#241812;border-color:rgba(255,255,255,.08);color:#f4f1ea}
+.feat{display:grid;gap:16px;margin-top:36px}.feat .card h3{margin:8px 0 6px;font-size:20px;letter-spacing:-.02em}.feat p{color:var(--muted);font-size:15px}
+.steps{display:grid;gap:16px;margin-top:36px}
+.plans{display:grid;gap:16px;margin-top:36px}.plan.f{border:2px solid var(--orange)}.price{font-size:44px;font-weight:600;letter-spacing:-.04em}.price small{font-size:15px;color:var(--muted);font-weight:400}
+.plan ul{list-style:none;padding:0;margin:16px 0 20px;display:grid;gap:8px;font-size:15px}.plan li:before{content:"✓ ";color:var(--gain);font-weight:700}
+.badge{font:600 11px var(--font);background:var(--orange);color:#fff;padding:4px 10px;border-radius:var(--r-pill)}
+details{border-bottom:1px solid var(--line);padding:18px 0}summary{font-weight:600;cursor:pointer;min-height:24px}details p{color:var(--muted);margin-top:8px}
+.closer{background:var(--ink);color:#fff;text-align:center}.closer h2{margin:auto;max-width:14ch}
+footer{padding:32px 0;font-size:13px;color:var(--muted)}
+.rv{opacity:0;transform:translateY(16px);transition:.6s var(--ease)}.rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
+@media(min-width:900px){section{padding:112px 0}.hero .w{grid-template-columns:.42fr .58fr;align-items:center;gap:64px}.cta{flex-direction:row;align-items:center}
+.proof{grid-template-columns:repeat(4,1fr)}.three,.feat,.steps,.plans{grid-template-columns:repeat(3,1fr)}.feat{grid-template-columns:repeat(2,1fr)}}
+</style></head><body>
+<nav><div class="w"><b>tarinéo<span style="color:var(--orange)">.</span></b><a class="btn" href="#">Commencer</a></div></nav>
+
+<header class="hero"><div class="w">
+ <div>
+  <p class="eyebrow">Alertes prix <span>· artisans BTP</span></p>
+  <h1>Vos fournisseurs augmentent leurs prix. <span class="mark">Vous le voyez ?</span></h1>
+  <p class="lead">TARINEO lit vos factures et vous alerte dès qu’une référence augmente, avant que ça mange la marge de vos chantiers.</p>
+  <div class="cta"><a class="btn" href="#">Essayer TARINEO gratuitement →</a><span class="small">1er mois offert, sans carte bancaire.</span></div>
+  <p class="small" style="margin-top:12px">Créé par un ancien des Travaux Publics.</p>
+ </div>
+ <div class="card" aria-label="Exemple d’alertes (données fictives)">
+  <p class="tag">Exemple · données fictives</p>
+  <div class="alert"><div><b>Tube PER 16×20</b><br><span class="small">Point.P · 12,40 € → 14,20 €</span></div><span class="up">+14,5 %</span></div>
+  <div class="alert"><div><b>Câble R2V 3G2,5</b><br><span class="small">Rexel · 1,12 € → 1,21 €</span></div><span class="up">+8,0 %</span></div>
+  <div class="alert"><div><b>Raccord laiton 20</b><br><span class="small">Cedeo · 3,10 € → 3,25 €</span></div><span class="up">+4,8 %</span></div>
+ </div>
+ <div class="proof" style="grid-column:1/-1">
+  <div><b>Hausses visibles</b><span>Alerte dès +3 %</span></div><div><b>Devis plus rapides</b><span>IA, voix ou manuel</span></div>
+  <div><b>Chantiers centralisés</b><span>Tous vos documents</span></div><div><b>Données sécurisées</b><span>Hébergement en France</span></div>
+ </div>
+</div></header>
+
+<section class="dark"><div class="w rv">
+ <p class="eyebrow">Le problème</p><h2>Quelques centimes par ligne. Des milliers d’euros par an.</h2>
+ <div class="three">
+  <div class="card"><span class="num">01</span><h3>Des documents partout</h3><p class="small">PDF, mails, papier au fond du camion.</p></div>
+  <div class="card"><span class="num">02</span><h3>Des prix qui bougent</h3><p class="small">Invisible sur une seule facture.</p></div>
+  <div class="card"><span class="num">03</span><h3>Une marge qui fond</h3><p class="small">Sur une année de chantiers, ça pèse.</p></div>
+ </div></div></section>
+
+<section><div class="w rv"><p class="eyebrow">Comment ça marche</p><h2>Déposez. TARINEO compare.</h2>
+ <div class="steps">
+  <div class="card"><span class="num">1 · IMPORTER</span><h3>PDF ou photo</h3><p class="small">Glissez le fichier ou photographiez-le sur le chantier.</p></div>
+  <div class="card"><span class="num">2 · ANALYSER</span><h3>Lignes extraites</h3><p class="small">Références, quantités, prix unitaires.</p></div>
+  <div class="card"><span class="num">3 · COMPARER</span><h3>Alerte hausse</h3><p class="small">Comparé à votre historique, dès +3 %.</p></div>
+ </div></div></section>
+
+<section style="background:var(--hero)"><div class="w rv"><p class="eyebrow">Modules</p><h2>Tout pour protéger votre marge.</h2>
+ <div class="feat">
+  <div class="card"><span class="num">DEVIS IA</span><h3>Créez un devis sans repartir de zéro</h3><p>Document, saisie ou dictée.</p></div>
+  <div class="card"><span class="num">DOCUMENTS</span><h3>Repérez les hausses fournisseurs</h3><p>Comparaison automatique à l’historique.</p></div>
+  <div class="card"><span class="num">CHANTIERS</span><h3>Un chantier, tous ses documents</h3><p>Devis, achats et marge au même endroit.</p></div>
+  <div class="card"><span class="num">COPILOTE</span><h3>Posez une question</h3><p>Retrouvez l’info dans vos documents.</p></div>
+ </div></div></section>
+
+<section><div class="w rv"><p class="eyebrow">Qui</p><h2>Créé sur les chantiers, pas dans une incubatrice.</h2>
+ <p class="lead">Fondateur ancien des Travaux Publics + Alan. <em>[Photo + citation réelles à fournir — aucun faux témoignage.]</em></p></div></section>
+
+<section style="background:var(--hero)"><div class="w rv" style="text-align:center"><p class="eyebrow">Tarifs</p><h2 style="margin:auto">1er mois offert, puis dès 17 € HT / mois.</h2>
+ <p class="lead" style="margin:16px auto 0">Sans carte bancaire. Sans engagement.</p>
+ <div class="plans" style="text-align:left">
+  <div class="card plan"><b>Starter</b><div class="price">17 €<small> HT/mois</small></div><ul><li>150 documents / mois</li><li>Historique 12 mois</li><li>3 distributeurs</li><li>Alertes de hausses</li></ul><a class="btn ghost" style="width:100%" href="#">Commencer</a></div>
+  <div class="card plan f"><span class="badge">Le plus choisi</span> <b>Pro</b><div class="price">29 €<small> HT/mois</small></div><ul><li>400 documents / mois</li><li>Historique illimité</li><li>Tous les distributeurs</li><li>Devis avec logo et SIRET</li><li>Export comptable</li></ul><a class="btn" style="width:100%" href="#">Essayer Pro</a></div>
+  <div class="card plan"><b>Équipe</b><div class="price">49 €<small> HT/mois</small></div><ul><li>1 000 documents / mois</li><li>Tout Pro</li><li>Support prioritaire</li></ul><a class="btn ghost" style="width:100%" href="#">Commencer</a></div>
+ </div></div></section>
+
+<section><div class="w rv" style="max-width:760px"><p class="eyebrow">FAQ</p><h2>Questions fréquentes</h2><div style="margin-top:24px">
+ <details open><summary>Quels documents puis-je importer ?</summary><p>Devis, factures, bons de commande et d’enlèvement, en PDF ou photo, jusqu’à 15 Mo.</p></details>
+ <details><summary>Faut-il une carte bancaire ?</summary><p>Non. 1er mois offert, sans carte, sans engagement.</p></details>
+ <details><summary>Où sont mes données ?</summary><p>Hébergées en France.</p></details></div></div></section>
+
+<section class="closer"><div class="w rv"><h2>Construisez mieux.</h2><p class="lead" style="margin:16px auto 28px;color:#b9b2a8">1er mois offert, sans carte bancaire.</p><a class="btn" href="#">Essayer TARINEO gratuitement →</a></div></section>
+<footer><div class="w">© TARINEO · Mentions légales · CGU · Confidentialité</div></footer>
+<script>const o=new IntersectionObserver(e=>e.forEach(x=>x.isIntersecting&&x.target.classList.add('in')),{threshold:.15});document.querySelectorAll('.rv').forEach(n=>o.observe(n))</script>
+</body></html>
