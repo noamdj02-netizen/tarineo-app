@@ -197,13 +197,13 @@ export const HERO_SCENES: readonly HeroScene[] = [
     id: "analyser",
     label: "Analyser un devis",
     summary:
-      "TARINEO lit un devis fournisseur Cedeo à 442,80 € HT, en extrait les lignes, puis prépare un devis client à 598,00 € HT avec une marge estimée de 26 %.",
+      "TARINEO lit un devis fournisseur Point.P à 442,80 € HT, en extrait les lignes, puis prépare un devis client à 598,00 € HT avec une marge estimée de 26 %.",
     source: {
       kind: "Devis fournisseur",
       tag: "PDF",
-      party: "Cedeo Lyon",
+      party: "Point.P Lyon Est",
       partyMeta: "N° DEV-2026-0842",
-      logo: "Cedeo",
+      logo: "Point.P",
       lines: [
         { label: "Tube PVC Ø 500", value: "442,80 €" },
         { label: "Joint Ø 500", value: "4 u", soft: true },
@@ -237,13 +237,13 @@ export const HERO_SCENES: readonly HeroScene[] = [
     id: "hausse",
     label: "Surveiller une hausse",
     summary:
-      "TARINEO compare un nouveau prix fournisseur de 486,20 € à votre dernier prix payé de 442,80 € et signale une hausse de 43,40 €, soit 9,8 %.",
+      "TARINEO compare un nouveau prix Rexel de 486,20 € à votre dernier prix payé de 442,80 € et signale une hausse de 43,40 €, soit 9,8 %.",
     source: {
       kind: "Votre historique",
       tag: "12 mois",
-      party: "Cedeo Lyon",
+      party: "Rexel Lyon",
       partyMeta: "Tube PVC Ø 500",
-      logo: "Cedeo",
+      logo: "Rexel",
       lines: [
         { label: "Dernier prix payé", value: "442,80 €" },
         { label: "Moyenne 12 mois", value: "438,10 €", soft: true },
@@ -262,9 +262,9 @@ export const HERO_SCENES: readonly HeroScene[] = [
     result: {
       kind: "Hausse détectée",
       tag: "Alerte",
-      party: "Cedeo Lyon",
-      partyMeta: "Devis du 12 mars 2026",
-      logo: "Cedeo",
+      party: "Rexel Lyon",
+      partyMeta: "Facture du 12 mars 2026",
+      logo: "Rexel",
       lines: [
         { label: "Nouveau prix", value: "486,20 €" },
         { label: "Écart", value: "+ 43,40 €" },

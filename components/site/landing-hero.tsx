@@ -34,7 +34,7 @@ export function LandingHero() {
           </Reveal>
 
           <Reveal>
-            <h1 className="mt-5 max-w-[12ch] font-display text-[clamp(40px,5.6vw,76px)] leading-[0.98] font-semibold tracking-[-0.042em] text-ink text-balance">
+            <h1 className="mt-5 max-w-[20ch] font-display text-[clamp(36px,5.2vw,68px)] leading-[1.02] font-semibold tracking-[-0.038em] text-ink text-balance">
               {HERO.title}{" "}
               <span className="italic tracking-[-0.02em] text-tarineo-orange">{HERO.titleTail}</span>
             </h1>

@@ -34,10 +34,11 @@ export const DEMO_MARK = "Exemple";
 export const DEMO_NOTE = "Données fictives.";
 
 export const HERO = {
-  badge: "Assistant marge · artisans BTP",
-  title: "Votre marge,",
-  titleTail: "enfin sous contrôle.",
-  text: "Analysez vos devis, surveillez vos achats et pilotez vos chantiers depuis un seul endroit.",
+  badge: "Alertes prix · artisans BTP",
+  title: "Vos fournisseurs augmentent leurs prix.",
+  titleTail: "Vous le voyez ?",
+  text:
+    "TARINEO lit vos factures et vous alerte dès qu’une référence augmente, avant que ça mange la marge de vos chantiers.",
   primary: { label: "Essayer TARINEO gratuitement", href: "/inscription" },
   secondary: { label: "Découvrir TARINEO", href: "/#devis-ia" },
   founderLine: "Créé par un ancien des Travaux Publics.",
@@ -50,8 +51,8 @@ export const HERO = {
 /** Bandeau sous le hero : 4 preuves, pas une grille de cartes. */
 export const HERO_BENEFITS = [
   {
-    title: "Vos marges sous contrôle",
-    text: "Détection des hausses fournisseurs",
+    title: "Hausses visibles",
+    text: "Alerte dès qu’une référence augmente",
     icon: "shield",
   },
   {
@@ -73,7 +74,7 @@ export const HERO_BENEFITS = [
 
 /** Ligne d’exemple affichée sous le hero (démo). */
 export const HERO_SAMPLE = {
-  supplier: "Cedeo",
+  supplier: "Point.P",
   product: "Tube PER 16×20",
   before: 12.4,
   after: 14.2,
@@ -458,9 +459,9 @@ export const FOUNDER = {
 /* ------------------------------------------------------------------ */
 
 export const SUPPLIERS = [
-  { name: "Cedeo", docs: 14, change: 9.8, share: 34, spent: 23400 },
+  { name: "Point.P", docs: 12, change: 6.1, share: 28, spent: 18900 },
   { name: "Rexel", docs: 11, change: 8.7, share: 26, spent: 17880 },
-  { name: "Point.P", docs: 9, change: 6.1, share: 22, spent: 15120 },
+  { name: "Cedeo", docs: 9, change: 9.8, share: 22, spent: 15120 },
   { name: "Brossette", docs: 4, change: 3.2, share: 10, spent: 6880 },
   { name: "Richardson", docs: 3, change: 4.4, share: 8, spent: 5500 },
 ] as const;
