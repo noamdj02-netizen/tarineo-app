@@ -16,7 +16,14 @@ const DRIFT = DEMO_DOCUMENTS.flatMap((d) => d.lines.map((l) => ({ ...l, supplier
 export function LandingProblem() {
   return (
     <LandingSection id="probleme" className="relative">
-      <LandingSectionHead label="Le problème" title={PROBLEM.title} tail={PROBLEM.tail} text={PROBLEM.text} />
+      <LandingSectionHead
+        label="Le problème"
+        title={PROBLEM.title}
+        tail={PROBLEM.tail}
+        text={PROBLEM.text}
+        stackedTail
+        className="max-w-[34rem]"
+      />
 
       <InView className="mx-auto grid max-w-[1080px] gap-4 md:grid-cols-3" stagger={0.08}>
         {PROBLEM.points.map((p, i) => (
@@ -53,10 +60,15 @@ export function LandingProblem() {
               {DRIFT.map((l) => {
                 const pct = variation(l.before, l.after);
                 return (
-                  <li key={l.ref} className="flex items-center justify-between gap-3 bg-surface px-5 py-3.5 sm:px-6">
+                  <li
+                    key={l.ref}
+                    className="flex items-center justify-between gap-3 bg-surface px-5 py-4 sm:px-6"
+                  >
                     <div className="min-w-0">
-                      <p className="truncate text-[14px] text-ink">{l.label}</p>
-                      <p className="font-mono text-[11px] text-muted-foreground">
+                      <p className="truncate font-display text-[15px] font-medium leading-snug tracking-[-0.02em] text-ink">
+                        {l.label}
+                      </p>
+                      <p className="mt-0.5 font-mono text-[12px] leading-tight tabular-nums text-muted-foreground">
                         {l.supplier} · {euroDelta(l.after - l.before)}
                       </p>
                     </div>
@@ -66,7 +78,7 @@ export function LandingProblem() {
               })}
             </ul>
             <Separator />
-            <p className="px-5 py-4 text-[15px] leading-relaxed text-muted-foreground sm:px-6 sm:text-base">
+            <p className="px-5 py-4 text-[15px] leading-[1.65] tracking-[-0.01em] text-landing-ink-muted sm:px-6 sm:text-base">
               Pris un par un, aucun de ces écarts n’alerte. Répétés sur des centaines de références et des mois
               d’achats, ils finissent par réduire votre marge.
             </p>

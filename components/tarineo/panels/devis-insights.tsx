@@ -1,4 +1,4 @@
-import { TarineoSection } from "@/components/tarineo/cards/tarineo-section";
+import { TarineoPanelCard } from "@/components/tarineo/cards/tarineo-panel-card";
 import { QuoteStats } from "@/components/tarineo/quotes/quote-stats";
 import { QuoteStatusChart } from "@/components/tarineo/quotes/quote-status-chart";
 import { SupplierQuote } from "@/components/tarineo/quotes/supplier-quote";
@@ -10,6 +10,7 @@ import {
 } from "@/lib/tarineo/adapters";
 import type { DocumentCard } from "@/lib/metier/types";
 import type { FollowUpView } from "@/lib/metier/follow-ups";
+import { R } from "@/lib/routes";
 
 export function DevisInsights({
   outbound,
@@ -25,18 +26,18 @@ export function DevisInsights({
   const stats = adaptQuoteStats(outbound, followUps);
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <TarineoSection title="Statistiques devis">
-        <QuoteStats stats={stats} className="p-4" />
-      </TarineoSection>
-      <TarineoSection title="Répartition des statuts">
+      <TarineoPanelCard title="Mes devis clients" href={R.clientDevis}>
+        <QuoteStats stats={stats} />
+      </TarineoPanelCard>
+      <TarineoPanelCard title="Statut de vos devis" href={R.clientDevis}>
         <QuoteStatusChart stats={stats} />
-      </TarineoSection>
-      <TarineoSection title="Lignes du dernier devis fournisseur importé" className="lg:col-span-2">
+      </TarineoPanelCard>
+      <TarineoPanelCard title="Devis distributeur" className="lg:col-span-2">
         <SupplierQuote lines={adaptSupplierQuoteLines(sourceDoc)} />
-      </TarineoSection>
-      <TarineoSection title="Ajouter un produit au devis client" className="lg:col-span-2">
+      </TarineoPanelCard>
+      <TarineoPanelCard title="Ajouter un produit" className="lg:col-span-2">
         <DevisAddProductPanel products={adaptSavedProducts(articles)} />
-      </TarineoSection>
+      </TarineoPanelCard>
     </div>
   );
 }

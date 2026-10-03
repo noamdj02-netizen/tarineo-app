@@ -177,9 +177,13 @@ export function HomeDashboardClient({
   const buyTotal = enseignes.reduce((s, r) => s + r.amount, 0);
   const topEnseigne = enseignes[0];
 
-  const leftKeys = prefs.leftColumn.filter((k) => prefs.widgets[k]);
-  const rightKeys = prefs.rightColumn.filter((k) => prefs.widgets[k]);
+  /** Toujours affichés sous les KPI (pas dans les colonnes déplaçables). */
+  const PINNED_UNDER_KPIS: WidgetKey[] = ["prompt", "calendar"];
+
+  const leftKeys = prefs.leftColumn.filter((k) => prefs.widgets[k] && !PINNED_UNDER_KPIS.includes(k));
+  const rightKeys = prefs.rightColumn.filter((k) => prefs.widgets[k] && !PINNED_UNDER_KPIS.includes(k));
   const mobileKeys = [...leftKeys, ...rightKeys.filter((k) => !leftKeys.includes(k))];
+  const showPinnedHero = prefs.widgets.prompt || prefs.widgets.calendar;
 
   const makeDropHandler = (targetKey: WidgetKey, targetColumn: "left" | "right") => {
     return (dragged: WidgetKey, _fromCol: "left" | "right") => {
@@ -330,20 +334,21 @@ export function HomeDashboardClient({
         </Reveal>
       </RevealGroup>
 
-      <Reveal>
-      <TarineoDashboardInsights
-        outbound={outbound.length ? outbound : documents.filter((d) => d.direction === "out")}
-        followUps={followUps}
-        alerts={alerts}
-        months={months}
-        enseignes={enseignes}
-        articles={articles}
-        pendingDocs={pendingDocs}
-        devisAEnvoyer={devisAEnvoyer}
-        relancesDue={relancesDue}
-        distributorGoalsHt={distributorGoalsHt}
-      />
-      </Reveal>
+      {showPinnedHero ? (
+        <Reveal>
+          <div
+            data-tour="hero-prompt"
+            className="mb-6 grid gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:items-start"
+          >
+            {prefs.widgets.prompt ? (
+              <div className="min-w-0">
+                <PromptWidget firstName={firstName} wide />
+              </div>
+            ) : null}
+            {prefs.widgets.calendar ? <div className="min-w-0">{renderWidgetBody("calendar")}</div> : null}
+          </div>
+        </Reveal>
+      ) : null}
 
       {(leftKeys.length > 0 || rightKeys.length > 0) && (
         <>
@@ -364,6 +369,21 @@ export function HomeDashboardClient({
           </div>
         </>
       )}
+
+      <Reveal>
+        <TarineoDashboardInsights
+          outbound={outbound.length ? outbound : documents.filter((d) => d.direction === "out")}
+          followUps={followUps}
+          alerts={alerts}
+          months={months}
+          enseignes={enseignes}
+          articles={articles}
+          pendingDocs={pendingDocs}
+          devisAEnvoyer={devisAEnvoyer}
+          relancesDue={relancesDue}
+          distributorGoalsHt={distributorGoalsHt}
+        />
+      </Reveal>
 
       <DevisFacturesSection recentPieces={recentPieces} company={company} />
 

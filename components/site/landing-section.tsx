@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { InView } from "@/components/site/in-view";
+import { LandingStackHeadline } from "@/components/site/landing-stack-headline";
 import { cn } from "@/lib/utils";
 
 type LandingSectionProps = {
@@ -49,6 +50,7 @@ export function LandingSectionHead({
   text,
   align = "start",
   size = "lg",
+  stackedTail = false,
   className,
 }: {
   label?: string;
@@ -59,6 +61,8 @@ export function LandingSectionHead({
   text?: string;
   align?: "center" | "start";
   size?: "lg" | "md";
+  /** Deux lignes + marqueur orange sur `tail` (sections éditoriales). */
+  stackedTail?: boolean;
   className?: string;
 }) {
   return (
@@ -84,28 +88,30 @@ export function LandingSectionHead({
       ) : null}
       {label ? (
         <Reveal>
-          <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
+          <p className="mono-label text-landing-ink-muted">{label}</p>
         </Reveal>
       ) : null}
       <Reveal>
-        <h2
-          className={cn(
-            "font-display font-semibold tracking-[-0.034em] text-balance text-ink",
-            size === "lg" &&
-              "text-[clamp(28px,4.5vw,44px)] leading-[1.06]",
-            size === "md" &&
-              "text-[clamp(24px,3.8vw,34px)] leading-[1.1]",
-          )}
-        >
-          {title}
-          {tail ? (
-            <span className="font-serif italic font-normal tracking-[-0.02em]"> {tail}</span>
-          ) : null}
-        </h2>
+        {stackedTail && tail ? (
+          <LandingStackHeadline lead={title} tail={tail} />
+        ) : (
+          <h2
+            className={cn(
+              "font-display font-semibold tracking-[-0.034em] text-balance text-ink",
+              size === "lg" && "text-[clamp(28px,4.5vw,44px)] leading-[1.06]",
+              size === "md" && "text-[clamp(24px,3.8vw,34px)] leading-[1.1]",
+            )}
+          >
+            {title}
+            {tail ? (
+              <span className="font-display font-semibold italic tracking-[-0.03em]"> {tail}</span>
+            ) : null}
+          </h2>
+        )}
       </Reveal>
       {text ? (
         <Reveal>
-          <p className="max-w-prose text-[17px] leading-[1.58] text-landing-ink-muted text-pretty">
+          <p className="max-w-prose text-[16px] leading-[1.65] tracking-[-0.01em] text-landing-ink-muted text-pretty sm:text-[17px]">
             {text}
           </p>
         </Reveal>

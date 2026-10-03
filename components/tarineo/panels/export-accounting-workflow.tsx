@@ -1,6 +1,8 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Calendar, Download, FileText, Store } from "lucide-react";
+import { WorkflowStepCard } from "@/components/tarineo/exports/workflow-step-card";
 import { DateRangePicker } from "@/components/tarineo/exports/date-range-picker";
 import { DistributorSelector } from "@/components/tarineo/suppliers/distributor-selector";
 import { InvoiceTypeSelector } from "@/components/tarineo/exports/invoice-type-selector";
@@ -30,33 +32,6 @@ function downloadCsv(rows: Record<string, string | number>[], filename?: string)
   URL.revokeObjectURL(url);
 }
 
-function WorkflowBlock({
-  step,
-  title,
-  children,
-  className,
-}: {
-  step: string;
-  title: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={cn("flex flex-col gap-3 border-b border-line px-5 py-5 last:border-b-0", className)}>
-      <div className="flex items-center gap-2.5">
-        <span
-          className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#FF6B1A]/12 font-mono text-[11px] font-semibold text-[#C44F0A]"
-          aria-hidden
-        >
-          {step}
-        </span>
-        <h2 className="font-display text-[16px] font-semibold tracking-tight text-ink">{title}</h2>
-      </div>
-      <div className="pl-0 sm:pl-9">{children}</div>
-    </div>
-  );
-}
-
 export function ExportAccountingWorkflow({
   documents,
   enseignes,
@@ -81,6 +56,16 @@ export function ExportAccountingWorkflow({
   const [emailMsg, setEmailMsg] = useState<string | null>(null);
 
   const distributors = adaptAnnualGoals(enseignes);
+
+  const invoiceCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const d of documents) {
+      if (d.kind !== "facture" || d.direction !== "in") continue;
+      const name = d.party_name?.trim() || "Autre";
+      counts[name] = (counts[name] ?? 0) + 1;
+    }
+    return counts;
+  }, [documents]);
 
   useEffect(() => {
     const range = resolveDateRangePreset("year");
@@ -118,7 +103,7 @@ export function ExportAccountingWorkflow({
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:items-start">
       <div className="card-soft overflow-hidden">
-        <WorkflowBlock step="1" title="Période">
+        <WorkflowStepCard step="1" title="Sélectionnez la période" icon={Calendar}>
           <DateRangePicker
             preset={preset}
             onPresetChange={setPreset}
@@ -133,14 +118,26 @@ export function ExportAccountingWorkflow({
               setEnd(v);
             }}
           />
-        </WorkflowBlock>
-        <WorkflowBlock step="2" title="Distributeurs">
-          <p className="mb-2 text-[12.5px] text-muted-foreground">Laisser vide pour inclure tous les distributeurs.</p>
-          <DistributorSelector distributors={distributors} selectedIds={selectedDists} onChange={setSelectedDists} />
-        </WorkflowBlock>
-        <WorkflowBlock step="3" title="Type de factures">
+        </WorkflowStepCard>
+        <WorkflowStepCard step="2" title="Choisissez vos distributeurs" icon={Store}>
+          <DistributorSelector
+            distributors={distributors}
+            selectedIds={selectedDists}
+            onChange={setSelectedDists}
+            invoiceCounts={invoiceCounts}
+          />
+        </WorkflowStepCard>
+        <WorkflowStepCard step="3" title="Type de factures à exporter" icon={FileText}>
           <InvoiceTypeSelector selected={invoiceKinds} onChange={setInvoiceKinds} />
-        </WorkflowBlock>
+        </WorkflowStepCard>
+        <WorkflowStepCard step="5" title="Format d'export" icon={Download}>
+          <ExportFormatSelector
+            format={format}
+            onChange={setFormat}
+            disabled={!fullRows.length}
+            onGenerate={() => downloadCsv(fullRows)}
+          />
+        </WorkflowStepCard>
       </div>
 
       <div className="flex flex-col gap-4 lg:sticky lg:top-4">
@@ -173,12 +170,6 @@ export function ExportAccountingWorkflow({
 
         <div className="card-soft flex flex-col gap-4 p-5">
           <p className="font-display text-[17px] font-semibold tracking-tight text-ink">Télécharger ou envoyer</p>
-          <ExportFormatSelector
-            format={format}
-            onChange={setFormat}
-            disabled={!fullRows.length}
-            onGenerate={() => downloadCsv(fullRows)}
-          />
           {onRunServerExport ? (
             <button
               type="button"

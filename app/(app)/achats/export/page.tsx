@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { AccountingExportPageClient } from "@/components/tarineo/panels/accounting-export-page-client";
 import { PageHead } from "@/components/shell/page-head";
+import { R } from "@/lib/routes";
 import {
   listAccountingExportRuns,
   listAccountingExportSchedules,
@@ -29,9 +31,17 @@ export default async function AchatsExportPage() {
         title="Export comptable"
         crumbs={[
           { href: "/accueil", label: "Accueil" },
-          { href: "/achats", label: "Achats" },
+          { href: R.achats, label: "Achats" },
           { label: "Export" },
         ]}
+        action={
+          <Link
+            href={R.achatsProduits}
+            className="inline-flex h-9 items-center rounded-[10px] border border-line bg-surface px-4 text-[13.5px] font-medium text-ink hover:bg-surface-2"
+          >
+            Produits
+          </Link>
+        }
       >
         Filtrez vos factures, téléchargez un CSV ou programmez l’envoi à votre comptable.
       </PageHead>

@@ -34,6 +34,7 @@ export function adaptTopPriceIncreases(alerts: PriceAlert[], limit = 6) {
       pct: variation(Number(a.old_price), Number(a.new_price)),
       chantierName: a.chantier_name,
       documentId: a.document_id,
+      reference: a.product_id ? String(a.product_id).slice(0, 12) : null,
     }))
     .sort((a, b) => b.pct - a.pct)
     .slice(0, limit);
@@ -50,6 +51,27 @@ export function adaptTopProducts(articles: { label: string; amount: number; qty:
 
 export function adaptSalesEvolution(months: { key: string; label: string; amount: number }[]): SalesPoint[] {
   return months.map((m) => ({ key: m.key, label: m.label, amount: m.amount }));
+}
+
+/** Moyenne des hausses détectées par mois (pour la courbe « prix distributeurs »). */
+export function adaptDistributorPriceTrend(alerts: PriceAlert[], limit = 9): SalesPoint[] {
+  const buckets = new Map<string, { label: string; pcts: number[] }>();
+  for (const a of alerts) {
+    const key = a.created_at.slice(0, 7);
+    const label = a.created_at.slice(5, 7);
+    const pct = variation(Number(a.old_price), Number(a.new_price));
+    const row = buckets.get(key) ?? { label, pcts: [] };
+    row.pcts.push(pct);
+    buckets.set(key, row);
+  }
+  return [...buckets.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-limit)
+    .map(([key, row]) => ({
+      key,
+      label: row.label,
+      amount: Math.round((row.pcts.reduce((s, x) => s + x, 0) / row.pcts.length) * 10) / 10,
+    }));
 }
 
 function goalForEnseigne(label: string, amount: number, goals?: Record<string, number>): number | null {

@@ -8,6 +8,7 @@ import {
   FolderTree,
   HardHat,
   House,
+  Package,
   Sparkles,
   LifeBuoy,
   Mail,
@@ -70,6 +71,12 @@ const classement: Tab = {
   label: "Achats",
   short: "Achats",
   icon: FolderTree,
+};
+const produitsAchats: Tab = {
+  href: R.achatsProduits,
+  label: "Produits",
+  short: "Produits",
+  icon: Package,
 };
 const exportComptable: Tab = {
   href: R.achatsExport,
@@ -139,7 +146,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: "achats",
     label: "Achats",
-    items: [fournisseurs, comparateur, alertes, relances, exportComptable, classement],
+    items: [fournisseurs, comparateur, alertes, relances, produitsAchats, exportComptable, classement],
   },
 ];
 
@@ -159,7 +166,11 @@ const support: Tab = {
 export const MOBILE_MORE_SECTIONS: { id: string; label: string; items: Tab[] }[] = [
   { id: "docs-fournisseur", label: "Documents fournisseur", items: docsDistributeur.items },
   { id: "docs-entreprise", label: "Documents entreprise", items: docsEntreprise.items },
-  { id: "suivi", label: "Suivi", items: [fournisseurs, comparateur, alertes, exportComptable, classement, relances] },
+  {
+    id: "suivi",
+    label: "Suivi",
+    items: [fournisseurs, comparateur, alertes, produitsAchats, exportComptable, classement, relances],
+  },
   { id: "compte", label: "Compte", items: [entreprise, tarifs, support] },
 ];
 

@@ -303,10 +303,10 @@ export function MetierWidgetsSection({
   );
 }
 
-export function PromptWidget({ firstName }: { firstName?: string | null }) {
+export function PromptWidget({ firstName, wide }: { firstName?: string | null; wide?: boolean }) {
   return (
     <div data-tour="prompt">
-      <PromptHero firstName={firstName} featured inWidget />
+      <PromptHero firstName={firstName} featured inWidget={!wide} />
     </div>
   );
 }

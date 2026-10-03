@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Upload } from "lucide-react";
+import { FileText, Loader2 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
@@ -215,28 +215,21 @@ export function DocumentDrop({
           onChange={(e) => handleFiles(e.target.files)}
         />
         {pending ? (
-          <Loader2 className="size-8 animate-spin text-brand-orange" aria-hidden />
+          <Loader2 className="size-9 animate-spin text-brand-orange" aria-hidden />
         ) : (
-          <Upload className="size-8 text-brand-orange" aria-hidden />
+          <span className="grid size-14 place-items-center rounded-full bg-[#FF6B1A]/10 text-[#E85A12]">
+            <FileText className="size-7 stroke-[1.5]" aria-hidden />
+          </span>
         )}
-        <p className="font-display text-[17px] font-semibold tracking-tight md:text-[18px]">
+        <p className="font-display text-[19px] font-semibold tracking-tight md:text-[20px]">
           {pending
             ? "Lecture du document…"
             : over
               ? "Déposez ici"
-              : hint || (
-                  <>
-                    <span className="md:hidden">Ajouter un document</span>
-                    <span className="hidden md:inline">Glissez un devis, une facture ou un bon</span>
-                  </>
-                )}
+              : hint || "Glissez vos documents ici"}
         </p>
-        <p className="max-w-[42ch] text-[13px] text-muted-foreground md:text-[13.5px]">
-          <span className="md:hidden">PDF · JPG · PNG · HEIC</span>
-          <span className="hidden md:inline">
-            PDF, JPEG, PNG ou HEIC. TARINEO lit le type, le total HT, l’éco-contribution, la PMCB et le poids s’ils sont
-            écrits.
-          </span>
+        <p className="max-w-[42ch] text-[13px] text-muted-foreground md:text-[14px]">
+          PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers
         </p>
         {!pending ? (
           <span className="mt-1 inline-flex h-11 items-center rounded-[12px] bg-[#FF6B1A] px-4 text-[14px] font-medium text-white md:hidden">

@@ -703,6 +703,34 @@ body:has(.theme-tarineo) {
     background: color-mix(in oklab, var(--tarineo-orange) 30%, transparent);
   }
 
+  /* Sections landing (ex. #probleme) — même ADN que le hero, plus compact */
+  .landing-stack-headline-lead {
+    max-width: 24ch;
+    font-family: var(--font-display);
+    font-size: clamp(1.625rem, 3.2vw, 2.5rem);
+    line-height: 1.1;
+    font-weight: 600;
+    letter-spacing: -0.034em;
+  }
+  .landing-stack-headline-tail-wrap {
+    position: relative;
+    display: inline-block;
+    width: max-content;
+    max-width: 100%;
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 3.85vw, 2.875rem);
+    line-height: 1.05;
+    letter-spacing: -0.042em;
+  }
+  .landing-stack-headline-tail-text {
+    position: relative;
+    isolation: isolate;
+    display: block;
+    font-weight: 600;
+    font-style: italic;
+    text-wrap: balance;
+  }
+
   .hero-backdrop-accent {
     background:
       radial-gradient(

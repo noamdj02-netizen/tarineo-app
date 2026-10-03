@@ -3,6 +3,7 @@
 import type { DateRangePreset } from "@/components/tarineo/types";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { Calendar } from "lucide-react";
 
 const PRESETS: { id: DateRangePreset; label: string }[] = [
   { id: "month", label: "Ce mois" },
@@ -27,7 +28,33 @@ export function DateRangePicker({
   onEndChange: (v: string) => void;
 }) {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl bg-surface-2 px-3 py-3">
+          <p className="text-[12px] font-medium text-muted-foreground">Date de début</p>
+          <div className="relative mt-2">
+            <Input
+              type="date"
+              value={start}
+              onChange={(e) => onStartChange(e.target.value)}
+              className="h-11 rounded-xl border-line bg-surface pr-10"
+            />
+            <Calendar className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+        </div>
+        <div className="rounded-xl bg-surface-2 px-3 py-3">
+          <p className="text-[12px] font-medium text-muted-foreground">Date de fin</p>
+          <div className="relative mt-2">
+            <Input
+              type="date"
+              value={end}
+              onChange={(e) => onEndChange(e.target.value)}
+              className="h-11 rounded-xl border-line bg-surface pr-10"
+            />
+            <Calendar className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
+        </div>
+      </div>
       <div className="flex flex-wrap gap-2">
         {PRESETS.map((p) => (
           <button
@@ -35,25 +62,13 @@ export function DateRangePicker({
             type="button"
             onClick={() => onPresetChange(p.id)}
             className={cn(
-              "rounded-full border px-3 py-1.5 text-[13px] transition",
-              preset === p.id
-                ? "border-[#FF6B1A] bg-[#FF6B1A]/10 text-ink"
-                : "border-line bg-surface text-muted-foreground hover:bg-surface-2",
+              "rounded-full bg-surface-2 px-4 py-2 text-[13px] font-medium transition",
+              preset === p.id ? "text-ink ring-1 ring-line-strong" : "text-muted-foreground hover:text-ink",
             )}
           >
             {p.label}
           </button>
         ))}
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="text-[13px] text-muted-foreground">
-          Date début
-          <Input type="date" value={start} onChange={(e) => onStartChange(e.target.value)} className="mt-1 h-11 rounded-xl" />
-        </label>
-        <label className="text-[13px] text-muted-foreground">
-          Date fin
-          <Input type="date" value={end} onChange={(e) => onEndChange(e.target.value)} className="mt-1 h-11 rounded-xl" />
-        </label>
       </div>
     </div>
   );

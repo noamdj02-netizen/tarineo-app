@@ -34,7 +34,13 @@ export default async function ClassementPage() {
               Importer un document
             </Link>
             <Link
-              href="/achats/export"
+              href={R.achatsProduits}
+              className="inline-flex h-9 items-center rounded-[10px] border border-line bg-surface px-4 text-[13.5px] font-medium text-ink hover:bg-surface-2"
+            >
+              Produits
+            </Link>
+            <Link
+              href={R.achatsExport}
               className="inline-flex h-9 items-center rounded-[10px] border border-line bg-surface px-4 text-[13.5px] font-medium text-ink hover:bg-surface-2"
             >
               Export comptable

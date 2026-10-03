@@ -10,7 +10,7 @@ function markerReveal(reduce: boolean | null, delay = 0): Transition {
   return { ...APPLE_SPRING, delay };
 }
 
-function HeroMarker({ reduce }: { reduce: boolean | null }) {
+export function HeroMarker({ reduce }: { reduce: boolean | null }) {
   const origin = "0% 52%";
 
   return (

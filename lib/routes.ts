@@ -22,6 +22,8 @@ export const R = {
   comparateur: "/comparateur",
   fournisseurs: "/fournisseurs",
   achats: "/achats",
+  achatsProduits: "/achats/produits",
+  achatsProduit: (slug: string) => `/achats/produits/${slug}`,
   achatsExport: "/achats/export",
   entreprise: "/parametres/entreprise",
   parametres: "/parametres",
