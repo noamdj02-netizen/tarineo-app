@@ -62,7 +62,7 @@ export default async function BlogMetierHubPage({ params }: Props) {
           </Link>
         </Reveal>
         <Reveal>
-          <p className="mono-label">/ {hub.label} ///</p>
+          <p className="mono-label">/ {hub.label} {"///"}</p>
         </Reveal>
         <Reveal>
           <h1 className="font-display text-[clamp(28px,4.5vw,44px)] leading-[1.06] font-semibold tracking-tightest text-balance text-ink-900">

@@ -36,7 +36,7 @@ export default function BlogPage() {
 
       <RevealGroup className="mx-auto mb-12 flex max-w-[720px] flex-col gap-3 text-center">
         <Reveal>
-          <p className="mono-label">/ Ressources ///</p>
+          <p className="mono-label">/ Ressources {"///"}</p>
         </Reveal>
         <Reveal>
           <h1 className="font-display text-[clamp(32px,5.5vw,52px)] leading-[1.05] font-semibold tracking-tightest text-balance text-ink-900">

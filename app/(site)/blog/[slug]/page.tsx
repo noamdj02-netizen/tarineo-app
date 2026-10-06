@@ -73,8 +73,8 @@ export default async function BlogArticlePage({ params }: Props) {
                 className="hover:text-accent-700 hover:underline"
               >
                 {post.metier}
-              </Link>{" "}
-              ///
+              </Link>
+              {" ///"}
             </p>
           </Reveal>
           <Reveal>
