@@ -84,7 +84,7 @@ function TestimonialMedia({ t }: { t: LandingTestimonial }) {
   );
 }
 
-function TestimonialCard({ t }: { t: LandingTestimonial }) {
+export function TestimonialCard({ t }: { t: LandingTestimonial }) {
   return (
     <figure className="h-full">
       <Card

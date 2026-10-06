@@ -23,7 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     getOnboarding(),
     getPlan(),
     countUnreadNotifications().catch(() => 0),
-    listNotifications({ limit: 8 }).catch(() => []),
+    listNotifications({ limit: 12 }).catch(() => []),
   ]);
 
   return (

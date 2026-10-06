@@ -9,9 +9,12 @@ export type IntegrationStatus =
   | "requires_setup"
   | "coming_soon"
   | "disabled"
-  | "error";
+  | "error"
+  | "reconnection_required";
 
 export type IntegrationId =
+  | "tarineo_email"
+  | "stripe_billing"
   | "google"
   | "microsoft"
   | "calendar_ical"
@@ -26,7 +29,12 @@ export type IntegrationId =
   | "sonepar"
   | "api_tarineo";
 
-export type IntegrationCategory = "messagerie" | "comptabilite" | "fournisseurs" | "api";
+export type IntegrationCategory =
+  | "billing"
+  | "messagerie"
+  | "comptabilite"
+  | "fournisseurs"
+  | "api";
 
 export type IntegrationDef = {
   id: IntegrationId;
@@ -35,19 +43,47 @@ export type IntegrationDef = {
   subtitle: string;
   description: string;
   /** Capacité réelle côté code aujourd’hui */
-  capability: "oauth" | "ical" | "api_keys" | "manual_import" | "none";
+  capability:
+    | "oauth"
+    | "ical"
+    | "api_keys"
+    | "manual_import"
+    | "platform"
+    | "billing_status"
+    | "none";
   permissions?: string[];
 };
 
 export const INTEGRATIONS: IntegrationDef[] = [
   {
+    id: "tarineo_email",
+    category: "messagerie",
+    name: "E-mails TARINEO",
+    subtitle: "Relances & notifications",
+    description:
+      "Envoi géré par TARINEO (contact@tarineo.fr). C’est le canal utilisé aujourd’hui pour les relances automatiques et les e-mails transactionnels.",
+    capability: "platform",
+    permissions: ["Envoi depuis contact@tarineo.fr"],
+  },
+  {
+    id: "stripe_billing",
+    category: "billing",
+    name: "Abonnement TARINEO",
+    subtitle: "Stripe · facturation",
+    description:
+      "Votre offre TARINEO (Starter, Pro, essai). Géré par Stripe — ce n’est pas le compte Stripe de votre entreprise.",
+    capability: "billing_status",
+    permissions: ["Lecture statut abonnement", "Portail client Stripe"],
+  },
+  {
     id: "google",
     category: "messagerie",
     name: "Google",
     subtitle: "Gmail",
-    description: "Autorisez l’envoi d’e-mails via votre compte Google pour les workflows TARINEO.",
+    description:
+      "Lie votre compte Google (OAuth). Prépare l’envoi depuis votre adresse Gmail ; les relances automatiques passent encore par E-mails TARINEO tant que Gmail API n’est pas activé.",
     capability: "oauth",
-    permissions: ["Gmail (envoi)"],
+    permissions: ["Gmail (envoi — à venir)", "Profil Google"],
   },
   {
     id: "microsoft",
@@ -150,6 +186,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
 ];
 
 export const CATEGORY_LABEL: Record<IntegrationCategory, string> = {
+  billing: "Facturation",
   messagerie: "Messagerie & agenda",
   comptabilite: "Comptabilité",
   fournisseurs: "Fournisseurs",
@@ -161,6 +198,8 @@ export type IntegrationRuntime = {
   accountLabel?: string | null;
   connectedAt?: string | null;
   lastSyncAt?: string | null;
+  lastHealthAt?: string | null;
+  healthMessage?: string | null;
   errorMessage?: string | null;
   waitlisted?: boolean;
 };

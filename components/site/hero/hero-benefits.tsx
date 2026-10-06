@@ -7,7 +7,7 @@ export function HeroBenefits() {
       className="mx-auto mt-14 max-w-[1120px] border-t border-line px-4 pt-6 sm:px-8 lg:mt-16 lg:pt-7"
       aria-label="Points clés"
     >
-      <ul className="flex flex-col items-center justify-center gap-2 text-center sm:flex-row sm:flex-wrap sm:gap-x-1 sm:gap-y-2">
+      <ul className="flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
         {HERO_BENEFITS.map((item, i) => (
           <li key={item.title} className="flex items-center gap-2 sm:gap-1">
             {i > 0 ? (

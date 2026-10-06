@@ -1,4 +1,5 @@
 import "server-only";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getDb } from "@/lib/db";
 import {
   DEFAULT_NOTIFICATION_PREFS,
@@ -8,6 +9,19 @@ import {
 } from "@/lib/settings/notification-preferences";
 
 const mem = new Map<string, NotificationPreferences>();
+
+export async function getNotificationPreferencesForUser(
+  client: SupabaseClient,
+  userId: string,
+): Promise<NotificationPreferences> {
+  const { data, error } = await client
+    .from("notification_preferences")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error || !data) return { ...DEFAULT_NOTIFICATION_PREFS, events: {} };
+  return parseNotificationPreferences(data);
+}
 
 export async function getNotificationPreferences(): Promise<NotificationPreferences> {
   const db = await getDb();

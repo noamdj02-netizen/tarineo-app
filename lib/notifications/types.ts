@@ -8,6 +8,7 @@ export type NotificationType =
   | "site_activity"
   | "ai_alert"
   | "payment_alert"
+  | "margin_below_target"
   | "system";
 
 export type NotificationPriority = "critical" | "high" | "normal" | "low";
@@ -56,13 +57,14 @@ export const NOTIFICATION_TYPE_LABEL: Record<NotificationType, string> = {
   site_activity: "Chantier",
   ai_alert: "IA",
   payment_alert: "Paiement",
+  margin_below_target: "Marge sous seuil",
   system: "Système",
 };
 
 export function priorityDot(p: NotificationPriority) {
   switch (p) {
     case "critical":
-      return "bg-destructive";
+      return "bg-tarineo-orange";
     case "high":
       return "bg-tarineo-orange";
     case "normal":

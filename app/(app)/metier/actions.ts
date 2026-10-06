@@ -308,6 +308,10 @@ export async function transformQuoteAction(form: FormData) {
     }
     const doc = await transformImportedDocument(sourceId, markup > 0 ? markup : defaultMarkup, clientId, kind);
     if (!doc) return { ok: false as const, error: "Transformation impossible." };
+    if (doc.direction === "out" && doc.kind === "devis") {
+      const { evaluateMarginBelowTarget } = await import("@/lib/automation/margin");
+      await evaluateMarginBelowTarget(doc.id).catch((err) => console.error("[metier] margin", err));
+    }
     refresh();
     return { ok: true as const, id: doc.id, kind: doc.kind };
   } catch (err) {

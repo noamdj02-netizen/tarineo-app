@@ -2,6 +2,10 @@ import "server-only";
 import { loadConnectorSignals } from "@/lib/connectors/signals";
 import { data } from "@/lib/mcp/data";
 import { getDb } from "@/lib/db";
+import { getPlan } from "@/lib/billing/plan";
+import { isStripeConfigured } from "@/lib/billing/stripe";
+import { tarineoEmailPlatformConnected } from "@/lib/integrations/registry";
+import { createClient } from "@/lib/supabase/server";
 import {
   INTEGRATIONS,
   type IntegrationSnapshot,
@@ -14,15 +18,20 @@ function waitlistFromMeta(meta: Record<string, unknown> | undefined): string[] {
   return raw.filter((x): x is string => typeof x === "string");
 }
 
-/** État réel des intégrations pour l’utilisateur courant. */
-export async function loadIntegrationsSnapshot(opts?: {
-  oauthError?: boolean;
-}): Promise<IntegrationSnapshot[]> {
+export type LoadIntegrationsOpts = { oauthError?: boolean };
+
+/** État brut (liaisons DB) — utiliser `loadVerifiedIntegrationsSnapshot` pour le hub. */
+export async function loadIntegrationsSnapshot(
+  opts?: LoadIntegrationsOpts,
+): Promise<IntegrationSnapshot[]> {
   const db = await getDb();
-  const [signals, keys] = await Promise.all([
+  const [signals, keys, session] = await Promise.all([
     loadConnectorSignals(),
     db ? data.listApiKeys(db.user.id).catch(() => []) : Promise.resolve([]),
+    db ? createClient().then((c) => c.auth.getSession()) : Promise.resolve({ data: { session: null } }),
   ]);
+  const providerToken = session.data.session?.provider_token;
+  const planInfo = db ? await getPlan() : null;
   const waitlist = waitlistFromMeta(db?.user.user_metadata as Record<string, unknown> | undefined);
   const gmail = signals.connections.gmail;
   const calendar = signals.connections["apple-calendar"];
@@ -31,6 +40,41 @@ export async function loadIntegrationsSnapshot(opts?: {
 
   return INTEGRATIONS.map((def): IntegrationSnapshot => {
     const waitlisted = waitlist.includes(def.id);
+    if (def.id === "tarineo_email") {
+      const ok = tarineoEmailPlatformConnected();
+      return {
+        ...def,
+        status: ok ? "available" : "requires_setup",
+        accountLabel: ok ? "contact@tarineo.fr" : null,
+        errorMessage: ok ? null : "Service non configuré sur cet environnement.",
+        waitlisted,
+      };
+    }
+    if (def.id === "stripe_billing") {
+      if (!isStripeConfigured()) {
+        return {
+          ...def,
+          status: "requires_setup",
+          errorMessage: "Facturation non configurée sur cet environnement.",
+          waitlisted,
+        };
+      }
+      const label = planInfo
+        ? planInfo.plan === "founder"
+          ? "Fondateur"
+          : planInfo.isFreeTrial
+            ? "Essai Pro"
+            : planInfo.plan === "free"
+              ? "Gratuit"
+              : `Plan ${planInfo.plan}`
+        : "Gratuit";
+      return {
+        ...def,
+        status: "available",
+        accountLabel: label,
+        waitlisted,
+      };
+    }
     if (def.id === "google") {
       if (opts?.oauthError) {
         return {
@@ -41,12 +85,16 @@ export async function loadIntegrationsSnapshot(opts?: {
         };
       }
       if (gmail) {
+        const needsReconnect = !providerToken;
         return {
           ...def,
-          status: "connected",
+          status: needsReconnect ? "reconnection_required" : "connected",
           accountLabel: gmail.label || signals.googleEmail,
           connectedAt: gmail.at,
           lastSyncAt: gmail.at,
+          errorMessage: needsReconnect
+            ? "Réautorisez Google pour renouveler l’accès Gmail."
+            : null,
           waitlisted,
         };
       }

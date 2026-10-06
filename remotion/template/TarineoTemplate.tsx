@@ -16,8 +16,9 @@ import { UploadScene } from "./scenes/Upload";
 import { WaitingScene } from "./scenes/Waiting";
 
 /**
- * Adaptation fidèle de preview_540p_crf22 (~25 s).
- * Même rythme / compositions / mouvements — assets & couleurs TARINEO.
+ * Base vidéo marketing TARINEO — composition canonique : `TarineoTemplate-4K` (voir `CANONICAL_COMPOSITION_ID`).
+ * Adaptation fidèle de preview_540p_crf22 (~25 s). Même rythme / compositions / mouvements — assets & couleurs TARINEO.
+ * Les embeds `product-v2/` servent aux inserts UI ; la timeline reste celle du template.
  */
 export const TarineoTemplate: React.FC = () => {
   return (
@@ -31,7 +32,7 @@ export const TarineoTemplate: React.FC = () => {
       <Sequence from={SCENE.unlockVideo.from} durationInFrames={SCENE.unlockVideo.duration} name="UnlockVideo">
         <UnlockVideoScene />
       </Sequence>
-      <Sequence from={SCENE.portraits.from} durationInFrames={SCENE.portraits.duration} name="Portraits">
+      <Sequence from={SCENE.portraits.from} durationInFrames={SCENE.portraits.duration} name="Devis">
         <PortraitsScene />
       </Sequence>
       <Sequence from={SCENE.mutate.from} durationInFrames={SCENE.mutate.duration} name="Mutate">

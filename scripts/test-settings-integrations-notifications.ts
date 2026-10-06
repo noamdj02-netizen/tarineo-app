@@ -57,17 +57,30 @@ function testThresholdClamp() {
 }
 
 function testIntegrationsHonesty() {
+  const email = INTEGRATIONS.find((i) => i.id === "tarineo_email");
   const google = INTEGRATIONS.find((i) => i.id === "google");
   const ms = INTEGRATIONS.find((i) => i.id === "microsoft");
   const api = INTEGRATIONS.find((i) => i.id === "api_tarineo");
+  assert.ok(email && email.capability === "platform");
   assert.ok(google && google.capability === "oauth");
   assert.ok(ms && ms.capability === "none");
   assert.ok(api && api.capability === "api_keys");
+  assert.equal(INTEGRATIONS.length, 15);
+  const billing = INTEGRATIONS.find((i) => i.id === "stripe_billing");
+  assert.ok(billing && billing.capability === "billing_status");
   assert.equal(isIntegrationId("google"), true);
   assert.equal(isIntegrationId("fake"), false);
   // Aucune intégration « connected » au niveau catalogue (état runtime seulement)
   for (const i of INTEGRATIONS) {
-    assert.ok(i.capability === "oauth" || i.capability === "ical" || i.capability === "api_keys" || i.capability === "manual_import" || i.capability === "none");
+    assert.ok(
+      i.capability === "oauth" ||
+        i.capability === "ical" ||
+        i.capability === "api_keys" ||
+        i.capability === "manual_import" ||
+        i.capability === "platform" ||
+        i.capability === "billing_status" ||
+        i.capability === "none",
+    );
   }
 }
 

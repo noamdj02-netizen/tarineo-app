@@ -84,12 +84,7 @@ export async function updateSession(request: NextRequest) {
     const path = request.nextUrl.pathname;
     const adminLogin = path === "/login" && request.nextUrl.searchParams.get("next") === "/admin";
     if (adminLogin) return response;
-    if (AUTH_PAGES.includes(path)) {
-      const url = new URL("/accueil", request.url);
-      const q = request.nextUrl.searchParams.get("q");
-      if (q) url.searchParams.set("ask", q.slice(0, 500));
-      return NextResponse.redirect(url);
-    }
+    // Ne pas rediriger /login ni /inscription : la landing doit pouvoir y mener même en open access.
     return response;
   }
 

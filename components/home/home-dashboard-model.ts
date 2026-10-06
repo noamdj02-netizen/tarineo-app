@@ -3,6 +3,7 @@ import { documentAmountHt, formatRelativeFr } from "@/lib/metier/follow-ups";
 import { KIND_LABEL, type DocumentCard, type PriceAlert } from "@/lib/metier/types";
 import type { AppNotification } from "@/lib/notifications/types";
 import { priorityDot } from "@/lib/notifications/types";
+import { priceAlertProductHref } from "@/lib/tarineo/alert-product";
 import { R } from "@/lib/routes";
 import { signedPct, variation } from "@/lib/site/tarineo";
 
@@ -102,7 +103,7 @@ export function buildActions({
       key: `al-${a.id}`,
       title: a.label,
       hint: party ? `${party} · ${pct}` : pct,
-      href: a.document_id ? `/pieces/${a.document_id}` : R.hausses,
+      href: priceAlertProductHref(a),
       cta: "Voir",
       dot: "bg-[#F59E0B]",
     });

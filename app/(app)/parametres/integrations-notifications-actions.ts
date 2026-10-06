@@ -6,7 +6,11 @@ import { updateUserMeta } from "@/lib/profile";
 import { getDb } from "@/lib/db";
 import { canEditSection } from "@/lib/settings/roles";
 import { getEntrepriseConfig } from "@/lib/settings/entreprise-config";
-import { isIntegrationId } from "@/lib/settings/integrations-catalog";
+import {
+  integrationSupportsConnectionTest,
+  testIntegrationConnection,
+} from "@/lib/integrations/registry";
+import { isIntegrationId, type IntegrationId } from "@/lib/settings/integrations-catalog";
 import {
   getNotificationPreferences,
   saveNotificationPreferences,
@@ -17,6 +21,7 @@ import type {
 } from "@/lib/settings/notification-preferences";
 
 function refreshIntegrations() {
+  revalidatePath("/automatisations");
   revalidatePath("/parametres/integrations");
   revalidatePath("/parametres");
   revalidatePath("/accueil");
@@ -24,6 +29,18 @@ function refreshIntegrations() {
 
 function refreshNotifications() {
   revalidatePath("/parametres/notifications");
+}
+
+export async function testIntegrationConnectionAction(id: string) {
+  const { role } = await getEntrepriseConfig();
+  if (!canEditSection(role, "integrations")) {
+    return { ok: false as const, error: "Permission refusée." };
+  }
+  if (!isIntegrationId(id) || !integrationSupportsConnectionTest(id)) {
+    return { ok: false as const, error: "Test non disponible pour cette intégration." };
+  }
+  const result = await testIntegrationConnection(id as IntegrationId);
+  return { ok: true as const, result };
 }
 
 export async function completeGoogleBindAction(tool: "gmail" | "google-drive" = "gmail") {

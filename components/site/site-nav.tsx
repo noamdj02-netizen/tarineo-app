@@ -66,6 +66,8 @@ export function SiteNav() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  if (isHome) return null;
+
   return (
     <header className={cn("sticky top-0 z-40 px-3 pt-3 sm:px-6", light && "theme-light")}>
       <nav

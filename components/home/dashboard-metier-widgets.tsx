@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { priceAlertProductHref } from "@/lib/tarineo/alert-product";
 import type { ChantierCard, DocumentCard, PriceAlert } from "@/lib/metier/types";
 import { signedPct, variation } from "@/lib/site/tarineo";
 
@@ -36,13 +37,16 @@ export function HaussesWidget({ alerts }: { alerts: PriceAlert[] }) {
       {alerts.length ? (
         <ul className="grid gap-2">
           {alerts.slice(0, 3).map((a) => (
-            <li key={a.id} className="flex items-baseline justify-between gap-2 text-[14px]">
-              <span className="min-w-0 truncate">
-                {a.label}
-              </span>
-              <span className="shrink-0 tabular-nums text-brand-orange">
-                {signedPct(variation(Number(a.old_price), Number(a.new_price)))}
-              </span>
+            <li key={a.id}>
+              <Link
+                href={priceAlertProductHref(a)}
+                className="flex items-baseline justify-between gap-2 text-[14px] transition-colors hover:text-tarineo-orange"
+              >
+                <span className="min-w-0 truncate">{a.label}</span>
+                <span className="shrink-0 tabular-nums text-brand-orange">
+                  {signedPct(variation(Number(a.old_price), Number(a.new_price)))}
+                </span>
+              </Link>
             </li>
           ))}
         </ul>

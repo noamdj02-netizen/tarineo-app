@@ -5,10 +5,12 @@ export const BRAND = {
   domain: "tarineo.fr",
   /** Canonique SEO + emails (www). */
   siteUrl: "https://www.tarineo.fr",
-  /** Logo app clair (JSON-LD, emails, PWA). */
+  /** Picto app fond clair (sidebar / UI claire). */
   logoSrc: "/brand/tarineo-logo-light.png",
-  /** Logo app sombre (chrome noir). */
+  /** Picto app fond sombre (sidebar / UI sombre). */
   logoDarkSrc: "/brand/tarineo-logo-dark.png",
+  /** Icône PWA et écran d’accueil (fond noir, barres orange). */
+  appIconSrc: "/brand/favicon/icon-512.png",
   /** Logo landing (nav + footer site public) — asset marketing, inchangé. */
   logoLandingSrc: "/brand/tarineo-mark.png",
   /** Expéditeur Resend : domaine vérifié = tarineo.com (tarineo.fr DNS pas encore prêt). */

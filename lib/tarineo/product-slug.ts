@@ -4,6 +4,8 @@ export function productSlug(label: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
+    .replace(/ø/g, "o")
+    .replace(/œ/g, "oe")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return base || "produit";

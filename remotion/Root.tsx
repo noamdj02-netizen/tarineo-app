@@ -43,10 +43,10 @@ import { ExportComptableScene } from "./product-v2/scenes/ExportComptable";
 import { V2Scene } from "./product-v2/scenes/V2";
 import { LogoOutroScene } from "./product-v2/scenes/LogoOutro";
 import {
+  CANONICAL_COMPOSITION_ID,
   DURATION as TEMPLATE_DURATION,
   FPS as TEMPLATE_FPS,
   ID as TEMPLATE_ID,
-  ID_4K as TEMPLATE_ID_4K,
   SCENE as TEMPLATE_SCENE,
   SIZE as TEMPLATE_SIZE,
   SIZE_4K as TEMPLATE_SIZE_4K,
@@ -71,6 +71,22 @@ import { CloseScene } from "./scenes/CloseScene";
 import { DetectionScene } from "./scenes/DetectionScene";
 import { DocumentScene } from "./scenes/DocumentScene";
 import { MarginScene } from "./scenes/MarginScene";
+import {
+  DURATION_IN_FRAMES as COMPARE_DURATION,
+  FPS as COMPARE_FPS,
+  ID as COMPARE_ID,
+  SEQ,
+  SIZE as COMPARE_SIZE,
+} from "./compare-showreel/constants";
+import { TarineoCompareShowreel } from "./compare-showreel/TarineoCompareShowreel";
+import { HookScene } from "./compare-showreel/scenes/HookScene";
+import { VsIntroScene } from "./compare-showreel/scenes/VsIntroScene";
+import { RoundDetectionScene } from "./compare-showreel/scenes/RoundDetectionScene";
+import { RoundTimeScene } from "./compare-showreel/scenes/RoundTimeScene";
+import { RoundMarginScene } from "./compare-showreel/scenes/RoundMarginScene";
+import { MontageUiScene } from "./compare-showreel/scenes/MontageUiScene";
+import { WinnerScene } from "./compare-showreel/scenes/WinnerScene";
+import { OutroScene } from "./compare-showreel/scenes/OutroScene";
 
 const landscape = {
   width: COMPOSITION.landscape.width,
@@ -114,20 +130,26 @@ const template4k = {
   fps: TEMPLATE_FPS,
 } as const;
 
+const compareShowreel = {
+  width: COMPARE_SIZE.width,
+  height: COMPARE_SIZE.height,
+  fps: COMPARE_FPS,
+} as const;
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      <Composition
+        id={CANONICAL_COMPOSITION_ID}
+        component={TarineoTemplate}
+        durationInFrames={TEMPLATE_DURATION}
+        {...template4k}
+      />
       <Composition
         id={TEMPLATE_ID}
         component={TarineoTemplate}
         durationInFrames={TEMPLATE_DURATION}
         {...template}
-      />
-      <Composition
-        id={TEMPLATE_ID_4K}
-        component={TarineoTemplate}
-        durationInFrames={TEMPLATE_DURATION}
-        {...template4k}
       />
       <Composition
         id={PRODUCT_ID}
@@ -196,6 +218,37 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="DashAchats" component={AchatsScene} durationInFrames={DASH_SCENE.achats.duration} {...dashboard} />
         <Composition id="DashOverview" component={OverviewScene} durationInFrames={DASH_SCENE.overview.duration} {...dashboard} />
         <Composition id="DashOutro" component={OutroScene} durationInFrames={DASH_SCENE.outro.duration} {...dashboard} />
+      </Folder>
+      <Composition
+        id={COMPARE_ID}
+        component={TarineoCompareShowreel}
+        durationInFrames={COMPARE_DURATION}
+        {...compareShowreel}
+      />
+      <Folder name="Compare-Showreel">
+        <Composition id="CompareHook" component={HookScene} durationInFrames={SEQ.hook} {...compareShowreel} />
+        <Composition id="CompareVsIntro" component={VsIntroScene} durationInFrames={SEQ.vsIntro} {...compareShowreel} />
+        <Composition
+          id="CompareDetection"
+          component={RoundDetectionScene}
+          durationInFrames={SEQ.roundDetection}
+          {...compareShowreel}
+        />
+        <Composition id="CompareTime" component={RoundTimeScene} durationInFrames={SEQ.roundTime} {...compareShowreel} />
+        <Composition
+          id="CompareMargin"
+          component={RoundMarginScene}
+          durationInFrames={SEQ.roundMargin}
+          {...compareShowreel}
+        />
+        <Composition
+          id="CompareMontage"
+          component={MontageUiScene}
+          durationInFrames={SEQ.montageUi}
+          {...compareShowreel}
+        />
+        <Composition id="CompareWinner" component={WinnerScene} durationInFrames={SEQ.winner} {...compareShowreel} />
+        <Composition id="CompareOutro" component={OutroScene} durationInFrames={SEQ.outro} {...compareShowreel} />
       </Folder>
       <Folder name="Tarineo-Scenes">
         <Composition id="Document" component={DocumentScene} durationInFrames={SCENE.document.duration} {...landscape} />

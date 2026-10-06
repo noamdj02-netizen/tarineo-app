@@ -23,7 +23,7 @@ export function LandingHero() {
     >
       <HeroBackdrop />
 
-      <div className="relative mx-auto grid w-full max-w-[1280px] items-center gap-12 px-4 sm:px-8 lg:grid-cols-[minmax(0,0.42fr)_minmax(0,0.58fr)] lg:gap-16 xl:gap-[4.5rem]">
+      <div className="relative mx-auto grid w-full max-w-[1240px] items-center gap-12 px-4 sm:px-8 lg:grid-cols-[minmax(0,0.44fr)_minmax(0,0.56fr)] lg:gap-16 xl:gap-[4.5rem]">
         <RevealGroup stagger={0.06} delay={0.03} className="flex flex-col lg:pr-2">
           <Reveal>
             <p className="text-[11px] font-semibold tracking-[0.18em] uppercase">

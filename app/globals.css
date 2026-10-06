@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "../styles/studio.css" layer(components);
+@import "../styles/landing-v2.css";
 
 /* Variantes `dark:` des primitives shadcn pilotées par la classe .dark (site public), pas par l'OS. */
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *):not(:where(.theme-light, .theme-light *)));
@@ -106,8 +107,8 @@
   --color-landing-chapter: color-mix(in oklab, var(--tarineo-orange) 82%, transparent);
   --shadow-landing-cta: 0 10px 28px -16px color-mix(in oklab, var(--tarineo-orange) 42%, transparent);
   /* Hero H1 — ligne question + marqueur */
-  --hero-headline-lead: clamp(1.5rem, 3.25vw, 2.375rem);
-  --hero-headline-highlight: clamp(2.05rem, 5.4vw, 4.5rem);
+  --hero-headline-lead: clamp(1.625rem, 3.5vw, 2.625rem);
+  --hero-headline-highlight: clamp(2.25rem, 6vw, 5.25rem);
   --hero-headline-lead-tracking: -0.035em;
   --hero-headline-highlight-tracking: -0.048em;
   --hero-marker-rotate-fill: -1.15deg;
@@ -757,6 +758,25 @@ body:has(.theme-tarineo) {
         color-mix(in oklab, var(--color-ink) 4%, transparent),
         transparent 50%
       );
+  }
+
+  .landing-editorial-grid {
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--color-ink) 5%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-ink) 4%, transparent) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(to bottom, black 0%, black 42%, transparent 100%);
+  }
+
+  .landing-showcase-bezel {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-ink) 6%, transparent),
+      0 28px 64px -40px color-mix(in oklab, var(--color-ink) 22%, transparent);
+  }
+
+  .landing-surface .landing-stack-headline-lead,
+  .landing-surface .landing-stack-headline-tail-wrap {
+    font-family: var(--font-grotesk);
   }
 
   /* Grain argentique très léger (hero) */

@@ -25,7 +25,7 @@ export const SCENE = {
   circles: { from: 0, duration: 45 }, // 0.0 → 1.5
   unlock: { from: 45, duration: 30 }, // 1.5 → 2.5
   unlockVideo: { from: 75, duration: 60 }, // 2.5 → 4.5
-  portraits: { from: 135, duration: 75 }, // 4.5 → 7.0
+  portraits: { from: 135, duration: 75 }, // 4.5 → 7.0 — 3 devis (ex-portraits)
   mutate: { from: 210, duration: 45 }, // 7.0 → 8.5
   waiting: { from: 255, duration: 45 }, // 8.5 → 10.0
   upload: { from: 300, duration: 75 }, // 10.0 → 12.5
@@ -40,5 +40,8 @@ export const SCENE = {
 export const DURATION = SCENE.logoEnd.from + SCENE.logoEnd.duration; // 750
 export const ID = "TarineoTemplate";
 export const ID_4K = "TarineoTemplate-4K";
+
+/** Composition marketing de référence (4K) — timeline ~25 s, ne pas remplacer par Product V2 / Compare sans décision explicite. */
+export const CANONICAL_COMPOSITION_ID = ID_4K;
 export const SIZE = { width: 1920, height: 1080 } as const;
 export const SIZE_4K = { width: 3840, height: 2160 } as const;

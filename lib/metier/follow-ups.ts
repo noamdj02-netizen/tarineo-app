@@ -18,6 +18,7 @@ export type FollowUp = {
   created_at: string;
   updated_at?: string;
   attempt_number?: number;
+  sequence_number?: number;
   virtual?: boolean;
 };
 

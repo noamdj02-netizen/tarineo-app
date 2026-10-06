@@ -69,7 +69,10 @@ export default async function AchatsProduitsPage() {
           </TarineoPanelCard>
           <TopProducts items={topBySpend} title="Top produits vendus" />
           <div className="lg:col-span-2">
-            <TopPriceIncreases items={adaptTopPriceIncreases(alerts, 8)} title="Principales hausses détectées" />
+            <TopPriceIncreases
+              items={adaptTopPriceIncreases(alerts, 8, articles)}
+              title="Principales hausses détectées"
+            />
           </div>
         </div>
       )}

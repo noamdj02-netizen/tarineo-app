@@ -16,7 +16,7 @@ export function ProductPriceHistory({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div id="historique" className="flex scroll-mt-24 flex-col gap-3">
       {showChart ? <PriceHistoryChart points={points} /> : null}
       <table className="w-full text-left text-[13px]">
         <thead>

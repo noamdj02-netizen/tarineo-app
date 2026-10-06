@@ -12,6 +12,13 @@ import type { FollowUpView } from "@/lib/metier/follow-ups";
 import { documentSentAt } from "@/lib/metier/follow-ups";
 import type { DocumentCard, PriceAlert } from "@/lib/metier/types";
 import { buildExportPreviewRows } from "@/lib/metier/accounting-export/rows";
+import {
+  alertProductName,
+  alertsMatchingProduct,
+  distributorFromAlertLabel,
+  priceAlertProductHref,
+} from "@/lib/tarineo/alert-product";
+import { productSlug } from "@/lib/tarineo/product-slug";
 import { R } from "@/lib/routes";
 import { variation } from "@/lib/site/tarineo";
 
@@ -24,18 +31,24 @@ export function adaptQuoteStats(outbound: DocumentCard[], followUps: FollowUpVie
   return { sent, followup, accepted, refused };
 }
 
-export function adaptTopPriceIncreases(alerts: PriceAlert[], limit = 6) {
+export function adaptTopPriceIncreases(alerts: PriceAlert[], limit = 6, _articles?: { label: string }[]) {
   return alerts
-    .map((a) => ({
-      id: a.id,
-      label: a.label,
-      oldPrice: Number(a.old_price),
-      newPrice: Number(a.new_price),
-      pct: variation(Number(a.old_price), Number(a.new_price)),
-      chantierName: a.chantier_name,
-      documentId: a.document_id,
-      reference: a.product_id ? String(a.product_id).slice(0, 12) : null,
-    }))
+    .map((a) => {
+      const productName = alertProductName(a.label);
+      const detailHref = priceAlertProductHref(a);
+      return {
+        id: a.id,
+        label: a.label,
+        productName,
+        oldPrice: Number(a.old_price),
+        newPrice: Number(a.new_price),
+        pct: variation(Number(a.old_price), Number(a.new_price)),
+        chantierName: a.chantier_name,
+        documentId: a.document_id,
+        reference: a.product_id ? String(a.product_id).slice(0, 12) : null,
+        detailHref,
+      };
+    })
     .sort((a, b) => b.pct - a.pct)
     .slice(0, limit);
 }
@@ -174,18 +187,64 @@ export function adaptSavedProducts(articles: { label: string; amount: number; qt
   }));
 }
 
+function lineMatchesProduct(lineLabel: string, productName: string) {
+  const a = productName.toLowerCase().trim();
+  const b = lineLabel.toLowerCase().trim();
+  return b === a || b.startsWith(a) || a.startsWith(b);
+}
+
+export function adaptPriceHistoryFromDocuments(
+  docs: DocumentCard[],
+  productName: string,
+): PriceHistoryPoint[] {
+  const points: PriceHistoryPoint[] = [];
+  for (const d of docs) {
+    if (d.direction !== "in") continue;
+    for (const l of d.lines) {
+      if (!lineMatchesProduct(l.label, productName)) continue;
+      points.push({
+        date: d.created_at.slice(0, 10),
+        priceHt: Number(l.buy_price),
+        label: d.party_name ?? undefined,
+      });
+    }
+  }
+  return points.sort((x, y) => x.date.localeCompare(y.date));
+}
+
 export function adaptPriceHistoryFromAlerts(alerts: PriceAlert[], label: string): PriceHistoryPoint[] {
-  const related = alerts
-    .filter((a) => a.label.toLowerCase() === label.toLowerCase())
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
-  const points: PriceHistoryPoint[] = related.map((a) => ({
-    date: a.created_at.slice(0, 10),
-    priceHt: Number(a.new_price),
-  }));
-  if (!points.length && related.length === 0) {
-    return [];
+  const related = alertsMatchingProduct(alerts, label).sort((a, b) =>
+    a.created_at.localeCompare(b.created_at),
+  );
+  const points: PriceHistoryPoint[] = [];
+  for (const a of related) {
+    const dist = distributorFromAlertLabel(a.label);
+    const date = a.created_at.slice(0, 10);
+    points.push({
+      date,
+      priceHt: Number(a.old_price),
+      label: dist ? `${dist} (avant)` : "Avant",
+    });
+    points.push({
+      date,
+      priceHt: Number(a.new_price),
+      label: dist ?? undefined,
+    });
   }
   return points;
+}
+
+/** Historique achats : lignes de factures/devis + hausses détectées. */
+export function adaptProductPriceHistory(
+  productName: string,
+  alerts: PriceAlert[],
+  docs: DocumentCard[],
+): PriceHistoryPoint[] {
+  const fromDocs = adaptPriceHistoryFromDocuments(docs, productName);
+  const fromAlerts = adaptPriceHistoryFromAlerts(alerts, productName);
+  const merged = [...fromDocs, ...fromAlerts];
+  merged.sort((a, b) => a.date.localeCompare(b.date) || a.priceHt - b.priceHt);
+  return merged;
 }
 
 export function adaptDistributorPriceSeries(months: SalesPoint[], enseignes: { label: string; amount: number }[]) {

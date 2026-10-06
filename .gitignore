@@ -23,6 +23,14 @@
 
 # misc
 .DS_Store
+.figma-capture-id
+
+# Cursor agent skills (local only)
+.cursor/skills/
+
+# Local media archives (not product assets)
+tarineo-remotion-medias.zip
+tarineo-remotion-bundle.zip
 /navpit/
 /my-video/
 .agents/

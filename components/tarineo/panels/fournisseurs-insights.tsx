@@ -57,7 +57,16 @@ export function FournisseursInsights({
       <TarineoPanelCard title="Produits enregistrés" href={R.achatsProduits}>
         <SavedProducts products={adaptSavedProducts(articles)} />
       </TarineoPanelCard>
-      <TopPriceIncreases items={adaptTopPriceIncreases(alerts, 5)} title="Produits avec la plus forte hausse" href={R.hausses} compact />
+      <TopPriceIncreases
+        items={adaptTopPriceIncreases(
+          alerts,
+          5,
+          articles.map((a) => ({ label: a.label })),
+        )}
+        title="Produits avec la plus forte hausse"
+        href={R.hausses}
+        compact
+      />
       {product ? (
         <TarineoPanelCard title="Fiche produit" className="lg:col-span-2">
           <ProductDetail

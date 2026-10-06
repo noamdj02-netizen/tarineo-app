@@ -5,7 +5,7 @@ import { AUDIENCE } from "@/lib/site/tarineo";
 /** Métiers — liste éditoriale avec numérotation discrète. */
 export function LandingAudience() {
   return (
-    <InView className="mx-auto max-w-[760px]" stagger={0.04}>
+    <InView className="w-full max-w-[720px] lg:max-w-none" stagger={0.04}>
       <ul className="flex flex-col">
         {AUDIENCE.map((a, i) => (
           <Reveal key={a.id}>

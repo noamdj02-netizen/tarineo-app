@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight, Mail } from "lucide-react";
 import Link from "next/link";
@@ -32,9 +33,12 @@ const riseQuiet = {
 } as const;
 
 export function SiteFooter() {
+  const pathname = usePathname();
   const reduce = useReducedMotion();
   const variants = reduce ? riseQuiet : rise;
   const year = new Date().getFullYear();
+
+  if (pathname === "/") return null;
 
   return (
     <footer className="bg-bg px-4 pt-4 pb-8 sm:px-8 sm:pt-6 sm:pb-10">

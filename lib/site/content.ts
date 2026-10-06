@@ -227,6 +227,69 @@ export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
   },
 ];
 
+/** Avis artisans BTP — carrousel landing (#qui). */
+export const ARTISAN_LANDING_REVIEWS: LandingTestimonial[] = [
+  {
+    id: "avis-plombier",
+    brand: "Plomberie",
+    quote:
+      "La hausse sur le PER est sortie toute seule après l’import Cedeo. Je refais le devis client avant de partir en perte.",
+    name: "Julien",
+    role: "Plombier · Lyon",
+    photo: "/landing/testimonials/marcus.jpg",
+    photoVariant: "portrait",
+    photoPosition: "center 22%",
+    stackTools: [
+      { label: "Cedeo", domain: "cedeo.fr" },
+      { label: "Point.P", domain: "pointp.fr" },
+    ],
+  },
+  {
+    id: "avis-electricien",
+    brand: "Électricité",
+    quote:
+      "Je ne relis plus chaque ligne de facture Rexel le dimanche. TARINEO me dit quoi a bougé et sur quel chantier.",
+    name: "Marc",
+    role: "Électricien · Toulouse",
+    photo: "/landing/testimonials/karim.jpg",
+    photoVariant: "graphic",
+    photoBg: "#0f1419",
+    stackTools: [
+      { label: "Rexel", domain: "rexel.com" },
+      { label: "Legrand", domain: "legrand.fr" },
+    ],
+  },
+  {
+    id: "avis-chauffage",
+    brand: "Chauffage",
+    quote:
+      "Devis client prérempli à partir des achats chantier : je garde la marge que je me suis fixée, sans tableur.",
+    name: "Sophie",
+    role: "Chauffagiste · Nantes",
+    photo: "/landing/testimonials/sarah.jpg",
+    photoVariant: "graphic",
+    stackTools: [
+      { label: "Brossette", domain: "brossette.fr" },
+      { label: "Aubade", domain: "aubade.fr" },
+    ],
+  },
+  {
+    id: "avis-tpe",
+    brand: "TPE BTP",
+    quote:
+      "Export compta des achats distributeur en un fichier — ma comptable arrête de me relancer pour les factures du trimestre.",
+    name: "Thomas",
+    role: "Gérant · 6 personnes",
+    photo: "/landing/testimonials/ines.jpg",
+    photoVariant: "portrait",
+    photoPosition: "center 18%",
+    stackTools: [
+      { label: "Cedeo", domain: "cedeo.fr" },
+      { label: "Castorama Pro", domain: "castorama.fr" },
+    ],
+  },
+];
+
 export type CompareColumn = {
   title: string;
   subtitle: string;

@@ -42,7 +42,7 @@ export function Topbar({
 
   return (
     <header
-      className="sticky top-0 z-20 flex shrink-0 flex-col border-b border-line bg-surface transition-[background-color,border-color,color] duration-[180ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none lg:z-10"
+      className="sticky top-0 z-40 flex shrink-0 flex-col border-b border-line bg-surface transition-[background-color,border-color,color] duration-[180ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none"
       style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       {viewer?.needsOnboarding ? (

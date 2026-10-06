@@ -3,10 +3,8 @@ import { notFound } from "next/navigation";
 import { PageHead } from "@/components/shell/page-head";
 import { TarineoPanelCard } from "@/components/tarineo/cards/tarineo-panel-card";
 import { ProductDetail } from "@/components/tarineo/products/product-detail";
-import {
-  adaptPriceHistoryFromAlerts,
-  adaptSupplierQuoteLines,
-} from "@/lib/tarineo/adapters";
+import { adaptProductPriceHistory, adaptSupplierQuoteLines } from "@/lib/tarineo/adapters";
+import { alertProductName } from "@/lib/tarineo/alert-product";
 import { productSlug } from "@/lib/tarineo/product-slug";
 import { listAlerts, listDocuments, rankingRows } from "@/lib/metier/queries";
 import { R } from "@/lib/routes";
@@ -27,19 +25,37 @@ export default async function AchatsProduitDetailPage({ params }: PageProps) {
     listAlerts(),
     listDocuments({ direction: "in" }),
   ]);
-  const article = articles.find((a) => productSlug(a.label) === slug);
+  const alertForSlug = alerts.find((a) => productSlug(alertProductName(a.label)) === slug);
+  let article =
+    articles.find((a) => productSlug(a.label) === slug) ??
+    (alertForSlug
+      ? articles.find(
+          (a) => a.label.toLowerCase() === alertProductName(alertForSlug.label).toLowerCase(),
+        )
+      : undefined);
+  if (!article && alertForSlug) {
+    article = {
+      label: alertProductName(alertForSlug.label),
+      qty: 1,
+      amount: Number(alertForSlug.new_price),
+    };
+  }
   if (!article) notFound();
+
+  const matchingAlert = alerts.find((a) => productSlug(alertProductName(a.label)) === slug);
 
   const product = {
     id: slug,
     name: article.label,
-    supplierRef: null,
+    supplierRef: matchingAlert?.product_id ? String(matchingAlert.product_id).slice(0, 12) : null,
     distributorRef: null,
     lastPriceHt: article.qty > 0 ? Math.round((article.amount / article.qty) * 100) / 100 : null,
   };
 
   const relatedDoc =
-    docs.find((d) => d.lines.some((l) => l.label.toLowerCase() === article.label.toLowerCase())) ?? docs[0] ?? null;
+    (matchingAlert?.document_id ? docs.find((d) => d.id === matchingAlert.document_id) : null) ??
+    docs.find((d) => d.lines.some((l) => l.label.toLowerCase() === article.label.toLowerCase())) ??
+    null;
 
   const quoteLines = relatedDoc
     ? adaptSupplierQuoteLines({
@@ -74,7 +90,7 @@ export default async function AchatsProduitDetailPage({ params }: PageProps) {
       <TarineoPanelCard title="Fiche produit">
         <ProductDetail
           product={product}
-          priceHistory={adaptPriceHistoryFromAlerts(alerts, product.name)}
+          priceHistory={adaptProductPriceHistory(product.name, alerts, docs)}
           quoteLines={quoteLines}
           documentsHref={relatedDoc ? R.piece(relatedDoc.id) : undefined}
         />

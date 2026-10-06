@@ -11,7 +11,11 @@ export function LandingClosingCta({ className }: { className?: string }) {
     <section className={cn("px-4 pb-14 pt-6 sm:px-8 sm:pb-20", className)}>
       <div className="mx-auto max-w-[1180px]">
         <InView stagger={0.08}>
-          <LandingBezel tone="dark" className="bg-[rgba(10,10,10,0.06)]" innerClassName="bg-ink">
+          <LandingBezel
+            tone="dark"
+            className="bg-[rgba(10,10,10,0.06)] shadow-[0_0_0_1px_rgba(255,107,26,0.12),0_24px_80px_-32px_rgba(10,10,10,0.55)] transition-transform duration-300 hover:-translate-y-0.5 motion-reduce:transform-none"
+            innerClassName="bg-ink"
+          >
             <div className="flex flex-col items-start justify-between gap-10 px-6 py-14 sm:flex-row sm:items-center sm:px-10 sm:py-16 lg:px-14">
               <Reveal>
                 <h2 className="max-w-[20ch] font-display text-[clamp(28px,4.2vw,40px)] leading-[1.06] font-semibold tracking-[-0.034em] text-balance text-white">

@@ -90,11 +90,11 @@ export function PwaInstallBanner() {
     >
       <div className="mx-auto flex max-w-lg items-start gap-2.5">
         <img
-          src={BRAND.logoSrc}
+          src={BRAND.appIconSrc}
           alt=""
           width={40}
           height={40}
-          className="size-10 shrink-0 rounded-xl border border-line bg-bg object-cover"
+          className="size-10 shrink-0 rounded-[22%] object-cover shadow-soft"
         />
         <div className="min-w-0 flex-1 pt-0.5">
           <p className="text-[14px] font-semibold tracking-[-0.02em] text-ink">Installer {BRAND.name}</p>

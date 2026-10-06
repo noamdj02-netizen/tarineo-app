@@ -75,6 +75,40 @@ export async function notifyClientFollowUp(view: FollowUpView) {
   }
 }
 
+export async function notifyMarginBelowTarget(input: {
+  documentId: string;
+  chantierId?: string | null;
+  marginPct: number;
+  floorPct: number;
+  sellHt: number;
+  costHt: number;
+  idempotencyKey: string;
+}) {
+  try {
+    const priority = input.marginPct < input.floorPct - 5 ? "high" : "normal";
+    await createNotification({
+      type: "margin_below_target",
+      title: "Marge sous votre seuil",
+      message: `Marge estimée ${input.marginPct.toFixed(1)} % (objectif ${input.floorPct.toFixed(1)} %).`,
+      priority,
+      actionUrl: `/pieces/${input.documentId}`,
+      entityType: "document",
+      entityId: input.documentId,
+      preferenceChannel: "quotes",
+      idempotencyKey: input.idempotencyKey,
+      metadata: {
+        marginPct: input.marginPct,
+        floorPct: input.floorPct,
+        sellHt: input.sellHt,
+        costHt: input.costHt,
+        chantierId: input.chantierId ?? null,
+      },
+    });
+  } catch (err) {
+    console.error("[notifyMarginBelowTarget]", err);
+  }
+}
+
 export async function notifyQuoteReady(doc: DocumentCard) {
   try {
     if (doc.kind !== "devis" || doc.direction !== "out") return;

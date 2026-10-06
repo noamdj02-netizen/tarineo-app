@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { integrationsHubUrl } from "@/lib/integrations/hub";
 import { safeNext } from "@/lib/safe-next";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,16 +12,16 @@ const SCOPES: Record<string, string> = {
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const tool = url.searchParams.get("tools") === "drive" ? "drive" : "gmail";
+  const bound = tool === "drive" ? "drive" : "gmail";
+  const defaultReturn = integrationsHubUrl({ bound });
+  const returnParam = url.searchParams.get("return");
   const db = await getDb();
   if (!db) {
-    return NextResponse.redirect(new URL("/login?next=/parametres/integrations", url.origin));
+    return NextResponse.redirect(new URL("/login?next=/automatisations", url.origin));
   }
 
   const supabase = await createClient();
-  const next = safeNext(
-    `/parametres/integrations?bound=${tool === "drive" ? "drive" : "gmail"}`,
-    "/parametres/integrations",
-  );
+  const next = safeNext(returnParam ?? defaultReturn, defaultReturn);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
@@ -30,7 +31,9 @@ export async function GET(request: Request) {
     },
   });
   if (error || !data.url) {
-    return NextResponse.redirect(new URL("/parametres/integrations?erreur=google", url.origin));
+    return NextResponse.redirect(
+      new URL(integrationsHubUrl({ erreur: "google" }), url.origin),
+    );
   }
   return NextResponse.redirect(data.url);
 }

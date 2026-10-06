@@ -3,7 +3,6 @@ import { DeltaBadge } from "@/components/site/delta-badge";
 import { InView } from "@/components/site/in-view";
 import { Badge } from "@/components/ui/badge";
 import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { DEMO_DOCUMENTS, DEMO_MARK, PROBLEM, euroDelta, variation } from "@/lib/site/tarineo";
 
@@ -12,7 +11,7 @@ const DRIFT = DEMO_DOCUMENTS.flatMap((d) => d.lines.map((l) => ({ ...l, supplier
   .filter((l) => l.after > l.before && l.after < 200)
   .slice(0, 6);
 
-/** Section #probleme : pourquoi les hausses passent inaperçues. */
+/** Section #probleme : pourquoi les hausses passent inaperçues — bento asymétrique. */
 export function LandingProblem() {
   return (
     <LandingSection id="probleme" className="relative">
@@ -22,32 +21,30 @@ export function LandingProblem() {
         tail={PROBLEM.tail}
         text={PROBLEM.text}
         stackedTail
-        className="max-w-[34rem]"
+        className="max-w-[38rem]"
       />
 
-      <InView className="mx-auto grid max-w-[1080px] gap-4 md:grid-cols-3" stagger={0.08}>
-        {PROBLEM.points.map((p, i) => (
-          <Reveal key={p.title}>
-            <Card className="card-lift h-full gap-0 rounded-2xl py-0 shadow-soft">
-              <CardHeader className="gap-3 px-5 pt-6 sm:px-6">
-                <span className="grid size-8 place-items-center rounded-lg border bg-muted font-mono text-[11px] text-muted-foreground">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <CardTitle className="text-[1.125rem] font-semibold tracking-tight">{p.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="px-5 pt-2 pb-6 sm:px-6">
-                <CardDescription className="text-[15px] sm:text-base leading-relaxed">{p.text}</CardDescription>
-              </CardContent>
-            </Card>
-          </Reveal>
-        ))}
-      </InView>
+      <InView className="mt-2 grid gap-5 lg:grid-cols-12 lg:gap-6" stagger={0.06}>
+        <Reveal className="lg:col-span-5">
+          <ul className="flex h-full flex-col justify-center gap-0 overflow-hidden rounded-xl border border-black/[0.06] border-l-[3px] border-l-tarineo-orange bg-white/55 backdrop-blur-sm">
+            {PROBLEM.points.map((p) => (
+              <li
+                key={p.title}
+                className="px-5 py-5 sm:px-6 sm:py-6 [&+&]:border-t [&+&]:border-black/[0.06]"
+              >
+                <p className="font-[family-name:var(--font-grotesk)] text-[17px] font-semibold tracking-[-0.03em] text-ink">
+                  {p.title}
+                </p>
+                <p className="mt-2 text-[15px] leading-[1.6] text-landing-ink-muted">{p.text}</p>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
 
-      <InView className="mx-auto mt-4 max-w-[1080px]" stagger={0.05} delay={0.12}>
-        <Reveal>
-          <Card className="gap-0 overflow-hidden rounded-2xl py-0 shadow-soft">
+        <Reveal className="lg:col-span-7">
+          <div className="overflow-hidden rounded-xl border border-black/[0.06] bg-surface shadow-soft ring-1 ring-black/[0.04] transition-transform duration-300 hover:-translate-y-0.5">
             <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 sm:px-6">
-              <p className="mono-label">/ Petits écarts, ligne par ligne ///</p>
+              <p className="mono-label text-landing-ink-muted">Petits écarts, ligne par ligne</p>
               <Badge
                 variant="outline"
                 className="h-6 rounded-md px-2 font-mono text-[10px] tracking-[0.1em] text-muted-foreground uppercase"
@@ -56,13 +53,13 @@ export function LandingProblem() {
               </Badge>
             </div>
             <Separator />
-            <ul className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid gap-px bg-line sm:grid-cols-2">
               {DRIFT.map((l) => {
                 const pct = variation(l.before, l.after);
                 return (
                   <li
                     key={l.ref}
-                    className="flex items-center justify-between gap-3 bg-surface px-5 py-4 sm:px-6"
+                    className="flex items-center justify-between gap-3 bg-landing-hero/80 px-5 py-4 sm:px-6"
                   >
                     <div className="min-w-0">
                       <p className="truncate font-display text-[15px] font-medium leading-snug tracking-[-0.02em] text-ink">
@@ -82,7 +79,7 @@ export function LandingProblem() {
               Pris un par un, aucun de ces écarts n’alerte. Répétés sur des centaines de références et des mois
               d’achats, ils finissent par réduire votre marge.
             </p>
-          </Card>
+          </div>
         </Reveal>
       </InView>
     </LandingSection>

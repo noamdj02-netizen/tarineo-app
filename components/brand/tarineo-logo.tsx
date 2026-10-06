@@ -16,7 +16,7 @@ const SIZE_PX = {
 export type TarineoLogoVariant = "light" | "dark";
 export type TarineoLogoSize = keyof typeof SIZE_PX | number;
 
-/** Logo officiel TARINEO (fichiers raster). Light = UI claire, dark = UI sombre. */
+/** Picto app TARINEO (1024²). Light = fond clair, dark = fond noir — chrome dashboard. */
 export function TarineoLogo({
   variant,
   className,

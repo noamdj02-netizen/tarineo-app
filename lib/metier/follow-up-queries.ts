@@ -27,6 +27,9 @@ import { sendEmailWithPdf } from "@/lib/email/send";
 import { getViewer } from "@/lib/session";
 import { getCompanyProfile } from "@/lib/metier/queries";
 import { getCompanyProfileForUser, listDocumentsForUser } from "@/lib/metier/documents-for-user";
+import { tryInsertAutomationExecution } from "@/lib/automation/executions";
+import { quoteFollowupSendKey } from "@/lib/automation/types";
+import { getNotificationPreferencesForUser } from "@/lib/settings/notification-store";
 
 function allowLocalMemory() {
   return process.env.NODE_ENV !== "production" && process.env.VERCEL_ENV !== "preview" && process.env.VERCEL_ENV !== "production";
@@ -59,7 +62,10 @@ export async function listStoredFollowUps(): Promise<FollowUp[]> {
     console.error("[metier] listStoredFollowUps", error);
     return [];
   }
-  return (data ?? []) as FollowUp[];
+  return (data ?? []).map((row) => ({
+    ...(row as FollowUp),
+    sequence_number: (row as { sequence_number?: number }).sequence_number ?? 1,
+  }));
 }
 
 export async function markDocumentSent(documentId: string, extra?: Record<string, unknown>) {
@@ -93,6 +99,7 @@ export async function upsertFollowUp(input: {
   toEmail: string;
   subject: string;
   body: string;
+  sequenceNumber?: number;
 }): Promise<{ ok: true; followUp: FollowUp } | { ok: false; error: string }> {
   const doc = await getDocument(input.documentId);
   if (!doc) return { ok: false, error: "Pièce introuvable." };
@@ -110,6 +117,7 @@ export async function upsertFollowUp(input: {
     subject: input.subject,
     body: input.body,
     created_at: now,
+    sequence_number: input.sequenceNumber ?? 1,
   };
 
   const db = await getDb();
@@ -132,8 +140,9 @@ export async function upsertFollowUp(input: {
     to_email: row.to_email,
     subject: row.subject,
     body: row.body,
+    sequence_number: row.sequence_number ?? 1,
   };
-  const { error } = await db.supabase.from("follow_ups").upsert(payload);
+  const { error } = await db.supabase.from("follow_ups").upsert(payload as never);
   if (error) {
     if (isMissingTable(error) && allowLocalMemory()) {
       memUpsertFollowUp(db.user.id, row);
@@ -299,6 +308,8 @@ export async function processScheduledFollowUps() {
   }
 
   let sent = 0;
+  let failed = 0;
+  let skippedEmailPref = 0;
   for (const raw of data ?? []) {
     const fu = raw as FollowUp & { user_id: string; attempt_number?: number };
     try {
@@ -328,8 +339,15 @@ export async function processScheduledFollowUps() {
           .eq("user_id", fu.user_id);
         continue;
       }
-      const mail = await sendFollowUpAsUser(admin, fu.user_id, doc!, fu);
-      if (mail.ok) {
+
+      const prefs = await getNotificationPreferencesForUser(admin, fu.user_id);
+      if (!prefs.emailFollowups) {
+        skippedEmailPref += 1;
+        continue;
+      }
+
+      const sendRes = await sendFollowUpAsUser(admin, fu.user_id, doc!, fu);
+      if (sendRes.ok) {
         await admin
           .from("follow_ups")
           .update({ status: "sent", sent_at: nowIso, last_action_at: nowIso })
@@ -342,20 +360,52 @@ export async function processScheduledFollowUps() {
           .eq("id", doc!.id)
           .eq("user_id", fu.user_id);
         sent += 1;
+        const seq = fu.sequence_number ?? 1;
+        await tryInsertAutomationExecution(admin, {
+          userId: fu.user_id,
+          slug: "quote_followup",
+          phase: "send",
+          status: "completed",
+          idempotencyKey: quoteFollowupSendKey(doc!.id, seq),
+          entityType: "document",
+          entityId: doc!.id,
+          metadata: { followUpId: fu.id, sequence: seq },
+        });
+      } else {
+        failed += 1;
+        const seq = fu.sequence_number ?? 1;
+        const errMsg = sendRes.error ?? (sendRes.skipped ? "email-not-configured" : "send-failed");
+        console.error("[cron] follow-up send", { followUpId: fu.id, documentId: doc!.id, error: errMsg });
+        await tryInsertAutomationExecution(admin, {
+          userId: fu.user_id,
+          slug: "quote_followup",
+          phase: "send",
+          status: "failed",
+          idempotencyKey: `${quoteFollowupSendKey(doc!.id, seq)}:failed:${nowIso.slice(0, 13)}`,
+          entityType: "document",
+          entityId: doc!.id,
+          error: errMsg,
+          metadata: { followUpId: fu.id, sequence: seq, resendSkipped: Boolean(sendRes.skipped) },
+        });
       }
     } catch (err) {
       console.error("[cron] follow-up", fu.id, err);
+      failed += 1;
     }
   }
-  return { processed: sent };
+  return { processed: sent, failed, skippedEmailPref };
 }
+
+type SendPdfResult =
+  | { ok: true; skipped?: false; id?: string | null }
+  | { ok: false; skipped?: boolean; error?: string };
 
 async function sendFollowUpAsUser(
   admin: ReturnType<typeof createAdminClient>,
   userId: string,
   doc: DocumentCard,
   fu: FollowUp,
-) {
+): Promise<SendPdfResult> {
   const profile = await getCompanyProfileForUser(admin, userId);
   const { buffer, filename } = await pdfFromDocument(doc, profile?.email_contact, profile);
   const html = pieceMailHtml({
@@ -365,6 +415,7 @@ async function sendFollowUpAsUser(
     email: profile?.email_contact,
     address: [profile?.adresse_rue, profile?.adresse_code_postal, profile?.adresse_ville].filter(Boolean).join(", "),
   });
+  const seq = fu.sequence_number ?? 1;
   return sendEmailWithPdf({
     to: fu.to_email,
     subject: fu.subject,
@@ -373,6 +424,6 @@ async function sendFollowUpAsUser(
     filename,
     pdf: buffer,
     replyTo: profile?.email_contact,
-    idempotencyKey: `follow-up:${fu.id}`,
+    idempotencyKey: quoteFollowupSendKey(doc.id, seq),
   });
 }

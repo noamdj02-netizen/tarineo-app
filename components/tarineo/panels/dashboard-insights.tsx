@@ -50,7 +50,7 @@ export function TarineoDashboardInsights({
   distributorGoalsHt?: Record<string, number>;
 }) {
   const quoteStats = adaptQuoteStats(outbound, followUps);
-  const priceIncreases = adaptTopPriceIncreases(alerts);
+  const priceIncreases = adaptTopPriceIncreases(alerts, 6, articles);
   const sales = adaptSalesEvolution(months);
   const priceTrend = adaptDistributorPriceTrend(alerts);
   const goals = adaptAnnualGoals(enseignes, distributorGoalsHt);
@@ -88,7 +88,7 @@ export function TarineoDashboardInsights({
       <FamilyPerformanceTable rows={families} />
       <TopProducts items={topProducts} />
       <TopPriceIncreases
-        items={priceIncreases.slice(0, 5)}
+        items={adaptTopPriceIncreases(alerts, 5, articles)}
         title="Produits avec la plus forte hausse"
         href={R.achatsProduits}
         compact

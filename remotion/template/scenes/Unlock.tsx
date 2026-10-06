@@ -1,15 +1,14 @@
 import {
   AbsoluteFill,
-  Img,
-  OffthreadVideo,
   interpolate,
   spring,
-  staticFile,
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { C } from "../constants";
-import { COPY, HERO_POSTER, HERO_VIDEO } from "../data";
+import { AnalysePanel } from "../../product-v2/embeds/AnalysePanel";
+import { COPY } from "../data";
+import { TemplateAppInset } from "../TemplateAppInset";
+import { PillLogoBtn } from "../components/PillLogoBtn";
 import { Cursor, GuideCross, PillBar, RoundBtn, Stage, clamp } from "../ui";
 
 /** 1.5→2.5s — pill seule + grilles. */
@@ -30,7 +29,7 @@ export const UnlockScene: React.FC = () => {
         >
           <PillBar width={480}>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <RoundBtn>+</RoundBtn>
+              <PillLogoBtn />
               <span style={{ fontSize: 21, fontWeight: 550, letterSpacing: "-0.02em" }}>{COPY.unlock}</span>
             </div>
             <RoundBtn dark>→</RoundBtn>
@@ -41,7 +40,7 @@ export const UnlockScene: React.FC = () => {
   );
 };
 
-/** 2.5→4.5s — même pill sur fenêtre vidéo chantier + curseur. */
+/** 2.5→4.5s — analyse IA (écran app) + pill. */
 export const UnlockVideoScene: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -56,35 +55,23 @@ export const UnlockVideoScene: React.FC = () => {
       <AbsoluteFill style={{ display: "grid", placeItems: "center" }}>
         <div
           style={{
-            width: 980,
-            height: 552,
-            borderRadius: 4,
-            overflow: "hidden",
-            border: `1px solid rgba(10,10,10,0.2)`,
-            boxShadow: "0 24px 64px rgba(10,10,10,0.18)",
-            opacity: win,
-            transform: `scale(${0.96 + win * 0.04})`,
             position: "relative",
-            background: C.ink,
+            width: "100%",
+            height: "100%",
+            opacity: win,
+            scale: interpolate(win, [0, 1], [0.96, 1], clamp),
           }}
         >
-          <OffthreadVideo
-            src={staticFile(HERO_VIDEO)}
-            muted
-            style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.92 }}
-          />
-          {/* fallback poster if video fails mid-still */}
-          <Img
-            src={staticFile(HERO_POSTER)}
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              opacity: 0,
-            }}
-          />
+          <TemplateAppInset
+            activeNav="Analyse IA"
+            shellWidth={1280}
+            shellHeight={700}
+            maxWidthRatio={0.88}
+            maxHeightRatio={0.78}
+            skipEnter
+          >
+            <AnalysePanel />
+          </TemplateAppInset>
 
           <div
             style={{
@@ -92,11 +79,13 @@ export const UnlockVideoScene: React.FC = () => {
               left: "50%",
               top: "50%",
               transform: `translate(-50%, -50%) scale(${press})`,
+              zIndex: 20,
+              pointerEvents: "none",
             }}
           >
             <PillBar width={460}>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <RoundBtn>+</RoundBtn>
+                <PillLogoBtn />
                 <span style={{ fontSize: 20, fontWeight: 550 }}>{COPY.unlock}</span>
               </div>
               <RoundBtn dark>→</RoundBtn>

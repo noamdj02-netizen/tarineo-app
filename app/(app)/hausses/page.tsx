@@ -3,16 +3,19 @@ import { EmptyState } from "@/components/app-ui/empty-state";
 import { TopPriceIncreases } from "@/components/tarineo/analytics/top-price-increases";
 import { StatusBadge } from "@/components/tarineo/status-badge";
 import { adaptTopPriceIncreases } from "@/lib/tarineo/adapters";
+import { alertProductName, priceAlertProductHref } from "@/lib/tarineo/alert-product";
 import { PageHead } from "@/components/shell/page-head";
 import { DEMO_IDS } from "@/lib/metier/demo";
-import { listAlerts } from "@/lib/metier/queries";
+import { listAlerts, rankingRows } from "@/lib/metier/queries";
 import { R } from "@/lib/routes";
 import { DEMO_MARK, euro, signedPct, variation } from "@/lib/site/tarineo";
 
 export const metadata = { title: "Hausses de prix" };
 
 export default async function AlertesPage() {
-  const alerts = await listAlerts();
+  const [alerts, { articles }] = await Promise.all([listAlerts(), rankingRows()]);
+  const topItems = adaptTopPriceIncreases(alerts, 8, articles);
+
   return (
     <section className="flex flex-col gap-8">
       <PageHead
@@ -25,13 +28,15 @@ export default async function AlertesPage() {
       >
         Identifiez les augmentations qui peuvent réduire votre marge.
       </PageHead>
-      <TopPriceIncreases items={adaptTopPriceIncreases(alerts)} />
+      <TopPriceIncreases items={topItems} showPrices href={R.hausses} />
 
       {alerts.length ? (
         <ul className="grid gap-3 sm:grid-cols-2">
           {alerts.map((a) => {
             const pct = variation(Number(a.old_price), Number(a.new_price));
             const demo = a.id === DEMO_IDS.alert;
+            const productHref = priceAlertProductHref(a);
+            const productName = alertProductName(a.label);
             return (
               <li key={a.id} className="rounded-card border border-line bg-surface p-5 shadow-soft">
                 {demo ? <p className="mb-1 text-[11px] text-muted-foreground">{DEMO_MARK}</p> : null}
@@ -50,13 +55,11 @@ export default async function AlertesPage() {
                   {euro(Number(a.new_price))}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3 text-[13px]">
-                  {a.document_id ? (
-                    <Link href={R.piece(a.document_id)} className="font-medium text-tarineo-orange hover:underline">
-                      Voir la pièce
-                    </Link>
-                  ) : null}
+                  <Link href={productHref} className="font-medium text-tarineo-orange hover:underline">
+                    Voir la pièce
+                  </Link>
                   <Link
-                    href={`${R.comparateur}?article=${encodeURIComponent(a.label)}`}
+                    href={`${R.comparateur}?article=${encodeURIComponent(productName)}`}
                     className="text-muted-foreground hover:underline"
                   >
                     Comparer

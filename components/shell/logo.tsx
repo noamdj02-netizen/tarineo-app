@@ -54,10 +54,13 @@ export function Logo({
       )}
     >
       <span
-        className={cn("grid shrink-0 place-items-center overflow-hidden rounded-[9px] border shadow-soft", markFrame)}
-        style={{ width: px + 6, height: px + 6 }}
+        className={cn(
+          "grid shrink-0 place-items-center overflow-hidden rounded-[22%] shadow-soft",
+          markFrame,
+        )}
+        style={{ width: px + 4, height: px + 4 }}
       >
-        <TarineoLogo variant={theme} size={px} priority decorative />
+        <TarineoLogo variant={theme} size={px + 2} priority decorative />
       </span>
       <span className={cn("font-display text-[14px] font-semibold tracking-[-0.03em] sm:text-[15px]", word)}>
         {BRAND.name}

@@ -132,6 +132,7 @@ export function TrendAreaChart({
   className?: string;
   formatY?: (v: number) => string;
 }) {
+  const gradId = useId();
   if (data.length < 2) {
     return <p className="text-[13px] text-muted-foreground">Pas assez de données.</p>;
   }
@@ -153,7 +154,6 @@ export function TrendAreaChart({
   const area = `${pad.l},${pad.t + innerH} ${line} ${points[points.length - 1].x},${pad.t + innerH}`;
   const yTicks = 4;
   const fmt = formatY ?? ((v: number) => `${Math.round(v)}`);
-  const gradId = useId();
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className={cn("h-[180px] w-full", className)} role="img" aria-label="Courbe d’évolution">
@@ -180,7 +180,7 @@ export function TrendAreaChart({
       {points.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r={i === points.length - 1 ? 4 : 3} fill="#FF6B1A" />
       ))}
-      {points.map((p, i) => (
+      {points.map((p) => (
         <text
           key={`${p.label}-x`}
           x={p.x}

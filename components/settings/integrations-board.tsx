@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Check,
   KeyRound,
@@ -11,7 +12,9 @@ import {
   Package,
   Plug,
   Loader2,
+  CreditCard,
 } from "lucide-react";
+import { googleOAuthHref } from "@/lib/integrations/hub";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,11 +28,15 @@ import {
   completeGoogleBindAction,
   disconnectIntegrationAction,
   joinIntegrationWaitlistAction,
+  testIntegrationConnectionAction,
 } from "@/app/(app)/parametres/integrations-notifications-actions";
+import { integrationSupportsConnectionTest } from "@/lib/integrations/client";
 import { CATEGORY_LABEL, type IntegrationSnapshot } from "@/lib/settings/integrations-catalog";
 import { cn } from "@/lib/utils";
 
 const ICONS: Record<string, typeof Mail> = {
+  tarineo_email: Mail,
+  stripe_billing: CreditCard,
   google: Mail,
   microsoft: Mail,
   calendar_ical: Calendar,
@@ -57,6 +64,8 @@ function statusLabel(s: IntegrationSnapshot["status"]) {
       return "Disponible prochainement";
     case "error":
       return "Erreur";
+    case "reconnection_required":
+      return "Reconnexion requise";
     case "disabled":
       return "Désactivé";
   }
@@ -68,6 +77,8 @@ function statusDot(s: IntegrationSnapshot["status"]) {
       return "bg-st-focus-ink";
     case "available":
       return "bg-tarineo-orange";
+    case "reconnection_required":
+      return "bg-amber-500";
     case "error":
       return "bg-destructive";
     default:
@@ -102,19 +113,50 @@ export function IntegrationsBoard({
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(oauthError ? "La connexion n’a pas pu être établie." : null);
   const [googleOpen, setGoogleOpen] = useState(false);
+  const router = useRouter();
   const [pending, start] = useTransition();
+  const [testMsg, setTestMsg] = useState<Record<string, string>>({});
+
+  function runTest(id: string) {
+    start(async () => {
+      setErr(null);
+      const res = await testIntegrationConnectionAction(id);
+      if (!res.ok) {
+        setErr(res.error);
+        return;
+      }
+      setTestMsg((m) => ({ ...m, [id]: res.result.message }));
+      router.refresh();
+    });
+  }
 
   useEffect(() => {
     if (bound === "gmail" || bound === "drive") {
       start(async () => {
         const res = await completeGoogleBindAction(bound === "drive" ? "google-drive" : "gmail");
-        if (res.ok) setMsg("Google connecté.");
-        else setErr(res.error);
+        if (!res.ok) {
+          setErr(res.error);
+          return;
+        }
+        const test = await testIntegrationConnectionAction("google");
+        if (test.ok) {
+          setTestMsg((m) => ({ ...m, google: test.result.message }));
+          setMsg(
+            test.result.outcome === "ok"
+              ? "Google connecté et vérifié."
+              : "Google lié — action requise (voir le statut).",
+          );
+        } else {
+          setMsg("Google connecté.");
+        }
+        router.refresh();
       });
     }
-  }, [bound]);
+  }, [bound, router]);
 
-  const grouped = (["messagerie", "comptabilite", "fournisseurs", "api"] as const).map((cat) => ({
+  const grouped = (
+    ["billing", "messagerie", "comptabilite", "fournisseurs", "api"] as const
+  ).map((cat) => ({
     cat,
     label: CATEGORY_LABEL[cat],
     list: items.filter((i) => i.category === cat),
@@ -125,7 +167,10 @@ export function IntegrationsBoard({
       setErr(null);
       const res = await disconnectIntegrationAction(id);
       if (!res.ok) setErr(res.error);
-      else setMsg("Intégration déconnectée.");
+      else {
+        setMsg("Intégration déconnectée.");
+        router.refresh();
+      }
     });
   }
 
@@ -189,7 +234,17 @@ export function IntegrationsBoard({
                     <span className={cn("size-1.5 rounded-full", statusDot(item.status))} aria-hidden />
                     <span className="font-medium text-ink">{statusLabel(item.status)}</span>
                   </div>
-                  {item.status === "connected" ? (
+                  {item.healthMessage && item.status === "connected" ? (
+                    <p className="rounded-xl bg-st-focus-soft/60 px-3 py-2 text-[12.5px] text-st-focus-ink" role="status">
+                      {item.healthMessage}
+                    </p>
+                  ) : null}
+                  {testMsg[item.id] ? (
+                    <p className="rounded-xl bg-surface-2 px-3 py-2 text-[12.5px] text-ink" role="status">
+                      {testMsg[item.id]}
+                    </p>
+                  ) : null}
+                  {item.status === "connected" || item.status === "reconnection_required" ? (
                     <div className="rounded-xl bg-surface-2 px-3 py-2.5 text-[12.5px] text-muted-foreground">
                       {item.accountLabel ? (
                         <p>
@@ -209,7 +264,28 @@ export function IntegrationsBoard({
                   ) : null}
 
                   <div className="mt-auto flex flex-wrap gap-2 pt-1">
-                    {item.id === "google" && item.status !== "connected" && canEdit ? (
+                    {integrationSupportsConnectionTest(item.id) && canEdit ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        disabled={pending}
+                        onClick={() => runTest(item.id)}
+                      >
+                        {pending ? (
+                          <>
+                            <Loader2 className="size-3.5 animate-spin" aria-hidden /> Test…
+                          </>
+                        ) : (
+                          "Tester la connexion"
+                        )}
+                      </Button>
+                    ) : null}
+                    {item.id === "google" &&
+                      item.status !== "connected" &&
+                      item.status !== "reconnection_required" &&
+                      canEdit ? (
                       <Button
                         type="button"
                         size="sm"
@@ -220,7 +296,9 @@ export function IntegrationsBoard({
                         Connecter Google
                       </Button>
                     ) : null}
-                    {item.id === "google" && item.status === "connected" && canEdit ? (
+                    {item.id === "google" &&
+                      (item.status === "connected" || item.status === "reconnection_required") &&
+                      canEdit ? (
                       <>
                         <Button
                           type="button"
@@ -233,12 +311,20 @@ export function IntegrationsBoard({
                           Déconnecter
                         </Button>
                         <a
-                          href="/api/connect/google?tools=gmail"
+                          href={googleOAuthHref("gmail")}
                           className={cn(buttonVariants({ size: "sm", variant: "ghost" }), "rounded-full")}
                         >
-                          Reconnecter
+                          {item.status === "reconnection_required" ? "Reconnecter" : "Réautoriser"}
                         </a>
                       </>
+                    ) : null}
+                    {item.id === "stripe_billing" ? (
+                      <Link
+                        href="/abonnement"
+                        className={cn(buttonVariants({ size: "sm" }), "rounded-full")}
+                      >
+                        {item.status === "connected" ? "Gérer l’abonnement" : "Voir les offres"}
+                      </Link>
                     ) : null}
                     {item.id === "calendar_ical" && item.status !== "connected" ? (
                       <Link
@@ -319,18 +405,18 @@ export function IntegrationsBoard({
             </li>
             <li className="flex gap-2">
               <Check className="mt-0.5 size-4 shrink-0 text-tarineo-orange" aria-hidden />
-              Envoyer des e-mails via Gmail pour vos workflows TARINEO
+              Préparer l’envoi depuis Gmail (les relances automatiques passent encore par E-mails TARINEO)
             </li>
           </ul>
           <p className="text-[12.5px] text-muted-foreground">
-            Aucune autre permission n’est demandée. Google Calendar se branche via un flux iCal (carte Agenda).
+            Aucune autre permission n’est demandée. L’agenda se configure via la carte « Agenda (iCal) ».
           </p>
           <DialogFooter>
             <Button type="button" variant="outline" className="rounded-full" onClick={() => setGoogleOpen(false)}>
               Annuler
             </Button>
             <a
-              href="/api/connect/google?tools=gmail"
+              href={googleOAuthHref("gmail")}
               className={cn(buttonVariants({ variant: "default" }), "rounded-full")}
             >
               Continuer avec Google
