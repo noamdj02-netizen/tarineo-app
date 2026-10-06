@@ -29,7 +29,7 @@ export function Hero() {
   const lineItem = reduce ? landingMountItemReduced : landingMountItem;
 
   return (
-    <section id="top" className="pt-28 pb-16 sm:pt-36 lg:pt-40 lg:pb-24">
+    <section id="top" className="pt-28 pb-8 sm:pt-36 sm:pb-10 lg:pt-40 lg:pb-12">
       <div className="shell grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] lg:gap-16">
         <LandingHeroStagger className="min-w-0" stagger={0.09}>
           <LandingStaggerItem>
@@ -81,7 +81,7 @@ export function Hero() {
           </LandingStaggerItem>
         </LandingHeroStagger>
 
-        <motion.div style={{ y: cardY }} className="relative min-w-0">
+        <motion.div style={{ y: cardY }} className="relative min-w-0 pb-4 lg:pb-24">
           <LandingFloatCard className="relative" delay={0.1} trigger="mount">
             <div className="landing-product-surface relative surface overflow-hidden shadow-float">
               <LandingScanPass className="rounded-[inherit]" />

@@ -44,7 +44,7 @@ export function InvoiceScanScene({ className = "" }: { className?: string }) {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-ink-900">Facture fournisseur</p>
-            <p className="mt-0.5 text-xs text-ink-400">Cedeo · n° FAC-2026-118</p>
+            <p className="mt-0.5 text-xs text-ink-400">Rexel · n° FAC-2026-118</p>
           </div>
           <span className="rounded-sm bg-paper-50 px-2 py-1 text-[10px] font-medium tracking-wide text-ink-400 uppercase">
             PDF

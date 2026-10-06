@@ -2,64 +2,143 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
-type Variant = "primary" | "secondary" | "ghost";
-type Size = "md" | "lg";
+import { cn } from "@/lib/utils";
 
-const base =
-  "inline-flex items-center justify-center gap-2 rounded-full text-center font-medium transition-colors duration-200 ease-out select-none";
+const buttonVariants = cva(
+  [
+    "inline-flex touch-manipulation items-center justify-center gap-2 rounded-full text-center font-medium",
+    "transition-colors duration-200 ease-out select-none outline-none",
+    "focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper-100",
+    "disabled:pointer-events-none disabled:opacity-50",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+  ].join(" "),
+  {
+    variants: {
+      variant: {
+        primary:
+          "bg-accent text-white shadow-[0_6px_16px_-10px_rgb(120_58_32/0.35)] hover:bg-accent-hover active:bg-accent-active",
+        secondary:
+          "border border-line bg-paper-0 text-ink-900 hover:border-line-strong hover:bg-paper-50 active:bg-paper-200",
+        ghost: "text-ink-900 hover:bg-paper-0/90 hover:text-accent-700 active:bg-paper-50",
+      },
+      size: {
+        /** Barre de navigation — compact, aligné au header */
+        sm: "h-9 px-3.5 text-[13px] leading-tight sm:h-10 sm:px-4 sm:text-sm",
+        md: "h-11 px-5 text-sm leading-tight",
+        lg: "h-12 px-6 text-[0.9375rem] leading-tight",
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+      size: "md",
+    },
+  },
+);
 
-const sizes: Record<Size, string> = {
-  md: "px-5 py-2.5 text-sm",
-  lg: "px-6 py-3 text-[0.9375rem]",
+type ButtonBaseProps = VariantProps<typeof buttonVariants> & {
+  children: ReactNode;
+  className?: string;
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: () => void;
 };
 
-const variants: Record<Variant, string> = {
-  primary:
-    "bg-accent text-white shadow-[0_6px_16px_-10px_rgb(120_58_32/0.35)] hover:bg-accent-hover active:bg-accent-active",
-  secondary:
-    "bg-paper-0 text-ink-900 border border-line hover:border-line-strong hover:bg-paper-50 active:bg-paper-200",
-  ghost: "text-ink-900 hover:text-accent-700",
+type ButtonAsLink = ButtonBaseProps & {
+  href: string;
 };
 
-function linkClass(size: Size, variant: Variant, className: string) {
-  return `${base} ${sizes[size]} ${variants[variant]} ${className}`;
+type ButtonAsNative = ButtonBaseProps & {
+  href?: undefined;
+  type?: "button" | "submit";
+};
+
+export type LandingButtonProps = ButtonAsLink | ButtonAsNative;
+
+function ButtonSpinner({ className }: { className?: string }) {
+  return (
+    <svg
+      className={cn("animate-spin", className)}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+      <path
+        className="opacity-90"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
+  );
 }
 
-export function Button({
-  href,
-  children,
-  variant = "primary",
-  size = "md",
-  className = "",
-}: {
-  href: string;
-  children: ReactNode;
-  variant?: Variant;
-  size?: Size;
-  className?: string;
-}) {
-  const cls = linkClass(size, variant, className);
+export function Button(props: LandingButtonProps) {
+  const {
+    children,
+    variant,
+    size,
+    className,
+    disabled = false,
+    loading = false,
+    onClick,
+  } = props;
 
-  if (href.startsWith("/")) {
-    return (
-      <Link href={href} className={cls}>
-        {children}
-      </Link>
-    );
-  }
+  const cls = cn(buttonVariants({ variant, size }), className);
+  const busy = disabled || loading;
 
-  if (href.startsWith("#") || href.startsWith("http") || href.startsWith("mailto")) {
+  const inner = loading ? (
+    <>
+      <ButtonSpinner className="size-4" />
+      <span>{children}</span>
+    </>
+  ) : (
+    children
+  );
+
+  if (props.href !== undefined) {
+    const { href } = props;
+    if (busy) {
+      return (
+        <span className={cn(cls, "pointer-events-none opacity-50")} aria-disabled="true">
+          {inner}
+        </span>
+      );
+    }
+
+    if (href.startsWith("/")) {
+      return (
+        <Link href={href} className={cls} onClick={onClick}>
+          {inner}
+        </Link>
+      );
+    }
+
+    const external = href.startsWith("http");
     return (
-      <a href={href} className={cls}>
-        {children}
+      <a
+        href={href}
+        className={cls}
+        onClick={onClick}
+        rel={external ? "noopener noreferrer" : undefined}
+        target={external ? "_blank" : undefined}
+      >
+        {inner}
       </a>
     );
   }
 
+  const type = props.type ?? "button";
   return (
-    <button type="button" className={cls}>
-      {children}
+    <button
+      type={type}
+      className={cls}
+      disabled={busy}
+      aria-busy={loading || undefined}
+      onClick={onClick}
+    >
+      {inner}
     </button>
   );
 }
@@ -80,3 +159,5 @@ export function ArrowRight({ className = "h-4 w-4" }: { className?: string }) {
     </svg>
   );
 }
+
+export { buttonVariants };

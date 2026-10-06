@@ -11,8 +11,6 @@ import { Copilot } from "@/components/site/landing-v2/sections/Copilot";
 import { Dashboard } from "@/components/site/landing-v2/sections/Dashboard";
 import { FinalCta } from "@/components/site/landing-v2/sections/FinalCta";
 import { Hero } from "@/components/site/landing-v2/sections/Hero";
-import { HumanLoop } from "@/components/site/landing-v2/sections/HumanLoop";
-import { Learning } from "@/components/site/landing-v2/sections/Learning";
 import { Pricing } from "@/components/site/landing-v2/sections/Pricing";
 import { Problem } from "@/components/site/landing-v2/sections/Problem";
 import { QuoteAnalysis } from "@/components/site/landing-v2/sections/QuoteAnalysis";
@@ -40,15 +38,13 @@ export function LandingV2Page() {
       <Header />
       <main id="contenu-landing">
         <Hero />
+        <QuoteToInvoice />
         <Problem />
         <QuoteAnalysis />
-        <QuoteToInvoice />
         <Connect />
-        <Learning />
         <Automations />
         <Copilot />
         <Dashboard />
-        <HumanLoop />
         <Security />
         <Pricing />
         <FinalCta />

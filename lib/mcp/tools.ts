@@ -31,7 +31,14 @@ function guarded<A>(
     try {
       const authInfo = ctx.http?.authInfo;
       requireScope(authInfo, scope);
-      return await fn(args, getUserId(authInfo));
+      const userId = getUserId(authInfo);
+      const { canUseFeature, featureDeniedMessage } = await import("@/lib/billing/entitlements");
+      const { planForUserId } = await import("@/lib/billing/plan");
+      const plan = await planForUserId(userId);
+      if (!canUseFeature(plan, "api_access")) {
+        return fail(featureDeniedMessage("api_access"));
+      }
+      return await fn(args, userId);
     } catch (err) {
       if (err instanceof McpAuthError) return fail(err.message);
       console.error("[navpit-mcp]", err);

@@ -19,7 +19,7 @@ function buildThread(userRequest: string) {
 /** Fil assistant : réponses qui arrivent comme un traitement réel. */
 export function CopilotThreadScene({
   className = "",
-  userRequest = "Analyse cette facture Cedeo du chantier Dupont.",
+  userRequest = "Analyse cette facture Rexel du chantier Dupont.",
 }: {
   className?: string;
   userRequest?: string;

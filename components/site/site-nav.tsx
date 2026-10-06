@@ -9,6 +9,7 @@ import { APPLE_SPRING_FAST } from "@/components/motion/reveal";
 import { LandingButton } from "@/components/site/landing-button";
 import { SiteLogo } from "@/components/site/site-logo";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { isBlogPath } from "@/lib/site/is-blog-path";
 import { NAV_LINKS } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
@@ -20,12 +21,13 @@ export function SiteNav() {
   const reduce = useReducedMotion();
   const [scrolled, setScrolled] = useState(false);
   const isHome = pathname === "/";
+  const isBlog = isBlogPath(pathname);
   const [overHero, setOverHero] = useState(
     pathname === "/avis" || pathname === "/prix",
   );
   const [open, setOpen] = useState(false);
   const light =
-    isHome ||
+    isBlog ||
     ((pathname === "/avis" || pathname === "/prix") && !(overHero && !open));
 
   /**

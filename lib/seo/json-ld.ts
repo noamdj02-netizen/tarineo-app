@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/brand";
+import { LEGAL_PUBLISHER } from "@/lib/legal/publisher";
 import { FAQ_GROUPS, PRICING } from "@/lib/site/tarineo";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -11,10 +12,18 @@ export function organizationJsonLd() {
     "@type": "Organization",
     "@id": `${site()}/#organization`,
     name: BRAND.name,
+    legalName: LEGAL_PUBLISHER.legalName,
     url: site(),
     logo: `${site()}${BRAND.logoSrc}`,
     description: BRAND.description,
     email: BRAND.contactEmail,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: LEGAL_PUBLISHER.addressLine,
+      postalCode: LEGAL_PUBLISHER.postalCode,
+      addressLocality: LEGAL_PUBLISHER.city,
+      addressCountry: "FR",
+    },
   };
 }
 
@@ -74,6 +83,47 @@ export function faqPageJsonLd() {
         "@type": "Answer",
         text: item.a,
       },
+    })),
+  };
+}
+
+export function blogPostingJsonLd(post: {
+  title: string;
+  description: string;
+  slug: string;
+  publishedAt: string;
+  updatedAt: string;
+}) {
+  const url = `${site()}/blog/${post.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.publishedAt,
+    dateModified: post.updatedAt,
+    inLanguage: "fr-FR",
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    author: { "@id": `${site()}/#organization` },
+    publisher: { "@id": `${site()}/#organization` },
+  };
+}
+
+export function blogIndexJsonLd(posts: { title: string; slug: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "@id": `${site()}/blog#blog`,
+    name: `Blog ${BRAND.name}`,
+    description: BRAND.description,
+    url: `${site()}/blog`,
+    inLanguage: "fr-FR",
+    publisher: { "@id": `${site()}/#organization` },
+    blogPost: posts.map((p) => ({
+      "@type": "BlogPosting",
+      headline: p.title,
+      url: `${site()}/blog/${p.slug}`,
     })),
   };
 }

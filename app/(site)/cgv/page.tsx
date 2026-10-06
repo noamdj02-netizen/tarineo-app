@@ -1,5 +1,6 @@
 import { LegalPage } from "@/components/site/legal-page";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_PUBLISHER, formatLegalSiret } from "@/lib/legal/publisher";
 import { PRICING } from "@/lib/site/tarineo";
 import { siteMetadata } from "@/lib/seo";
 
@@ -16,12 +17,13 @@ export default function CgvPage() {
   return (
     <LegalPage
       title="Conditions générales d’utilisation et de vente"
-      updated="24 septembre 2026"
+      updated={LEGAL_PUBLISHER.legalPagesUpdated}
       sections={[
         {
           h: "1. Objet",
           p: [
             `Ces conditions encadrent l’utilisation de ${BRAND.name}, un logiciel en ligne qui analyse les devis et factures fournisseurs des professionnels du bâtiment pour suivre l’évolution de leurs prix d’achat, et la souscription aux offres payantes.`,
+            `Prestataire : ${LEGAL_PUBLISHER.legalName}, ${LEGAL_PUBLISHER.legalForm.toLowerCase()}, SIRET ${formatLegalSiret(LEGAL_PUBLISHER.siret)}.`,
           ],
         },
         {
@@ -35,7 +37,7 @@ export default function CgvPage() {
           p: [
             `Les offres ${PRICING.map((p) => p.name).join(", ")} sont détaillées sur la page Tarifs. Tout changement de tarif est annoncé avant d’être appliqué.`,
             PRICING.map((p) => `${p.name} : ${p.month} € HT par mois ou ${p.year} € HT par an`).join(" · ") + ". Le premier mois est offert.",
-            "Les prix sont indiqués en euros, [À compléter : TTC ou « TVA non applicable, art. 293 B du CGI » selon le statut de l’éditeur].",
+            LEGAL_PUBLISHER.pricesVatNote,
           ],
         },
         {
@@ -46,9 +48,7 @@ export default function CgvPage() {
         },
         {
           h: "5. Droit de rétractation",
-          p: [
-            "Le service s’adresse à des professionnels. [À compléter : conditions de rétractation applicables selon la qualité du client].",
-          ],
+          p: [LEGAL_PUBLISHER.professionalWithdrawalNote],
         },
         {
           h: "6. Usage acceptable et limites",
@@ -59,7 +59,7 @@ export default function CgvPage() {
         {
           h: "7. Responsabilité",
           p: [
-            `${BRAND.name} est fourni en l’état. La lecture automatique des documents peut contenir des erreurs : vérifiez les montants avant de vous en servir. L’éditeur ne peut être tenu responsable des décisions prises sur leur base.`,
+            `${BRAND.name} est fourni en l’état. La lecture automatique des documents peut contenir des erreurs : vérifiez les montants avant de vous en servir. ${LEGAL_PUBLISHER.legalName} ne peut être tenu responsable des décisions prises sur leur base.`,
           ],
         },
         {

@@ -13,12 +13,15 @@ const PUBLIC_PATHS = [
   "/mot-de-passe-oublie",
   "/nouveau-mot-de-passe",
   "/prix",
+  "/blog",
   "/mentions-legales",
   "/cgv",
   "/confidentialite",
   "/api/billing/webhook",
   "/api/cron",
   "/api/mcp",
+  "/api/landing",
+  "/api/analytics/event",
 ];
 /** Pages de connexion : un visiteur déjà connecté part directement dans l'app. */
 const AUTH_PAGES = ["/login", "/inscription"];

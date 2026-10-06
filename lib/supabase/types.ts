@@ -511,6 +511,17 @@ export type Database = {
         },
         "trigger" | "period_start" | "period_end"
       >;
+      integration_ingest_idempotency: Table<
+        {
+          user_id: string;
+          idempotency_key: string;
+          content_sha256: string;
+          document_id: string;
+          response_json: Record<string, unknown>;
+          created_at: string;
+        },
+        "content_sha256" | "document_id" | "response_json"
+      >;
     };
     Views: Record<string, never>;
     Functions: {

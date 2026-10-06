@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { History, SlidersHorizontal, Zap } from "lucide-react";
 import { runAccountingExportNowAction } from "@/app/(app)/metier/actions";
 import { AccountingExportHistory } from "@/components/tarineo/exports/accounting-export-history";
@@ -51,6 +52,7 @@ export function AccountingExportPageClient({
   invoiceCount,
   activeSchedules,
   lastExportLabel,
+  canAccountingAuto,
 }: {
   documents: DocumentCard[];
   enseignes: { label: string; amount: number }[];
@@ -60,6 +62,7 @@ export function AccountingExportPageClient({
   invoiceCount: number;
   activeSchedules: number;
   lastExportLabel: string | null;
+  canAccountingAuto: boolean;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-[960px] flex-col gap-8">
@@ -127,7 +130,18 @@ export function AccountingExportPageClient({
           />
         </TabsContent>
         <TabsContent value="auto" className="mt-0 focus-visible:outline-none">
-          <AccountingExportScheduleForm schedules={schedules} enseignes={enseignes} defaultEmail={defaultEmail} />
+          {canAccountingAuto ? (
+            <AccountingExportScheduleForm schedules={schedules} enseignes={enseignes} defaultEmail={defaultEmail} />
+          ) : (
+            <div className="rounded-[14px] border border-line bg-surface p-6 text-[14px] leading-relaxed text-muted-foreground">
+              L’envoi automatique du CSV à votre comptable est réservé au plan{" "}
+              <span className="font-medium text-ink">Pro</span>. L’export manuel reste disponible dans l’onglet
+              précédent.
+              <Link href="/parametres/abonnement" className="ml-1 font-medium text-[#FF6B1A] hover:underline">
+                Passer à Pro
+              </Link>
+            </div>
+          )}
         </TabsContent>
         <TabsContent value="history" className="mt-0 focus-visible:outline-none">
           <AccountingExportHistory runs={runs} />

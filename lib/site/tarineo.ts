@@ -675,7 +675,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: "Quels fournisseurs sont compatibles ?",
-        a: "TARINEO lit le contenu du document, pas un format propre à une enseigne : Cedeo, Point.P, Rexel, Brossette, Richardson, Aubade ou votre grossiste local. Le nom du distributeur est détecté automatiquement.",
+        a: "TARINEO lit le contenu du document, pas un format propre à une enseigne : Point.P, Rexel, Brossette, Richardson, Aubade ou votre grossiste local. Le nom du distributeur est détecté automatiquement.",
       },
     ],
   },

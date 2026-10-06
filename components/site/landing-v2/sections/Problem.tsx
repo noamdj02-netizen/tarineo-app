@@ -22,7 +22,7 @@ export function Problem() {
   const reduce = useReducedMotion();
 
   return (
-    <section id="probleme" className="py-20 sm:py-28">
+    <section id="probleme" className="pt-14 pb-20 sm:pt-16 sm:pb-28">
       <div className="shell">
         <SectionHeading
           label="Le problème"

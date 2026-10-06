@@ -3,11 +3,25 @@
 import { revalidatePath } from "next/cache";
 import { mergeMarginConfig, mergeQuoteFollowupConfig } from "@/lib/automation/config";
 import { ensureAutomationDefinitions, updateAutomationDefinition } from "@/lib/automation/definitions";
+import { FeatureNotAllowedError, requireFeature } from "@/lib/billing/entitlements";
+import { getDb } from "@/lib/db";
+
 export async function saveAutomationsAction(form: FormData) {
+  const db = await getDb();
+  if (!db) return { ok: false as const, error: "Non connecté." };
+
   await ensureAutomationDefinitions();
 
   const quoteEnabled = form.get("quoteEnabled") === "on";
   const quoteAuto = form.get("quoteAutoSchedule") === "on";
+  if (quoteAuto) {
+    try {
+      await requireFeature(db, "quote_followup_auto");
+    } catch (err) {
+      if (err instanceof FeatureNotAllowedError) return { ok: false as const, error: err.message };
+      throw err;
+    }
+  }
   const firstDelayDays = Number(form.get("firstDelayDays") ?? 3);
   const maxSequences = Number(form.get("maxSequences") ?? 2);
   const betweenDays = Number(form.get("betweenSequencesDays") ?? 7);

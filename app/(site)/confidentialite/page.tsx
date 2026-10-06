@@ -1,5 +1,6 @@
 import { LegalPage } from "@/components/site/legal-page";
 import { BRAND } from "@/lib/brand";
+import { LEGAL_PUBLISHER, publisherEditorParagraph } from "@/lib/legal/publisher";
 import { siteMetadata } from "@/lib/seo";
 
 export const metadata = {
@@ -15,8 +16,12 @@ export default function ConfidentialitePage() {
   return (
     <LegalPage
       title="Politique de confidentialité"
-      updated="24 septembre 2026"
+      updated={LEGAL_PUBLISHER.legalPagesUpdated}
       sections={[
+        {
+          h: "Responsable de traitement",
+          p: [publisherEditorParagraph(), `Contact données personnelles : ${BRAND.contactEmail}.`],
+        },
         {
           h: "Données collectées",
           p: [
@@ -32,7 +37,7 @@ export default function ConfidentialitePage() {
         {
           h: "Sous-traitants",
           p: [
-            "Supabase (base de données et connexion), Vercel (hébergement), Stripe (paiement), Resend (emails). [À compléter : prestataire de lecture automatique des documents, le cas échéant].",
+            "Supabase (base de données et connexion), Vercel (hébergement), Stripe (paiement), Resend (emails transactionnels), Anthropic (analyse automatique de documents lorsque cette fonctionnalité est utilisée), Google (connexion OAuth le cas échéant).",
           ],
         },
         {

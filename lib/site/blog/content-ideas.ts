@@ -1,0 +1,105 @@
+import type { BlogMetierSlug } from "@/lib/site/blog/types";
+
+/** Idées d’articles futurs — slugs uniques, pas encore dans `posts.ts`. */
+export type EditorialIdea = {
+  slug: string;
+  title: string;
+};
+
+export const EDITORIAL_IDEAS_BY_METIER: Record<BlogMetierSlug, EditorialIdea[]> = {
+  plombier: [
+    { slug: "plombier-per-chauffage-comparer-devis", title: "PER et chauffage : comparer deux devis négoce sur le même logement" },
+    { slug: "plombier-depannage-fuite-devis-rapide", title: "Dépannage fuite : structurer un devis express sans perdre la marge" },
+    { slug: "plombier-syndic-copropriete-devis", title: "Plombier et syndic : devis, avenants et pièces justificatives" },
+    { slug: "plombier-remise-negoce-lire-ligne", title: "Remises fournisseur : lire le PU net sur le PDF" },
+    { slug: "plombier-sdb-renovation-marge", title: "Rénovation SDB : enchaîner devis sanitaire et devis client" },
+    { slug: "plombier-historique-prix-tube-cuivre", title: "Suivre le prix du cuivre et des tubes sur 12 mois" },
+    { slug: "plombier-sous-traitance-plomberie", title: "Sous-traitant plomberie : dossier chantier partagé" },
+  ],
+  electricien: [
+    { slug: "electricien-mise-aux-normes-devis", title: "Mise aux normes : chiffrer matériel et temps sur devis long" },
+    { slug: "electricien-tableau-tgbt-devis", title: "Tableau électrique : éviter les oublis de lignes sur le devis client" },
+    { slug: "electricien-promo-grossiste-piege", title: "Promotions grossiste : ne pas se faire avoir sur le devis signé" },
+    { slug: "electricien-neuf-vs-renovation-dossier", title: "Neuf et rénovation : séparer les dossiers et les marges" },
+    { slug: "electricien-appel-offres-marge", title: "Appel d’offres : marge cible et devis fournisseur verrouillé" },
+    { slug: "electricien-facture-vs-devis-ecart", title: "Facture grossiste différente du devis : que faire avant la clôture" },
+    { slug: "electricien-facturation-electronique-entreprise-generale", title: "Électricien en sous-traitance : facture électronique vers l’entreprise générale" },
+  ],
+  peintre: [
+    { slug: "peintre-enduit-facade-devis", title: "Enduit façade : quantités et devis fournisseur décoration pro" },
+    { slug: "peintre-reprise-murs-devis", title: "Reprises et retouches : les refacturer dans le devis client" },
+    { slug: "peintre-lot-appartement-marge", title: "Lot peinture appartement : marge par pièce ou forfait global" },
+    { slug: "peintre-batiment-ecologique-prix", title: "Peintures écolabel : comparer le coût matière au standard" },
+    { slug: "peintre-protection-chantier-cout", title: "Bâches et protections : intégrer le coût réel au devis" },
+    { slug: "peintre-sous-couche-oubliee", title: "Sous-couches oubliées : checklist devis fournisseur" },
+    { slug: "peintre-relance-devis-client", title: "Devis peinture en attente : relance sans brûler la marge" },
+  ],
+  macon: [
+    { slug: "macon-dalle-beton-devis", title: "Dalle et fondations : devis béton et ferraille ligne par ligne" },
+    { slug: "macon-mur-porteur-avenant", title: "Avenants gros œuvre : quand mettre à jour le devis client" },
+    { slug: "macon-location-materiel-marge", title: "Location nacelle et benne : ne pas les oublier dans la marge" },
+    { slug: "macon-coffrage-petites-lignes", title: "Petites lignes coffrage : l’effet cumul sur la marge" },
+    { slug: "macon-chantier-lotissement-suivi", title: "Lotissement : un dossier par lot et par phase" },
+    { slug: "macon-sous-traitance-macellerie", title: "Sous-traitance maçonnerie : tracer les devis fournisseurs" },
+    { slug: "macon-reprise-etancheite-devis", title: "Reprises étanchéité : documenter les coûts pour le client" },
+  ],
+  carreleur: [
+    { slug: "carreleur-grand-format-pose", title: "Grand format : chutes et colle dans le devis client" },
+    { slug: "carreleur-sdb-italienne-devis", title: "Salle de bain italienne : showroom vs réalité chantier" },
+    { slug: "carreleur-joints-epoxy-cout", title: "Joints époxy : marge sur une ligne souvent sous-estimée" },
+    { slug: "carreleur-terrasse-exterieur", title: "Terrasse extérieure : devis fournisseur et dilatation" },
+    { slug: "carreleur-mosaique-temps-pose", title: "Mosaïque : intégrer le temps de pose dans le coefficient" },
+    { slug: "carreleur-commande-showroom-retard", title: "Retard showroom : protéger le planning et le devis client" },
+    { slug: "carreleur-devis-m2-ou-forfait", title: "Au m² ou forfait : cohérence avec le devis négoce" },
+  ],
+  menuisier: [
+    { slug: "menuisier-porte-interieure-lot", title: "Lot portes intérieures : un devis atelier, un devis pose" },
+    { slug: "menuisier-volet-roulant-option", title: "Volets et motorisation : options sur le devis client" },
+    { slug: "menuisier-erreur-mesure-cout", title: "Erreur de mesure : tracer l’impact sur la marge" },
+    { slug: "menuisier-agencement-sur-mesure", title: "Agencement : devis fournisseur complexe et devis client clair" },
+    { slug: "menuisier-fenetre-renovation-ite", title: "Fenêtres en rénovation ITE : coordination devis" },
+    { slug: "menuisier-delai-atelier-client", title: "Délai atelier : aligner promesse client et commande" },
+    { slug: "menuisier-quincaillerie-invisible", title: "Quincaillerie invisible : vis, paumelles, caches" },
+  ],
+  couvreur: [
+    { slug: "couvreur-zinc-gouttiere-marge", title: "Zinc et gouttières : marge sur le poste secondaire" },
+    { slug: "couvreur-etancheite-terrasse", title: "Étanchéité terrasse : devis membrane et finitions" },
+    { slug: "couvreur-ventilation-toiture-prix", title: "Sorties de toit et ventilation : ne pas les oublier" },
+    { slug: "couvreur-meteo-approvisionnement", title: "Intempéries et approvisionnement : dater les devis" },
+    { slug: "couvreur-isolation-combles-devis", title: "Combles perdus : lier isolation et couverture au dossier" },
+    { slug: "couvreur-devis-urgence-nuit", title: "Intervention nuit : majoration et preuve fournisseur" },
+  ],
+  chauffagiste: [
+    { slug: "chauffagiste-entretien-chaudiere-contrat", title: "Contrats d’entretien : marge récurrente et pièces" },
+    { slug: "chauffagiste-plancher-chauffant-devis", title: "Plancher chauffant : devis long et sous-ensembles" },
+    { slug: "chauffagiste-remplacement-chaudiere-devis", title: "Remplacement chaudière : comparer deux marques sur le même chantier" },
+    { slug: "chauffagiste-pac-air-eau-bruit", title: "PAC air-eau : accessoires acoustiques et supports" },
+    { slug: "chauffagiste-tuyauterie-cuivre-per", title: "Tuyauterie : suivre les hausses sur le devis client signé" },
+    { slug: "chauffagiste-depannage-hiver-pieces", title: "Dépannage hiver : stock pièces et devis express" },
+    { slug: "chauffagiste-regulation-connectee-devis", title: "Régulation connectée : ligne technique sur le devis" },
+  ],
+  serrurier: [
+    { slug: "serrurier-ouverture-porte-tarif", title: "Ouverture de porte : cadre tarifaire et devis client" },
+    { slug: "serrurier-blindage-certification-devis", title: "Blindage et certification : lire le devis fournisseur complet" },
+    { slug: "serrurier-cylindre-haute-securite", title: "Cylindres haute sécurité : comparer les PU entre négoce" },
+    { slug: "serrurier-porte-blindee-pose", title: "Porte blindée : séparer fourniture, pose et finitions" },
+    { slug: "serrurier-syndic-acces-devis", title: "Syndic et accès : devis et preuves pour le gardien" },
+    { slug: "serrurier-rideau-metallique-pro", title: "Rideau métallique pro : devis motorisation et entretien" },
+    { slug: "serrurier-nuit-weekend-majorations", title: "Majorations nuit et week-end : les figer dans le devis" },
+  ],
+  entreprise: [
+    { slug: "facturation-electronique-pdp-comparatif-tpe", title: "Choisir une PDP ou un logiciel : critères pour une TPE bâtiment" },
+    { slug: "facturation-electronique-avoir-acompte", title: "Avoirs et acomptes en facturation électronique" },
+    { slug: "facturation-electronique-rejet-facture", title: "Facture rejetée : causes fréquentes et que faire" },
+    { slug: "facturation-electronique-archivage-duree", title: "Archivage des factures électroniques : ce que le dirigeant doit savoir" },
+    { slug: "facturation-electronique-b2c-vs-b2b-artisan", title: "Particulier vs professionnel : deux circuits de facturation" },
+    { slug: "facturation-electronique-sous-traitant-btp", title: "Sous-traitant BTP : facturer l’entreprise générale en e-facture" },
+    { slug: "entreprise-apprenti-classement-pdf", title: "Former un apprenti au classement des devis PDF" },
+    { slug: "entreprise-relance-devis-automatisee", title: "Relances devis : quoi automatiser, quoi garder manuel" },
+    { slug: "entreprise-multi-corps-etat-dossier", title: "Plusieurs corps d’état : un dossier client unique" },
+    { slug: "entreprise-comptable-export-achats", title: "Préparer l’export achats pour le comptable" },
+    { slug: "entreprise-saisonnalite-tresorerie-devis", title: "Saisonnalité BTP : enchaîner devis et trésorerie" },
+    { slug: "entreprise-whatsapp-chantier-risque", title: "WhatsApp chantier : limites et dossier officiel" },
+    { slug: "entreprise-audit-marge-trimestriel", title: "Audit marge trimestriel : quels indicateurs suivre" },
+  ],
+};

@@ -1,14 +1,18 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
-import { LANDING_LOGIN, LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
-import { nav } from "@/lib/site/landing-v2-content";
-import { Button } from "@/components/site/landing-v2/components/ui/Button";
+import { LandingHeaderNav } from "@/components/site/landing-v2/components/layout/LandingHeaderNav";
+import { LandingMenuButton } from "@/components/site/landing-v2/components/layout/LandingMenuButton";
+import { LandingNavDrawer } from "@/components/site/landing-v2/components/layout/LandingNavDrawer";
 import { Logo } from "@/components/site/landing-v2/components/layout/Logo";
+import { Button } from "@/components/site/landing-v2/components/ui/Button";
+import { LANDING_LOGIN, LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
+import { cn } from "@/lib/utils";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -17,87 +21,75 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const headerSurface = scrolled || menuOpen;
+
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300 ease-out ${
-        scrolled || open
-          ? "border-b border-line bg-paper-100/85 backdrop-blur-md"
-          : "border-b border-transparent bg-transparent"
-      }`}
-    >
-      <div className="shell flex h-16 items-center justify-between gap-6 sm:h-[72px]">
-        <a href="#top" className="shrink-0" aria-label="Tarinéo — revenir en haut de la page">
-          <Logo />
-        </a>
-
-        <nav aria-label="Navigation principale" className="hidden items-center gap-0.5 lg:flex">
-          {nav.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="rounded-full px-3.5 py-2 text-sm text-ink-600 transition-colors duration-200 hover:bg-paper-0 hover:text-ink-900"
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="flex items-center gap-2">
-          <Button href={LANDING_LOGIN} variant="ghost" className="max-sm:hidden px-3">
-            Connexion
-          </Button>
-          <Button href={LANDING_SIGNUP} className="max-sm:hidden">
-            Commencer avec Tarinéo
-          </Button>
-          <Button href={LANDING_SIGNUP} className="sm:hidden">
-            Commencer
-          </Button>
-
-          <button
-            type="button"
-            aria-expanded={open}
-            aria-controls="nav-mobile"
-            aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
-            onClick={() => setOpen((value) => !value)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line bg-paper-0 text-ink-900 lg:hidden"
+    <>
+      <header
+        className={cn(
+          "fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300 ease-out",
+          headerSurface
+            ? "border-b border-line bg-paper-100/90 shadow-[0_1px_0_rgb(10_10_10/0.04)] backdrop-blur-md"
+            : "border-b border-transparent bg-transparent",
+        )}
+      >
+        <div
+          className={cn(
+            "shell flex h-16 items-center sm:h-[72px]",
+            "lg:grid lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] lg:items-center lg:gap-6",
+          )}
+        >
+          <a
+            href="#top"
+            className="shrink-0 lg:justify-self-start"
+            aria-label="Tarinéo — revenir en haut de la page"
           >
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" aria-hidden="true">
-              {open ? <path d="M5 5l10 10M15 5L5 15" /> : <path d="M3.5 6.5h13M3.5 10h13M3.5 13.5h13" />}
-            </svg>
-          </button>
-        </div>
-      </div>
+            <Logo />
+          </a>
 
-      {open ? (
-        <div id="nav-mobile" className="border-t border-line bg-paper-100/95 backdrop-blur-md lg:hidden">
-          <nav aria-label="Navigation mobile" className="shell flex flex-col py-3">
-            {nav.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="rounded-md px-2 py-3 text-[0.9375rem] text-ink-600 transition-colors hover:bg-paper-0 hover:text-ink-900"
+          <div className="hidden lg:flex lg:justify-self-center">
+            <LandingHeaderNav />
+          </div>
+
+          <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5 lg:ml-0 lg:justify-self-end">
+            <div className="landing-header-actions hidden lg:inline-flex">
+              <Button href={LANDING_LOGIN} variant="ghost" size="sm" className="px-3">
+                Connexion
+              </Button>
+              <LandingMenuButton onClick={() => setMenuOpen(true)} open={menuOpen} />
+              <Button
+                href={LANDING_SIGNUP}
+                size="sm"
+                className="shadow-[0_4px_12px_-8px_rgb(120_58_32/0.3)]"
               >
-                {item.label}
-              </a>
-            ))}
-            <a
-              href={LANDING_LOGIN}
-              onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-3 text-[0.9375rem] font-medium text-ink-900 transition-colors hover:bg-paper-0"
-            >
-              Connexion
-            </a>
-            <a
-              href={LANDING_SIGNUP}
-              onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-3 text-[0.9375rem] font-medium text-accent-700 transition-colors hover:bg-paper-0"
-            >
-              Créer un compte
-            </a>
-          </nav>
+                Commencer
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-1 sm:gap-1.5 lg:hidden">
+              <Button
+                href={LANDING_LOGIN}
+                variant="ghost"
+                size="sm"
+                className="hidden px-2.5 sm:inline-flex"
+              >
+                Connexion
+              </Button>
+              <LandingMenuButton onClick={() => setMenuOpen(true)} open={menuOpen} />
+              <span aria-hidden className="mx-0.5 hidden h-6 w-px bg-line sm:mx-1 sm:block" />
+              <Button
+                href={LANDING_SIGNUP}
+                size="sm"
+                className="hidden shadow-[0_4px_12px_-8px_rgb(120_58_32/0.3)] sm:inline-flex"
+              >
+                Commencer
+              </Button>
+            </div>
+          </div>
         </div>
-      ) : null}
-    </header>
+      </header>
+
+      <LandingNavDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </>
   );
 }

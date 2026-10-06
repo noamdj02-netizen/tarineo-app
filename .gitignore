@@ -25,8 +25,11 @@
 .DS_Store
 .figma-capture-id
 
-# Cursor agent skills (local only)
+# Cursor agent skills (local only; install via scripts/install-claude-blog.sh)
 .cursor/skills/
+
+# claude-blog upstream (clone via scripts/install-claude-blog.sh)
+/vendor/claude-blog/
 
 # Local media archives (not product assets)
 tarineo-remotion-medias.zip

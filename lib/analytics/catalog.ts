@@ -27,6 +27,13 @@ export const EVENT_NAMES = [
   "session_ended",
   "page_viewed",
   "hero_prompt_copied",
+  "demo_started",
+  "demo_file_uploaded",
+  "demo_document_analyzed",
+  "demo_margin_applied",
+  "demo_pdf_generated",
+  "demo_pdf_downloaded",
+  "demo_signup_clicked",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];

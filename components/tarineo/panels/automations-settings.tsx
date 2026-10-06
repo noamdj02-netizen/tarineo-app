@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { saveAutomationsAction } from "@/app/(app)/automatisations/actions";
 import { mergeMarginConfig, mergeQuoteFollowupConfig } from "@/lib/automation/config";
 import type { AutomationDefinitionRow } from "@/lib/automation/types";
@@ -8,9 +9,11 @@ import type { AutomationDefinitionRow } from "@/lib/automation/types";
 export function AutomationsSettings({
   quote,
   margin,
+  canQuoteAuto,
 }: {
   quote: AutomationDefinitionRow | null;
   margin: AutomationDefinitionRow | null;
+  canQuoteAuto: boolean;
 }) {
   const quoteCfg = mergeQuoteFollowupConfig(quote?.config);
   const marginCfg = mergeMarginConfig(margin?.config);
@@ -52,15 +55,26 @@ export function AutomationsSettings({
           <span className="text-[14px] font-medium text-ink">Activer la relance devis</span>
         </label>
 
-        <label className="mt-4 flex cursor-pointer items-center gap-3 pl-7">
-          <input
-            type="checkbox"
-            name="quoteAutoSchedule"
-            defaultChecked={quoteCfg.autoScheduleEnabled ?? false}
-            className="size-4 rounded border-line accent-[#EC5821]"
-          />
-          <span className="text-[14px] text-ink">Planification automatique (cron quotidien)</span>
-        </label>
+        {canQuoteAuto ? (
+          <label className="mt-4 flex cursor-pointer items-center gap-3 pl-7">
+            <input
+              type="checkbox"
+              name="quoteAutoSchedule"
+              defaultChecked={quoteCfg.autoScheduleEnabled ?? false}
+              className="size-4 rounded border-line accent-[#EC5821]"
+            />
+            <span className="text-[14px] text-ink">Planification automatique (cron quotidien)</span>
+          </label>
+        ) : (
+          <div className="mt-4 rounded-[10px] border border-line bg-paper-0 px-4 py-3 pl-7 text-[13px] leading-relaxed text-muted-foreground">
+            La planification automatique est incluse dans le plan{" "}
+            <span className="font-medium text-ink">Pro</span>. Les relances manuelles depuis un devis restent
+            disponibles.
+            <Link href="/parametres/abonnement" className="ml-1 font-medium text-[#EC5821] hover:underline">
+              Voir l’abonnement
+            </Link>
+          </div>
+        )}
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <label className="flex flex-col gap-1.5 text-[13px]">

@@ -1,4 +1,6 @@
-import { genererPdfPiece, type PiecePdfDonnees } from "@/lib/metier/pdf/piece-pdf";
+import { genererPdfPiece, type PiecePdfDonnees, type PiecePdfKind } from "@/lib/metier/pdf/piece-pdf";
+import type { LandingExtractLine } from "@/lib/site/landing-quote-extract.types";
+import type { LandingDemoOutputKind } from "@/lib/site/landing-quote-transform-demo";
 import type { EntrepriseInfoPdf, LigneDocumentPdf } from "@/lib/metier/pdf/pdf-clients";
 import {
   clientUnitFromSupplier,
@@ -31,6 +33,25 @@ function clampMargin(marginPct: number) {
   const min = LANDING_QUOTE_DEMO.minMarginPct;
   const max = 45;
   return Math.min(max, Math.max(min, Math.round(marginPct)));
+}
+
+function buildClientLignesFromExtract(
+  lines: LandingExtractLine[],
+  marginPct: number,
+): LigneDocumentPdf[] {
+  return lines.map((line, index) => {
+    const prixUnitaireHt = clientUnitFromSupplier(line.unitPriceHT, marginPct);
+    const totalHt = lineTotalHt(line.qty, prixUnitaireHt);
+    const ref = line.reference?.trim();
+    const designation = ref ? `${ref} — ${line.label}` : line.label;
+    return {
+      designation: designation.slice(0, 500) || `Ligne ${index + 1}`,
+      quantite: line.qty,
+      prixUnitaireHt,
+      tauxTva: line.vatRate ?? DEMO_TVA,
+      totalHt,
+    };
+  });
 }
 
 function buildClientLignes(marginPct: number): LigneDocumentPdf[] {
@@ -105,28 +126,81 @@ export async function buildLandingSupplierDemoPdf(): Promise<Buffer> {
   return genererPdfPiece(LANDING_DEMO_FOURNISSEUR, piece);
 }
 
+function numeroForKind(kind: PiecePdfKind): string {
+  switch (kind) {
+    case "facture":
+      return "FAC-DEMO-2026";
+    case "bon_commande":
+      return "BC-DEMO-2026";
+    case "bon_enlevement":
+      return "BE-DEMO-2026";
+    default:
+      return "DEV-DEMO-2026";
+  }
+}
+
+function conditionsForKind(kind: PiecePdfKind): string {
+  switch (kind) {
+    case "facture":
+      return "Paiement à 30 jours fin de mois.";
+    case "bon_commande":
+      return "Bon pour commande — merci de confirmer les quantités.";
+    case "bon_enlevement":
+      return "Enlèvement sur site selon créneau convenu.";
+    default:
+      return "30 % à la commande, solde à réception des travaux.";
+  }
+}
+
 export async function buildLandingDemoDevisPdf(
   marginPct: number,
   clientName: string,
   sourceRef?: string | null,
+  documentKind: LandingDemoOutputKind = "devis",
+  clientAddress?: string | null,
+  extractLines?: LandingExtractLine[] | null,
+  meta?: { documentNumber?: string; issueDate?: string },
 ): Promise<Buffer> {
   const marge = clampMargin(marginPct);
-  const lignes = buildClientLignes(marge);
+  const fromUserDocument = Boolean(extractLines?.length);
+  const lignes =
+    fromUserDocument ? buildClientLignesFromExtract(extractLines!, marge) : buildClientLignes(marge);
   const totalHt = lignes.reduce((acc, l) => acc + l.totalHt, 0);
   const totalTva = lignes.reduce((acc, l) => acc + l.totalHt * (l.tauxTva / 100), 0);
   const totalTtc = totalHt + totalTva;
+  const kind: PiecePdfKind = documentKind;
+
+  const emission = meta?.issueDate ? new Date(meta.issueDate) : new Date();
+  const dateEmission = Number.isNaN(emission.getTime()) ? new Date() : emission;
+
+  const refTrim = sourceRef?.trim();
+  const clientNom = clientName.trim()
+    ? clientName.trim()
+    : fromUserDocument
+      ? "Client"
+      : LANDING_QUOTE_DEMO.clientName;
+  const chantier = refTrim
+    ? refTrim
+    : fromUserDocument
+      ? "—"
+      : LANDING_QUOTE_DEMO.clientSubtitle;
+  const numeroOrigine = refTrim
+    ? refTrim.slice(0, 160)
+    : fromUserDocument
+      ? undefined
+      : LANDING_QUOTE_DEMO.supplierSubtitle.slice(0, 160);
 
   const piece: PiecePdfDonnees = {
-    kind: "devis",
-    numero: "DEV-DEMO-2026",
-    dateEmission: new Date(),
-    dureeValiditeJours: 30,
-    conditionsPaiement: "30 % à la commande, solde à réception des travaux.",
-    clientNom: clientName.trim() || LANDING_QUOTE_DEMO.clientName,
-    clientAdresse: "12 rue des Lilas, 69003 Lyon",
-    chantier: LANDING_QUOTE_DEMO.clientSubtitle,
-    numeroOrigine:
-      (sourceRef?.trim() || LANDING_QUOTE_DEMO.supplierSubtitle).slice(0, 160),
+    kind,
+    numero: (meta?.documentNumber?.trim() || numeroForKind(kind)).slice(0, 40),
+    dateEmission,
+    dureeValiditeJours: kind === "devis" ? 30 : undefined,
+    dateEcheance: kind === "facture" ? new Date(Date.now() + 30 * 86400000) : undefined,
+    conditionsPaiement: conditionsForKind(kind),
+    clientNom,
+    clientAdresse: clientAddress?.trim() || "—",
+    chantier,
+    numeroOrigine,
     lignes,
     totalHt,
     totalTva,

@@ -1,4 +1,4 @@
-/** Page légale : titre, date de mise à jour, sections. `[À compléter]` repère les infos à remplir. */
+/** Page légale : titre, date de mise à jour, sections. */
 export function LegalPage({
   title,
   updated,

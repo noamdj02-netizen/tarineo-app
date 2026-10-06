@@ -47,29 +47,33 @@ async function isOwnerDb(db: Db) {
   return isOwner(data.user?.email);
 }
 
-async function load(db: Db): Promise<PlanInfo> {
-  if (await isOwnerDb(db)) {
-    return {
-      plan: "founder",
-      limits: OWNER_LIMITS,
-      status: "owner",
-      interval: null,
-      tier: 0,
-      periodEnd: null,
-      cancelAtPeriodEnd: false,
-      hasCustomer: false,
-      hasPaidSubscription: false,
-      isFreeTrial: false,
-    };
-  }
-  const { data } = await db.supabase
-    .from("subscriptions")
-    .select(
-      "plan, status, billing_interval, tier, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id",
-    )
-    .eq("user_id", db.user.id)
-    .maybeSingle();
+type SubscriptionRow = {
+  plan: string | null;
+  status: string | null;
+  billing_interval: Interval | null;
+  tier: number | null;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+};
 
+function ownerPlanInfo(): PlanInfo {
+  return {
+    plan: "founder",
+    limits: OWNER_LIMITS,
+    status: "owner",
+    interval: null,
+    tier: 0,
+    periodEnd: null,
+    cancelAtPeriodEnd: false,
+    hasCustomer: false,
+    hasPaidSubscription: false,
+    isFreeTrial: false,
+  };
+}
+
+function planInfoFromSubscription(data: SubscriptionRow | null): PlanInfo {
   const hasStripeSub = Boolean(data?.stripe_subscription_id);
   const periodEndMs = data?.current_period_end ? Date.parse(data.current_period_end) : NaN;
   const trialLive =
@@ -105,6 +109,36 @@ async function load(db: Db): Promise<PlanInfo> {
     hasPaidSubscription,
     isFreeTrial: trialLive,
   };
+}
+
+async function load(db: Db): Promise<PlanInfo> {
+  if (await isOwnerDb(db)) return ownerPlanInfo();
+  const { data } = await db.supabase
+    .from("subscriptions")
+    .select(
+      "plan, status, billing_interval, tier, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id",
+    )
+    .eq("user_id", db.user.id)
+    .maybeSingle();
+  return planInfoFromSubscription(data as SubscriptionRow | null);
+}
+
+/** Plan pour un user_id (cron, MCP, clés API) sans session navigateur. */
+export async function planForUserId(userId: string): Promise<PlanInfo | null> {
+  if (!userId) return null;
+  const admin = createAdminClient();
+  const { data: userData } = await admin.auth.admin.getUserById(userId);
+  const email = userData.user?.email;
+  if (localStudio() || isOwner(email)) return ownerPlanInfo();
+
+  const { data } = await admin
+    .from("subscriptions")
+    .select(
+      "plan, status, billing_interval, tier, current_period_end, cancel_at_period_end, stripe_customer_id, stripe_subscription_id",
+    )
+    .eq("user_id", userId)
+    .maybeSingle();
+  return planInfoFromSubscription(data as SubscriptionRow | null);
 }
 
 /** Plan de l'utilisateur courant (Gratuit par défaut). Une lecture par requête. */

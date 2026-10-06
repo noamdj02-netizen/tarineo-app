@@ -2,6 +2,8 @@ import Link from "next/link";
 import { AccountingExportPageClient } from "@/components/tarineo/panels/accounting-export-page-client";
 import { PageHead } from "@/components/shell/page-head";
 import { R } from "@/lib/routes";
+import { canUseFeature } from "@/lib/billing/entitlements";
+import { getPlan } from "@/lib/billing/plan";
 import {
   listAccountingExportRuns,
   listAccountingExportSchedules,
@@ -11,13 +13,15 @@ import { getCompanyProfile, listDocuments, rankingRows } from "@/lib/metier/quer
 export const metadata = { title: "Export comptable" };
 
 export default async function AchatsExportPage() {
-  const [documents, ranking, schedules, runs, company] = await Promise.all([
+  const [documents, ranking, schedules, runs, company, plan] = await Promise.all([
     listDocuments(),
     rankingRows(),
     listAccountingExportSchedules(),
     listAccountingExportRuns(20),
     getCompanyProfile(),
+    getPlan(),
   ]);
+  const canAccountingAuto = canUseFeature(plan, "accounting_export_auto");
   const invoiceCount = documents.filter((d) => d.kind === "facture").length;
   const activeSchedules = schedules.filter((s) => s.enabled).length;
   const lastExportLabel = runs[0]
@@ -54,6 +58,7 @@ export default async function AchatsExportPage() {
         invoiceCount={invoiceCount}
         activeSchedules={activeSchedules}
         lastExportLabel={lastExportLabel}
+        canAccountingAuto={canAccountingAuto}
       />
     </section>
   );

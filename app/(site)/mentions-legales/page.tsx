@@ -1,5 +1,11 @@
 import { LegalPage } from "@/components/site/legal-page";
 import { BRAND } from "@/lib/brand";
+import {
+  LEGAL_PUBLISHER,
+  publisherEditorParagraph,
+  publisherPublicationDirectorLine,
+  publisherSupabaseDataRegion,
+} from "@/lib/legal/publisher";
 import { siteMetadata } from "@/lib/seo";
 
 export const metadata = {
@@ -15,20 +21,17 @@ export default function MentionsPage() {
   return (
     <LegalPage
       title="Mentions légales"
-      updated="24 septembre 2026"
+      updated={LEGAL_PUBLISHER.legalPagesUpdated}
       sections={[
         {
           h: "Éditeur",
-          p: [
-            `${BRAND.name} est édité par [À compléter : nom et prénom ou raison sociale], [À compléter : statut, ex. micro-entreprise], SIRET [À compléter], dont le siège est situé [À compléter : adresse].`,
-            "Directeur de la publication : [À compléter]. Contact : [À compléter : email de contact].",
-          ],
+          p: [publisherEditorParagraph(), publisherPublicationDirectorLine()],
         },
         {
           h: "Hébergement",
           p: [
             "Le site est hébergé par Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis.",
-            "Les données sont stockées par Supabase Inc. (base de données) dans la région [À compléter : région d’hébergement].",
+            `Les données d’usage et les comptes sont stockés par Supabase Inc. (base de données) dans la région ${publisherSupabaseDataRegion()}.`,
           ],
         },
         {

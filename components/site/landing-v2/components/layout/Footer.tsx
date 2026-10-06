@@ -1,5 +1,6 @@
-import { footerColumns } from "@/lib/site/landing-v2-content";
+import { FooterBrandWordmark } from "@/components/site/footer-brand-wordmark";
 import { Logo } from "@/components/site/landing-v2/components/layout/Logo";
+import { footerColumns } from "@/lib/site/landing-v2-content";
 
 export function Footer() {
   return (
@@ -44,6 +45,9 @@ export function Footer() {
           <p>© {new Date().getFullYear()} Tarinéo. Tous droits réservés.</p>
           <p>Conçu et hébergé en France.</p>
         </div>
+
+        <div className="mt-6 border-t border-line sm:mt-8" aria-hidden />
+        <FooterBrandWordmark tone="on-light" className="mt-6 sm:mt-8" />
       </div>
     </footer>
   );

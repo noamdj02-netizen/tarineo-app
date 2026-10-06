@@ -17,15 +17,50 @@ export type IconName =
 
 export type NavItem = { label: string; href: string };
 
-/** L'analyse de devis ouvre la navigation : c'est la promesse principale. */
-export const nav: NavItem[] = [
-  { label: "Analyse de devis", href: "#analyse" },
+export type LandingNavGroup = { title: string; items: NavItem[] };
+
+/** Ancres de la page d’accueil — barre centrale desktop. */
+export const landingNavPrimary: NavItem[] = [
+  { label: "Analyse", href: "#analyse" },
   { label: "Produit", href: "#produit" },
+  { label: "Devis client", href: "#devis-facture" },
   { label: "Automatisations", href: "#automatisations" },
-  { label: "Fonctionnalités", href: "#devis-facture" },
-  { label: "Comment ça marche", href: "#apprentissage" },
+  { label: "Blog", href: "/blog" },
   { label: "Tarifs", href: "#tarifs" },
 ];
+
+/** Menu tiroir — sections regroupées. */
+export const landingNavGroups: LandingNavGroup[] = [
+  {
+    title: "Produit",
+    items: [
+      { label: "Analyse de devis", href: "#analyse" },
+      { label: "Devis fournisseur → client", href: "#devis-facture" },
+      { label: "Vue d’ensemble", href: "#produit" },
+      { label: "Copilote", href: "#copilote" },
+      { label: "Sécurité", href: "#securite" },
+    ],
+  },
+  {
+    title: "Automatisation",
+    items: [
+      { label: "Automatisations", href: "#automatisations" },
+      { label: "Connexions & e-mail", href: "#connecter" },
+    ],
+  },
+  {
+    title: "Ressources",
+    items: [
+      { label: "Comment ça marche", href: "#devis-facture" },
+      { label: "Blog", href: "/blog" },
+      { label: "Tarifs", href: "#tarifs" },
+      { label: "Contact", href: "#contact" },
+    ],
+  },
+];
+
+/** @deprecated Préférer `landingNavPrimary` + `landingNavGroups`. */
+export const nav: NavItem[] = landingNavGroups.flatMap((g) => g.items);
 
 export const heroProof = [
   "Devis fournisseurs",
@@ -100,7 +135,7 @@ export const analysedQuote: {
   verdict: string;
   advice: string;
 } = {
-  supplier: "Cedeo",
+  supplier: "Point.P",
   reference: "Devis n° 2026-014",
   date: "Reçu le 21 septembre",
   total: "1 310,00 € HT",
@@ -172,7 +207,7 @@ export const priceAlerts: {
   delta: string;
 }[] = [
   { name: "Câble U1000 R2V 3G2,5 mm²", supplier: "Rexel", from: "3,42 €", to: "3,84 €", delta: "+12,3 %" },
-  { name: "Tube PVC Ø 500", supplier: "Cedeo", from: "22,40 €", to: "24,60 €", delta: "+9,8 %" },
+  { name: "Tube PVC Ø 500", supplier: "Brossette", from: "22,40 €", to: "24,60 €", delta: "+9,8 %" },
   { name: "Disjoncteur 20 A courbe C", supplier: "Rexel", from: "14,80 €", to: "15,90 €", delta: "+7,4 %" },
   { name: "Colle carrelage flexible C2 S1", supplier: "Point.P", from: "36,20 €", to: "38,50 €", delta: "+6,4 %" },
 ];
@@ -185,7 +220,7 @@ export type LooseDocument = { icon: IconName; title: string; detail: string };
 
 export const looseDocuments: LooseDocument[] = [
   { icon: "mail", title: "Email client", detail: "« Pouvez-vous me chiffrer la salle de bain ? »" },
-  { icon: "doc", title: "Devis fournisseur", detail: "Cedeo n° 2026-014 · 1 310,00 € HT" },
+  { icon: "doc", title: "Devis fournisseur", detail: "Point.P n° 2026-014 · 1 310,00 € HT" },
   { icon: "box", title: "Document fournisseur", detail: "Point.P — chapé & collé" },
   { icon: "invoice", title: "Facture", detail: "Rexel Vénissieux · 2026-09-21" },
   { icon: "calendar", title: "Calendrier", detail: "Visite chantier jeudi 9 h" },
@@ -216,7 +251,7 @@ export const sourceCatalog: ConnectSourceCatalogItem[] = [
   { icon: "doc", label: "Documents PDF", detail: "Devis, bons de commande, factures", logoDomain: "adobe.com" },
   { icon: "box", label: "Photos", detail: "Chantiers, plans, métrés", logoDomain: "icloud.com" },
   { icon: "doc", label: "Excel", detail: "Tableaux de suivi et références", logoDomain: "microsoft.com" },
-  { icon: "box", label: "Données fournisseurs", detail: "Cedeo, Point.P, Rexel…" },
+  { icon: "box", label: "Données fournisseurs", detail: "Point.P, Rexel, Brossette…" },
   { icon: "history", label: "Historique des devis", detail: "Vos chiffrages passés", logoDomain: "dropbox.com" },
   { icon: "invoice", label: "Factures", detail: "Achats et ventes", logoDomain: "pennylane.com" },
 ];
@@ -255,7 +290,7 @@ export const learningActivityFeed: { icon: IconName; text: string; meta: string 
   { icon: "mail", text: "Email client relié au chantier", meta: "Il y a 8 min" },
 ];
 
-export const detectedSuppliers = ["Cedeo", "Point.P", "Rexel"];
+export const detectedSuppliers = ["Point.P", "Rexel", "Brossette"];
 
 export const detectedRules: { label: string; value: string }[] = [
   { label: "Marge minimale", value: "25 %" },
@@ -275,7 +310,7 @@ export type WorkflowNode = {
 };
 
 export const automationFlow: WorkflowNode[] = [
-  { icon: "doc", title: "Devis fournisseur reçu", meta: "Cedeo n° 2026-014 · 8 h 12" },
+  { icon: "doc", title: "Devis fournisseur reçu", meta: "Point.P n° 2026-014 · 8 h 12" },
   {
     icon: "spark",
     title: "Analyse IA",
@@ -292,16 +327,16 @@ export const automationFlow: WorkflowNode[] = [
  * ------------------------------------------------------------------ */
 
 export const copilotRequest =
-  "Quand je reçois un devis de Cedeo, analyse les prix et préviens-moi si ma marge descend sous 25 %.";
+  "Quand je reçois un devis de Point.P, analyse les prix et préviens-moi si ma marge descend sous 25 %.";
 
 /** La règle obtenue, présentée comme une spécification — pas comme un graphe. */
 export const copilotRule: {
   name: string;
   rows: { icon: IconName; label: string; value: string }[];
 } = {
-  name: "Surveillance marge Cedeo",
+  name: "Surveillance marge Point.P",
   rows: [
-    { icon: "doc", label: "Se déclenche sur", value: "Un devis Cedeo reçu dans Gmail" },
+    { icon: "doc", label: "Se déclenche sur", value: "Un devis Point.P reçu dans Gmail" },
     { icon: "spark", label: "Vérifie", value: "La marge recalculée, ligne par ligne" },
     { icon: "bell", label: "Vous prévient si", value: "La marge passe sous 25 %" },
   ],
@@ -319,9 +354,9 @@ export const copilotSuggestions = [
  * ------------------------------------------------------------------ */
 
 export const quoteSteps = [
-  { label: "Devis fournisseur", detail: "Cedeo n° 2026-014 · 1 310,00 € HT" },
+  { label: "Devis fournisseur", detail: "Point.P n° 2026-014 · 1 310,00 € HT" },
   { label: "Analyse", detail: "2 lignes lues, références retrouvées" },
-  { label: "Marge", detail: "Marge appliquée : 32 %" },
+  { label: "Marge", detail: "Marge appliquée : 25 %" },
   { label: "Devis client", detail: "Rénovation SDB — Dupont · 1 529,00 € HT" },
   { label: "Facture", detail: "Prête à envoyer, sans ressaisie" },
 ];
@@ -345,9 +380,9 @@ export const dashboardKpis: { label: string; value: string; detail: string; tone
 ];
 
 export const dashboardTodo: { kind: "Action" | "Pièce"; title: string; detail: string }[] = [
-  { kind: "Action", title: "3 lignes du devis Cedeo sont au-dessus du prix habituel", detail: "96,40 € de trop · à renégocier" },
+  { kind: "Action", title: "3 lignes du devis Point.P sont au-dessus du prix habituel", detail: "96,40 € de trop · à renégocier" },
   { kind: "Action", title: "Relancer le devis client — Rénovation SDB Dupont", detail: "En attente depuis 4 jours" },
-  { kind: "Pièce", title: "Facture Cedeo — commande SDB", detail: "Devis d'achat à transformer" },
+  { kind: "Pièce", title: "Facture Rexel — commande SDB", detail: "Devis d'achat à transformer" },
 ];
 
 /* ------------------------------------------------------------------ *
@@ -485,8 +520,9 @@ export const footerColumns: { title: string; links: { label: string; href: strin
   {
     title: "Ressources",
     links: [
-      { label: "Comment ça marche", href: "#apprentissage" },
+      { label: "Comment ça marche", href: "#devis-facture" },
       { label: "Du devis à la facture", href: "#devis-facture" },
+      { label: "Blog", href: "/blog" },
       { label: "Sécurité", href: "#securite" },
       { label: "Vue d'ensemble", href: "#produit" },
     ],
@@ -502,9 +538,9 @@ export const footerColumns: { title: string; links: { label: string; href: strin
   {
     title: "Légal",
     links: [
-      { label: "Conditions d'utilisation", href: "#produit" },
-      { label: "Confidentialité", href: "#produit" },
-      { label: "Mentions légales", href: "#produit" },
+      { label: "Conditions d'utilisation", href: "/cgv" },
+      { label: "Confidentialité", href: "/confidentialite" },
+      { label: "Mentions légales", href: "/mentions-legales" },
     ],
   },
 ];

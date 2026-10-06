@@ -2,6 +2,7 @@
 // POST /api/account/api-keys  → crée une clé, renvoie la clé en clair UNE SEULE FOIS
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { FeatureNotAllowedError, requireFeatureForUserId } from "@/lib/billing/entitlements";
 import { data } from "@/lib/mcp/data";
 import { generateApiKey, parseScopes } from "@/lib/mcp/api-keys";
 import { getCurrentUserId } from "@/lib/mcp/session";
@@ -36,6 +37,15 @@ export async function POST(req: Request) {
   const parsed = CreateBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "Donne un nom à ta clé (60 caractères max)." }, { status: 400 });
+  }
+
+  try {
+    await requireFeatureForUserId(userId, "api_access");
+  } catch (err) {
+    if (err instanceof FeatureNotAllowedError) {
+      return NextResponse.json({ error: err.message }, { status: 403 });
+    }
+    throw err;
   }
 
   const active = (await data.listApiKeys(userId)).filter((k) => !k.revokedAt);

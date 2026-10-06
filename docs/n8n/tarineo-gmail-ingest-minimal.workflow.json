@@ -1,0 +1,119 @@
+{
+  "name": "TARINEO — Gmail ingest (smoke test)",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "filters": { "includeSpamTrash": false }
+      },
+      "id": "gmail-trigger",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "credentials": { "gmailOAuth2": { "id": "REPLACE_ME", "name": "Gmail account" } }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [{ "value1": "={{ $json.attachments?.length > 0 }}", "value2": true }]
+        }
+      },
+      "id": "filter-attachment",
+      "name": "Has attachment",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "operation": "getAttachment",
+        "messageId": "={{ $json.id }}",
+        "attachmentId": "={{ $json.attachments[0].id }}"
+      },
+      "id": "gmail-attachment",
+      "name": "Get attachment",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [440, -80],
+      "credentials": { "gmailOAuth2": { "id": "REPLACE_ME", "name": "Gmail account" } }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://app.tarineo.com/api/integrations/ingest-document",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Idempotency-Key",
+              "value": "=gmail:{{ $('Gmail Trigger').item.json.id }}:{{ $('Gmail Trigger').item.json.attachments[0].id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "document_kind", "value": "supplier_quote" },
+            {
+              "name": "file",
+              "parameterType": "formBinaryData",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": { "timeout": 120000 }
+      },
+      "id": "http-tarineo",
+      "name": "TARINEO ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [660, -80],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_ME",
+          "name": "TARINEO API (Bearer npk_...)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.statusCode }}",
+              "operation": "smaller",
+              "value2": 300
+            }
+          ]
+        }
+      },
+      "id": "if-success",
+      "name": "HTTP success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [880, -80]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": { "main": [[{ "node": "Has attachment", "type": "main", "index": 0 }]] },
+    "Has attachment": {
+      "main": [
+        [{ "node": "Get attachment", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Get attachment": { "main": [[{ "node": "TARINEO ingest", "type": "main", "index": 0 }]] },
+    "TARINEO ingest": { "main": [[{ "node": "HTTP success", "type": "main", "index": 0 }]] }
+  },
+  "meta": {
+    "templateCredsSetup": [
+      "Créer credential HTTP Header Auth : Name=Authorization, Value=Bearer <votre npk_...>",
+      "Remplacer l'URL par http://localhost:3000 en dev",
+      "Ne jamais exporter le workflow avec les vraies clés"
+    ]
+  }
+}

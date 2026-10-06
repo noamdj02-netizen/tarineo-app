@@ -99,6 +99,15 @@ export async function upsertAccountingExportSchedule(input: {
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const db = await getDb();
   if (!db) return { ok: false, error: "Non connecté." };
+  if (input.enabled) {
+    const { FeatureNotAllowedError, requireFeature } = await import("@/lib/billing/entitlements");
+    try {
+      await requireFeature(db, "accounting_export_auto");
+    } catch (err) {
+      if (err instanceof FeatureNotAllowedError) return { ok: false, error: err.message };
+      throw err;
+    }
+  }
   const next_run_at = computeNextRun({ frequency: input.frequency, dayOfMonth: input.dayOfMonth });
   const payload = {
     user_id: db.user.id,
@@ -140,6 +149,15 @@ export async function deleteAccountingExportSchedule(id: string) {
 export async function toggleAccountingExportSchedule(id: string, enabled: boolean) {
   const db = await getDb();
   if (!db) return { ok: false as const, error: "Non connecté." };
+  if (enabled) {
+    const { FeatureNotAllowedError, requireFeature } = await import("@/lib/billing/entitlements");
+    try {
+      await requireFeature(db, "accounting_export_auto");
+    } catch (err) {
+      if (err instanceof FeatureNotAllowedError) return { ok: false as const, error: err.message };
+      throw err;
+    }
+  }
   const { error } = await db.supabase
     .from("accounting_export_schedules")
     .update({ enabled })
@@ -210,6 +228,11 @@ export async function processDueAccountingExports() {
   for (const raw of data ?? []) {
     const schedule = mapSchedule(raw as Record<string, unknown>);
     try {
+      const { canUseFeature } = await import("@/lib/billing/entitlements");
+      const { planForUserId } = await import("@/lib/billing/plan");
+      const plan = await planForUserId(schedule.user_id);
+      if (!canUseFeature(plan, "accounting_export_auto")) continue;
+
       const period = previousPeriod(schedule.frequency);
       const docs = await listDocumentsForUser(admin, schedule.user_id);
       const company = await getCompanyProfileForUser(admin, schedule.user_id);

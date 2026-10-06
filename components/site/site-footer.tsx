@@ -9,7 +9,9 @@ import { InView } from "@/components/site/in-view";
 import { LandingButton } from "@/components/site/landing-button";
 import { SiteLogo } from "@/components/site/site-logo";
 import { Separator } from "@/components/ui/separator";
+import { FooterBrandWordmark } from "@/components/site/footer-brand-wordmark";
 import { BRAND } from "@/lib/brand";
+import { isBlogPath } from "@/lib/site/is-blog-path";
 import { CTA_TRIAL, FINAL_CTA, FOOTER_COLS } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
@@ -37,18 +39,28 @@ export function SiteFooter() {
   const reduce = useReducedMotion();
   const variants = reduce ? riseQuiet : rise;
   const year = new Date().getFullYear();
+  const isLightFooter = isBlogPath(pathname);
+  const wordmarkTone = isLightFooter ? "on-light" : "on-dark";
 
   if (pathname === "/") return null;
 
   return (
-    <footer className="bg-bg px-4 pt-4 pb-8 sm:px-8 sm:pt-6 sm:pb-10">
+    <footer
+      className={cn(
+        "px-4 pt-4 pb-8 sm:px-8 sm:pt-6 sm:pb-10",
+        isLightFooter ? "border-t border-line bg-paper-0" : "bg-bg",
+      )}
+    >
       <InView className="mx-auto max-w-[1080px]" stagger={0.1}>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.18fr)] lg:gap-5">
           <motion.article
             variants={variants}
             whileHover={reduce ? undefined : { y: -2 }}
             transition={APPLE_SPRING_FAST}
-            className="relative isolate flex h-full min-h-[280px] flex-col overflow-hidden rounded-[22px] border border-line bg-surface px-6 py-7 text-white shadow-lift sm:min-h-[300px] sm:rounded-[28px] sm:px-8 sm:py-8"
+            className={cn(
+              "relative isolate flex h-full min-h-[280px] flex-col overflow-hidden rounded-[22px] border border-line px-6 py-7 text-white shadow-lift sm:min-h-[300px] sm:rounded-[28px] sm:px-8 sm:py-8",
+              isLightFooter ? "bg-ink-900" : "bg-surface",
+            )}
           >
             <div
               aria-hidden
@@ -96,13 +108,21 @@ export function SiteFooter() {
             variants={variants}
             whileHover={reduce ? undefined : { y: -2 }}
             transition={APPLE_SPRING_FAST}
-            className="h-full rounded-[22px] border border-line bg-surface px-6 py-7 shadow-soft ring-1 ring-line sm:rounded-[28px] sm:px-8 sm:py-8"
+            className={cn(
+              "h-full rounded-[22px] border border-line px-6 py-7 shadow-soft ring-1 ring-line sm:rounded-[28px] sm:px-8 sm:py-8",
+              isLightFooter ? "bg-paper-50" : "bg-surface",
+            )}
           >
             <p className="mono-label mb-5">{`/ Aller plus loin ///`}</p>
             <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 sm:gap-x-4">
               {FOOTER_COLS.map((col) => (
                 <div key={col.title}>
-                  <p className="mb-3 font-mono text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
+                  <p
+                    className={cn(
+                      "mb-3 font-mono text-[11px] font-medium tracking-[0.14em] uppercase",
+                      isLightFooter ? "text-ink-400" : "text-muted-foreground",
+                    )}
+                  >
                     {col.title}
                   </p>
                   <ul className="flex flex-col gap-2">
@@ -110,7 +130,12 @@ export function SiteFooter() {
                       <li key={l.href}>
                         <Link
                           href={l.href}
-                          className="group inline-flex items-center gap-1 text-[15px] text-white/75 transition-[color,transform] duration-300 ease-out-soft hover:text-white"
+                          className={cn(
+                            "group inline-flex items-center gap-1 text-[15px] transition-[color,transform] duration-300 ease-out-soft",
+                            isLightFooter
+                              ? "text-ink-600 hover:text-ink-900"
+                              : "text-white/75 hover:text-white",
+                          )}
                         >
                           {l.label}
                           <ArrowUpRight
@@ -129,16 +154,9 @@ export function SiteFooter() {
 
         <Separator className="mt-6 bg-line sm:mt-8" />
 
-        <motion.p
-          aria-hidden
-          variants={variants}
-          className={cn(
-            "mt-6 select-none text-center font-display text-[clamp(4.75rem,20vw,12.5rem)] leading-[0.78] font-semibold tracking-tightest text-white/[0.06] sm:mt-8",
-            "[mask-image:linear-gradient(180deg,black_8%,transparent_88%)]",
-          )}
-        >
-          {BRAND.name}
-        </motion.p>
+        <motion.div variants={variants} className="mt-6 sm:mt-8">
+          <FooterBrandWordmark tone={wordmarkTone} />
+        </motion.div>
       </InView>
     </footer>
   );

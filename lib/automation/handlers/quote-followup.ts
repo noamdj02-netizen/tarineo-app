@@ -67,6 +67,13 @@ export async function autoScheduleDueQuoteFollowUps(): Promise<{
     if (!config.autoScheduleEnabled) continue;
 
     const userId = def.user_id;
+    const { canUseFeature } = await import("@/lib/billing/entitlements");
+    const { planForUserId } = await import("@/lib/billing/plan");
+    const plan = await planForUserId(userId);
+    if (!canUseFeature(plan, "quote_followup_auto")) {
+      skipped += 1;
+      continue;
+    }
     const [docs, profile] = await Promise.all([
       listDocumentsForUser(admin, userId),
       getCompanyProfileForUser(admin, userId),

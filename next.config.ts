@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@react-pdf/renderer", "@react-pdf/hyphenate"],
   experimental: {
     optimizePackageImports: ["lucide-react", "framer-motion"],
+    /** Démo landing : upload jusqu’à 15 Mo avec middleware Supabase (défaut Next = 10 Mo). */
+    middlewareClientMaxBodySize: "16mb",
     serverActions: {
       bodySizeLimit: "3mb",
     },

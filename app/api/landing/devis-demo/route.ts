@@ -3,16 +3,33 @@ import {
   buildLandingSupplierDemoPdf,
 } from "@/lib/site/landing-quote-pdf.server";
 import { LANDING_QUOTE_DEMO_COOKIE } from "@/lib/site/landing-quote-demo-quota";
-import { LANDING_QUOTE_DEMO } from "@/lib/site/landing-quote-transform-demo";
+import { sanitizeLandingExtractLines } from "@/lib/site/landing-quote-extract-map";
+import {
+  demoPdfDownloadName,
+  LANDING_QUOTE_DEMO,
+  type LandingDemoOutputKind,
+} from "@/lib/site/landing-quote-transform-demo";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
+
+const OUTPUT_KINDS = new Set<LandingDemoOutputKind>([
+  "devis",
+  "facture",
+  "bon_commande",
+  "bon_enlevement",
+]);
 
 type Body = {
   kind?: "client" | "supplier";
   marginPct?: number;
   clientName?: string;
+  clientAddress?: string;
   sourceRef?: string;
+  documentKind?: LandingDemoOutputKind;
+  lines?: unknown;
+  documentNumber?: string;
+  issueDate?: string;
 };
 
 function hasDemoQuotaCookie(req: Request): boolean {
@@ -81,15 +98,45 @@ export async function POST(req: Request) {
       ? body.sourceRef.trim().slice(0, 160)
       : undefined;
 
+  const documentKind =
+    body.documentKind && OUTPUT_KINDS.has(body.documentKind) ? body.documentKind : "devis";
+
+  const clientAddress =
+    typeof body.clientAddress === "string" && body.clientAddress.trim()
+      ? body.clientAddress.trim().slice(0, 240)
+      : undefined;
+
+  const extractLines = sanitizeLandingExtractLines(body.lines);
+  if (!extractLines) {
+    return new Response("Lignes d’extraction manquantes ou invalides. Analysez d’abord votre document.", {
+      status: 400,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
+  const filename = demoPdfDownloadName(documentKind, clientName);
+
+  const documentNumber =
+    typeof body.documentNumber === "string" ? body.documentNumber.trim().slice(0, 40) : undefined;
+  const issueDate = typeof body.issueDate === "string" ? body.issueDate.trim().slice(0, 32) : undefined;
+
   try {
-    const buffer = await buildLandingDemoDevisPdf(marginPct, clientName, sourceRef);
+    const buffer = await buildLandingDemoDevisPdf(
+      marginPct,
+      clientName,
+      sourceRef,
+      documentKind,
+      clientAddress,
+      extractLines,
+      { documentNumber, issueDate },
+    );
     if (!buffer?.length) {
       return new Response("PDF vide.", { status: 500 });
     }
     return new Response(new Uint8Array(buffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": 'attachment; filename="devis-client-exemple-tarineo.pdf"',
+        "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "public, max-age=0, must-revalidate",
         "X-Content-Type-Options": "nosniff",
         "Set-Cookie": quotaCookieHeader,
