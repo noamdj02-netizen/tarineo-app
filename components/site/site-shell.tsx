@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Footer as LandingFooter } from "@/components/site/landing-v2/components/layout/Footer";
+import { Header as LandingHeader } from "@/components/site/landing-v2/components/layout/Header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteNav } from "@/components/site/site-nav";
 import { isBlogPath } from "@/lib/site/is-blog-path";
@@ -32,15 +34,13 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
   if (isBlog) {
     return (
-      <div
-        className="landing-v2 theme-tarineo theme-light flex min-h-dvh flex-col overflow-x-clip bg-paper-100 text-ink-600 pb-[env(safe-area-inset-bottom,0px)]"
-      >
+      <div className="landing-v2 flex min-h-dvh flex-col bg-paper-100 text-ink-600 pb-[env(safe-area-inset-bottom,0px)]">
         {skipLink}
-        <SiteNav />
-        <main id="contenu" className="flex-1 min-h-0 bg-paper-100">
+        <LandingHeader />
+        <main id="contenu" className="flex-1 min-h-0">
           {children}
         </main>
-        <SiteFooter />
+        <LandingFooter />
       </div>
     );
   }

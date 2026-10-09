@@ -4,9 +4,9 @@ import { BRAND } from "@/lib/brand";
 import { siteMetadata } from "@/lib/seo";
 import { faqPageJsonLd, softwareApplicationJsonLd } from "@/lib/seo/json-ld";
 
-const HOME_TITLE = `${BRAND.name} — L'administratif des artisans, en pilote automatique`;
+const HOME_TITLE = `${BRAND.name} — L'assistant qui protège votre marge`;
 const HOME_DESCRIPTION =
-  "Tarinéo lit vos emails et vos documents, comprend votre activité et automatise vos devis, relances et factures. Vous gardez le contrôle à chaque étape.";
+  "Logiciel pour artisans du bâtiment : comparez vos achats fournisseurs, repérez les hausses de prix, suivez vos chantiers et générez devis et factures clients. Vous validez chaque envoi.";
 
 export const metadata = {
   ...siteMetadata({ title: HOME_TITLE, description: HOME_DESCRIPTION, path: "/" }),

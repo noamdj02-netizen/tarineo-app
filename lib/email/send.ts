@@ -4,6 +4,18 @@ import { BRAND } from "@/lib/brand";
 
 const TARINEO_FROM = `${BRAND.name} <${BRAND.contactEmail}>`;
 
+/** En local, Resend est off sauf RESEND_ENABLE_DEV=true (évite 403 si la clé ne matche pas le domaine). */
+export function isResendSendEnabled() {
+  const key = process.env.RESEND_API_KEY?.trim();
+  if (!key) return false;
+  const deployed =
+    process.env.NODE_ENV === "production" ||
+    process.env.VERCEL_ENV === "production" ||
+    process.env.VERCEL_ENV === "preview";
+  if (!deployed && process.env.RESEND_ENABLE_DEV !== "true") return false;
+  return true;
+}
+
 function fromAddress() {
   const raw = process.env.EMAIL_FROM?.trim();
   // Domaine Resend non vérifié (.fr) ou legacy Navpit → fallback TARINEO vérifié.
@@ -21,9 +33,27 @@ function fromAddress() {
 function describeSendError(error: { message?: string; name?: string } | null) {
   const text = `${error?.name ?? ""} ${error?.message ?? ""}`.toLowerCase();
   if (text.includes("not authorized") || text.includes("403") || text.includes("domain")) {
-    return "L’envoi est refusé par Resend : la clé ou le domaine ne correspond pas à TARINEO (contact@tarineo.fr).";
+    return "L’envoi est refusé par Resend : la clé ou le domaine ne correspond pas à TARINEO (contact@tarineo.com).";
   }
   return error?.message || "L’email n’est pas parti. Réessaie dans un moment.";
+}
+
+/** Auth : basculer sur les emails natifs Supabase (OTP / recovery) si Resend est indisponible. */
+export function authEmailShouldUseSupabaseFallback(result: {
+  ok: boolean;
+  skipped?: boolean;
+  error?: string;
+}) {
+  if (result.ok) return false;
+  if (result.skipped) return true;
+  const text = (result.error ?? "").toLowerCase();
+  return (
+    text.includes("resend") ||
+    text.includes("403") ||
+    text.includes("not authorized") ||
+    text.includes("domain") ||
+    text.includes("api key")
+  );
 }
 
 let client: Resend | null = null;
@@ -35,11 +65,11 @@ export async function sendEmail(
   react: React.ReactElement,
   idempotencyKey?: string,
 ) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
+  if (!isResendSendEnabled()) {
     if (process.env.NODE_ENV === "production") console.error("[email] RESEND_API_KEY manquant");
     return { ok: false as const, skipped: true as const };
   }
+  const key = process.env.RESEND_API_KEY!.trim();
   client ??= new Resend(key);
   const { error } = await client.emails.send(
     {
@@ -64,8 +94,10 @@ export async function sendPlainEmail(input: {
   text: string;
   replyTo?: string;
 }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return { ok: false as const, skipped: true as const, error: "RESEND_API_KEY manquant." };
+  if (!isResendSendEnabled()) {
+    return { ok: false as const, skipped: true as const, error: "RESEND_API_KEY manquant." };
+  }
+  const key = process.env.RESEND_API_KEY!.trim();
   client ??= new Resend(key);
   const html = `<pre style="font:15px/1.45 ui-sans-serif,system-ui;white-space:pre-wrap">${escapeHtml(
     input.text,
@@ -96,11 +128,11 @@ export async function sendEmailWithPdf(input: {
   inline?: { filename: string; content: Buffer; contentId: string }[];
   idempotencyKey?: string;
 }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
+  if (!isResendSendEnabled()) {
     if (process.env.NODE_ENV === "production") console.error("[email] RESEND_API_KEY manquant");
     return { ok: false as const, skipped: true as const, error: "E-mail non configuré (RESEND_API_KEY)." };
   }
+  const key = process.env.RESEND_API_KEY!.trim();
   client ??= new Resend(key);
   const attachments = [
     { filename: input.filename, content: input.pdf },
@@ -138,11 +170,11 @@ export async function sendEmailWithAttachment(input: {
   replyTo?: string;
   idempotencyKey?: string;
 }) {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) {
+  if (!isResendSendEnabled()) {
     if (process.env.NODE_ENV === "production") console.error("[email] RESEND_API_KEY manquant");
     return { ok: false as const, skipped: true as const, error: "E-mail non configuré (RESEND_API_KEY)." };
   }
+  const key = process.env.RESEND_API_KEY!.trim();
   client ??= new Resend(key);
   const { data, error } = await client.emails.send(
     {

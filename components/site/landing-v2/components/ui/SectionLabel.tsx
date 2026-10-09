@@ -48,7 +48,7 @@ export function SectionHeading({
         <SectionLabel>{label}</SectionLabel>
       </LandingStaggerItem>
       <LandingStaggerItem>
-        <h2 id={id} className="mt-4 text-title font-semibold">
+        <h2 id={id} className="mt-4 text-title font-semibold tracking-tight text-ink-900">
           {title}
         </h2>
       </LandingStaggerItem>

@@ -29,11 +29,21 @@
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
+    ".next-dev/types/**/*.ts",
     ".next/types/**/*.ts",
-    "next-env.d.ts",
-    ".next-dev/types/**/*.ts"
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "emails/**/*.ts",
+    "emails/**/*.tsx",
+    "hooks/**/*.ts",
+    "hooks/**/*.tsx",
+    "instrumentation.ts",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "middleware.ts",
+    "next-env.d.ts"
   ],
   "exclude": [
     "node_modules",
@@ -44,6 +54,14 @@
     "remotion",
     "remotion.config.ts",
     "components/motion/TarineoMotion.tsx",
-    "components/site/landing-motion-film.tsx"
+    "components/site/landing-motion-film.tsx",
+    "**/* 2.ts",
+    "**/* 2.tsx",
+    "**/* 2.json",
+    ".next-dev-test",
+    ".next-dev-turbo",
+    ".next-dev-turbo2",
+    ".next-dev-warm",
+    ".next-dev-probe"
   ]
 }

@@ -78,7 +78,8 @@ export function PromptHero({
             month: "long",
           })}
         </p>
-        <h1
+        {/* h2 : le h1 Accueil reste dans PageHeader (un seul greeting document). */}
+        <h2
           className={cn(
             "mt-1.5 font-display font-semibold tracking-tightest text-balance",
             featured && inWidget
@@ -92,15 +93,15 @@ export function PromptHero({
                   : "max-w-[16ch] text-[clamp(28px,5vw,40px)] leading-[1.04]",
           )}
         >
-          Bonjour{firstName ? `, ${firstName}` : ""}
-        </h1>
+          Quels prix ont bougé ?
+        </h2>
         <p
           className={cn(
             "mt-1.5 max-w-[36ch] text-muted-foreground",
             featured ? "text-[15px] leading-snug sm:text-[16px]" : "text-[14.5px] leading-snug",
           )}
         >
-          Quels prix ont bougé aujourd’hui ?
+          {firstName ? `${firstName}, d` : "D"}emandez à l’assistant — sans inventer de prix.
         </p>
       </div>
       <PromptBox

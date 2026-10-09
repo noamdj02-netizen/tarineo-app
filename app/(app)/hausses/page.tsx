@@ -34,7 +34,7 @@ export default async function AlertesPage() {
         <ul className="grid gap-3 sm:grid-cols-2">
           {alerts.map((a) => {
             const pct = variation(Number(a.old_price), Number(a.new_price));
-            const demo = a.id === DEMO_IDS.alert;
+            const demo = a.seed_key === DEMO_IDS.alert;
             const productHref = priceAlertProductHref(a);
             const productName = alertProductName(a.label);
             return (

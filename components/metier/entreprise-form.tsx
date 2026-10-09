@@ -9,16 +9,20 @@ import {
 } from "@/components/metier/entreprise-lookup-flow";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EmailSignaturePanel } from "@/components/metier/email-signature-panel";
 import { LABELS_REGIME_TVA, type CompanyProfile } from "@/lib/metier/company";
+import type { EmailSettings } from "@/lib/settings/workspace-settings";
 
 const field = "h-12 min-h-12 rounded-xl";
 
 export function EntrepriseForm({
   profil,
   logoUrl,
+  emailSettings,
 }: {
   profil: CompanyProfile;
   logoUrl: string | null;
+  emailSettings: EmailSettings;
 }) {
   const [pending, setPending] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -29,7 +33,7 @@ export function EntrepriseForm({
   const [seed, setSeed] = useState(() => draftFromProfile(profil, logoUrl));
 
   function applyLookup(draft: EntrepriseDraft) {
-    // Complète les champs publics sans écraser logo / email / TVA déjà valides.
+    // Recherche explicite : on remplace l’identité publique (SIRET, raison, adresse, logo trouvé).
     setSeed((prev) => ({
       ...prev,
       raisonSociale: draft.raisonSociale || prev.raisonSociale,
@@ -40,15 +44,19 @@ export function EntrepriseForm({
       adresseVille: draft.adresseVille || prev.adresseVille,
       emailContact: prev.emailContact || draft.emailContact || profil.email_contact,
       regimeTva: prev.regimeTva ?? draft.regimeTva ?? profil.regime_tva,
-      logoUrl: prev.logoUrl ?? draft.logoUrl ?? logoUrl,
+      logoUrl: draft.logoUrl ?? prev.logoUrl ?? logoUrl,
       logoPath: prev.logoPath || profil.logo_path,
       margeParDefautPct: prev.margeParDefautPct ?? draft.margeParDefautPct ?? 35,
       activity: draft.activity || prev.activity,
       fromLookup: true,
     }));
-    if (draft.logoUrl && !preview) setPreview(draft.logoUrl);
+    if (draft.logoUrl) setPreview(draft.logoUrl);
     setFormKey((k) => k + 1);
-    setMsg("Informations récupérées — vérifiez puis enregistrez.");
+    setErr(null);
+    setMsg("Entreprise trouvée — vérifiez le formulaire puis Enregistrer.");
+    requestAnimationFrame(() => {
+      document.getElementById("entreprise-identite")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
   }
 
   return (
@@ -81,7 +89,7 @@ export function EntrepriseForm({
       >
         <input type="hidden" name="logoPath" value={seed.logoPath ?? profil.logo_path} />
         <input type="hidden" name="logoUrl" value={seed.logoUrl ?? ""} />
-        <section className="card-soft flex flex-col gap-4 p-5">
+        <section id="entreprise-identite" className="card-soft flex flex-col gap-4 p-5 scroll-mt-24">
           <p className="text-[12px] font-semibold tracking-[0.06em] text-muted-foreground uppercase">Identité visuelle</p>
           <p className="text-[13px] text-muted-foreground">Repris sur chaque devis, facture et bon client.</p>
           <div className="flex items-center gap-4">
@@ -207,6 +215,11 @@ export function EntrepriseForm({
           {pending ? "Enregistrement…" : "Enregistrer"}
         </Button>
       </form>
+
+      <EmailSignaturePanel
+        initial={emailSettings}
+        companyName={profil.raison_sociale || seed.raisonSociale}
+      />
     </div>
   );
 }

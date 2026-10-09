@@ -10,12 +10,22 @@ test("parseCompanyQuery — nom simple", () => {
   assert.equal(p?.searchText, "Dupont Plomberie");
   assert.equal(p?.domain, null);
   assert.equal(p?.digits, null);
+  assert.deepEqual(p?.searchVariants, []);
+});
+
+test("parseCompanyQuery — marque collée INKFLOW", () => {
+  const p = parseCompanyQuery("INKFLOW");
+  assert.ok(p);
+  assert.equal(p.searchText, "INKFLOW");
+  assert.ok(p.searchVariants.some((v) => /ink\s+flow/i.test(v)), String(p.searchVariants));
 });
 
 test("parseCompanyQuery — domaine et URL", () => {
   assert.equal(parseCompanyQuery("dupont-plomberie.fr")?.domain, "dupont-plomberie.fr");
   assert.equal(parseCompanyQuery("https://www.dupont-plomberie.fr/contact")?.domain, "dupont-plomberie.fr");
   assert.equal(parseCompanyQuery("dupont-plomberie.fr")?.searchText.includes("dupont"), true);
+  assert.equal(parseCompanyQuery("ink-flow.me")?.domain, "ink-flow.me");
+  assert.ok(parseCompanyQuery("ink-flow.me")?.website?.includes("ink-flow.me"));
 });
 
 test("parseCompanyQuery — SIRET / SIREN avec espaces", () => {

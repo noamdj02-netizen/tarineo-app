@@ -6,10 +6,10 @@ import { R } from "@/lib/routes";
 
 export const metadata = { title: "Analyse IA · documents" };
 
-type Props = { searchParams: Promise<{ mode?: string }> };
+type Props = { searchParams: Promise<{ mode?: string; film?: string }> };
 
 export default async function DevisAnalyserPage({ searchParams }: Props) {
-  const { mode } = await searchParams;
+  const { mode, film } = await searchParams;
   if (mode === "voice" || mode === "manual") {
     redirect(`${R.devisNouveau}?mode=${mode}`);
   }
@@ -20,7 +20,7 @@ export default async function DevisAnalyserPage({ searchParams }: Props) {
   const [chantiers, clients] = await Promise.all([listChantiers(), listParties("client")]);
   return (
     <Suspense fallback={<div className="text-[14px] text-muted-foreground">Chargement…</div>}>
-      <DocumentAnalyseAgent chantiers={chantiers} clients={clients} />
+      <DocumentAnalyseAgent chantiers={chantiers} clients={clients} filmLecture={film === "lecture"} />
     </Suspense>
   );
 }

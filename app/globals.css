@@ -4,6 +4,12 @@
 @import "../styles/studio.css" layer(components);
 @import "../styles/landing-v2.css";
 
+/* Barlow / Space Grotesk : chargées via <link> dans app/layout (compat Turbopack). */
+:root {
+  --font-barlow: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-space-grotesk: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Variantes `dark:` des primitives shadcn pilotées par la classe .dark (site public), pas par l'OS. */
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *):not(:where(.theme-light, .theme-light *)));
 
@@ -139,6 +145,15 @@
 
   --animate-marquee: marquee var(--marquee-duration, 52s) linear infinite;
   --animate-marquee-reverse: marquee-reverse var(--marquee-duration, 58s) linear infinite;
+}
+
+@keyframes terrain-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 @keyframes marquee {
@@ -364,6 +379,54 @@ html[data-theme="light"] {
   --ink2: var(--color-muted-ink);
   --line: var(--color-line);
   --brand: var(--color-brand-orange);
+}
+
+/*
+ * Login / inscription : fond clair même si l’utilisateur a choisi le thème sombre (app).
+ */
+html:has(.auth-shell) {
+  background-color: #f5f5f3;
+  color-scheme: light;
+}
+
+.auth-shell {
+  color-scheme: light;
+  --color-bg: #f5f5f3;
+  --color-surface: #ffffff;
+  --color-surface-2: #ececea;
+  --color-ink: #111111;
+  --color-muted-ink: #525252;
+  --color-faint: #737373;
+  --color-line: rgba(17, 17, 17, 0.1);
+  --color-line-strong: rgba(17, 17, 17, 0.14);
+  --color-accent: #111111;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #f4f4f3;
+  --color-accent-2: #6e6e6e;
+  --color-st-focus-soft: #ecfdf3;
+  --color-st-focus-ink: #15803d;
+  --color-st-pause-soft: #fff7e6;
+  --color-st-pause-ink: #b45309;
+  --color-st-fini-soft: #f3f4f6;
+  --color-st-fini-ink: #4b5563;
+  --color-search: #f3f3f2;
+  --shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04),
+    0 16px 40px -18px rgba(0, 0, 0, 0.18);
+  --shadow-lift: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 10px rgba(0, 0, 0, 0.05),
+    0 24px 48px -20px rgba(0, 0, 0, 0.24);
+  --bg: var(--color-bg);
+  --panel: var(--color-surface);
+  --panel2: var(--color-surface-2);
+  --ink: var(--color-ink);
+  --ink2: var(--color-muted-ink);
+  --line: var(--color-line);
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+}
+
+.auth-shell .mono-label {
+  font-size: 12px;
+  color: var(--color-brand-orange);
 }
 
 /* Sections claires du site (Pour qui, FAQ) : alternance pour rythmer la lecture. */

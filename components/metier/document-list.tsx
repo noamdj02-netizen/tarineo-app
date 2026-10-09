@@ -3,6 +3,9 @@ import Link from "next/link";
 import { ConvertDevisActions } from "@/components/metier/convert-devis";
 import { DocumentPreview } from "@/components/metier/document-preview";
 import type { CompanyProfile } from "@/lib/metier/company";
+import { StatusBadge } from "@/components/tarineo/status-badge";
+import { documentDeliveryDate, formatDeliveryDateFr } from "@/lib/metier/delivery";
+import { documentLifecycleLabel } from "@/lib/metier/follow-ups";
 import { KIND_LABEL, totalsFromExtract, type DocumentCard } from "@/lib/metier/types";
 import { DEMO_MARK, euro } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
@@ -14,9 +17,11 @@ export function DocumentList({
   emptyAction,
   company,
   transformedSourceIds,
+  allDocs,
   className,
 }: {
   docs: DocumentCard[];
+  allDocs?: DocumentCard[];
   empty: string;
   emptyHref?: string;
   emptyAction?: string;
@@ -43,6 +48,7 @@ export function DocumentList({
         const totals = totalsFromExtract(d.extract);
         const transformed = d.direction === "in" && Boolean(transformedSourceIds?.includes(d.id));
         const ht = totals.ht ?? d.lines.reduce((s, l) => s + Number(l.buy_price || l.sell_price) * Number(l.qty), 0);
+        const deliveryDay = documentDeliveryDate(d);
         return (
           <li
             key={d.id}
@@ -71,8 +77,16 @@ export function DocumentList({
                   {d.party_name ? ` · ${d.party_name}` : d.seed_key ? ` · ${DEMO_MARK}` : ""}
                 </p>
                 <p className="font-medium group-hover:underline">{d.title}</p>
+                {allDocs && d.direction === "out" && d.kind === "devis" ? (
+                  <StatusBadge
+                    label={documentLifecycleLabel(d, allDocs)}
+                    tone="ok"
+                    className="mt-1 w-fit"
+                  />
+                ) : null}
                 <p className="text-[13px] text-muted-foreground">
                   {d.chantier_name ?? "Sans chantier"}
+                  {deliveryDay ? ` · Livraison ${formatDeliveryDateFr(deliveryDay)}` : ""}
                 </p>
                 <p className="mt-1 tabular-nums text-[15px] font-medium">
                   {ht ? `${euro(ht)} HT` : "—"}

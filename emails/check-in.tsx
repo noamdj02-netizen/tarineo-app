@@ -54,7 +54,6 @@ export function CheckInEmail({
       label="Check-in"
       title="Comment ça se passe ?"
       appUrl={base}
-      hideHeroImage
       footerNote="Pas de pub, pas d’offre. Juste Noam qui lit les réponses pour décider quoi construire ensuite."
     >
       <EmailParagraph>{hello}</EmailParagraph>
@@ -115,7 +114,6 @@ export function CheckInEmailShort({
       label="Check-in"
       title="Un petit check"
       appUrl={base}
-      hideHeroImage
       footerNote="Réponds quand tu peux. Pas d’urgence, pas de pitch."
     >
       <EmailParagraph>{hello}</EmailParagraph>

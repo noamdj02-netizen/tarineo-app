@@ -8,9 +8,11 @@ import type { ChantierCard, Party } from "@/lib/metier/types";
 export function DocumentAnalyseAgent({
   chantiers,
   clients,
+  filmLecture,
 }: {
   chantiers: ChantierCard[];
   clients: Party[];
+  filmLecture?: boolean;
 }) {
   const chantier = chantiers.find((c) => c.status === "focus") ?? chantiers[0] ?? null;
 
@@ -55,6 +57,7 @@ export function DocumentAnalyseAgent({
           defaultChantierId={chantier?.id ?? null}
           showAgentMeta
           dropHint="PDF ou photo : devis, facture, bon de commande, BL…"
+          filmLecture={filmLecture}
         />
       </DocumentDropzone>
     </div>

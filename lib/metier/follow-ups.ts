@@ -201,7 +201,17 @@ export function buildFollowUpViews(
     done: 4,
     cancelled: 5,
   };
-  return views.sort((a, b) => order[a.status] - order[b.status] || a.document_title.localeCompare(b.document_title, "fr"));
+  const filmRelanceTitle = "Devis client — extension Dupont";
+  return views.sort((a, b) => {
+    if (order[a.status] !== order[b.status]) return order[a.status] - order[b.status];
+    const aFilm = a.document_title === filmRelanceTitle ? 0 : 1;
+    const bFilm = b.document_title === filmRelanceTitle ? 0 : 1;
+    if (aFilm !== bFilm) return aFilm - bFilm;
+    const ta = Date.parse(a.last_action_at || a.sent_at || a.created_at);
+    const tb = Date.parse(b.last_action_at || b.sent_at || b.created_at);
+    if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) return ta - tb;
+    return a.document_title.localeCompare(b.document_title, "fr");
+  });
 }
 
 function toView(fu: FollowUp, doc: DocumentCard): FollowUpView {

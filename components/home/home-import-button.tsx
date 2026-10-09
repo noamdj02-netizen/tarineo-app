@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { DocumentImportPanels } from "@/components/metier/document-import-dialog";
 import {
   Dialog,
@@ -21,8 +22,26 @@ export function HomeImportButton({
   clients: Party[];
   className?: string;
 }) {
+  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState<"pick" | "review">("pick");
+
+  const onPhaseChange = useCallback((next: "pick" | "review") => {
+    setPhase(next);
+  }, []);
+
+  const onDocumentSaved = useCallback(() => {
+    setOpen(false);
+    setPhase("pick");
+  }, []);
+
   return (
-    <Dialog>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setPhase("pick");
+      }}
+    >
       <DialogTrigger
         render={
           <button
@@ -36,14 +55,30 @@ export function HomeImportButton({
       >
         Importer
       </DialogTrigger>
-      <DialogContent className="max-h-[min(92dvh,880px)] overflow-y-auto sm:max-w-3xl" showCloseButton>
-        <DialogHeader>
-          <DialogTitle>Importer des documents</DialogTitle>
+      <DialogContent
+        className="flex max-h-[min(92dvh,880px)] w-full flex-col gap-3 overflow-hidden sm:max-w-3xl md:top-[max(1.25rem,5dvh)] md:translate-y-0"
+        showCloseButton
+      >
+        <DialogHeader className="shrink-0 pr-8">
+          <DialogTitle>
+            {phase === "review" ? "Lecture du document" : "Importer des documents"}
+          </DialogTitle>
           <DialogDescription>
-            Un fichier avec relecture complète, ou un lot jusqu’à 150 documents en enregistrement automatique.
+            {phase === "review"
+              ? "Vérifiez le récap agent et les totaux, puis enregistrez — vous ouvrirez ensuite la fiche du document."
+              : "Un fichier avec relecture complète, ou un lot jusqu’à 150 documents en enregistrement automatique."}
           </DialogDescription>
         </DialogHeader>
-        <DocumentImportPanels chantiers={chantiers} clients={clients} compact showAgentMeta />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+          <DocumentImportPanels
+            chantiers={chantiers}
+            clients={clients}
+            compact
+            showAgentMeta
+            onPhaseChange={onPhaseChange}
+            onDocumentSaved={onDocumentSaved}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );

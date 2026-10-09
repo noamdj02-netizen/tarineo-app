@@ -99,6 +99,7 @@ export default async function AccueilPage() {
       company={company}
       actionNotifications={actionNotifs}
       distributorGoalsHt={distributorGoalsHt}
+      showDashboardTour={viewer?.needsTour === true}
     />
   );
 }

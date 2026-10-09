@@ -6,6 +6,7 @@ import { ArrowRight, Button } from "@/components/site/landing-v2/components/ui/B
 import { Mascot } from "@/components/site/landing-v2/components/ui/Mascot";
 import { SectionLabel } from "@/components/site/landing-v2/components/ui/SectionLabel";
 import { LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
+import { cn } from "@/lib/utils";
 import {
   LANDING_EASE,
   LANDING_VIEW,
@@ -15,13 +16,11 @@ import {
   LandingStaggerItem,
 } from "@/components/site/landing-v2/lib/landing-motion";
 
-export function FinalCta() {
+export function FinalCtaCard({ className }: { className?: string }) {
   const reduce = useReducedMotion();
 
   return (
-    <section id="contact" className="pb-20 sm:pb-28">
-      <div className="shell">
-        <LandingFloatCard className="relative surface overflow-hidden shadow-card">
+    <LandingFloatCard className={cn("relative surface overflow-hidden shadow-card", className)}>
           <LandingCtaGlow />
           <div className="relative grid items-center gap-8 p-7 sm:p-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:gap-6 lg:p-12">
             <LandingStagger className="min-w-0" stagger={0.07}>
@@ -37,8 +36,9 @@ export function FinalCta() {
               </LandingStaggerItem>
               <LandingStaggerItem>
                 <p className="mt-5 max-w-lg text-body-lg text-ink-600">
-                  Connectez votre boîte mail et vos documents. La première analyse de devis prend
-                  quelques minutes — pas une journée d&apos;installation.
+                  Importez un premier devis ou une facture fournisseur : la comparaison à vos prix
+                  habituels prend quelques minutes — sans journée d&apos;installation ni engagement
+                  sur votre logiciel actuel.
                 </p>
               </LandingStaggerItem>
               <LandingStaggerItem>
@@ -78,7 +78,15 @@ export function FinalCta() {
               />
             </motion.div>
           </div>
-        </LandingFloatCard>
+    </LandingFloatCard>
+  );
+}
+
+export function FinalCta() {
+  return (
+    <section id="contact" className="pb-20 sm:pb-28">
+      <div className="shell">
+        <FinalCtaCard />
       </div>
     </section>
   );

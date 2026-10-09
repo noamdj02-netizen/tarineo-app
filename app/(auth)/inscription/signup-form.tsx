@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field as UiField, FieldLabel } from "@/components/ui/field";
 import { HoneypotField } from "@/components/site/honeypot-field";
-import { FollowAuthTab } from "@/components/auth/follow-auth";
+import { FollowAuthTab, publishAuthLanding } from "@/components/auth/follow-auth";
 import { continueAfterAuth } from "@/lib/auth/continue-after-auth";
 import { sendSignupCode } from "@/lib/email/auth-mail";
 import { createClient } from "@/lib/supabase/client";
@@ -87,7 +87,7 @@ export function SignupForm({ next }: { next: string }) {
       return;
     }
     const { data, error } = await createClient().auth.signUp({
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       password,
       options: {
         data: { first_name: name.trim(), onboarding_required: true, locale: "fr" },
@@ -111,7 +111,13 @@ export function SignupForm({ next }: { next: string }) {
       return;
     }
     if (data.session) {
-      router.replace(next);
+      const settled = await continueAfterAuth(next, "signup");
+      if (!settled.ok) {
+        window.location.assign(`/auth/callback?next=${encodeURIComponent(next)}&verified=signup`);
+        return;
+      }
+      publishAuthLanding(settled.path);
+      router.replace(settled.path);
       router.refresh();
       return;
     }
@@ -140,6 +146,7 @@ export function SignupForm({ next }: { next: string }) {
       );
       return;
     }
+    publishAuthLanding(settled.path);
     router.replace(settled.path);
     router.refresh();
   }

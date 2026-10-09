@@ -81,6 +81,7 @@ export function DocumentBrowser({
       )}
       <DocumentList
         docs={filtered}
+        allDocs={allDocs}
         empty={empty}
         emptyHref={emptyHref}
         emptyAction={emptyAction}

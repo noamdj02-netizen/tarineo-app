@@ -42,3 +42,12 @@ export function pieceListHref(direction: "in" | "out", kind: string) {
   if (kind === "facture") return R.distributeurFacture;
   return R.distributeurDevis;
 }
+
+/**
+ * Après import : toujours la fiche pièce (aperçu / modifier / envoyer).
+ * Le chantier reste accessible depuis cette page.
+ */
+export function hrefAfterDocumentSave(doc: { id: string; chantierSlug?: string | null }) {
+  void doc.chantierSlug;
+  return R.piece(doc.id);
+}

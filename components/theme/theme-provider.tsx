@@ -42,16 +42,9 @@ function readStoredTheme(): ThemePref {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemePref>(() =>
-    typeof document === "undefined" ? "system" : parseThemePref(document.documentElement.dataset.themePref),
-  );
-  const [resolved, setResolved] = useState<ResolvedTheme>(() =>
-    typeof document === "undefined"
-      ? "light"
-      : document.documentElement.classList.contains("dark")
-        ? "dark"
-        : "light",
-  );
+  // Valeurs stables SSR = premier paint client (pas de lecture document ici).
+  const [theme, setThemeState] = useState<ThemePref>("system");
+  const [resolved, setResolved] = useState<ResolvedTheme>("light");
 
   useEffect(() => {
     const stored = readStoredTheme();

@@ -23,7 +23,10 @@ export function scoreMatch(
   if (names.some((n) => n === nameForMatch)) score += 50;
   else if (names.some((n) => n.startsWith(nameForMatch) || nameForMatch.startsWith(n))) score += 35;
   else if (names.some((n) => n.includes(nameForMatch) || nameForMatch.includes(n))) score += 25;
+  else if (names.some((n) => tokenOverlap(n, nameForMatch) >= 0.8)) score += 32;
   else if (names.some((n) => tokenOverlap(n, nameForMatch) >= 0.6)) score += 18;
+  // Marque collée vs tokens (inkflow ↔ ink flow / flow ink)
+  else if (names.some((n) => n.replace(/\s+/g, "") === nameForMatch.replace(/\s+/g, ""))) score += 40;
 
   if (cityHint && company.city) {
     const c = normalizeName(company.city);

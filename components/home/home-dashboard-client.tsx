@@ -43,9 +43,11 @@ import {
   type WidgetKey,
 } from "@/lib/home/dashboard-prefs";
 import type { WeekStats } from "@/lib/home/week";
-import { TarineoDashboardInsights } from "@/components/tarineo/panels/dashboard-insights";
+import { TopPriceIncreases } from "@/components/tarineo/analytics/top-price-increases";
+import { adaptTopPriceIncreases } from "@/lib/tarineo/adapters";
 import { R } from "@/lib/routes";
 import { euroInt, variation } from "@/lib/site/tarineo";
+import { DashboardTour } from "@/components/home/dashboard-tour";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
 
@@ -105,7 +107,9 @@ export type HomeDashboardClientProps = {
   company?: CompanyProfile | null;
   actionNotifications?: AppNotification[];
   weekStats: WeekStats;
+  /** @deprecated Accueil n’affiche plus la ferme d’objectifs ; conservé pour compat appelants. */
   distributorGoalsHt?: Record<string, number>;
+  showDashboardTour?: boolean;
 };
 
 export function HomeDashboardClient({
@@ -122,13 +126,12 @@ export function HomeDashboardClient({
   months = [],
   enseignes = [],
   articles = [],
-  outbound = [],
   documents = [],
   recentPieces = [],
   company = null,
   actionNotifications = [],
   weekStats,
-  distributorGoalsHt,
+  showDashboardTour = false,
 }: HomeDashboardClientProps) {
   const who = firstName?.trim() || "vous";
   const [prefs, setPrefs] = useState(() => normalizeDashboardPrefs(initialPrefs));
@@ -254,6 +257,7 @@ export function HomeDashboardClient({
 
   return (
     <div className="mx-auto flex w-full max-w-[1200px] flex-col pb-4">
+      <DashboardTour open={showDashboardTour} />
       <Reveal>
       <PageHeader
         dense
@@ -267,19 +271,38 @@ export function HomeDashboardClient({
               <Plus className="mr-1.5 size-3.5" strokeWidth={2.2} aria-hidden />
               Nouveau devis
             </Link>
-            <HomeImportButton chantiers={chantiers} clients={clients} className={BTN_SECONDARY} />
-            <Link href={R.nouveauChantier} className={BTN_SECONDARY}>
-              Nouveau chantier
-            </Link>
-            <div data-tour="compose">
-              <DashboardCustomize
-                variant="header"
-                prefs={prefs}
-                editMode={editMode}
-                onEditMode={setEditMode}
-                onPrefs={persistPrefs}
-              />
-            </div>
+            <details className="relative">
+              <summary
+                className={cn(
+                  BTN_SECONDARY,
+                  "cursor-pointer list-none [&::-webkit-details-marker]:hidden",
+                )}
+              >
+                Plus
+              </summary>
+              <div className="absolute right-0 z-20 mt-1.5 flex min-w-[12.5rem] flex-col gap-1 rounded-xl border border-line bg-surface p-1.5 shadow-lift">
+                <HomeImportButton
+                  chantiers={chantiers}
+                  clients={clients}
+                  className="justify-start rounded-lg border-0 bg-transparent px-3 py-2.5 text-left shadow-none hover:bg-surface-2"
+                />
+                <Link
+                  href={R.nouveauChantier}
+                  className="rounded-lg px-3 py-2.5 text-[13px] font-medium text-ink hover:bg-surface-2"
+                >
+                  Nouveau chantier
+                </Link>
+                <div data-tour="compose" className="border-t border-line pt-1">
+                  <DashboardCustomize
+                    variant="header"
+                    prefs={prefs}
+                    editMode={editMode}
+                    onEditMode={setEditMode}
+                    onPrefs={persistPrefs}
+                  />
+                </div>
+              </div>
+            </details>
           </>
         }
       />
@@ -370,20 +393,19 @@ export function HomeDashboardClient({
         </>
       )}
 
-      <Reveal>
-        <TarineoDashboardInsights
-          outbound={outbound.length ? outbound : documents.filter((d) => d.direction === "out")}
-          followUps={followUps}
-          alerts={alerts}
-          months={months}
-          enseignes={enseignes}
-          articles={articles}
-          pendingDocs={pendingDocs}
-          devisAEnvoyer={devisAEnvoyer}
-          relancesDue={relancesDue}
-          distributorGoalsHt={distributorGoalsHt}
-        />
-      </Reveal>
+      {/* Accueil triage : une seule bande analytics, le reste vit sur /achats /fournisseurs */}
+      {alerts.length > 0 ? (
+        <Reveal>
+          <div className="mb-8">
+            <TopPriceIncreases
+              items={adaptTopPriceIncreases(alerts, 5, articles)}
+              title="Hausses à surveiller"
+              href={R.hausses}
+              compact
+            />
+          </div>
+        </Reveal>
+      ) : null}
 
       <DevisFacturesSection recentPieces={recentPieces} company={company} />
 

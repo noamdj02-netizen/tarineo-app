@@ -1,3 +1,4 @@
+import { normalizeSupplierContact } from "@/lib/metier/supplier-contact";
 import type { ExtractReadAssessment, ExtractResult, ExtractTotals, ReadQuality } from "@/lib/metier/types";
 
 export class ExtractError extends Error {
@@ -27,6 +28,14 @@ function parseTotals(raw: unknown, lineSum: number): ExtractTotals {
 
 const KINDS = new Set(["devis", "facture", "bon_commande", "bl", "bon_enlevement", "autre"]);
 const READ_QUALITIES = new Set<ReadQuality>(["fiable", "partiel", "incertain"]);
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseIsoDay(raw: unknown): string | undefined {
+  const s = String(raw ?? "").trim();
+  if (!ISO_DAY.test(s)) return undefined;
+  const t = Date.parse(`${s}T12:00:00Z`);
+  return Number.isFinite(t) ? s : undefined;
+}
 
 function parseReadAssessment(raw: unknown): ExtractReadAssessment | undefined {
   const a = (raw && typeof raw === "object" ? raw : null) as Record<string, unknown> | null;
@@ -96,11 +105,18 @@ export function parseExtractResponse(raw: string, fileName: string): ExtractResu
   );
 
   const docNumber = String(parsed.document_number ?? "").trim();
-  const issueDate = String(parsed.issue_date ?? "").trim();
+  const issueDate = parseIsoDay(parsed.issue_date);
+  const deliveryDate = parseIsoDay(parsed.delivery_date);
   const partyAddress = String(parsed.party_address ?? "").trim();
   const titleBase = String(parsed.title ?? "").trim() || fileName;
 
   const read_assessment = parseReadAssessment(parsed.read_assessment);
+  const contact = normalizeSupplierContact({
+    name: String(parsed.contact_name ?? "").trim(),
+    email: String(parsed.contact_email ?? "").trim(),
+    phone: String(parsed.contact_phone ?? "").trim(),
+    role: String(parsed.contact_role ?? "").trim(),
+  });
 
   return {
     direction,
@@ -113,7 +129,12 @@ export function parseExtractResponse(raw: string, fileName: string): ExtractResu
     lines,
     ...(docNumber ? { document_number: docNumber } : {}),
     ...(issueDate ? { issue_date: issueDate } : {}),
+    ...(deliveryDate ? { delivery_date: deliveryDate } : {}),
     ...(partyAddress ? { party_address: partyAddress } : {}),
+    ...(contact?.name ? { contact_name: contact.name } : {}),
+    ...(contact?.email ? { contact_email: contact.email } : {}),
+    ...(contact?.phone ? { contact_phone: contact.phone } : {}),
+    ...(contact?.role ? { contact_role: contact.role } : {}),
     ...(read_assessment ? { read_assessment } : {}),
   };
 }

@@ -30,7 +30,11 @@ export function confirmPayloadFromExtract(
     fileSha256: files.fileSha256,
     documentNumber: extracted.document_number ?? null,
     issueDate: extracted.issue_date ?? null,
+    deliveryDate: extracted.delivery_date ?? null,
     partyAddress: extracted.party_address ?? null,
+    contactName: extracted.contact_name ?? null,
+    contactEmail: extracted.contact_email ?? null,
+    contactPhone: extracted.contact_phone ?? null,
     totals: extracted.totals ?? undefined,
     lines: extracted.lines.map((l) => {
       const price = l.buy_price ?? l.sell_price ?? 0;

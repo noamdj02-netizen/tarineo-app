@@ -1,4 +1,5 @@
 import { Field as AuthField } from "@/components/auth/auth-ui";
+import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { FieldGroup } from "@/components/ui/field";
 import { LOCALE_LABEL, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -20,11 +21,15 @@ export function IdentiteScreen({
 }) {
   return (
     <>
-      <h2 className="font-serif text-[1.7rem] leading-[1.1] tracking-[-0.02em]">
-        Comment t’appeler ?
+      <TarineoHdMascot name="03-salut" className="mb-3 h-28 w-32 self-center" label="" />
+      <h1 className="font-display text-[clamp(1.5rem,5vw,2rem)] font-semibold leading-[1.08] tracking-tight">
+        Déposez un devis. Envoyez la facture.
+      </h1>
+      <h2 className="mt-4 font-serif text-[1.35rem] leading-[1.1] tracking-[-0.02em]">
+        Comment vous appeler ?
       </h2>
       <p className="mt-2 text-[14.5px] leading-relaxed text-muted-foreground">
-        Prénom et nom. On les pose dans ton compte.
+        Prénom et nom pour vos devis et factures.
       </p>
       <FieldGroup className="mt-6 gap-3">
         <AuthField

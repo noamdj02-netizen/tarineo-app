@@ -1,0 +1,412 @@
+{
+  "meta": {
+    "generatedFor": "launch-film-30-35s",
+    "dashboardRoute": "/accueil",
+    "dashboardTitle": "Tableau de bord",
+    "sources": {
+      "dashboardRoute": "app/(app)/accueil/page.tsx:20-22",
+      "routes": "lib/routes.ts:2-31",
+      "nav": "lib/nav.ts:142-150"
+    }
+  },
+  "A_appMap": {
+    "sidebar": {
+      "status": "LIVE",
+      "sections": [
+        {
+          "label": "Aujourd'hui",
+          "source": "lib/nav.ts:143",
+          "items": [
+            { "label": "Accueil", "href": "/accueil", "icon": "House", "source": "lib/nav.ts:50-55" },
+            { "label": "Analyse IA", "href": "/devis/analyser", "icon": "Sparkles", "source": "lib/nav.ts:57-61" }
+          ]
+        },
+        {
+          "label": "Documents",
+          "source": "lib/nav.ts:144",
+          "items": [
+            {
+              "label": "Documents fournisseur",
+              "icon": "Truck",
+              "source": "lib/nav.ts:112-121",
+              "children": [
+                { "label": "Devis", "href": "/distributeur/devis" },
+                { "label": "Bons de commande", "href": "/distributeur/bon-commande" },
+                { "label": "Bons d'enlèvement", "href": "/distributeur/bon-enlevement" },
+                { "label": "Factures", "href": "/distributeur/facture" }
+              ]
+            },
+            {
+              "label": "Documents entreprise",
+              "icon": "Building2",
+              "source": "lib/nav.ts:123-131",
+              "children": [
+                { "label": "Devis", "href": "/client/devis" },
+                { "label": "Bons de commande", "href": "/client/bon-commande" },
+                { "label": "Factures", "href": "/client/facture" }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Chantiers",
+          "items": [{ "label": "Chantiers", "href": "/chantiers", "icon": "HardHat", "source": "lib/nav.ts:87-91" }]
+        },
+        {
+          "label": "Achats",
+          "source": "lib/nav.ts:147-149",
+          "items": [
+            { "label": "Fournisseurs", "href": "/fournisseurs", "icon": "Store" },
+            { "label": "Comparateur", "href": "/comparateur", "icon": "ArrowLeftRight" },
+            { "label": "Hausses", "href": "/hausses", "icon": "Bell" },
+            { "label": "Relances", "href": "/relances", "icon": "Mail" },
+            { "label": "Produits", "href": "/achats/produits", "icon": "Package" },
+            { "label": "Export comptable", "href": "/achats/export", "icon": "FileSpreadsheet" },
+            { "label": "Achats", "href": "/achats", "icon": "FolderTree" }
+          ]
+        }
+      ]
+    },
+    "documentSpaces": {
+      "fournisseur": {
+        "uiLabel": "Documents fournisseur",
+        "direction": "in",
+        "codePartyKind": "distributeur",
+        "routes": {
+          "devis": "/distributeur/devis",
+          "bon_commande": "/distributeur/bon-commande",
+          "bon_enlevement": "/distributeur/bon-enlevement",
+          "facture": "/distributeur/facture"
+        },
+        "source": "lib/routes.ts:11-15"
+      },
+      "entreprise": {
+        "uiLabel": "Documents entreprise",
+        "direction": "out",
+        "routes": {
+          "devis": "/client/devis",
+          "bon_commande": "/client/bon-commande",
+          "facture": "/client/facture"
+        },
+        "source": "lib/routes.ts:16-19"
+      },
+      "importFields": {
+        "sens": {
+          "in": "Entrant (achat)",
+          "out": "Sortant (client)",
+          "source": "lib/metier/types.ts:201-204"
+        },
+        "role": {
+          "client": "Client",
+          "fournisseur": "Fournisseur",
+          "distributeur": "Distributeur",
+          "atelier": "Atelier",
+          "source": "lib/metier/types.ts:206-211"
+        }
+      }
+    },
+    "dashboard": {
+      "status": "LIVE",
+      "route": "/accueil",
+      "header": {
+        "titlePattern": "Bonjour, {firstName}",
+        "description": "Voici ce qui mérite votre attention.",
+        "source": "components/home/home-dashboard-client.tsx:262-263",
+        "actions": [
+          { "label": "Nouveau devis", "href": "/devis/nouveau", "source": "components/home/home-dashboard-client.tsx:266-268" },
+          { "label": "Importer", "effect": "open DocumentImportPanels dialog", "source": "components/home/home-import-button.tsx:37" },
+          { "label": "Nouveau chantier", "href": "/chantiers#nouveau", "source": "components/home/home-dashboard-client.tsx:271-273" },
+          { "label": "Composer", "effect": "toggle dashboard edit mode", "source": "components/home/dashboard-customize.tsx:122" },
+          { "label": "Ajouter", "effect": "add widgets in edit mode", "source": "components/home/dashboard-customize.tsx:135" }
+        ]
+      },
+      "kpis": [
+        {
+          "label": "Devis à envoyer",
+          "valueSource": "outbound devis without sent_at and without child BC/facture",
+          "source": "app/(app)/accueil/page.tsx:44-46",
+          "href": "/client/devis"
+        },
+        {
+          "label": "Hausses",
+          "valueSource": "listAlerts().length",
+          "source": "app/(app)/accueil/page.tsx:33",
+          "href": "/hausses"
+        },
+        {
+          "label": "Factures client",
+          "valueSource": "count outbound kind facture",
+          "source": "app/(app)/accueil/page.tsx:47",
+          "href": "/client/facture"
+        },
+        {
+          "label": "Relances",
+          "valueSource": "followUps status due",
+          "source": "app/(app)/accueil/page.tsx:49-50",
+          "href": "/relances"
+        },
+        {
+          "label": "Achats du mois",
+          "hint": "HT lignes",
+          "valueSource": "spendByMonth(inbound) last month",
+          "source": "app/(app)/accueil/page.tsx:93",
+          "href": "/achats"
+        }
+      ],
+      "widgetsDefault": {
+        "left": ["prompt", "focus", "actions", "projects"],
+        "right": ["schemas", "calendar"],
+        "source": "lib/home/dashboard-prefs.ts:44-45"
+      },
+      "sections": [
+        { "label": "À traiter", "source": "components/home/home-dashboard-sections.tsx:31" },
+        { "label": "Hausses fournisseurs", "source": "components/home/home-dashboard-sections.tsx:139" },
+        { "label": "Chantiers actifs", "source": "components/home/home-dashboard-sections.tsx:77" }
+      ]
+    },
+    "routesFilm": [
+      { "path": "/accueil", "title": "Tableau de bord" },
+      { "path": "/devis/analyser", "title": "Analyse IA · documents" },
+      { "path": "/distributeur/devis", "title": "Devis distributeur" },
+      { "path": "/client/devis", "title": "Devis clients" },
+      { "path": "/relances", "title": "Relances" },
+      { "path": "/hausses", "title": "Hausses de prix" },
+      { "path": "/chantiers/madame-dupont", "title": "absent" }
+    ]
+  },
+  "B_ingest": {
+    "status": "LIVE",
+    "maxFileBytes": 12582912,
+    "maxFileError": "Fichier trop lourd (12 Mo max).",
+    "maxFileSource": "app/(app)/metier/actions.ts:65",
+    "bulkMaxFiles": 150,
+    "bulkSource": "components/metier/document-bulk-import.tsx:12",
+    "accept": "application/pdf,image/jpeg,image/png,image/heic,image/webp",
+    "acceptSource": "components/metier/document-drop.tsx:213",
+    "dropzoneStates": {
+      "idle": { "title": "Glissez vos documents ici", "subtitle": "PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers" },
+      "hover": { "title": "Déposez ici" },
+      "reading": { "title": "Lecture du document…" },
+      "source": "components/metier/document-drop.tsx:224-232"
+    },
+    "extract": {
+      "lineFields": ["Ligne", "Qté", "Unité", "Prix"],
+      "totalFields": ["Total HT", "Éco-contribution", "PMCB", "Poids (kg)"],
+      "source": "components/metier/document-drop.tsx:349-387"
+    },
+    "agentRecap": {
+      "title": "Récapitulatif agent",
+      "scoreMax": 100,
+      "reliabilityThresholds": { "fiable": 78, "a_verifier": 52, "peu_fiable": 0 },
+      "labels": {
+        "fiable": "Lecture fiable",
+        "a_verifier": "À vérifier",
+        "peu_fiable": "Lecture incertaine"
+      },
+      "source": "lib/metier/document-agent/assess-recap.ts:36-39",
+      "uiSource": "components/metier/document-read-recap.tsx:49-55"
+    }
+  },
+  "C_transform": {
+    "status": "LIVE",
+    "inboundToClient": {
+      "kinds": ["devis", "bon_commande", "bon_enlevement", "facture"],
+      "labels": {
+        "devis": "Devis client",
+        "bon_commande": "Bon de commande client",
+        "bon_enlevement": "Bon d'enlèvement",
+        "facture": "Facture client"
+      },
+      "source": "lib/metier/types.ts:179-184"
+    },
+    "outboundDevisNext": {
+      "buttons": ["Commande client", "Facture client"],
+      "source": "components/metier/convert-devis.tsx:78"
+    },
+    "margin": {
+      "defaultPercent": 35,
+      "defaultMarkup": 1.35,
+      "bonEnlevementMarginPercent": 0,
+      "rounding": "Math.round(buy * markup * 100) / 100",
+      "sources": [
+        "components/metier/document-drop.tsx:425-430",
+        "lib/metier/types.ts:190-193",
+        "lib/metier/queries.ts:857-859"
+      ]
+    },
+    "numbering": {
+      "pattern": "{CLIENT_OUT_LABEL} n°{NNN}",
+      "source": "lib/metier/queries.ts:790-794"
+    },
+    "lifecycleLabels": {
+      "source": "lib/metier/follow-ups.ts:62-79",
+      "devisOut": ["Prêt", "Envoyé", "Commande créée", "Facturé"],
+      "inboundCard": ["à transformer", "déjà transformé"],
+      "inboundCardSource": "components/metier/document-list.tsx:82"
+    },
+    "chainLabel": "Suite devis → commande → facture",
+    "chainSource": "components/metier/chantier-fiche.tsx:251"
+  },
+  "D_followUps": {
+    "clientAcceptance": {
+      "status": "BIENTOT",
+      "onlineSignature": "absent",
+      "notificationPrefsOnly": ["quote_accepted", "quote_refused"],
+      "prefsSource": "lib/settings/notification-preferences.ts:87-88"
+    },
+    "relances": {
+      "status": "LIVE",
+      "virtualDueDays": 3,
+      "virtualSource": "lib/metier/follow-ups.ts:137,174-177",
+      "channel": "email",
+      "humanApproval": true,
+      "humanApprovalSource": "app/(app)/metier/actions.ts:331-349",
+      "statusLabels": {
+        "due": "À relancer",
+        "scheduled": "Programmée",
+        "sent": "Envoyée",
+        "answered": "Réponse reçue",
+        "done": "Terminée",
+        "cancelled": "Annulée"
+      },
+      "statusSource": "lib/metier/follow-ups.ts:34-41",
+      "mailFallback": {
+        "subjectPattern": "{KIND} — {chantier or title}",
+        "bodyPattern": "Bonjour {party},\\n\\nVeuillez trouver ci-joint {kind} « {title} »…",
+        "source": "lib/metier/draft-mail.ts:13-22"
+      },
+      "page": {
+        "route": "/relances",
+        "subtitle": "Ne laissez plus un devis ou une demande sans réponse.",
+        "source": "app/(app)/relances/page.tsx:22"
+      }
+    }
+  },
+  "E_priceRises": {
+    "status": "LIVE",
+    "baselineRule": "last inbound line with same label (case insensitive)",
+    "baselineSource": "lib/metier/queries.ts:529-533",
+    "thresholdPercentDefault": 5,
+    "thresholdSource": "lib/settings/notification-preferences.ts:79",
+    "demoBadge": "Exemple",
+    "demoBadgeSources": ["lib/site/tarineo.ts:33", "lib/metier/demo.ts:3"]
+  },
+  "F_demoDataset": {
+    "validation": "proposed_not_seeded",
+    "seedKeys": {
+      "chantier": "demo-chantier-dupont",
+      "slug": "madame-dupont",
+      "source": "lib/metier/demo.ts:5-14"
+    },
+    "incoherences": [
+      {
+        "issue": "sell_price 33.2 in seed vs computed 33.21",
+        "source": "lib/metier/queries.ts:251"
+      },
+      {
+        "issue": "landing proofTable product name and supplier",
+        "source": "lib/site/landing-v2-content.ts:63-75"
+      }
+    ],
+    "proposed": {
+      "chantier": { "name": "Chantier Madame Dupont", "client": "Madame Dupont", "source": "lib/metier/queries.ts:129,168" },
+      "supplierQuote": {
+        "title": "Devis Cedeo - tubes PVC",
+        "party": "Cedeo Lyon",
+        "lines": [{ "label": "Tube PVC Ø 500", "qty": 18, "unit": "ml", "buy_price": 24.6, "total_ht": 442.8 }],
+        "extractTotals": { "ht": 442.8, "eco_contribution": 0.42, "pmcb": 0.42, "weight_kg": 86.4 },
+        "source": "lib/metier/queries.ts:190-236"
+      },
+      "clientQuote": {
+        "title": "Devis client Dupont",
+        "markup": 1.35,
+        "unit_sell": 33.21,
+        "total_ht": 597.78,
+        "calculation": "round(24.6*1.35,2)=33.21; 18*33.21=597.78",
+        "calcSource": "lib/metier/queries.ts:857-859"
+      },
+      "priceAlert": {
+        "label": "Tube PVC Ø 500 chez Cedeo",
+        "old_price": 22.4,
+        "new_price": 24.6,
+        "pct": 9.821428571428585,
+        "pctDisplay": "+9,8 %",
+        "source": "lib/metier/queries.ts:255-263"
+      },
+      "relance": {
+        "condition": "extract.sent_at older than 3 days, not transformed",
+        "status": "due",
+        "source": "lib/metier/follow-ups.ts:174-183"
+      }
+    },
+    "landingAlign": [
+      "lib/site/landing-v2-content.ts proofTable → Cedeo, Tube PVC Ø 500, single line",
+      "lib/site/landing-v2-content.ts:155 mail reference"
+    ]
+  },
+  "G_design": {
+    "tokens": {
+      "bg": "#f5f5f3",
+      "surface": "#ffffff",
+      "ink": "#0a0a0a",
+      "mutedInk": "#6e6e6e",
+      "orange": "#ff6b1a",
+      "source": "app/globals.css:21-64"
+    },
+    "iconLibrary": "lucide-react",
+    "components": {
+      "DocumentDrop": "components/metier/document-drop.tsx",
+      "DocumentAnalyseAgent": "components/metier/document-analyse-agent.tsx",
+      "DocumentImportPanels": "components/metier/document-import-dialog.tsx",
+      "ConvertDevisActions": "components/metier/convert-devis.tsx",
+      "documentEdit": "components/metier/document-edit.tsx",
+      "sidebar": "components/shell/sidebar.tsx"
+    },
+    "logo": {
+      "format": "PNG",
+      "light": "/brand/tarineo-logo-light.png",
+      "svgProduct": "absent",
+      "source": "components/brand/tarineo-logo.tsx:5-7"
+    },
+    "mascotsHd": {
+      "catalog": "lib/tarineo-hd-mascots.ts",
+      "poses": [
+        "01-pouce-leve",
+        "02-clin-oeil",
+        "03-salut",
+        "04-coucou",
+        "05-bras-croises",
+        "06-loupe",
+        "07-ordinateur",
+        "08-pouce-ordi",
+        "09-devis-valide",
+        "10-chrono",
+        "11-equipe",
+        "12-erreur-404",
+        "13-pancarte",
+        "14-bulle",
+        "15-coucou-bord"
+      ]
+    }
+  },
+  "H_captures": {
+    "generated": false,
+    "spec": { "width": 1920, "height": 1080, "deviceScaleFactor": 2, "theme": "light" },
+    "readme": "docs/film/captures/README.md",
+    "shots": [
+      { "id": "01", "url": "http://localhost:3000/accueil", "note": "full dashboard" },
+      { "id": "02", "url": "http://localhost:3000/accueil", "note": "sidebar expanded" },
+      { "id": "03", "url": "http://localhost:3000/distributeur/devis", "note": "list + dropzone" },
+      { "id": "04", "url": "http://localhost:3000/devis/analyser", "note": "empty dropzone" },
+      { "id": "05", "url": "http://localhost:3000/devis/analyser", "note": "Lecture du document…" },
+      { "id": "06", "url": "http://localhost:3000/devis/analyser", "note": "recap + form" },
+      { "id": "07", "url": "http://localhost:3000/devis/analyser", "note": "Transformer le fichier" },
+      { "id": "08", "url": "http://localhost:3000/pieces/{documentId}", "note": "client devis PDF" },
+      { "id": "12", "url": "http://localhost:3000/relances", "note": "due follow-up visible" },
+      { "id": "14", "url": "http://localhost:3000/hausses", "note": "alerts list" },
+      { "id": "15", "url": "http://localhost:3000/achats/produits/{productSlug}", "note": "Tube PVC Ø 500" },
+      { "id": "16", "url": "http://localhost:3000/chantiers/madame-dupont", "note": "chain label" }
+    ],
+    "copilotHideFlag": "absent"
+  }
+}

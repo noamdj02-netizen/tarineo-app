@@ -18,13 +18,25 @@ let openUser: Promise<Db["user"] | null> | null = null;
 
 async function findOpenAccessUser(admin: SupabaseClient<Database>) {
   const email = process.env.SEED_USER_EMAIL?.trim().toLowerCase();
-  if (!email) throw new Error("Accès libre : SEED_USER_EMAIL manquant dans .env.local");
-  for (let page = 1; ; page++) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
-    if (error) throw new Error(`Accès libre : ${error.message}`);
-    const u = data.users.find((x) => x.email?.toLowerCase() === email);
-    if (u) return { id: u.id, email: u.email, user_metadata: u.user_metadata };
-    if (data.users.length < 200) return null;
+  if (!email) {
+    console.error("[db] Accès libre : SEED_USER_EMAIL manquant dans .env.local");
+    return null;
+  }
+  try {
+    for (let page = 1; ; page++) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 200 });
+      if (error) {
+        console.error("[db] Accès libre :", error.message);
+        return null;
+      }
+      const u = data.users.find((x) => x.email?.toLowerCase() === email);
+      if (u) return { id: u.id, email: u.email, user_metadata: u.user_metadata };
+      if (data.users.length < 200) return null;
+    }
+  } catch (err) {
+    // URL / réseau invalide (ex. host inventé) → on ne plante pas toute la page RSC.
+    console.error("[db] Accès libre : fetch échoué", err);
+    return null;
   }
 }
 
@@ -52,10 +64,7 @@ export const getDb = cache(async (): Promise<Db | null> => {
 
   if (isOpenAccess() && !requireLogin) {
     const admin = createAdminClient();
-    openUser ??= findOpenAccessUser(admin).catch((e) => {
-      openUser = null;
-      throw e;
-    });
+    openUser ??= findOpenAccessUser(admin);
     const seed = await openUser;
     return seed ? { supabase: admin, user: seed } : null;
   }

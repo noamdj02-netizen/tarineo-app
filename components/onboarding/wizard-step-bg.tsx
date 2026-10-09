@@ -5,8 +5,6 @@ import { cn } from "@/lib/utils";
 /** Fond pastel plein écran (réf. onboarding mobile). */
 const SKY = [
   "from-[#fff0e9]/95 via-bg to-[#fff8e6]/80",
-  "from-[#fff8e6]/90 via-bg to-[#fff0e9]/85",
-  "from-[#1a1a1a]/[0.04] via-bg to-[#fff0e9]/70",
   "from-[#fff0e9]/80 via-[#fffaf3] to-[#ffe8cc]/60",
   "from-[#fff8e6]/85 via-bg to-[#fff0e9]/90",
 ] as const;

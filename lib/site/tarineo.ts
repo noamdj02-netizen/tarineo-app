@@ -36,12 +36,12 @@ export const DEMO_NOTE = "Données fictives.";
 export const HERO = {
   badge: "Alertes prix · artisans BTP",
   title: "Vos fournisseurs augmentent leurs prix.",
-  /** Ligne 2 du H1 — surlignée au marqueur dans `HeroHeadline`. */
+  /** Ligne 2 du H1 — surlignée au marqueur dans le hero landing v2. */
   titleTail: "Vous le voyez ?",
   text:
     "TARINEO lit vos factures et vous alerte dès qu’une référence augmente, avant que ça mange la marge de vos chantiers.",
   primary: { label: "Essayer TARINEO gratuitement", href: "/inscription" },
-  secondary: { label: "Découvrir TARINEO", href: "/#devis-ia" },
+  secondary: { label: "Découvrir TARINEO", href: "/#devis-facture" },
   founderLine: "Créé par un ancien des Travaux Publics.",
   /** Hero sans vidéo — fichiers conservés dans /public/landing pour d’autres surfaces. */
   video: null as HeroVideo | null,

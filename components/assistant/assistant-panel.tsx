@@ -142,6 +142,7 @@ export function AssistantPanel({
             key="fab"
             {...motionProps}
             className="fixed right-4 z-[45] bottom-[calc(112px+env(safe-area-inset-bottom,0px))] hidden lg:right-6 lg:bottom-6 lg:block"
+            data-copilot-fab
           >
             <CopilotTrigger variant="inline" onClick={() => show()} />
           </motion.div>

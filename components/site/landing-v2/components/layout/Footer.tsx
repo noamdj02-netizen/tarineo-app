@@ -10,7 +10,7 @@ export function Footer() {
           <div>
             <Logo />
             <p className="mt-5 max-w-xs text-sm text-ink-600">
-              Tarinéo lit vos documents, comprend votre activité et fait avancer vos dossiers.
+              Tarineo lit vos documents, compare vos achats et prépare vos documents client.
             </p>
             <a
               href="mailto:contact@tarineo.com"
@@ -42,8 +42,8 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col gap-3 border-t border-line pt-6 text-xs text-ink-400 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Tarinéo. Tous droits réservés.</p>
-          <p>Conçu et hébergé en France.</p>
+          <p>© {new Date().getFullYear()} Tarineo. Tous droits réservés.</p>
+          <p>Conçu en France, données hébergées en Europe.</p>
         </div>
 
         <div className="mt-6 border-t border-line sm:mt-8" aria-hidden />

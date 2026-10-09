@@ -44,7 +44,7 @@ export default async function BlogMetierHubPage({ params }: Props) {
   const posts = getBlogPostsByMetier(metierSlug);
 
   return (
-    <div className="px-4 pt-14 pb-16 sm:px-8 sm:pt-24 sm:pb-20">
+    <div className="shell pb-16 pt-[5.5rem] sm:pb-20 sm:pt-28">
       <JsonLd
         data={[
           breadcrumbJsonLd([

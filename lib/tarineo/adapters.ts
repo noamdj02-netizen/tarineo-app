@@ -10,6 +10,7 @@ import type {
 } from "@/components/tarineo/types";
 import type { FollowUpView } from "@/lib/metier/follow-ups";
 import { documentSentAt } from "@/lib/metier/follow-ups";
+import { resolveDistributorGoal } from "@/lib/metier/supplier-spend";
 import type { DocumentCard, PriceAlert } from "@/lib/metier/types";
 import { buildExportPreviewRows } from "@/lib/metier/accounting-export/rows";
 import {
@@ -88,26 +89,27 @@ export function adaptDistributorPriceTrend(alerts: PriceAlert[], limit = 9): Sal
 }
 
 function goalForEnseigne(label: string, amount: number, goals?: Record<string, number>): number | null {
-  if (goals) {
-    const direct = goals[label];
-    if (direct != null && direct > 0) return Math.round(direct);
-    const lower = label.toLowerCase();
-    for (const [k, v] of Object.entries(goals)) {
-      if (k.toLowerCase() === lower && v > 0) return Math.round(v);
-    }
-  }
+  const set = resolveDistributorGoal(label, goals);
+  if (set != null) return set;
   return amount > 0 ? Math.round(amount * 1.15) : null;
 }
 
 export function adaptAnnualGoals(
   enseignes: { label: string; amount: number }[],
   goals?: Record<string, number>,
+  monthly?: {
+    amounts?: { label: string; amount: number }[];
+    goals?: Record<string, number>;
+  },
 ): TarineoDistributor[] {
+  const monthlyMap = new Map((monthly?.amounts ?? []).map((m) => [m.label.toLowerCase(), m.amount]));
   return enseignes.map((e, i) => ({
     id: `d-${i}`,
     name: e.label,
     amountHt: e.amount,
     goalHt: goalForEnseigne(e.label, e.amount, goals),
+    monthlyAmountHt: monthlyMap.get(e.label.toLowerCase()) ?? 0,
+    monthlyGoalHt: resolveDistributorGoal(e.label, monthly?.goals),
   }));
 }
 

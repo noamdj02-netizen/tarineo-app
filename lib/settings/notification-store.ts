@@ -60,6 +60,15 @@ export async function saveNotificationPreferences(
 
   if (error) {
     if (/notification_preferences|relation|column/i.test(error.message)) {
+      // Mémoire locale déjà peuplée plus haut — OK seulement hors production
+      // (dev / accès libre). En prod, signaler l’échec plutôt qu’un faux succès.
+      const vercel = process.env.VERCEL_ENV;
+      const prodLike =
+        vercel === "production" || vercel === "preview" || process.env.NODE_ENV === "production";
+      if (prodLike) {
+        console.error("[saveNotificationPreferences] table absente en environnement déployé");
+        return { ok: false, error: "Impossible d’enregistrer les préférences." };
+      }
       console.warn("[saveNotificationPreferences] table absente — fallback mémoire");
       return { ok: true };
     }

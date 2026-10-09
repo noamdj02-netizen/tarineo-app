@@ -5,6 +5,7 @@ import { DocumentSend } from "@/components/metier/document-send";
 import { DocumentViewer } from "@/components/metier/document-viewer";
 import { ConvertDevisActions } from "@/components/metier/convert-devis";
 import { DocumentDownload } from "@/components/metier/document-download";
+import { PieceChantierCta, PieceOrientationBanner } from "@/components/metier/piece-chantier-cta";
 import { RelanceButton, RelanceStatus } from "@/components/metier/relance-dialog";
 import { TransformForm } from "@/components/metier/transform-form";
 import { MetricStrip } from "@/components/app-ui/metric-strip";
@@ -12,6 +13,7 @@ import { PageHeader } from "@/components/app-ui/page-header";
 import { SectionHeader } from "@/components/app-ui/section-header";
 import { StatusBadge } from "@/components/tarineo/status-badge";
 import { DocumentChain } from "@/components/metier/document-chain";
+import { documentDeliveryDate, formatDeliveryDateFr } from "@/lib/metier/delivery";
 import { documentAmountHt, documentChains, documentLifecycleLabel, buildFollowUpViews } from "@/lib/metier/follow-ups";
 import { listStoredFollowUps } from "@/lib/metier/follow-up-queries";
 import { getCompanyProfile, getDocument, listChantiers, listDocuments, listParties } from "@/lib/metier/queries";
@@ -44,6 +46,7 @@ export default async function PiecePage({ params }: { params: Promise<{ id: stri
   const chain = documentChains(all).find((c) => c.some((d) => d.id === doc.id)) ?? [];
   const lifecycle = documentLifecycleLabel(doc, all);
   const partyLabel = doc.direction === "out" ? "Client" : "Fournisseur";
+  const deliveryDay = documentDeliveryDate(doc);
 
   return (
     <section className="flex flex-col gap-6">
@@ -54,18 +57,19 @@ export default async function PiecePage({ params }: { params: Promise<{ id: stri
           { label: doc.title },
         ]}
         title={doc.title}
-        description={KIND_LABEL[doc.kind]}
+        description={
+          doc.chantier_name
+            ? `${KIND_LABEL[doc.kind]} · chantier ${doc.chantier_name}`
+            : `${KIND_LABEL[doc.kind]} · pas encore lié à un chantier`
+        }
         action={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-start gap-2">
+            <PieceChantierCta
+              documentId={doc.id}
+              chantierSlug={doc.chantier_slug}
+              chantierName={doc.chantier_name}
+            />
             <DocumentDownload doc={doc} />
-            {doc.chantier_slug ? (
-              <Link
-                href={R.chantier(doc.chantier_slug)}
-                className="inline-flex h-9 items-center rounded-[10px] border border-line bg-surface px-3 text-[13px]"
-              >
-                Voir le chantier
-              </Link>
-            ) : null}
             {doc.direction === "in" ? (
               <Link
                 href={`${R.comparateur}?a=${doc.id}`}
@@ -76,6 +80,12 @@ export default async function PiecePage({ params }: { params: Promise<{ id: stri
             ) : null}
           </div>
         }
+      />
+
+      <PieceOrientationBanner
+        documentId={doc.id}
+        hasChantier={Boolean(doc.chantier_id)}
+        kindLabel={KIND_LABEL[doc.kind]}
       />
 
       <MetricStrip
@@ -91,6 +101,10 @@ export default async function PiecePage({ params }: { params: Promise<{ id: stri
           {
             label: "Montant HT",
             value: ht ? euro(ht) : "—",
+          },
+          {
+            label: "Livraison",
+            value: deliveryDay ? formatDeliveryDateFr(deliveryDay) : "—",
           },
           {
             label: "Statut",

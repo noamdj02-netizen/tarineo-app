@@ -258,6 +258,9 @@ export type Database = {
           name: string;
           address: string;
           seed_key: string | null;
+          contact_name: string;
+          contact_email: string;
+          contact_phone: string;
           created_at: string;
         },
         "kind" | "name"

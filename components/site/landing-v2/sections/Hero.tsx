@@ -19,8 +19,9 @@ import {
   landingMountItem,
   landingMountItemReduced,
 } from "@/components/site/landing-v2/lib/landing-motion";
-import { LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
+import { LANDING_PRIMARY_CTA_LABEL, LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
 import { heroProof, heroQuote } from "@/lib/site/landing-v2-content";
+import { HERO } from "@/lib/site/tarineo";
 
 export function Hero() {
   const reduce = useReducedMotion();
@@ -33,35 +34,32 @@ export function Hero() {
       <div className="shell grid items-center gap-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.02fr)] lg:gap-16">
         <LandingHeroStagger className="min-w-0" stagger={0.09}>
           <LandingStaggerItem>
-            <SectionLabel className="eyebrow-accent">Copilote administratif du bâtiment</SectionLabel>
+            <SectionLabel className="eyebrow-accent">{HERO.badge}</SectionLabel>
           </LandingStaggerItem>
 
           <LandingStaggerItem>
             <h1 className="mt-5 text-display font-semibold text-ink-900">
-              Votre entreprise avance.
+              {HERO.title}
               <br />
-              <span className="hero-title-mark">Tarinéo s&apos;occupe du reste.</span>
+              <span className="hero-title-mark">{HERO.titleTail}</span>
             </h1>
           </LandingStaggerItem>
 
           <LandingStaggerItem>
-            <p className="mt-6 max-w-xl text-body-lg text-ink-600">
-              Tarinéo lit vos devis fournisseurs, compare chaque ligne à vos prix habituels et vous
-              dit où vous payez trop. Le reste — devis, relances, factures — suit tout seul.
-            </p>
+            <p className="mt-6 max-w-xl text-body-lg text-ink-600">{HERO.text}</p>
           </LandingStaggerItem>
 
           <LandingStaggerItem>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <motion.div whileHover={reduce ? undefined : { y: -2 }} whileTap={reduce ? undefined : { scale: 0.97 }}>
                 <Button href={LANDING_SIGNUP} size="lg">
-                  Commencer avec Tarinéo
+                  {LANDING_PRIMARY_CTA_LABEL}
                   <ArrowRight />
                 </Button>
               </motion.div>
               <motion.div whileHover={reduce ? undefined : { y: -2 }} whileTap={reduce ? undefined : { scale: 0.97 }}>
-                <Button href="#devis-facture" variant="secondary" size="lg">
-                  Générer un devis client (PDF)
+                <Button href={HERO.secondary.href} variant="secondary" size="lg">
+                  {HERO.secondary.label}
                 </Button>
               </motion.div>
             </div>

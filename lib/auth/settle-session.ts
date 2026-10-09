@@ -3,7 +3,9 @@ import { WelcomeEmail } from "@/emails/welcome";
 import { track } from "@/lib/analytics/track";
 import { signupSkipsProTrial, startProTrial } from "@/lib/billing/trial";
 import { sendEmail } from "@/lib/email/send";
+import { isDeployedRuntime } from "@/lib/runtime-config";
 import { safeNext } from "@/lib/safe-next";
+import { getSiteUrl } from "@/lib/site-url";
 import type { Database } from "@/lib/supabase/types";
 
 type Sb = SupabaseClient<Database>;

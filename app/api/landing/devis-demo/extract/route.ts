@@ -3,13 +3,16 @@ import {
   LandingExtractError,
   landingExtractUserMessage,
 } from "@/lib/site/landing-quote-extract.server";
-import { checkExtractRateLimit } from "@/lib/site/landing-demo-rate-limit";
+import {
+  checkExtractRateLimit,
+  clientIpFromHeaders,
+} from "@/lib/site/landing-demo-rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const rl = checkExtractRateLimit(req.headers.get("cookie"));
+  const rl = checkExtractRateLimit(req.headers.get("cookie"), clientIpFromHeaders(req.headers));
   if (!rl.allowed) {
     return Response.json(
       { ok: false, code: "rate_limited", message: landingExtractUserMessage("rate_limited") },

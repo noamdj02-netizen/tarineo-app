@@ -113,6 +113,8 @@ export type LandingTestimonial = {
   photoSource?: { page: string; author: string };
   /** Logos d’outils branchés / utilisés via TARINEO. */
   stackTools: readonly StackToolRef[];
+  /** Cas concret expliqué (section landing humaine). */
+  insight?: string;
 };
 
 export const LANDING_TESTIMONIALS: LandingTestimonial[] = [
@@ -236,13 +238,19 @@ export const ARTISAN_LANDING_REVIEWS: LandingTestimonial[] = [
       "La hausse sur le PER est sortie toute seule après l’import Cedeo. Je refais le devis client avant de partir en perte.",
     name: "Julien",
     role: "Plombier · Lyon",
-    photo: "/landing/testimonials/marcus.jpg",
+    photo: "/landing/testimonials/artisans/julien.jpg?v=20251009",
     photoVariant: "portrait",
-    photoPosition: "center 22%",
+    photoPosition: "center 35%",
+    photoSource: {
+      page: "https://unsplash.com/photos/4_jhDO54BYg",
+      author: "The Climate Reality Project",
+    },
     stackTools: [
       { label: "Cedeo", domain: "cedeo.fr" },
       { label: "Point.P", domain: "pointp.fr" },
     ],
+    insight:
+      "Import du PDF Cedeo → comparaison ligne PER avec vos 12 derniers achats → alerte + proposition de révision du devis client Dupont.",
   },
   {
     id: "avis-electricien",
@@ -251,13 +259,19 @@ export const ARTISAN_LANDING_REVIEWS: LandingTestimonial[] = [
       "Je ne relis plus chaque ligne de facture Rexel le dimanche. TARINEO me dit quoi a bougé et sur quel chantier.",
     name: "Marc",
     role: "Électricien · Toulouse",
-    photo: "/landing/testimonials/karim.jpg",
-    photoVariant: "graphic",
-    photoBg: "#0f1419",
+    photo: "/landing/testimonials/artisans/marc.jpg?v=20251009",
+    photoVariant: "portrait",
+    photoPosition: "center 40%",
+    photoSource: {
+      page: "https://unsplash.com/photos/5QgIuuBxKwM",
+      author: "ThisisEngineering",
+    },
     stackTools: [
       { label: "Rexel", domain: "rexel.com" },
       { label: "Legrand", domain: "legrand.fr" },
     ],
+    insight:
+      "Factures Rexel rattachées au bon chantier → seules les lignes qui dépassent votre prix habituel remontent, avec l’écart en euros.",
   },
   {
     id: "avis-chauffage",
@@ -266,12 +280,19 @@ export const ARTISAN_LANDING_REVIEWS: LandingTestimonial[] = [
       "Devis client prérempli à partir des achats chantier : je garde la marge que je me suis fixée, sans tableur.",
     name: "Sophie",
     role: "Chauffagiste · Nantes",
-    photo: "/landing/testimonials/sarah.jpg",
-    photoVariant: "graphic",
+    photo: "/landing/testimonials/artisans/sophie.jpg?v=20251009",
+    photoVariant: "portrait",
+    photoPosition: "center 30%",
+    photoSource: {
+      page: "https://unsplash.com/photos/raoGODtmvqM",
+      author: "ThisisEngineering",
+    },
     stackTools: [
       { label: "Brossette", domain: "brossette.fr" },
       { label: "Aubade", domain: "aubade.fr" },
     ],
+    insight:
+      "Achats chantier SDB → devis client prérempli avec votre coefficient marge → vous validez avant envoi au client.",
   },
   {
     id: "avis-tpe",
@@ -280,13 +301,19 @@ export const ARTISAN_LANDING_REVIEWS: LandingTestimonial[] = [
       "Export compta des achats distributeur en un fichier — ma comptable arrête de me relancer pour les factures du trimestre.",
     name: "Thomas",
     role: "Gérant · 6 personnes",
-    photo: "/landing/testimonials/ines.jpg",
+    photo: "/landing/testimonials/artisans/thomas.jpg?v=20251009",
     photoVariant: "portrait",
-    photoPosition: "center 18%",
+    photoPosition: "center 45%",
+    photoSource: {
+      page: "https://unsplash.com/photos/1K9T5YiZ2WU",
+      author: "Josue Isai Ramos Figueroa",
+    },
     stackTools: [
       { label: "Cedeo", domain: "cedeo.fr" },
       { label: "Castorama Pro", domain: "castorama.fr" },
     ],
+    insight:
+      "Export CSV des achats du trimestre, prêt pour la compta — plus de chasse aux factures fournisseur dans les mails.",
   },
 ];
 

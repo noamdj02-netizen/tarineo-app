@@ -3,17 +3,27 @@
 import { FileText, Loader2 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
-import { confirmDocument, ingestDocument, transformQuoteAction } from "@/app/(app)/metier/actions";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { filmAnalyseDraft } from "@/lib/metier/film-analyse-draft";
+import {
+  confirmDocument,
+  createChantierAction,
+  ingestDocument,
+  lookupPriorBuyPrices,
+  transformQuoteAction,
+} from "@/app/(app)/metier/actions";
+import { getCompanyMailIdentityAction } from "@/app/(app)/parametres/actions";
 import { ExtractTotalsGrid } from "@/components/metier/extract-totals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DocumentReadRecap } from "@/components/metier/document-read-recap";
 import type { DocumentAgentMeta, DocumentRecap } from "@/lib/metier/document-agent/types";
+import type { PriorPriceHit } from "@/lib/metier/prior-prices";
 import type { ChantierCard, ClientOutKind, ExtractResult, Party } from "@/lib/metier/types";
 import { CLIENT_OUT_KINDS, CLIENT_OUT_LABEL, emptyTotals } from "@/lib/metier/types";
 import { DIRECTION_LABEL, KIND_LABEL, PARTY_LABEL, type DocDirection, type DocKind, type PartyKind } from "@/lib/metier/types";
 import { suggestChantierFromHint } from "@/lib/metier/chantier-match";
+import { hrefAfterDocumentSave, R } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 function numField(raw: FormDataEntryValue | null, fallback: number | null | undefined) {
@@ -33,6 +43,9 @@ export function DocumentDrop({
   hint,
   showAgentMeta,
   onAgentMetaChange,
+  filmLecture,
+  onDocumentSaved,
+  onDraftActive,
 }: {
   chantiers: ChantierCard[];
   clients?: Party[];
@@ -43,6 +56,11 @@ export function DocumentDrop({
   hint?: string;
   showAgentMeta?: boolean;
   onAgentMetaChange?: (meta: DocumentAgentMeta | null) => void;
+  /** Préremplit la lecture Cedeo (captures film, `?film=lecture`). */
+  filmLecture?: boolean;
+  onDocumentSaved?: () => void;
+  /** true dès qu’une lecture est prête (vue revue) ; false après annulation / enregistrement. */
+  onDraftActive?: (active: boolean) => void;
 }) {
   const reduce = useReducedMotion();
   const router = useRouter();
@@ -56,6 +74,9 @@ export function DocumentDrop({
   >(null);
   const [rawExtract, setRawExtract] = useState<ExtractResult | null>(null);
   const [recap, setRecap] = useState<DocumentRecap | null>(null);
+  const [deliveryDate, setDeliveryDate] = useState("");
+  const [priorPriceHits, setPriorPriceHits] = useState<PriorPriceHit[]>([]);
+  const [mailClosing, setMailClosing] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const suggestedChantier = draft
     ? suggestChantierFromHint([draft.chantier_hint, draft.title].filter(Boolean).join(" "), chantiers)
@@ -63,6 +84,41 @@ export function DocumentDrop({
   const [outKind, setOutKind] = useState<ClientOutKind>(
     lockKind && CLIENT_OUT_KINDS.includes(lockKind as ClientOutKind) ? (lockKind as ClientOutKind) : "devis",
   );
+
+  useEffect(() => {
+    if (!filmLecture || draft) return;
+    const { extracted, agent, recap } = filmAnalyseDraft();
+    setRawExtract(extracted);
+    setRecap(recap);
+    setDeliveryDate(extracted.delivery_date ?? "");
+    setPriorPriceHits([]);
+    setDraft({ ...extracted, agent });
+    onAgentMetaChange?.(agent);
+    void lookupPriorBuyPrices(
+      extracted.lines.map((l) => ({ label: l.label, buy_price: l.buy_price })),
+    ).then((res) => {
+      if (res.ok) setPriorPriceHits(res.hits);
+    });
+  }, [filmLecture, draft, onAgentMetaChange]);
+
+  useEffect(() => {
+    onDraftActive?.(Boolean(draft));
+  }, [draft, onDraftActive]);
+
+  useEffect(() => {
+    if (!draft || !showAgentMeta) return;
+    void getCompanyMailIdentityAction().then((id) => setMailClosing(id.closingBlock));
+  }, [draft, showAgentMeta]);
+
+  function clearDraft() {
+    setDraft(null);
+    setRawExtract(null);
+    setRecap(null);
+    setDeliveryDate("");
+    setPriorPriceHits([]);
+    setError(null);
+    onAgentMetaChange?.(null);
+  }
 
   function handleFiles(files: FileList | null) {
     const file = files?.[0];
@@ -79,8 +135,15 @@ export function DocumentDrop({
       setRawExtract(res.extracted);
       const agent = res.agent;
       setRecap(res.recap ?? null);
+      setDeliveryDate(res.extracted.delivery_date ?? "");
+      setPriorPriceHits([]);
       setDraft({ ...res.extracted, filePath: res.filePath, fileSha256: res.fileSha256, agent });
       onAgentMetaChange?.(agent ?? null);
+      void lookupPriorBuyPrices(
+        res.extracted.lines.map((l) => ({ label: l.label, buy_price: l.buy_price })),
+      ).then((prior) => {
+        if (prior.ok) setPriorPriceHits(prior.hits);
+      });
     });
   }
 
@@ -99,6 +162,10 @@ export function DocumentDrop({
       documentNumber: draft.document_number ?? null,
       issueDate: draft.issue_date ?? null,
       partyAddress: draft.party_address ?? null,
+      contactName: String(form.get("contactName") || draft.contact_name || "") || null,
+      contactEmail: String(form.get("contactEmail") || draft.contact_email || "") || null,
+      contactPhone: String(form.get("contactPhone") || draft.contact_phone || "") || null,
+      deliveryDate: deliveryDate || draft.delivery_date || null,
       totals: {
         ht: numField(form.get("ht"), draft.totals?.ht),
         eco_contribution: numField(form.get("eco"), draft.totals?.eco_contribution),
@@ -119,6 +186,23 @@ export function DocumentDrop({
     };
   }
 
+  async function resolveChantierId(form: FormData): Promise<string | null> {
+    const selected = String(form.get("chantierId") || "");
+    if (!selected) return null;
+    if (selected !== "__create_hint__") return selected;
+    const hint = draft?.chantier_hint?.trim();
+    if (!hint) return null;
+    const fd = new FormData();
+    fd.set("name", hint.slice(0, 120));
+    fd.set("address", hint.slice(0, 200));
+    if (draft?.party_kind === "client" && draft.party_name) {
+      fd.set("client", draft.party_name);
+    }
+    const created = await createChantierAction(fd);
+    if (!created.ok || !("id" in created)) return null;
+    return created.id;
+  }
+
   async function confirm(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!draft) return;
@@ -126,21 +210,38 @@ export function DocumentDrop({
     const payload = payloadFromForm(form, false);
     if (!payload) return;
     setSaving(true);
-    const res = await confirmDocument({
-      ...payload,
-      rawExtract,
-      agentMeta: draft.agent ?? null,
-      readRecap: recap,
-    });
-    setSaving(false);
-    if (res.ok) {
-      setDraft(null);
-      setRawExtract(null);
-      setRecap(null);
-      onAgentMetaChange?.(null);
-      router.refresh();
-    } else {
-      setError("error" in res ? res.error : "Enregistrement impossible.");
+    setError(null);
+    try {
+      const chantierId = await resolveChantierId(form);
+      const res = await confirmDocument({
+        ...payload,
+        chantierId,
+        rawExtract,
+        agentMeta: draft.agent ?? null,
+        readRecap: recap,
+      });
+      if (!res.ok) {
+        setError("error" in res ? res.error : "Enregistrement impossible.");
+        return;
+      }
+      // Toujours la fiche pièce (modifiable). Fermer le modal avant, sans clearDraft
+      // qui réafficherait l’import sur /accueil.
+      const href = hrefAfterDocumentSave({
+        id: res.id,
+        chantierSlug: res.chantierSlug,
+      });
+      onDocumentSaved?.();
+      router.replace(href);
+      // Si le Dialog Accueil bloque la soft-nav, forcer l’ouverture de la pièce.
+      if (typeof window !== "undefined") {
+        window.setTimeout(() => {
+          if (!window.location.pathname.startsWith("/pieces/")) {
+            window.location.assign(href);
+          }
+        }, 80);
+      }
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -150,133 +251,157 @@ export function DocumentDrop({
     const payload = payloadFromForm(form, true);
     if (!payload) return;
     setSaving(true);
-    const saved = await confirmDocument({
-      ...payload,
-      rawExtract,
-      agentMeta: draft.agent ?? null,
-      readRecap: recap,
-    });
-    if (!saved.ok) {
+    setError(null);
+    try {
+      const chantierId = await resolveChantierId(form);
+      const saved = await confirmDocument({
+        ...payload,
+        chantierId,
+        rawExtract,
+        agentMeta: draft.agent ?? null,
+        readRecap: recap,
+      });
+      if (!saved.ok) {
+        setError("Enregistrement impossible.");
+        return;
+      }
+      const tf = new FormData();
+      tf.set("sourceId", saved.id);
+      tf.set("kind", outKind);
+      tf.set("clientId", String(form.get("clientId") ?? ""));
+      tf.set("margin", String(form.get("margin") || (outKind === "bon_enlevement" ? "0" : "35")));
+      const res = await transformQuoteAction(tf);
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      onDocumentSaved?.();
+      router.replace(R.piece(res.id));
+      router.refresh();
+    } finally {
       setSaving(false);
-      setError("Enregistrement impossible.");
-      return;
     }
-    const tf = new FormData();
-    tf.set("sourceId", saved.id);
-    tf.set("kind", outKind);
-    tf.set("clientId", String(form.get("clientId") ?? ""));
-    tf.set("margin", String(form.get("margin") || (outKind === "bon_enlevement" ? "0" : "35")));
-    const res = await transformQuoteAction(tf);
-    setSaving(false);
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-    setDraft(null);
-    router.push(lockKind === "bon_commande" ? "/client/bon-commande" : lockKind === "facture" ? "/client/facture" : "/client/devis");
-    router.refresh();
   }
+
+  const showDropZone = !draft;
 
   return (
     <div id="import" className="flex flex-col gap-4 scroll-mt-24">
-      <motion.button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setOver(true);
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setOver(false);
-          handleFiles(e.dataTransfer.files);
-        }}
-        animate={
-          reduce
-            ? undefined
-            : over
-              ? { scale: 1.01 }
-              : pending
-                ? { opacity: 0.85 }
-                : { scale: 1 }
-        }
-        className={cn(
-          "relative flex w-full flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed px-4 text-center transition-[border-color,background-color,transform] duration-200 md:rounded-[28px]",
-          compact ? "min-h-[140px] py-6" : "min-h-[180px] py-8 md:min-h-[220px] md:py-10",
-          over ? "border-brand-orange bg-wash-orange" : "border-line bg-surface-2",
-        )}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept="application/pdf,image/jpeg,image/png,image/heic,image/webp"
-          className="sr-only"
-          onChange={(e) => handleFiles(e.target.files)}
-        />
-        {pending ? (
-          <Loader2 className="size-9 animate-spin text-brand-orange" aria-hidden />
-        ) : (
-          <span className="grid size-14 place-items-center rounded-full bg-[#FF6B1A]/10 text-[#E85A12]">
-            <FileText className="size-7 stroke-[1.5]" aria-hidden />
-          </span>
-        )}
-        <p className="font-display text-[19px] font-semibold tracking-tight md:text-[20px]">
-          {pending
-            ? "Lecture du document…"
-            : over
-              ? "Déposez ici"
-              : hint || "Glissez vos documents ici"}
-        </p>
-        <p className="max-w-[42ch] text-[13px] text-muted-foreground md:text-[14px]">
-          PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers
-        </p>
-        {!pending ? (
-          <span className="mt-1 inline-flex h-11 items-center rounded-[12px] bg-[#FF6B1A] px-4 text-[14px] font-medium text-white md:hidden">
-            Choisir un fichier
-          </span>
-        ) : null}
-        <ul className="hidden flex-wrap justify-center gap-1.5 md:flex">
-          {["PDF", "JPEG", "PNG", "HEIC"].map((fmt) => (
-            <li
-              key={fmt}
-              className="rounded-full border border-line bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground uppercase"
-            >
-              {fmt}
-            </li>
-          ))}
-        </ul>
-        {pending && !reduce ? (
-          <motion.span
-            className="absolute inset-x-10 bottom-5 h-1 overflow-hidden rounded-full bg-line"
-            aria-hidden
-          >
+      {showDropZone ? (
+        <motion.button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setOver(true);
+          }}
+          onDragLeave={() => setOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setOver(false);
+            handleFiles(e.dataTransfer.files);
+          }}
+          animate={
+            reduce
+              ? undefined
+              : over
+                ? { scale: 1.01 }
+                : pending
+                  ? { opacity: 0.85 }
+                  : { scale: 1 }
+          }
+          className={cn(
+            "relative flex w-full flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed px-4 text-center transition-[border-color,background-color,transform] duration-200 md:rounded-[28px]",
+            compact ? "min-h-[140px] py-6" : "min-h-[180px] py-8 md:min-h-[220px] md:py-10",
+            over ? "border-brand-orange bg-wash-orange" : "border-line bg-surface-2",
+          )}
+        >
+          <input
+            ref={inputRef}
+            type="file"
+            accept="application/pdf,image/jpeg,image/png,image/heic,image/webp"
+            className="sr-only"
+            onChange={(e) => handleFiles(e.target.files)}
+          />
+          {pending ? (
+            <Loader2 className="size-9 animate-spin text-brand-orange" aria-hidden />
+          ) : (
+            <span className="grid size-14 place-items-center rounded-full bg-[#FF6B1A]/10 text-[#E85A12]">
+              <FileText className="size-7 stroke-[1.5]" aria-hidden />
+            </span>
+          )}
+          <p className="font-display text-[19px] font-semibold tracking-tight md:text-[20px]">
+            {pending
+              ? "Lecture du document…"
+              : over
+                ? "Déposez ici"
+                : hint || "Glissez vos documents ici"}
+          </p>
+          <p className="max-w-[42ch] text-[13px] text-muted-foreground md:text-[14px]">
+            PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers
+          </p>
+          {!pending ? (
+            <span className="mt-1 inline-flex h-11 items-center rounded-[12px] bg-[#FF6B1A] px-4 text-[14px] font-medium text-white md:hidden">
+              Choisir un fichier
+            </span>
+          ) : null}
+          <ul className="hidden flex-wrap justify-center gap-1.5 md:flex">
+            {["PDF", "JPEG", "PNG", "HEIC"].map((fmt) => (
+              <li
+                key={fmt}
+                className="rounded-full border border-line bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground uppercase"
+              >
+                {fmt}
+              </li>
+            ))}
+          </ul>
+          {pending && !reduce ? (
             <motion.span
-              className="block h-full bg-brand-orange"
-              initial={{ x: "-100%" }}
-              animate={{ x: "100%" }}
-              transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
-            />
-          </motion.span>
-        ) : null}
-      </motion.button>
+              className="absolute inset-x-10 bottom-5 h-1 overflow-hidden rounded-full bg-line"
+              aria-hidden
+            >
+              <motion.span
+                className="block h-full bg-brand-orange"
+                initial={{ x: "-100%" }}
+                animate={{ x: "100%" }}
+                transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
+              />
+            </motion.span>
+          ) : null}
+        </motion.button>
+      ) : null}
       {error ? (
         <p role="alert" className="text-[14px] text-destructive">
           {error}
         </p>
       ) : null}
 
-      {showAgentMeta && recap && draft?.agent ? (
+      {showAgentMeta && recap && draft ? (
         <DocumentReadRecap
           recap={recap}
-          vendorName={draft.agent.vendor_display_name}
-          profileVersion={draft.agent.profile_version}
+          extract={draft}
+          vendorName={draft.agent?.vendor_display_name}
+          profileVersion={draft.agent?.profile_version}
+          deliveryDate={deliveryDate}
+          onDeliveryDateChange={setDeliveryDate}
+          priorPriceHits={priorPriceHits}
+          mailClosing={mailClosing}
         />
       ) : null}
 
       {draft ? (
         <form ref={formRef} onSubmit={confirm} className="card-soft flex flex-col gap-4 p-5">
-          <p className="mono-label">/ Lecture ///</p>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="mono-label">/ Lecture ///</p>
+              <p className="mt-1 text-[15px] text-muted-foreground">
+                Corrigez si besoin, puis enregistrez ou transformez.
+              </p>
+            </div>
+            <Button type="button" variant="ghost" size="sm" className="rounded-full" onClick={clearDraft}>
+              Autre fichier
+            </Button>
+          </div>
           <p className="text-[15px] text-muted-foreground">
             {KIND_LABEL[draft.kind]} · {DIRECTION_LABEL[draft.direction]} · {PARTY_LABEL[draft.party_kind]}
           </p>
@@ -327,12 +452,21 @@ export function DocumentDrop({
             <label className="flex flex-col gap-1.5 text-[13px]">
               Chantier
               <select
-                key={suggestedChantier?.id ?? "none"}
+                key={suggestedChantier?.id ?? draft.chantier_hint ?? "none"}
                 name="chantierId"
-                defaultValue={suggestedChantier?.id ?? defaultChantierId ?? ""}
+                defaultValue={
+                  suggestedChantier?.id ??
+                  (draft.chantier_hint?.trim() ? "__create_hint__" : defaultChantierId ?? "")
+                }
                 className="h-11 rounded-xl border border-line bg-surface px-3"
               >
                 <option value="">Sans chantier</option>
+                {draft.chantier_hint?.trim() && !suggestedChantier ? (
+                  <option value="__create_hint__">
+                    Créer « {draft.chantier_hint.trim().slice(0, 48)}
+                    {draft.chantier_hint.trim().length > 48 ? "…" : ""} »
+                  </option>
+                ) : null}
                 {chantiers.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -341,10 +475,35 @@ export function DocumentDrop({
               </select>
               {suggestedChantier ? (
                 <span className="text-[12.5px] text-muted-foreground">
-                  Chantier détecté : {suggestedChantier.name}. Confirmez ou choisissez « Sans chantier ».
+                  Chantier détecté : {suggestedChantier.name}. Après enregistrement, vous ouvrirez ce chantier.
+                </span>
+              ) : draft.chantier_hint?.trim() ? (
+                <span className="text-[12.5px] text-muted-foreground">
+                  Lieu détecté sur le document — un nouveau chantier sera créé si vous gardez cette option.
                 </span>
               ) : null}
             </label>
+            {draft.direction === "in" || draft.contact_name || draft.contact_email || draft.contact_phone ? (
+              <>
+                <label className="flex flex-col gap-1.5 text-[13px]">
+                  Contact commercial
+                  <Input name="contactName" defaultValue={draft.contact_name ?? ""} className="h-11 rounded-xl" />
+                </label>
+                <label className="flex flex-col gap-1.5 text-[13px]">
+                  E-mail commercial
+                  <Input
+                    name="contactEmail"
+                    type="email"
+                    defaultValue={draft.contact_email ?? ""}
+                    className="h-11 rounded-xl"
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5 text-[13px] sm:col-span-2">
+                  Téléphone commercial
+                  <Input name="contactPhone" defaultValue={draft.contact_phone ?? ""} className="h-11 rounded-xl" />
+                </label>
+              </>
+            ) : null}
           </div>
           <p className="mono-label">/ Totaux lus ///</p>
           <ExtractTotalsGrid totals={draft.totals ?? emptyTotals()} />
@@ -442,10 +601,10 @@ export function DocumentDrop({
           </div>
           )}
           <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={saving} variant="outline" className="rounded-full">
-              {saving ? "Enregistrement…" : "Enregistrer sans transformer"}
+            <Button type="submit" disabled={saving} className="rounded-full bg-brand-orange text-white hover:brightness-[0.96]">
+              {saving ? "Enregistrement…" : "Enregistrer et ouvrir"}
             </Button>
-            <Button type="button" variant="ghost" className="rounded-full" onClick={() => setDraft(null)}>
+            <Button type="button" variant="ghost" className="rounded-full" onClick={clearDraft} disabled={saving}>
               Annuler
             </Button>
           </div>

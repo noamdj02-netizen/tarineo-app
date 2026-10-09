@@ -22,9 +22,14 @@ Réponds UNIQUEMENT en JSON valide :
   "title":"titre court avec n° si présent",
   "document_number":"n° document ou chaîne vide",
   "issue_date":"AAAA-MM-JJ ou chaîne vide",
+  "delivery_date":"date de livraison / mise à disposition AAAA-MM-JJ si écrite, sinon chaîne vide",
   "party_name":"nom client OU fournisseur/distributeur",
   "party_kind":"client"|"fournisseur"|"distributeur",
   "party_address":"adresse telle qu’écrite ou chaîne vide",
+  "contact_name":"nom du commercial / interlocuteur écrit sur le document, ou chaîne vide",
+  "contact_email":"e-mail du commercial s’il est écrit, sinon chaîne vide",
+  "contact_phone":"téléphone du commercial s’il est écrit, sinon chaîne vide",
+  "contact_role":"commercial|chargé d'affaires|vendeur|autre libellé court, ou chaîne vide",
   "chantier_hint":"nom/adresse chantier ou chaîne vide",
   "totals":{"ht":0|"null","ttc":null,"tva":null,"eco_contribution":null,"pmcb":null,"weight_kg":null},
   "lines":[{
@@ -58,9 +63,11 @@ Règles métier :
    - qty / unit / tva_rate tels qu’écrits (défaut qty=1, unit=u, tva=20 si non indiqué mais régime normal visible)
 6. Recopie éco-contribution, PMCB, poids seulement s’ils sont explicitement indiqués.
 7. chantier_hint = adresse de livraison / chantier / référence chantier écrite.
+7bis. delivery_date = date de livraison / enlèvement / mise à disposition explicitement écrite (AAAA-MM-JJ). Sinon chaîne vide — ne jamais inventer.
 8. Maximum 60 lignes. Ignore les lignes purement marketing / conditions générales.
-9. N’invente AUCUNE ligne, AUCUN montant, AUCUN fournisseur.
-10. read_assessment : auto-évalue la lisibilité (fiable = scan net, partiel = zones floues, incertain = gros doutes). caveats = incertitudes réelles, pas de remplissage.`;
+9. N’invente AUCUNE ligne, AUCUN montant, AUCUN fournisseur, AUCUN contact.
+10. Contacts (Point P, Cedeo, etc.) : si un commercial / vendeur / chargé d’affaires apparaît (signature, pied de page, « Votre interlocuteur », e-mail @enseigne), remplis contact_*. Sinon laisse des chaînes vides. Ne jamais inventer un e-mail.
+11. read_assessment : auto-évalue la lisibilité (fiable = scan net, partiel = zones floues, incertain = gros doutes). caveats = incertitudes réelles, pas de remplissage.`;
 
 function buildExtractPrompt(promptAddon?: string): string {
   const addon = promptAddon?.trim();

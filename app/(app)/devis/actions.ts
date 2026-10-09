@@ -13,8 +13,6 @@ import { calculateQuoteTotals, formatEuro } from "@/lib/metier/devis/totals";
 import { listChantiers, listParties } from "@/lib/metier/queries";
 import type { ChantierCard, Party } from "@/lib/metier/types";
 
-export type { DevisProposal, DevisProposalLine };
-
 export type DevisMatchResult = {
   client: { exact: Party | null; candidates: { id: string; name: string; score: number }[]; ambiguous: boolean };
   chantier: {
@@ -234,6 +232,69 @@ export async function createDevisFromProposalAction(input: {
     chantierId: input.chantierId ?? null,
     idempotencyKey: key,
   });
+
+  const result = await persistDevisDraft(draft);
+  if (!result.ok) return result;
+
+  refresh();
+  revalidatePath(`/pieces/${result.id}`);
+  return { ok: true, id: result.id, reused: result.reused };
+}
+
+/** Création manuelle depuis le formulaire Nouveau devis. */
+export async function createManualDevisAction(input: {
+  title?: string | null;
+  clientId?: string | null;
+  clientName?: string | null;
+  chantierId?: string | null;
+  chantierName?: string | null;
+  notes?: string | null;
+  lines: Array<{
+    description: string;
+    quantity: number;
+    unit?: string;
+    unitPriceHT: number;
+    vatRate: number;
+  }>;
+  idempotencyKey?: string | null;
+}): Promise<{ ok: true; id: string; reused: boolean } | { ok: false; error: string }> {
+  const db = await getDb();
+  if (!db) return { ok: false, error: "Connexion requise." };
+  if (!input.lines?.length) return { ok: false, error: "Ajoutez au moins une ligne." };
+
+  const clients = await listParties("client");
+  const chantiers = await listChantiers();
+  const client =
+    (input.clientId ? clients.find((c) => c.id === input.clientId) : null) ??
+    (input.clientName ? clients.find((c) => c.name === input.clientName) : null);
+  const chantier = input.chantierId ? chantiers.find((c) => c.id === input.chantierId) : null;
+
+  const draft = {
+    client: {
+      id: client?.id ?? input.clientId ?? null,
+      name: client?.name?.trim() || input.clientName?.trim() || "Client",
+    },
+    chantier:
+      chantier || input.chantierName
+        ? {
+            id: chantier?.id ?? input.chantierId ?? null,
+            name: chantier?.name ?? input.chantierName ?? null,
+          }
+        : undefined,
+    lines: input.lines.map((l) => ({
+      description: String(l.description ?? "").trim() || "Prestation",
+      quantity: Number(l.quantity) || 0,
+      unit: String(l.unit ?? "u").trim() || "u",
+      unitPriceHT: Number(l.unitPriceHT) || 0,
+      vatRate: Number(l.vatRate) || 20,
+    })),
+    notes: input.notes?.trim() || undefined,
+    source: "manual" as const,
+    title: String(input.title ?? "").trim() || "Devis",
+    vatMode: "standard" as const,
+    validityDays: 30,
+    idempotencyKey: input.idempotencyKey?.trim() || undefined,
+  };
 
   const result = await persistDevisDraft(draft);
   if (!result.ok) return result;

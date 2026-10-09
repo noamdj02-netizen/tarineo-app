@@ -1,8 +1,2 @@
-/** Étapes du wizard /onboarding (Compte + barre latérale). */
-export const WIZARD_STEPS = [
-  "Bienvenue",
-  "Prénom et nom",
-  "Mon entreprise (SIRET, TVA)",
-  "Premier chantier",
-  "Tableau de bord",
-] as const;
+/** Étapes du wizard /onboarding (option A — PDF d’abord). */
+export const WIZARD_STEPS = ["Vous", "Premier PDF distributeur", "Tableau de bord"] as const;

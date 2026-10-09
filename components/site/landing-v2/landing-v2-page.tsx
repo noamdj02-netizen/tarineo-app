@@ -1,23 +1,44 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect } from "react";
 
 import { Footer } from "@/components/site/landing-v2/components/layout/Footer";
 import { Header } from "@/components/site/landing-v2/components/layout/Header";
 import { enableMotion } from "@/components/site/landing-v2/lib/motion";
-import { Automations } from "@/components/site/landing-v2/sections/Automations";
-import { Connect } from "@/components/site/landing-v2/sections/Connect";
-import { Copilot } from "@/components/site/landing-v2/sections/Copilot";
-import { Dashboard } from "@/components/site/landing-v2/sections/Dashboard";
-import { FinalCta } from "@/components/site/landing-v2/sections/FinalCta";
 import { Hero } from "@/components/site/landing-v2/sections/Hero";
-import { Pricing } from "@/components/site/landing-v2/sections/Pricing";
-import { Problem } from "@/components/site/landing-v2/sections/Problem";
-import { QuoteAnalysis } from "@/components/site/landing-v2/sections/QuoteAnalysis";
-import { QuoteToInvoice } from "@/components/site/landing-v2/sections/QuoteToInvoice";
-import { Security } from "@/components/site/landing-v2/sections/Security";
 
-/** Landing marketing v2 — synchronisée depuis l’export Vite (`~/Downloads/tarineo`). */
+const JourneyFiveSteps = dynamic(
+  () => import("@/components/site/landing-v2/sections/JourneyFiveSteps").then((m) => m.JourneyFiveSteps),
+  { loading: () => null },
+);
+const ProofTable = dynamic(
+  () => import("@/components/site/landing-v2/sections/ProofTable").then((m) => m.ProofTable),
+  { loading: () => null },
+);
+const TerrainStories = dynamic(
+  () => import("@/components/site/landing-v2/sections/TerrainStories").then((m) => m.TerrainStories),
+  { loading: () => null },
+);
+const NegotiationTransform = dynamic(
+  () =>
+    import("@/components/site/landing-v2/sections/NegotiationTransform").then((m) => m.NegotiationTransform),
+  { loading: () => null },
+);
+const AppCapturePastilles = dynamic(
+  () => import("@/components/site/landing-v2/sections/AppCapturePastilles").then((m) => m.AppCapturePastilles),
+  { loading: () => null },
+);
+const Pricing = dynamic(
+  () => import("@/components/site/landing-v2/sections/Pricing").then((m) => m.Pricing),
+  { loading: () => null },
+);
+const FaqFinal = dynamic(
+  () => import("@/components/site/landing-v2/sections/FaqFinal").then((m) => m.FaqFinal),
+  { loading: () => null },
+);
+
+/** Landing marketing — 6 écrans (brief conversion). */
 export function LandingV2Page() {
   useLayoutEffect(() => {
     enableMotion();
@@ -38,16 +59,13 @@ export function LandingV2Page() {
       <Header />
       <main id="contenu-landing">
         <Hero />
-        <QuoteToInvoice />
-        <Problem />
-        <QuoteAnalysis />
-        <Connect />
-        <Automations />
-        <Copilot />
-        <Dashboard />
-        <Security />
+        <JourneyFiveSteps />
+        <ProofTable />
+        <TerrainStories />
+        <NegotiationTransform />
+        <AppCapturePastilles />
         <Pricing />
-        <FinalCta />
+        <FaqFinal />
       </main>
       <Footer />
     </div>

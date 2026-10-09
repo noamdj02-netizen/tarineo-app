@@ -18,6 +18,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "3mb",
     },
   },
+  turbopack: {
+    resolveAlias: {
+      "@react-pdf/hyphenate/en-us": path.join(
+        projectRoot,
+        "node_modules/@react-pdf/hyphenate/lib/en-us.js",
+      ),
+    },
+  },
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

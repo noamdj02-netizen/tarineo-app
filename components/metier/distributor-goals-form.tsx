@@ -8,10 +8,12 @@ import { Button } from "@/components/ui/button";
 export function DistributorGoalsForm({
   enseignes,
   goals,
+  monthlyGoals,
   disabled,
 }: {
   enseignes: { label: string; amount: number }[];
   goals: Record<string, number>;
+  monthlyGoals: Record<string, number>;
   disabled?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
@@ -41,34 +43,56 @@ export function DistributorGoalsForm({
       }}
     >
       <div>
-        <p className="text-[15px] font-medium text-ink">Objectifs d’achat annuels (HT)</p>
+        <p className="text-[15px] font-medium text-ink">Objectifs d’achat (HT)</p>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Utilisés dans les graphiques objectifs. Laissez vide pour l’estimation automatique (+15 % sur vos achats
-          actuels).
+          Fixez un plafond mensuel (ex. 5&nbsp;000&nbsp;€ chez un grossiste) et un objectif annuel. Les jauges
+          suivent vos achats du mois et de l’année en cours.
         </p>
       </div>
-      <ul className="grid gap-3 sm:grid-cols-2">
+      <ul className="grid gap-4">
         {rows.map((e) => (
-          <li key={e.label}>
-            <label className="text-[13px] text-muted-foreground">
-              {e.label}
-              <input
-                name={`goal:${e.label}`}
-                type="number"
-                min={0}
-                step={100}
-                disabled={disabled || pending}
-                defaultValue={goals[e.label] ?? ""}
-                placeholder="Objectif € HT"
-                className="mt-1 h-11 w-full rounded-xl border border-line bg-surface px-3 text-[14px] tabular-nums text-ink"
-              />
-            </label>
+          <li key={e.label} className="rounded-xl border border-line bg-surface px-3.5 py-3">
+            <p className="text-[14px] font-medium text-ink">{e.label}</p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              <label className="text-[12px] text-muted-foreground">
+                Objectif mensuel (€ HT)
+                <input
+                  name={`goalMonth:${e.label}`}
+                  type="number"
+                  min={0}
+                  step={100}
+                  disabled={disabled || pending}
+                  defaultValue={monthlyGoals[e.label] ?? ""}
+                  placeholder="ex. 5000"
+                  className="mt-1 h-11 w-full rounded-xl border border-line bg-surface-2 px-3 text-[14px] tabular-nums text-ink"
+                />
+              </label>
+              <label className="text-[12px] text-muted-foreground">
+                Objectif annuel (€ HT)
+                <input
+                  name={`goal:${e.label}`}
+                  type="number"
+                  min={0}
+                  step={100}
+                  disabled={disabled || pending}
+                  defaultValue={goals[e.label] ?? ""}
+                  placeholder="ex. 60000"
+                  className="mt-1 h-11 w-full rounded-xl border border-line bg-surface-2 px-3 text-[14px] tabular-nums text-ink"
+                />
+              </label>
+            </div>
           </li>
         ))}
       </ul>
-      {error ? <p className="text-[13px] text-destructive" role="alert">{error}</p> : null}
+      {error ? (
+        <p className="text-[13px] text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
       {saved ? (
-        <p className="text-[13px] text-muted-foreground" aria-live="polite">Objectifs enregistrés.</p>
+        <p className="text-[13px] text-muted-foreground" aria-live="polite">
+          Objectifs enregistrés.
+        </p>
       ) : null}
       <Button type="submit" disabled={disabled || pending} className="self-start">
         {pending ? (

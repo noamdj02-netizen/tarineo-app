@@ -17,11 +17,13 @@ export const LEGAL_PUBLISHER = {
   country: "France",
   activityCode: "62.01Z",
   activityLabel: "Programmation informatique",
-  directorPublication: "Alann Drapier",
+  /** Responsable éditorial / produit (hors immatriculation RNE). */
+  productLead: "Noam Hariau",
+  directorPublication: "Alann Drapier et Noam Hariau",
   registryUrl:
     "https://annuaire-entreprises.data.gouv.fr/entreprise/alann-drapier-130865041",
   /** Dernière relecture des mentions légales (contenu site). */
-  legalPagesUpdated: "6 octobre 2026",
+  legalPagesUpdated: "7 octobre 2026",
   /** Prix CGV : franchise en base (vérifier avec le comptable si le régime change). */
   pricesVatNote:
     "Les prix sont indiqués en euros hors taxes (HT). L’éditeur n’est pas assujetti à la TVA sur ses prestations (article 293 B du CGI) ; toute évolution de régime sera reflétée sur facture.",
@@ -54,6 +56,15 @@ export function publisherEditorParagraph(): string {
 
 export function publisherPublicationDirectorLine(): string {
   return `Directeur de la publication : ${LEGAL_PUBLISHER.directorPublication}. Contact : ${BRAND.contactEmail}.`;
+}
+
+/** Ligne « prestataire » des CGV (éditeur légal + contact produit). */
+export function publisherCgvProviderLine(): string {
+  const p = LEGAL_PUBLISHER;
+  return (
+    `Prestataire : ${p.legalName}, ${p.legalForm.toLowerCase()}, SIRET ${formatLegalSiret(p.siret)}. ` +
+    `Direction produit et relation client : ${p.productLead}.`
+  );
 }
 
 /** Région Supabase : surcharger via LEGAL_SUPABASE_DATA_REGION (ex. eu-west-3). */

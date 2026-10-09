@@ -17,6 +17,7 @@ import {
 import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { PLAN_LABEL, type PlanId } from "@/lib/billing/plans";
 import { NotificationsBell } from "@/components/shell/notifications-bell";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import type { AppNotification } from "@/lib/notifications/types";
 import type { Viewer } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -121,19 +122,36 @@ function PlanBadge({ planId }: { planId: PlanId }) {
   );
 }
 
+function AvatarFace({ viewer }: { viewer: Viewer | null }) {
+  return (
+    <Avatar className="size-9 border-0 after:hidden lg:size-10">
+      {viewer?.avatarUrl ? <AvatarImage src={viewer.avatarUrl} alt="" /> : null}
+      <AvatarFallback className="bg-transparent font-mono text-[13px] text-accent-ink">
+        {viewer?.initial ?? "·"}
+      </AvatarFallback>
+    </Avatar>
+  );
+}
+
+const AVATAR_TRIGGER_CLASS =
+  "btn-dark relative size-9 overflow-hidden rounded-full p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:size-10";
+
 function AvatarMenu({ viewer }: { viewer: Viewer | null }) {
+  const mounted = useMounted();
+
+  // Base UI Menu utilise useId — différé après mount pour éviter le mismatch Next 15.5.
+  if (!mounted) {
+    return (
+      <button type="button" aria-label="Mon compte" className={AVATAR_TRIGGER_CLASS} disabled>
+        <AvatarFace viewer={viewer} />
+      </button>
+    );
+  }
+
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger
-        aria-label="Mon compte"
-        className="btn-dark relative size-9 overflow-hidden rounded-full p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:size-10"
-      >
-        <Avatar className="size-9 border-0 after:hidden lg:size-10">
-          {viewer?.avatarUrl ? <AvatarImage src={viewer.avatarUrl} alt="" /> : null}
-          <AvatarFallback className="bg-transparent font-mono text-[13px] text-accent-ink">
-            {viewer?.initial ?? "·"}
-          </AvatarFallback>
-        </Avatar>
+      <DropdownMenuTrigger aria-label="Mon compte" className={AVATAR_TRIGGER_CLASS}>
+        <AvatarFace viewer={viewer} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
         <DropdownMenuGroup>

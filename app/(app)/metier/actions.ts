@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/lib/db";
 import { ingestDocumentWithAgent } from "@/lib/metier/document-agent/extract-with-agent";
 import { learnFromConfirmation } from "@/lib/metier/document-agent/learn";
+import { assertCompanyProfileReady } from "@/lib/metier/require-company";
 import type { DocumentAgentMeta, DocumentRecap } from "@/lib/metier/document-agent/types";
 import type { ExtractResult } from "@/lib/metier/types";
 import {
@@ -29,7 +30,7 @@ import {
 import { followUpStillEligible, isDocumentTransformed, type FollowUpStatus } from "@/lib/metier/follow-ups";
 import type { ChantierStatus, ClientOutKind, DocDirection, DocKind, ExtractTotals, PartyKind } from "@/lib/metier/types";
 import { draftDocumentMail } from "@/lib/metier/draft-mail";
-import { CLIENT_DEVIS_NEXT_KINDS, CLIENT_OUT_KINDS, marginToMarkup } from "@/lib/metier/types";
+import { CLIENT_DEVIS_NEXT_KINDS, CLIENT_OUT_KINDS, KIND_LABEL, marginToMarkup } from "@/lib/metier/types";
 
 function refresh() {
   for (const p of [
@@ -94,6 +95,27 @@ export async function ingestDocument(form: FormData) {
   }
 }
 
+/** Anciens prix d’achat pour préparer un mail de renégociation. */
+export async function lookupPriorBuyPrices(
+  lines: Array<{ label: string; buy_price: number }>,
+): Promise<{ ok: true; hits: import("@/lib/metier/prior-prices").PriorPriceHit[] }> {
+  const { findPriorBuyPrices } = await import("@/lib/metier/prior-prices");
+  if (!lines?.length) return { ok: true, hits: [] };
+  const history = await listDocuments({ direction: "in", limit: 80 });
+  const hits = findPriorBuyPrices(
+    lines,
+    history.map((d) => ({
+      title: d.title,
+      created_at: d.created_at,
+      document_number:
+        typeof d.extract?.document_number === "string" ? d.extract.document_number : null,
+      party_name: d.party_name,
+      lines: d.lines.map((l) => ({ label: l.label, buy_price: Number(l.buy_price) })),
+    })),
+  );
+  return { ok: true, hits };
+}
+
 export async function confirmDocument(input: {
   title: string;
   direction: DocDirection;
@@ -107,6 +129,11 @@ export async function confirmDocument(input: {
   documentNumber?: string | null;
   issueDate?: string | null;
   partyAddress?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  /** Date de livraison prévue AAAA-MM-JJ → extract + événement calendrier. */
+  deliveryDate?: string | null;
   rawExtract?: ExtractResult | null;
   agentMeta?: DocumentAgentMeta | null;
   readRecap?: DocumentRecap | null;
@@ -121,6 +148,10 @@ export async function confirmDocument(input: {
     weight_kg?: number | null;
   }>;
 }) {
+  if (input.direction === "out") {
+    const company = await assertCompanyProfileReady();
+    if (!company.ok) return { ok: false as const, error: company.error };
+  }
   const doc = await saveExtractedDocument({
     ...input,
     lines: input.lines.map((l) => ({
@@ -140,6 +171,10 @@ export async function confirmDocument(input: {
       document_number: input.documentNumber || null,
       issue_date: input.issueDate || null,
       party_address: input.partyAddress || null,
+      contact_name: input.contactName || null,
+      contact_email: input.contactEmail || null,
+      contact_phone: input.contactPhone || null,
+      delivery_date: input.deliveryDate || null,
       raw_model: input.rawExtract ?? null,
       vendor_key: input.agentMeta?.vendor_key ?? null,
       profile_version: input.agentMeta?.profile_version ?? null,
@@ -150,6 +185,32 @@ export async function confirmDocument(input: {
     return null;
   });
   if (!doc) return { ok: false as const, error: "Le document n’a pas pu être enregistré." };
+  const deliveryDay =
+    typeof input.deliveryDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input.deliveryDate.trim())
+      ? input.deliveryDate.trim()
+      : null;
+  if (deliveryDay) {
+    try {
+      const { addCalendarEvent } = await import("@/app/(app)/accueil/actions");
+      const { formatDeliveryDateFr } = await import("@/lib/metier/delivery");
+      const chantierLabel = doc.chantier_name?.trim() || null;
+      const titleBits = [
+        "Livraison",
+        chantierLabel ? `chantier ${chantierLabel}` : null,
+        input.partyName?.trim() || null,
+        input.documentNumber ? `n° ${input.documentNumber}` : input.title?.trim() || null,
+        formatDeliveryDateFr(deliveryDay),
+      ].filter(Boolean);
+      await addCalendarEvent({
+        title: titleBits.join(" · ").slice(0, 120),
+        startsAt: `${deliveryDay}T12:00:00.000Z`,
+        allDay: true,
+        day: deliveryDay,
+      });
+    } catch (err) {
+      console.error("[confirmDocument] calendar delivery", err);
+    }
+  }
   try {
     await learnFromConfirmation({
       vendorKey: input.agentMeta?.vendor_key ?? "unknown",
@@ -216,7 +277,14 @@ export async function confirmDocument(input: {
     console.error("[confirmDocument] notifications", err);
   }
   refresh();
-  return { ok: true as const, id: doc.id };
+  return {
+    ok: true as const,
+    id: doc.id,
+    chantierId: doc.chantier_id,
+    chantierSlug: doc.chantier_slug,
+    direction: doc.direction,
+    kind: doc.kind,
+  };
 }
 
 export async function createPartyAction(form: FormData) {
@@ -248,9 +316,54 @@ export async function createChantierAction(form: FormData) {
       clientName: String(form.get("client") ?? ""),
     });
     refresh();
-    return { ok: true as const, slug: c.slug };
+    return { ok: true as const, id: c.id, slug: c.slug };
   } catch (err) {
     console.error("[metier] createChantierAction", err);
+    return { ok: false as const, error: "Impossible de créer le chantier." };
+  }
+}
+
+/** Crée un chantier (depuis le document) et y rattache la pièce. */
+export async function createChantierForDocumentAction(documentId: string) {
+  const doc = await getDocument(documentId);
+  if (!doc) return { ok: false as const, error: "Pièce introuvable." };
+  if (doc.chantier_id && doc.chantier_slug) {
+    return {
+      ok: true as const,
+      id: doc.chantier_id,
+      slug: doc.chantier_slug,
+      reused: true as const,
+    };
+  }
+
+  const extract = (doc.extract ?? {}) as Record<string, unknown>;
+  const raw = extract.raw_model as { chantier_hint?: string } | null | undefined;
+  const hint = String(raw?.chantier_hint ?? "").trim();
+  const name =
+    hint ||
+    doc.chantier_name?.trim() ||
+    [doc.party_name, KIND_LABEL[doc.kind]].filter(Boolean).join(" — ") ||
+    doc.title;
+  const address = hint || doc.party_address || "";
+  const clientName =
+    doc.direction === "out" && doc.party_kind === "client" ? doc.party_name || "" : "";
+
+  try {
+    const c = await createChantier({
+      name: name.slice(0, 120),
+      address: address.slice(0, 200),
+      clientName: clientName || undefined,
+    });
+    const linked = await updateDocument({ id: doc.id, chantierId: c.id });
+    if (!linked.ok) {
+      return { ok: false as const, error: linked.error ?? "Impossible de lier le document." };
+    }
+    refresh();
+    revalidatePath(`/pieces/${doc.id}`);
+    revalidatePath(`/chantiers/${c.slug}`);
+    return { ok: true as const, id: c.id, slug: c.slug, reused: false as const };
+  } catch (err) {
+    console.error("[metier] createChantierForDocumentAction", err);
     return { ok: false as const, error: "Impossible de créer le chantier." };
   }
 }
@@ -306,6 +419,8 @@ export async function transformQuoteAction(form: FormData) {
       refresh();
       return { ok: true as const, id: doc.id, kind: doc.kind };
     }
+    const company = await assertCompanyProfileReady();
+    if (!company.ok) return { ok: false as const, error: company.error };
     const doc = await transformImportedDocument(sourceId, markup > 0 ? markup : defaultMarkup, clientId, kind);
     if (!doc) return { ok: false as const, error: "Transformation impossible." };
     if (doc.direction === "out" && doc.kind === "devis") {

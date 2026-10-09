@@ -7,6 +7,7 @@ import { confirmDocument, ingestDocument } from "@/app/(app)/metier/actions";
 import { Button } from "@/components/ui/button";
 import { confirmPayloadFromExtract } from "@/lib/metier/confirm-payload";
 import type { ChantierCard, DocDirection, DocKind, Party } from "@/lib/metier/types";
+import { hrefAfterDocumentSave, pieceListHref } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 const MAX_FILES = 150;
@@ -73,6 +74,8 @@ export function DocumentBulkImport({
     setRunning(true);
     setGlobalError(null);
     let failures = 0;
+    let lastHref: string | null = null;
+    let savedCount = 0;
 
     for (const item of queue) {
       if (item.status === "done") continue;
@@ -118,14 +121,25 @@ export function DocumentBulkImport({
         continue;
       }
 
+      savedCount += 1;
+      lastHref = hrefAfterDocumentSave({
+        id: saved.id,
+        chantierSlug: saved.chantierSlug,
+      });
       setQueue((q) => q.map((i) => (i.id === item.id ? { ...i, status: "done" } : i)));
     }
 
     setRunning(false);
     router.refresh();
-    if (failures === 0) {
+      if (failures === 0 && savedCount > 0) {
       setQueue([]);
-    } else {
+      // Un fichier → fiche pièce (modifiable) ; plusieurs → liste métier.
+      if (savedCount === 1 && lastHref) {
+        router.replace(lastHref);
+      } else {
+        router.replace(pieceListHref(lockDirection ?? "in", lockKind ?? "devis"));
+      }
+    } else if (failures > 0) {
       setGlobalError(`${failures} fichier(s) en erreur — corrigez ou retirez-les puis relancez.`);
     }
   }

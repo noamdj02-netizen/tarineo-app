@@ -32,6 +32,31 @@ test("buildDocumentRecap marque fiable si totaux alignés", () => {
   assert.equal(recap.stats.totalsAligned, true);
 });
 
+test("buildDocumentRecap crédite le contact commercial", () => {
+  const base = {
+    direction: "in" as const,
+    kind: "devis" as const,
+    title: "Devis",
+    party_name: "Cedeo Lyon",
+    party_kind: "distributeur" as const,
+    chantier_hint: "",
+    totals: { ht: 100, eco_contribution: null, pmcb: null, weight_kg: null },
+    lines: [{ label: "A", qty: 1, unit: "u", buy_price: 80, sell_price: 0 }],
+  };
+  const without = buildDocumentRecap(base, { ...agent, confidence: "low" });
+  const withContact = buildDocumentRecap(
+    {
+      ...base,
+      contact_name: "Marie",
+      contact_email: "marie@cedeo.fr",
+    },
+    { ...agent, confidence: "low" },
+  );
+  assert.ok(withContact.score >= without.score + 4);
+  assert.ok(withContact.checks.some((c) => c.id === "contact" && c.ok));
+  assert.ok(without.checks.some((c) => c.id === "contact" && !c.ok));
+});
+
 test("buildDocumentRecap baisse le score si totaux incohérents", () => {
   const recap = buildDocumentRecap(
     {

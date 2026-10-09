@@ -132,21 +132,33 @@ export function EntrepriseLookupFlow({
         return;
       }
       if (data.status === "not_found") {
-        setError("Aucune entreprise trouvée");
-        setHint("Saisir les informations manuellement");
-        setMode("edit");
+        setError("Aucune entreprise trouvée pour cette recherche.");
+        setHint(
+          variant === "settings"
+            ? "Essayez le SIRET, le site (ex. monentreprise.fr) ou un nom + ville. Sinon complétez le formulaire ci-dessous."
+            : "Saisir les informations manuellement",
+        );
+        setMode(variant === "settings" ? "search" : "edit");
         setPhase("not_found");
         return;
       }
       setError("Impossible de rechercher l’entreprise pour le moment.");
-      setHint("Saisir les informations manuellement");
-      setMode("edit");
+      setHint(
+        variant === "settings"
+          ? "Réessayez dans un instant, ou complétez le formulaire ci-dessous."
+          : "Saisir les informations manuellement",
+      );
+      setMode(variant === "settings" ? "search" : "edit");
       setPhase("error");
     } catch (err) {
       console.error("[entreprise-lookup]", err);
       setError("Impossible de rechercher l’entreprise pour le moment.");
-      setHint("Saisir les informations manuellement");
-      setMode("edit");
+      setHint(
+        variant === "settings"
+          ? "Réessayez dans un instant, ou complétez le formulaire ci-dessous."
+          : "Saisir les informations manuellement",
+      );
+      setMode(variant === "settings" ? "search" : "edit");
       setPhase("error");
     } finally {
       setPending(false);
@@ -208,14 +220,14 @@ export function EntrepriseLookupFlow({
                 Trouver mon entreprise
               </p>
               <p className="text-[14px] text-muted-foreground">
-                Nom, ville ou SIRET — TARINEO préremplit les mentions publiques pour vos devis.
+                Nom, site web ou SIRET — TARINEO préremplit raison sociale, adresse, SIRET et logo.
               </p>
             </div>
           )}
 
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="company-lookup-q">Nom de l’entreprise</FieldLabel>
+              <FieldLabel htmlFor="company-lookup-q">Nom, site ou SIRET</FieldLabel>
               <div className="relative">
                 <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -228,7 +240,7 @@ export function EntrepriseLookupFlow({
                       if (query.trim().length >= 2 && !searching) void search();
                     }
                   }}
-                  placeholder="Ex. Dupont Plomberie"
+                  placeholder="Ex. Dupont Plomberie Lyon · monentreprise.fr · SIRET"
                   className="h-12 min-h-12 rounded-xl pl-10"
                   autoComplete="organization"
                   disabled={searching}
@@ -236,10 +248,17 @@ export function EntrepriseLookupFlow({
                 />
               </div>
               <FieldDescription>
-                Ex. Dupont Plomberie · Dupont Plomberie Lyon · 533 712 527 00019
+                Ex. Dupont Plomberie · dupont-plomberie.fr · 533 712 527 00019
               </FieldDescription>
             </Field>
           </FieldGroup>
+
+          {error && (phase === "not_found" || phase === "error") ? (
+            <p role="alert" className="text-[13.5px] text-destructive">
+              {error}
+              {hint ? <span className="mt-1 block text-muted-foreground">{hint}</span> : null}
+            </p>
+          ) : null}
 
           {searching ? (
             <p

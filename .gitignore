@@ -16,7 +16,17 @@
 # next.js
 /.next/
 /.next-dev/
+/.next-dev*/
+/.next-build-test/
 /out/
+
+# local scratch / capture tooling (never ship)
+/.tmp/
+/recordly/
+.impeccable/
+
+# Finder / iCloud duplicate copies (« file 2.ext »)
+**/* 2.*
 
 # production
 /build

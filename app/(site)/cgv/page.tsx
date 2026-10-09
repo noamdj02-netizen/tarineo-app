@@ -1,6 +1,6 @@
 import { LegalPage } from "@/components/site/legal-page";
 import { BRAND } from "@/lib/brand";
-import { LEGAL_PUBLISHER, formatLegalSiret } from "@/lib/legal/publisher";
+import { LEGAL_PUBLISHER, publisherCgvProviderLine } from "@/lib/legal/publisher";
 import { PRICING } from "@/lib/site/tarineo";
 import { siteMetadata } from "@/lib/seo";
 
@@ -23,7 +23,7 @@ export default function CgvPage() {
           h: "1. Objet",
           p: [
             `Ces conditions encadrent l’utilisation de ${BRAND.name}, un logiciel en ligne qui analyse les devis et factures fournisseurs des professionnels du bâtiment pour suivre l’évolution de leurs prix d’achat, et la souscription aux offres payantes.`,
-            `Prestataire : ${LEGAL_PUBLISHER.legalName}, ${LEGAL_PUBLISHER.legalForm.toLowerCase()}, SIRET ${formatLegalSiret(LEGAL_PUBLISHER.siret)}.`,
+            publisherCgvProviderLine(),
           ],
         },
         {

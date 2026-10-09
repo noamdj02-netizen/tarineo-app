@@ -10,11 +10,12 @@ import { SettingsSection } from "@/components/settings/settings-section";
 export const metadata = { title: "Entreprise · Paramètres" };
 
 export default async function ParametresEntreprisePage() {
-  const [viewer, profil, { role }] = await Promise.all([
+  const [viewer, profil, config] = await Promise.all([
     getViewer(),
     getCompanyProfile(),
     getEntrepriseConfig(),
   ]);
+  const { role, settings } = config;
   if (!canViewSection(role, "entreprise")) {
     return <p className="text-[14px] text-muted-foreground">Accès non autorisé.</p>;
   }
@@ -30,11 +31,11 @@ export default async function ParametresEntreprisePage() {
   return (
     <SettingsSection
       title="Informations de l’entreprise"
-      description="Identité légale et coordonnées reprises sur vos devis, bons et factures PDF."
+      description="Identité légale, logo, et signature e-mail pour relances et mails fournisseurs."
       scope="entreprise"
     >
       {editable ? (
-        <EntrepriseForm profil={filled} logoUrl={logoUrl} />
+        <EntrepriseForm profil={filled} logoUrl={logoUrl} emailSettings={settings.email} />
       ) : (
         <div className="card-soft space-y-2 p-5 text-[14px]">
           <p className="font-medium text-ink">{filled.raison_sociale || "—"}</p>

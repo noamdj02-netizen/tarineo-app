@@ -1,4 +1,14 @@
 import { DEMO_IDS, demoNow } from "@/lib/metier/demo";
+import {
+  DEMO_BUY_HT,
+  DEMO_BUY_UNIT,
+  DEMO_CLIENT_HT,
+  DEMO_MARKUP,
+  DEMO_QTY,
+  DEMO_SELL_UNIT,
+  demoSentAtIso,
+  demoSentAtRelance,
+} from "@/lib/metier/demo-seed-bundle";
 import type { CompanyProfile } from "@/lib/metier/company";
 import type { FollowUp } from "@/lib/metier/follow-ups";
 import type {
@@ -46,122 +56,244 @@ export function getMem(userId: string): MemUser {
   return u;
 }
 
-export function seedMem(userId: string): MemUser {
-  const u = getMem(userId);
-  if (u.chantiers.some((c) => c.seed_key === DEMO_IDS.chantier)) return u;
-  const now = demoNow();
-  u.parties.push(
-    {
-      id: uid("p"),
-      kind: "client",
-      name: "Madame Dupont",
-      address: "12 rue des Acacias, 69003 Lyon",
-      seed_key: DEMO_IDS.client,
-    },
-    {
-      id: uid("p"),
-      kind: "distributeur",
-      name: "Cedeo Lyon",
-      address: "Avenue Jean Jaurès, Lyon",
-      seed_key: DEMO_IDS.dist,
-    },
-    {
-      id: uid("p"),
-      kind: "fournisseur",
-      name: "Nicoll",
-      address: "",
-      seed_key: DEMO_IDS.fourn,
-    },
-  );
-  u.products.push({
-    id: uid("pr"),
-    name: "Tube PVC Ø 500",
-    family: "Évacuation",
-    unit: "ml",
-    seed_key: DEMO_IDS.product,
+function upsertDoc(
+  u: MemUser,
+  row: Omit<DocumentRow, "id" | "created_at"> & { seed_key: string },
+  now: string,
+) {
+  const prev = u.documents.find((d) => d.seed_key === row.seed_key);
+  if (prev) {
+    Object.assign(prev, row);
+    return prev;
+  }
+  const stableId = row.seed_key.startsWith("demo-") ? `seed-${row.seed_key}` : uid("d");
+  const doc: DocumentRow = {
+    ...row,
+    id: stableId,
+    created_at: now,
+  };
+  u.documents.push(doc);
+  return doc;
+}
+
+function ensureDemoParties(u: MemUser, now: string) {
+  const pushParty = (row: Omit<Party, "id">) => {
+    if (!u.parties.some((p) => p.seed_key === row.seed_key)) u.parties.push({ ...row, id: uid("p") });
+  };
+  pushParty({
+    kind: "client",
+    name: "Madame Dupont",
+    address: "12 rue des Acacias, 69003 Lyon",
+    seed_key: DEMO_IDS.client,
   });
+  pushParty({
+    kind: "distributeur",
+    name: "Cedeo Lyon",
+    address: "Avenue Jean Jaurès, Lyon",
+    seed_key: DEMO_IDS.dist,
+  });
+  pushParty({ kind: "fournisseur", name: "Nicoll", address: "", seed_key: DEMO_IDS.fourn });
+  if (!u.products.some((p) => p.seed_key === DEMO_IDS.product)) {
+    u.products.push({
+      id: uid("pr"),
+      name: "Tube PVC Ø 500",
+      family: "Évacuation",
+      unit: "ml",
+      seed_key: DEMO_IDS.product,
+    });
+  }
+  if (!u.chantiers.some((c) => c.seed_key === DEMO_IDS.chantier)) {
+    const client = u.parties.find((p) => p.seed_key === DEMO_IDS.client)!;
+    u.chantiers.push({
+      id: uid("ch"),
+      slug: "madame-dupont",
+      name: "Chantier Madame Dupont",
+      address: "12 rue des Acacias, 69003 Lyon",
+      client_id: client.id,
+      project_id: null,
+      status: "focus",
+      seed_key: DEMO_IDS.chantier,
+      created_at: now,
+      updated_at: now,
+    });
+  }
+}
+
+function syncDemoMem(u: MemUser) {
+  const now = demoNow();
+  ensureDemoParties(u, now);
   const client = u.parties.find((p) => p.seed_key === DEMO_IDS.client)!;
   const dist = u.parties.find((p) => p.seed_key === DEMO_IDS.dist)!;
   const fourn = u.parties.find((p) => p.seed_key === DEMO_IDS.fourn)!;
-  const product = u.products[0];
-  u.chantiers.push({
-    id: uid("ch"),
-    slug: "madame-dupont",
-    name: "Chantier Madame Dupont",
-    address: "12 rue des Acacias, 69003 Lyon",
-    client_id: client.id,
-    project_id: null,
-    status: "focus",
-    seed_key: DEMO_IDS.chantier,
-    created_at: now,
-    updated_at: now,
-  });
-  const chantier = u.chantiers[0];
-  u.documents.push({
-    id: uid("d"),
-    direction: "in",
-    kind: "devis",
-    title: "Devis Cedeo - tubes PVC",
-    party_id: dist.id,
-    chantier_id: chantier.id,
-    source_document_id: null,
-    file_path: "",
-    extract: {
-      demo: true,
-      totals: { ht: 442.8, eco_contribution: 0.42, pmcb: 0.42, weight_kg: 86.4 },
-    },
-    status: "ready",
-    error: "",
-    seed_key: DEMO_IDS.docIn,
-    created_at: now,
-  });
-  const docIn = u.documents[0];
-  u.documents.push({
-    id: uid("d"),
-    direction: "out",
-    kind: "devis",
-    title: "Devis client Dupont",
-    party_id: client.id,
-    chantier_id: chantier.id,
-    source_document_id: docIn.id,
-    file_path: "",
-    extract: { demo: true, markup: 1.35 },
-    status: "ready",
-    error: "",
-    seed_key: DEMO_IDS.docOut,
-    created_at: now,
-  });
-  const docOut = u.documents[1];
-  u.lines.push(
+  const product = u.products.find((p) => p.seed_key === DEMO_IDS.product)!;
+  const chantier = u.chantiers.find((c) => c.seed_key === DEMO_IDS.chantier)!;
+  const docIn = upsertDoc(
+    u,
     {
-      id: uid("l"),
-      document_id: docIn.id,
-      product_id: product.id,
-      supplier_party_id: fourn.id,
-      distributor_party_id: dist.id,
-      label: "Tube PVC Ø 500",
-      qty: 18,
-      unit: "ml",
-      buy_price: 24.6,
-      sell_price: 0,
-      position: 0,
+      direction: "in",
+      kind: "devis",
+      title: "Devis Cedeo - tubes PVC",
+      party_id: dist.id,
+      chantier_id: chantier.id,
+      source_document_id: null,
+      file_path: "",
+      extract: {
+        demo: true,
+        totals: { ht: DEMO_BUY_HT, eco_contribution: 0.42, pmcb: 0.42, weight_kg: 86.4 },
+      },
+      status: "ready",
+      error: "",
+      seed_key: DEMO_IDS.docIn,
     },
-    {
-      id: uid("l"),
-      document_id: docOut.id,
-      product_id: product.id,
-      supplier_party_id: fourn.id,
-      distributor_party_id: dist.id,
-      label: "Tube PVC Ø 500",
-      qty: 18,
-      unit: "ml",
-      buy_price: 24.6,
-      sell_price: 33.2,
-      position: 0,
-    },
+    now,
   );
-  u.alerts.push({
-    id: uid("a"),
+  const docOut = upsertDoc(
+    u,
+    {
+      direction: "out",
+      kind: "devis",
+      title: "Devis client Dupont",
+      party_id: client.id,
+      chantier_id: chantier.id,
+      source_document_id: docIn.id,
+      file_path: "",
+      extract: { demo: true, markup: DEMO_MARKUP, sent_at: demoSentAtIso(4), totals: { ht: DEMO_CLIENT_HT } },
+      status: "ready",
+      error: "",
+      seed_key: DEMO_IDS.docOut,
+    },
+    now,
+  );
+  const docOutPret = upsertDoc(
+    u,
+    {
+      direction: "out",
+      kind: "devis",
+      title: "Devis client — extension Dupont",
+      party_id: client.id,
+      chantier_id: chantier.id,
+      source_document_id: null,
+      file_path: "",
+      extract: {
+        demo: true,
+        markup: DEMO_MARKUP,
+        sent_at: demoSentAtRelance(),
+        totals: { ht: DEMO_CLIENT_HT },
+      },
+      status: "ready",
+      error: "",
+      seed_key: DEMO_IDS.docOutPret,
+    },
+    now,
+  );
+  const docOutCmd = upsertDoc(
+    u,
+    {
+      direction: "out",
+      kind: "devis",
+      title: "Devis client — cuisine Dupont",
+      party_id: client.id,
+      chantier_id: chantier.id,
+      source_document_id: null,
+      file_path: "",
+      extract: { demo: true, markup: DEMO_MARKUP, totals: { ht: DEMO_CLIENT_HT } },
+      status: "ready",
+      error: "",
+      seed_key: DEMO_IDS.docOutCommande,
+    },
+    now,
+  );
+  const docBc = upsertDoc(
+    u,
+    {
+      direction: "out",
+      kind: "bon_commande",
+      title: "Bon de commande client n°001",
+      party_id: client.id,
+      chantier_id: chantier.id,
+      source_document_id: docOut.id,
+      file_path: "",
+      extract: {
+        demo: true,
+        markup: 1,
+        from: docOut.id,
+        from_title: "Devis client Dupont",
+        totals: { ht: DEMO_CLIENT_HT },
+      },
+      status: "ready",
+      error: "",
+      seed_key: DEMO_IDS.docBc,
+    },
+    now,
+  );
+  upsertDoc(
+    u,
+    {
+      direction: "out",
+      kind: "facture",
+      title: "Facture client n°001",
+      party_id: client.id,
+      chantier_id: chantier.id,
+      source_document_id: docBc.id,
+      file_path: "",
+      extract: {
+        demo: true,
+        markup: 1,
+        from: docBc.id,
+        from_title: "Bon de commande client n°001",
+        totals: { ht: DEMO_CLIENT_HT },
+      },
+      status: "ready",
+      error: "",
+      seed_key: DEMO_IDS.docFacture,
+    },
+    now,
+  );
+
+  const demoDocIds = new Set(
+    u.documents.filter((d) => d.seed_key?.startsWith("demo-doc")).map((d) => d.id),
+  );
+  u.lines = u.lines.filter((l) => !demoDocIds.has(l.document_id));
+
+  const lineIn = {
+    product_id: product.id,
+    supplier_party_id: fourn.id,
+    distributor_party_id: dist.id,
+    label: "Tube PVC Ø 500",
+    qty: DEMO_QTY,
+    unit: "ml",
+    buy_price: DEMO_BUY_UNIT,
+  };
+  u.lines.push({
+    id: uid("l"),
+    document_id: docIn.id,
+    ...lineIn,
+    sell_price: 0,
+    position: 0,
+  });
+  for (const doc of [docOut, docOutPret, docOutCmd, docBc]) {
+    u.lines.push({
+      id: uid("l"),
+      document_id: doc.id,
+      ...lineIn,
+      sell_price: DEMO_SELL_UNIT,
+      position: 0,
+    });
+  }
+  const facture = u.documents.find((d) => d.seed_key === DEMO_IDS.docFacture);
+  if (facture) {
+    u.lines.push({
+      id: uid("l"),
+      document_id: facture.id,
+      ...lineIn,
+      sell_price: DEMO_SELL_UNIT,
+      position: 0,
+    });
+  }
+
+  const alertIdx = u.alerts.findIndex((a) => a.label === "Tube PVC Ø 500 chez Cedeo");
+  const alert: PriceAlert = {
+    id: alertIdx >= 0 ? u.alerts[alertIdx].id : uid("a"),
     product_id: product.id,
     document_id: docIn.id,
     chantier_id: chantier.id,
@@ -170,7 +302,14 @@ export function seedMem(userId: string): MemUser {
     new_price: 24.6,
     created_at: now,
     chantier_name: chantier.name,
-  });
+  };
+  if (alertIdx >= 0) u.alerts[alertIdx] = alert;
+  else u.alerts.push(alert);
+}
+
+export function seedMem(userId: string): MemUser {
+  const u = getMem(userId);
+  syncDemoMem(u);
   return u;
 }
 

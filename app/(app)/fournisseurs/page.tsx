@@ -5,10 +5,19 @@ import { AddSupplierForm } from "@/components/metier/add-supplier-form";
 import { PageHead } from "@/components/shell/page-head";
 import { SupplierLogo } from "@/components/site/supplier-logo";
 import { FournisseursInsights } from "@/components/tarineo/panels/fournisseurs-insights";
+import { SupplierSpendGauge } from "@/components/tarineo/suppliers/supplier-spend-gauge";
 import { KNOWN_SUPPLIERS } from "@/lib/metier/suppliers";
 import { createPartyFormAction } from "@/app/(app)/metier/actions";
 import { listAlerts, listDocuments, listParties, rankingRows } from "@/lib/metier/queries";
+import {
+  documentSpendHt,
+  docsLinkedToParty,
+  resolveDistributorGoal,
+  spendByEnseigneInPeriod,
+  spendForPartyInPeriod,
+} from "@/lib/metier/supplier-spend";
 import { DistributorGoalsForm } from "@/components/metier/distributor-goals-form";
+import { formatDeliveryDateFr, upcomingDeliveries } from "@/lib/metier/delivery";
 import { getEntrepriseConfig } from "@/lib/settings/entreprise-config";
 import { canEditSection } from "@/lib/settings/roles";
 import { R } from "@/lib/routes";
@@ -25,9 +34,16 @@ export default async function FournisseursPage() {
     getEntrepriseConfig(),
   ]);
   const goals = entreprise.settings.commercial.distributorGoalsHt;
+  const monthlyGoals = entreprise.settings.commercial.distributorGoalsMonthlyHt;
   const canEditGoals = canEditSection(entreprise.role, "tarification");
   const dists = parties.filter((x) => x.kind === "distributeur");
   const fourns = parties.filter((x) => x.kind === "fournisseur");
+  const enseignesYear = spendByEnseigneInPeriod(docs, "year");
+  const enseignesMonth = spendByEnseigneInPeriod(docs, "month");
+  const formEnseignes =
+    ranking.enseignes.length > 0
+      ? ranking.enseignes
+      : [...dists, ...fourns].map((p) => ({ label: p.name, amount: 0, qty: 0 }));
 
   return (
     <section className="flex flex-col gap-8">
@@ -49,7 +65,8 @@ export default async function FournisseursPage() {
         <Link href={R.devisAnalyser} className="font-medium text-tarineo-orange underline-offset-2 hover:underline">
           Analyse IA
         </Link>{" "}
-        pour l’associer à un fournisseur et enrichir le catalogue.
+        pour l’associer à un fournisseur et enrichir le catalogue. Fixez un plafond mensuel pour voir si vous dépassez
+        chez un grossiste.
       </div>
 
       <AddSupplierForm />
@@ -98,14 +115,21 @@ export default async function FournisseursPage() {
         </ul>
       </div>
 
-      <DistributorGoalsForm enseignes={ranking.enseignes} goals={goals} disabled={!canEditGoals} />
+      <DistributorGoalsForm
+        enseignes={formEnseignes}
+        goals={goals}
+        monthlyGoals={monthlyGoals}
+        disabled={!canEditGoals}
+      />
 
       <FournisseursInsights
         articles={ranking.articles}
-        enseignes={ranking.enseignes}
+        enseignesYear={enseignesYear}
+        enseignesMonth={enseignesMonth}
         alerts={alerts}
         sampleDoc={docs[0] ?? null}
         distributorGoalsHt={goals}
+        distributorGoalsMonthlyHt={monthlyGoals}
       />
 
       {!dists.length && !fourns.length ? (
@@ -115,8 +139,20 @@ export default async function FournisseursPage() {
         />
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
-          <PartyCol title="Distributeurs & grossistes" items={dists} docs={docs} />
-          <PartyCol title="Marques & fabricants" items={fourns} docs={docs} />
+          <PartyCol
+            title="Distributeurs & grossistes"
+            items={dists}
+            docs={docs}
+            goals={goals}
+            monthlyGoals={monthlyGoals}
+          />
+          <PartyCol
+            title="Marques & fabricants"
+            items={fourns}
+            docs={docs}
+            goals={goals}
+            monthlyGoals={monthlyGoals}
+          />
         </div>
       )}
     </section>
@@ -127,10 +163,14 @@ function PartyCol({
   title,
   items,
   docs,
+  goals,
+  monthlyGoals,
 }: {
   title: string;
   items: { id: string; name: string; address: string; seed_key: string | null }[];
   docs: Awaited<ReturnType<typeof listDocuments>>;
+  goals: Record<string, number>;
+  monthlyGoals: Record<string, number>;
 }) {
   return (
     <div>
@@ -140,15 +180,13 @@ function PartyCol({
       ) : (
         <ul className="grid gap-3">
           {items.map((item) => {
-            const linked = docs.filter(
-              (d) =>
-                d.party_id === item.id ||
-                d.lines.some((l) => l.supplier_party_id === item.id || l.distributor_party_id === item.id),
-            );
-            const spend = linked.reduce(
-              (s, d) => s + d.lines.reduce((a, l) => a + Number(l.buy_price) * Number(l.qty), 0),
-              0,
-            );
+            const linked = docsLinkedToParty(docs, item.id);
+            const spendAll = linked.reduce((s, d) => s + documentSpendHt(d), 0);
+            const spendMonth = spendForPartyInPeriod(docs, item.id, "month");
+            const spendYear = spendForPartyInPeriod(docs, item.id, "year");
+            const monthGoal = resolveDistributorGoal(item.name, monthlyGoals);
+            const yearGoal = resolveDistributorGoal(item.name, goals);
+            const nextDelivery = upcomingDeliveries(linked, { limit: 1 })[0];
             return (
               <li key={item.id} className="flex gap-3 rounded-card border border-line bg-surface p-4 shadow-soft">
                 <SupplierLogo name={item.name} size={40} />
@@ -158,7 +196,18 @@ function PartyCol({
                   <p className="text-[13px] text-muted-foreground">
                     {item.address || `${linked.length} achat${linked.length > 1 ? "s" : ""}`}
                   </p>
-                  <p className="mt-1 tabular-nums text-[14px] font-medium">{euroInt(spend)}</p>
+                  {nextDelivery ? (
+                    <p className="mt-1 text-[13px] font-medium text-[#FF6B1A]">
+                      Livraison {formatDeliveryDateFr(nextDelivery.day)}
+                      {nextDelivery.chantierName ? ` · ${nextDelivery.chantierName}` : ""}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 tabular-nums text-[14px] font-medium">
+                    {euroInt(spendAll)}
+                    <span className="ml-1 text-[12px] font-normal text-muted-foreground">cumul</span>
+                  </p>
+                  <SupplierSpendGauge label="Ce mois" current={spendMonth} goal={monthGoal} compact />
+                  <SupplierSpendGauge label="Cette année" current={spendYear} goal={yearGoal} compact />
                   <div className="mt-2 flex flex-wrap gap-3 text-[13px]">
                     <Link
                       href={`${R.distributeurDevis}?party=${item.id}`}

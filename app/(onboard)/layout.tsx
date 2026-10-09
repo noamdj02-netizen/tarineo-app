@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { VerifiedNotice } from "@/components/auth/verified-notice";
 import { BRAND } from "@/lib/brand";
 
@@ -19,13 +18,12 @@ export default function OnboardLayout({ children }: { children: React.ReactNode 
         className="mx-auto flex w-full max-w-[560px] items-center py-3 lg:py-4"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <Link
-          href="/accueil"
+        <span
           className="font-grotesk text-[20px] font-bold tracking-[-0.04em] lg:text-[22px]"
         >
           {BRAND.name}
           <span className="text-accent-2">.</span>
-        </Link>
+        </span>
       </header>
       <main className="mx-auto flex h-full min-h-0 w-full max-w-[560px] flex-col overflow-hidden pb-2 lg:pb-4">
         <VerifiedNotice />

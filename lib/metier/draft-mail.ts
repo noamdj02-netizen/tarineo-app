@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { getCompanyMailIdentity } from "@/lib/metier/company-mail-identity";
 import { getCompanyProfile } from "@/lib/metier/queries";
 import { KIND_LABEL, totalsFromExtract, type DocumentCard } from "@/lib/metier/types";
 
@@ -10,7 +11,7 @@ export type MailDraft = {
   toLabel: string;
 };
 
-function fallbackDraft(doc: DocumentCard, companyName: string, signOff: string): MailDraft {
+function fallbackDraft(doc: DocumentCard, closingBlock: string): MailDraft {
   const label = KIND_LABEL[doc.kind].toLowerCase();
   const who = doc.party_name || "Madame, Monsieur";
   const chantier = doc.chantier_name ? ` pour le chantier ${doc.chantier_name}` : "";
@@ -19,16 +20,23 @@ function fallbackDraft(doc: DocumentCard, companyName: string, signOff: string):
     to: "",
     toLabel: toClient ? "E-mail du client" : "E-mail du distributeur",
     subject: `${KIND_LABEL[doc.kind]} — ${doc.chantier_name || doc.title}`,
-    body: `Bonjour ${who},\n\nVeuillez trouver ci-joint ${label} « ${doc.title} »${chantier}.\n\n${signOff}\n${companyName}`.trim(),
+    body: `Bonjour ${who},\n\nVeuillez trouver ci-joint ${label} « ${doc.title} »${chantier}.\n\n${closingBlock}`.trim(),
   };
 }
 
+function ensureClosing(body: string, closingBlock: string): string {
+  const trimmed = body.trim();
+  const closing = closingBlock.trim();
+  if (!closing) return trimmed;
+  if (trimmed.includes(closing.split("\n")[0] ?? "")) return trimmed;
+  return `${trimmed}\n\n${closing}`;
+}
+
 export async function draftDocumentMail(doc: DocumentCard): Promise<MailDraft> {
-  const company = await getCompanyProfile();
-  const companyName = company?.raison_sociale?.trim() || "L’entreprise";
-  const signBits = [companyName, company?.telephone, company?.email_contact].filter(Boolean);
-  const signOff = `Cordialement,\n${signBits.join("\n")}`;
-  const base = fallbackDraft(doc, companyName, signOff);
+  const [company, identity] = await Promise.all([getCompanyProfile(), getCompanyMailIdentity()]);
+  const companyName = identity.companyName;
+  const closingBlock = identity.closingBlock;
+  const base = fallbackDraft(doc, closingBlock);
   const totals = totalsFromExtract(doc.extract);
   const lines = doc.lines
     .slice(0, 8)
@@ -47,7 +55,11 @@ export async function draftDocumentMail(doc: DocumentCard): Promise<MailDraft> {
           role: "user",
           content: `Rédige un e-mail professionnel court (FR, vouvoiement) pour envoyer une pièce PDF à ${dest}.
 Réponds UNIQUEMENT en JSON : {"subject":"...","body":"..."}
-Le body est du texte brut, 2 à 4 phrases + signature. Pas de markdown.
+Le body est du texte brut, 2 à 4 phrases puis EXACTEMENT cette signature (ne pas la modifier) :
+---
+${closingBlock}
+---
+Pas de markdown. N’invente pas d’autre signature.
 
 Contexte :
 - Pièce : ${KIND_LABEL[doc.kind]} « ${doc.title} »
@@ -61,7 +73,7 @@ Contexte :
 - E-mail : ${company?.email_contact || "—"}
 - Adresse entreprise : ${[company?.adresse_rue, company?.adresse_code_postal, company?.adresse_ville].filter(Boolean).join(", ") || "—"}
 
-Signe avec le nom de l’entreprise. N’invente pas de prix ni de date. Mentionne le chantier s’il existe.`,
+N’invente pas de prix ni de date. Mentionne le chantier s’il existe.`,
         },
       ],
     });
@@ -72,7 +84,7 @@ Signe avec le nom de l’entreprise. N’invente pas de prix ni de date. Mention
     return {
       ...base,
       subject: parsed.subject?.trim() || base.subject,
-      body: parsed.body?.trim() || base.body,
+      body: ensureClosing(parsed.body?.trim() || base.body, closingBlock),
     };
   } catch {
     return base;
@@ -86,6 +98,8 @@ export function pieceMailHtml(input: {
   email?: string;
   address?: string;
   logoCid?: string;
+  /** Signature texte déjà dans le body : ne pas dupliquer le pied HTML. */
+  signatureFooter?: string | null;
 }) {
   const paras = input.body
     .split(/\n{2,}/)
@@ -94,12 +108,18 @@ export function pieceMailHtml(input: {
   const logo = input.logoCid
     ? `<img src="cid:${input.logoCid}" alt="${escapeHtml(input.company)}" width="120" style="display:block;max-width:140px;max-height:64px;margin:0 0 18px;object-fit:contain" />`
     : "";
-  const meta = [input.phone, input.email, input.address].filter(Boolean).join(" · ");
+  const footer = String(input.signatureFooter ?? "").trim();
+  const meta = footer
+    ? ""
+    : [input.phone, input.email, input.address].filter(Boolean).join(" · ");
+  const footerHtml = footer
+    ? `<p style="margin:22px 0 0;font:13px/1.5 ui-sans-serif,system-ui;color:#3a3a3a;white-space:pre-wrap">${escapeHtml(footer)}</p>`
+    : `<p style="margin:22px 0 0;font:12px/1.45 ui-sans-serif,system-ui;color:#6b6b6b">${escapeHtml(input.company)}${meta ? `<br/>${escapeHtml(meta)}` : ""}</p>`;
   return `<!doctype html><html><body style="margin:0;background:#f3f3f2;padding:24px">
   <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:20px;padding:28px 28px 24px">
     ${logo}
     ${paras}
-    <p style="margin:22px 0 0;font:12px/1.45 ui-sans-serif,system-ui;color:#6b6b6b">${escapeHtml(input.company)}${meta ? `<br/>${escapeHtml(meta)}` : ""}</p>
+    ${footerHtml}
   </div>
 </body></html>`;
 }

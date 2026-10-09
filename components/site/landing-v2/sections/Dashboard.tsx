@@ -16,39 +16,16 @@ import {
   LandingStaggerItem,
 } from "@/components/site/landing-v2/lib/landing-motion";
 
-export function Dashboard() {
+export function Dashboard({
+  embedded = false,
+  bare = false,
+}: {
+  embedded?: boolean;
+  /** Sans chrome fenêtre (déjà fourni par `LandingProductFrame`). */
+  bare?: boolean;
+}) {
   const chrome = LANDING_PRODUCT_CHROME;
-  return (
-    <section id="produit" className="py-20 sm:py-28">
-      <div className="shell">
-        <SectionHeading
-          label="Le dashboard"
-          title={
-            <>
-              Tout ce qui mérite votre attention.
-              <span className="mt-2 block text-ink-400">Au même endroit.</span>
-            </>
-          }
-          subtitle="Le même produit, à l'écran : ce qui est en retard, ce qui a bougé, ce qui attend votre accord."
-        />
-
-        {/* Fenêtre produit */}
-        <LandingFloatCard className="mt-14 surface overflow-hidden shadow-float" delay={0.1}>
-            <div className="flex items-center gap-3 border-b border-line px-4 py-3 sm:px-5">
-              <span className="flex gap-1.5" aria-hidden="true">
-                <span className="h-2.5 w-2.5 rounded-full bg-paper-200" />
-                <span className="h-2.5 w-2.5 rounded-full bg-paper-200" />
-                <span className="h-2.5 w-2.5 rounded-full bg-paper-200" />
-              </span>
-              <span className="mx-auto flex items-center gap-2 rounded-full bg-paper-50 px-3.5 py-1.5 text-xs text-ink-400">
-                <Icon name="loupe" className="h-3.5 w-3.5" />
-                {chrome.searchPlaceholder}
-                <span className="rounded border border-line px-1.5 py-0.5 text-[0.625rem]">
-                  {chrome.searchShortcut}
-                </span>
-              </span>
-            </div>
-
+  const body = (
             <div className="grid lg:grid-cols-[17rem_minmax(0,1fr)]">
               {/* Barre latérale */}
               <aside className="hidden border-r border-line bg-paper-0 p-5 lg:block">
@@ -183,7 +160,53 @@ export function Dashboard() {
                 </div>
               </div>
             </div>
-        </LandingFloatCard>
+  );
+
+  const chromeBar = (
+    <div className="flex items-center gap-3 border-b border-line px-4 py-3 sm:px-5">
+      <span className="flex gap-1.5" aria-hidden="true">
+        <span className="h-2.5 w-2.5 rounded-full bg-paper-200" />
+        <span className="h-2.5 w-2.5 rounded-full bg-paper-200" />
+        <span className="h-2.5 w-2.5 rounded-full bg-paper-200" />
+      </span>
+      <span className="mx-auto flex items-center gap-2 rounded-full bg-paper-50 px-3.5 py-1.5 text-xs text-ink-400">
+        <Icon name="loupe" className="h-3.5 w-3.5" />
+        {chrome.searchPlaceholder}
+        <span className="rounded border border-line px-1.5 py-0.5 text-[0.625rem]">
+          {chrome.searchShortcut}
+        </span>
+      </span>
+    </div>
+  );
+
+  const inner = bare ? (
+    body
+  ) : (
+    <LandingFloatCard
+      className={embedded ? "surface overflow-hidden shadow-float" : "mt-14 surface overflow-hidden shadow-float"}
+      delay={0.1}
+    >
+      {chromeBar}
+      {body}
+    </LandingFloatCard>
+  );
+
+  if (embedded) return inner;
+
+  return (
+    <section id="produit-legacy" className="py-20 sm:py-28">
+      <div className="shell">
+        <SectionHeading
+          label="Le dashboard"
+          title={
+            <>
+              Tout ce qui mérite votre attention.
+              <span className="mt-2 block text-ink-400">Au même endroit.</span>
+            </>
+          }
+          subtitle="Le même produit, à l'écran : ce qui est en retard, ce qui a bougé, ce qui attend votre accord."
+        />
+        {inner}
       </div>
     </section>
   );

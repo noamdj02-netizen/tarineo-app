@@ -15,6 +15,7 @@ import {
   markAllNotificationsReadAction,
   markNotificationReadAction,
 } from "@/app/(app)/notifications/actions";
+import { useMounted } from "@/lib/hooks/use-mounted";
 import type { AppNotification } from "@/lib/notifications/types";
 import { priorityDot } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,27 @@ function sortForPanel(items: AppNotification[]) {
   });
 }
 
+const TRIGGER_CLASS = cn(
+  "relative inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-ink transition-colors",
+  "hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/35",
+);
+
+function BellGlyph({ unread }: { unread: number }) {
+  return (
+    <>
+      <Bell className="size-5" strokeWidth={1.75} aria-hidden />
+      {unread > 0 ? (
+        <span
+          className="absolute top-1 right-1 grid min-w-[18px] place-items-center rounded-full bg-tarineo-orange px-1 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums ring-2 ring-surface"
+          aria-hidden
+        >
+          {unread > 9 ? "9+" : unread}
+        </span>
+      ) : null}
+    </>
+  );
+}
+
 export function NotificationsBell({
   initialUnread,
   initialItems,
@@ -44,6 +66,7 @@ export function NotificationsBell({
   initialUnread: number;
   initialItems: AppNotification[];
 }) {
+  const mounted = useMounted();
   const [unread, setUnread] = useState(initialUnread);
   const [items, setItems] = useState(initialItems);
   const [open, setOpen] = useState(false);
@@ -55,6 +78,7 @@ export function NotificationsBell({
   }, [initialUnread, initialItems]);
 
   const sorted = useMemo(() => sortForPanel(items), [items]);
+  const ariaLabel = unread ? `${unread} notifications non lues` : "Notifications";
 
   function markOne(id: string) {
     start(async () => {
@@ -72,25 +96,19 @@ export function NotificationsBell({
     });
   }
 
+  // Base UI Menu utilise useId — différé après mount pour éviter le mismatch Next 15.5.
+  if (!mounted) {
+    return (
+      <button type="button" aria-label={ariaLabel} className={TRIGGER_CLASS} disabled>
+        <BellGlyph unread={unread} />
+      </button>
+    );
+  }
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        type="button"
-        aria-label={unread ? `${unread} notifications non lues` : "Notifications"}
-        className={cn(
-          "relative inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-ink transition-colors",
-          "hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/35",
-        )}
-      >
-        <Bell className="size-5" strokeWidth={1.75} aria-hidden />
-        {unread > 0 ? (
-          <span
-            className="absolute top-1 right-1 grid min-w-[18px] place-items-center rounded-full bg-tarineo-orange px-1 py-0.5 text-[10px] font-semibold leading-none text-white tabular-nums ring-2 ring-surface"
-            aria-hidden
-          >
-            {unread > 9 ? "9+" : unread}
-          </span>
-        ) : null}
+      <DropdownMenuTrigger type="button" aria-label={ariaLabel} className={TRIGGER_CLASS}>
+        <BellGlyph unread={unread} />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"

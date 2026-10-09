@@ -1,6 +1,7 @@
 import { BRAND } from "@/lib/brand";
 import { LEGAL_PUBLISHER } from "@/lib/legal/publisher";
-import { FAQ_GROUPS, PRICING } from "@/lib/site/tarineo";
+import { faqItems as landingFaqItems } from "@/lib/site/landing-v2-content";
+import { PRICING } from "@/lib/site/tarineo";
 import { getSiteUrl } from "@/lib/site-url";
 
 const site = () => getSiteUrl();
@@ -69,9 +70,8 @@ export function softwareApplicationJsonLd() {
   };
 }
 
-/** FAQ — toutes les questions des onglets landing. */
-export function faqPageJsonLd() {
-  const items = FAQ_GROUPS.flatMap((g) => g.items);
+/** FAQ — questions landing (JSON-LD FAQPage). */
+export function faqPageJsonLd(items: { q: string; a: string }[] = landingFaqItems) {
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",

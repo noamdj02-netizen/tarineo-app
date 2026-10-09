@@ -7,7 +7,9 @@ import { MobileNav } from "@/components/shell/mobile-nav";
 import { Sidebar } from "@/components/shell/sidebar";
 import { Topbar } from "@/components/shell/topbar";
 import { getPlan } from "@/lib/billing/plan";
+import { OnboardingAppBanner } from "@/components/onboarding/onboarding-app-banner";
 import { getOnboarding } from "@/lib/onboarding";
+import { resolveOnboardingStartStep } from "@/lib/onboarding/resolve-start-step";
 import { getViewer } from "@/lib/session";
 import {
   countUnreadNotifications,
@@ -48,6 +50,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           >
             <AppMainScrollRestore />
             <VerifiedNotice />
+            {viewer?.needsOnboarding ? (
+              <OnboardingAppBanner
+                resumeStep={resolveOnboardingStartStep({
+                  firstName: viewer.firstName,
+                  onboardingStep: viewer.onboardingStep,
+                })}
+              />
+            ) : null}
             <PageEnter>{children}</PageEnter>
           </main>
         </div>

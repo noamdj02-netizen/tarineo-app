@@ -1,12 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import {
-  Barlow,
-  Instrument_Serif,
-  Inter_Tight,
-  JetBrains_Mono,
-  Space_Grotesk,
-} from "next/font/google";
+import { Instrument_Serif, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { NavigationProgress } from "@/components/motion/navigation-progress";
 import { PwaInstallBanner } from "@/components/shell/pwa-install-banner";
 import { ServiceWorker } from "@/components/shell/service-worker";
@@ -21,44 +15,43 @@ import { getSiteUrl } from "@/lib/site-url";
 import { THEME_BOOTSTRAP_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
+/** Pas de spread dans next/font (Turbopack). Variable + preload:false limite les @font-face. */
 const interTight = Inter_Tight({
+  subsets: ["latin"],
+  display: "swap",
+  preload: false,
   variable: "--font-inter-tight",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-/** Typo de marque TARINEO (site public) — même police que l'app TARINEO. */
-const barlow = Barlow({
-  variable: "--font-barlow",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrains = JetBrains_Mono({
-  variable: "--font-jetbrains",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  display: "swap",
+  preload: false,
+  variable: "--font-jetbrains",
+  weight: "400",
 });
 
 /** Deux entrées : Turbopack plante si `style` est un tableau (une seule requête font autorisée). */
 const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
+  variable: "--font-instrument-serif",
   weight: "400",
   style: "normal",
 });
 const instrumentSerifItalic = Instrument_Serif({
-  variable: "--font-instrument-serif-italic",
   subsets: ["latin"],
+  display: "swap",
+  preload: false,
+  variable: "--font-instrument-serif-italic",
   weight: "400",
   style: "italic",
 });
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
+/** Barlow + Space Grotesk : lien Google (Turbopack casse next/font multi-poids). Voir :root dans globals.css. */
+const GOOGLE_FONTS_HREF =
+  "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -94,8 +87,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href={GOOGLE_FONTS_HREF} rel="stylesheet" />
+      </head>
       <body
-        className={`antialiased ${interTight.variable} ${barlow.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
+        className={`antialiased ${interTight.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable}`}
         suppressHydrationWarning
       >
         <Script id="tarineo-theme" strategy="beforeInteractive">

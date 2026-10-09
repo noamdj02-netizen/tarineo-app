@@ -110,6 +110,32 @@ export function buildDocumentRecap(
     checks.push({ id: "lines", label: "Lignes produits", ok: false });
   }
 
+  const hasContact =
+    Boolean(extracted.contact_email?.trim()) ||
+    Boolean(extracted.contact_name?.trim()) ||
+    Boolean(extracted.contact_phone?.trim());
+  if (hasContact) {
+    score += 4;
+    const bits = [
+      extracted.contact_name?.trim(),
+      extracted.contact_email?.trim(),
+      extracted.contact_phone?.trim(),
+    ].filter(Boolean);
+    checks.push({
+      id: "contact",
+      label: "Contact commercial",
+      ok: true,
+      detail: bits.join(" · "),
+    });
+  } else if (extracted.direction === "in" && (extracted.kind === "devis" || extracted.kind === "bon_commande")) {
+    checks.push({
+      id: "contact",
+      label: "Contact commercial",
+      ok: false,
+      detail: "Absent sur le document.",
+    });
+  }
+
   if (assessment?.quality === "fiable") score += 10;
   else if (assessment?.quality === "partiel") score -= 4;
   else if (assessment?.quality === "incertain") score -= 14;

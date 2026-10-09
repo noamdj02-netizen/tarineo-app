@@ -49,8 +49,8 @@ export function AuthCard({
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <Card className="gap-0 overflow-hidden rounded-[28px] border-0 py-0 shadow-lift ring-1 ring-line">
-        <CardHeader className="relative grid-cols-1 gap-0 overflow-hidden rounded-t-[28px] border-b border-line px-8 pt-8 pb-4">
+      <Card className="gap-0 overflow-hidden rounded-[28px] border-0 bg-surface py-0 shadow-lift ring-1 ring-line">
+        <CardHeader className="relative grid-cols-1 gap-0 overflow-hidden rounded-t-[28px] border-b border-line bg-surface px-8 pt-8 pb-4">
           <div className="flex max-w-[240px] min-w-0 flex-col gap-3">
             <p className="mono-label">{`/ ${label} ///`}</p>
             <CardTitle className="font-display text-[30px] font-semibold leading-[1.06] tracking-[-0.045em]">
@@ -148,11 +148,19 @@ export function PasswordField({
   );
 }
 
-export function SubmitButton({ busy, children }: { busy: boolean; children: React.ReactNode }) {
+export function SubmitButton({
+  busy,
+  disabled,
+  children,
+}: {
+  busy: boolean;
+  disabled?: boolean;
+  children: React.ReactNode;
+}) {
   return (
     <Button
       type="submit"
-      disabled={busy}
+      disabled={busy || disabled}
       size="lg"
       className="h-12 w-full rounded-full text-[15px] font-medium"
     >
@@ -209,7 +217,7 @@ export function GoogleButton({ next }: { next: string }) {
         size="lg"
         disabled={busy}
         onClick={go}
-        className="h-12 w-full rounded-full bg-bg text-[15px] font-medium shadow-soft"
+        className="h-12 w-full rounded-full bg-surface text-[15px] font-medium shadow-soft"
       >
         {busy ? (
           <Loader2 className="animate-spin" data-icon="inline-start" aria-hidden />

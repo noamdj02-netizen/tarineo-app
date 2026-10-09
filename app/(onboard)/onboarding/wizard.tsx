@@ -4,42 +4,44 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { enregistrerEntreprise } from "@/app/(app)/entreprise/actions";
-import { createChantierAction } from "@/app/(app)/metier/actions";
-import { EntrepriseLookupFlow } from "@/components/metier/entreprise-lookup-flow";
 import { IdentiteScreen } from "@/components/onboarding/screens/identite-screen";
-import { WelcomeScreen } from "@/components/onboarding/screens/welcome-screen";
+import { OnboardingPdfStep } from "@/components/onboarding/screens/onboarding-pdf-step";
 import { WizardStepBg } from "@/components/onboarding/wizard-step-bg";
 import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { EASE } from "@/components/motion/reveal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import type { Locale } from "@/lib/i18n";
 import { ONBOARD_STEPS } from "@/lib/onboarding/catalog";
+import type { ChantierCard, Party } from "@/lib/metier/types";
 import { cn } from "@/lib/utils";
-import { finishOnboarding, saveWelcome } from "./actions";
+import { finishOnboarding, saveOnboardingStep, saveWelcome } from "./actions";
+
+const PDF_STEP = 1;
+const FIN_STEP = 2;
 
 export function Wizard({
   firstName,
   lastName,
   locale,
-  email,
+  chantiers,
+  clients = [],
   next,
   ask,
   startStep = 0,
+  hasInboundDoc = false,
 }: {
   firstName: string;
   lastName: string;
   locale: Locale;
   email: string;
-  avatarUrl: string | null;
-  initial: string;
-  projects: { id: string; name: string; slug: string; status: string }[];
+  chantiers: ChantierCard[];
+  clients?: Party[];
   next?: string;
   ask?: string;
   startStep?: number;
+  hasInboundDoc?: boolean;
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
@@ -49,9 +51,9 @@ export function Wizard({
   const [name, setName] = useState(firstName);
   const [family, setFamily] = useState(lastName);
   const [lang, setLang] = useState<Locale>(locale);
+  const [imported, setImported] = useState(hasInboundDoc);
 
-  const last = ONBOARD_STEPS.length - 1;
-  const hideFooter = step === 0 || step === last;
+  const hideFooter = step === PDF_STEP || step === FIN_STEP;
   const dest = ask ? `/accueil?ask=${encodeURIComponent(ask)}` : (next ?? "/accueil");
 
   function go(fn: () => Promise<void>) {
@@ -66,27 +68,22 @@ export function Wizard({
   }
 
   async function advance() {
-    if (step === 1) {
+    if (step === 0) {
       const res = await saveWelcome(name, lang, family);
       if (!res.ok) throw new Error(res.error);
-      setStep(2);
-      return;
+      setStep(PDF_STEP);
     }
-    if (step === 2) {
-      const form = document.getElementById("onboard-entreprise") as HTMLFormElement | null;
-      if (!form) throw new Error("Formulaire entreprise introuvable.");
-      const res = await enregistrerEntreprise(new FormData(form));
-      if (!res.ok) throw new Error(res.error);
-      setStep(3);
-      return;
-    }
-    if (step === 3) {
-      const form = document.getElementById("onboard-chantier") as HTMLFormElement | null;
-      if (!form) throw new Error("Formulaire chantier introuvable.");
-      const res = await createChantierAction(new FormData(form));
-      if (!res.ok) throw new Error(res.error);
-      setStep(4);
-    }
+  }
+
+  async function skipDocument() {
+    await saveOnboardingStep("document_skipped");
+    setStep(FIN_STEP);
+  }
+
+  function afterPdfSaved() {
+    setImported(true);
+    void saveOnboardingStep("document");
+    setStep(FIN_STEP);
   }
 
   async function enter() {
@@ -129,25 +126,28 @@ export function Wizard({
         <CardContent className="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-8">
           <AnimatePresence mode="wait">
             <motion.div key={step} className="flex min-h-full flex-col" {...motionProps}>
-              {step === 0 ? <WelcomeScreen onStart={() => setStep(1)} /> : null}
-              {step === 1 ? (
+              {step === 0 ? (
                 <IdentiteScreen first={name} last={family} lang={lang} onFirst={setName} onLast={setFamily} onLang={setLang} />
               ) : null}
-              {step === 2 ? (
-                <EntrepriseLookupFlow
-                  variant="onboarding"
-                  emailContact={email}
-                  formId="onboard-entreprise"
-                  onSkipLater={() => go(async () => setStep(3))}
+              {step === PDF_STEP ? (
+                <OnboardingPdfStep
+                  chantiers={chantiers}
+                  clients={clients}
+                  pending={pending}
+                  onSkip={() => go(skipDocument)}
+                  onSaved={afterPdfSaved}
                 />
               ) : null}
-              {step === 3 ? <ChantierOnboard /> : null}
-              {step === 4 ? (
+              {step === FIN_STEP ? (
                 <div className="flex flex-1 flex-col items-center justify-center text-center">
                   <TarineoHdMascot name="01-pouce-leve" className="h-36 w-40" label="" priority />
-                  <h2 className="mt-4 font-display text-[28px] font-semibold tracking-tight">C’est prêt.</h2>
-                  <p className="mt-2 max-w-[36ch] text-[15px] text-muted-foreground">
-                    Déposez un devis Cedeo, transformez-le, envoyez-le au client. Le tableau de bord est le même : orange, noir, vos pièces.
+                  <h2 className="mt-4 font-display text-[28px] font-semibold tracking-tight">
+                    {imported ? "Votre devis est dans TARINEO." : "C’est prêt."}
+                  </h2>
+                  <p className="mt-2 max-w-[40ch] text-[15px] text-muted-foreground">
+                    {imported
+                      ? "Affinez la marge, transformez pour le client. L’entreprise (SIRET) sera demandée à l’envoi de la pièce client."
+                      : "Explorez le tableau de bord — vous pourrez importer un PDF depuis Documents fournisseur."}
                   </p>
                   <Button type="button" size="lg" className="mt-6 min-h-12 rounded-full" disabled={pending} onClick={() => go(enter)}>
                     {pending ? <Loader2 className="animate-spin" /> : "Ouvrir le tableau de bord"}
@@ -164,10 +164,14 @@ export function Wizard({
         </CardContent>
         {!hideFooter ? (
           <CardFooter className="shrink-0 gap-2 border-line bg-surface/95 px-4 py-3 sm:px-6">
-            <Button type="button" variant="ghost" className="min-h-11" disabled={pending} onClick={() => setStep((s) => Math.max(0, s - 1))}>
-              <ArrowLeft data-icon="inline-start" aria-hidden />
-              Retour
-            </Button>
+            {step > 0 ? (
+              <Button type="button" variant="ghost" className="min-h-11" disabled={pending} onClick={() => setStep((s) => Math.max(0, s - 1))}>
+                <ArrowLeft data-icon="inline-start" aria-hidden />
+                Retour
+              </Button>
+            ) : (
+              <span />
+            )}
             <Button type="button" className="ml-auto min-h-11 rounded-full" disabled={pending} onClick={() => go(advance)}>
               {pending ? <Loader2 className="animate-spin" data-icon="inline-start" /> : null}
               Continuer
@@ -177,27 +181,5 @@ export function Wizard({
         ) : null}
       </Card>
     </div>
-  );
-}
-
-function ChantierOnboard() {
-  return (
-    <form id="onboard-chantier" className="flex flex-col gap-3">
-      <TarineoHdMascot name="11-equipe" className="h-24 w-28 self-center" label="" />
-      <h2 className="font-display text-[24px] font-semibold tracking-tight">Le chantier en cours</h2>
-      <p className="text-[14px] text-muted-foreground">Les devis Cedeo et les pièces client se rangeront ici.</p>
-      <label className="text-[13px]">
-        Nom du chantier
-        <Input name="name" required placeholder="Maison Dupont — Lyon 3" className="mt-1 h-11 rounded-xl" />
-      </label>
-      <label className="text-[13px]">
-        Adresse
-        <Input name="address" placeholder="12 rue des Acacias" className="mt-1 h-11 rounded-xl" />
-      </label>
-      <label className="text-[13px]">
-        Client
-        <Input name="client" placeholder="Madame Dupont" className="mt-1 h-11 rounded-xl" />
-      </label>
-    </form>
   );
 }

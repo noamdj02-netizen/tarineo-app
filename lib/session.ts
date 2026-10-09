@@ -15,6 +15,7 @@ export type Viewer = {
   canSignOut: boolean;
   /** Inscription récente : le wizard d’accueil n’est pas encore fini. */
   needsOnboarding: boolean;
+  onboardingStep: string | null;
   /** Accueil : overlay 3 spots après le wizard. */
   needsTour: boolean;
   theme: string | null;
@@ -49,6 +50,7 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     locale: meta.locale === "en" ? "en" : "fr",
     canSignOut: !isOpenAccess(),
     needsOnboarding: meta.onboarding_required === true && meta.onboarding_done !== true,
+    onboardingStep: typeof meta.onboarding_step === "string" ? meta.onboarding_step : null,
     needsTour: meta.onboarding_done === true && meta.dashboard_tour_done !== true,
     theme: typeof meta.theme === "string" ? meta.theme : null,
   };

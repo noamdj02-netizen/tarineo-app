@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   "/mot-de-passe-oublie",
   "/nouveau-mot-de-passe",
   "/prix",
+  "/avis",
   "/blog",
   "/mentions-legales",
   "/cgv",
@@ -140,23 +141,6 @@ export async function updateSession(request: NextRequest) {
       url.pathname = "/accueil";
       const q = request.nextUrl.searchParams.get("q");
       if (q) url.searchParams.set("ask", q.slice(0, 500));
-    }
-    return NextResponse.redirect(url);
-  }
-
-  if (
-    user &&
-    needsOnboarding &&
-    !pathname.startsWith("/admin") &&
-    !pathname.startsWith("/onboarding") &&
-    !pathname.startsWith("/auth") &&
-    !pathname.startsWith("/api/mcp")
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/onboarding";
-    url.search = "";
-    if (pathname.startsWith("/abonnement") && request.nextUrl.search) {
-      url.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
     }
     return NextResponse.redirect(url);
   }

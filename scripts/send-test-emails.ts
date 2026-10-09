@@ -5,13 +5,23 @@
 import React from "react";
 import { render } from "@react-email/render";
 import { Resend } from "resend";
+import { BRAND } from "@/lib/brand";
 import { getSiteUrl } from "@/lib/site-url";
+
+function fromAddress() {
+  const raw = process.env.EMAIL_FROM?.trim();
+  if (!raw || /@tarineo\.fr\b/i.test(raw) || /navpit/i.test(raw)) {
+    return `${BRAND.name} <${BRAND.contactEmail}>`;
+  }
+  return raw;
+}
 
 (globalThis as typeof globalThis & { React: typeof React }).React = React;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
+  console.log("[send-test-emails] démarrage…");
   if (process.env.RENDER_ONLY === "1") {
     const appUrl = getSiteUrl();
     const callback = `${appUrl}/auth/callback`;
@@ -25,6 +35,7 @@ async function main() {
       BillingLoyaltyEmail,
       BillingPaymentFailedEmail,
       BillingProWelcomeEmail,
+      BillingStarterWelcomeEmail,
       CheckInEmail,
       CheckInEmailShort,
       CHECK_IN_SUBJECT,
@@ -43,6 +54,7 @@ async function main() {
       },
       { subject: "[TARINEO] Confirme ta nouvelle adresse", react: AuthEmailChangeEmail({ appUrl, confirmationUrl: callback }) },
       { subject: "[TARINEO] Bienvenue en Pro", react: BillingProWelcomeEmail({ appUrl }) },
+      { subject: "[TARINEO] Bienvenue Starter", react: BillingStarterWelcomeEmail({ appUrl }) },
       { subject: "[TARINEO] Merci, Fondateur", react: BillingFounderEmail({ appUrl }) },
       {
         subject: "[TARINEO] Prix fidélité",
@@ -68,6 +80,7 @@ async function main() {
     return;
   }
 
+  console.log("Chargement des templates React Email…");
   const {
     AuthEmailChangeEmail,
     AuthMagicLinkEmail,
@@ -78,6 +91,7 @@ async function main() {
     BillingLoyaltyEmail,
     BillingPaymentFailedEmail,
     BillingProWelcomeEmail,
+    BillingStarterWelcomeEmail,
     CheckInEmail,
     CheckInEmailShort,
     CHECK_IN_SUBJECT,
@@ -90,7 +104,7 @@ async function main() {
     process.exit(1);
   }
   const to = process.argv[2] ?? "noamdj02@gmail.com";
-  const from = process.env.EMAIL_FROM ?? "TARINEO <contact@tarineo.fr>";
+  const from = fromAddress();
   const appUrl = getSiteUrl();
   const callback = `${appUrl}/auth/callback`;
   const resend = new Resend(key);
@@ -111,6 +125,7 @@ async function main() {
       react: AuthEmailChangeEmail({ appUrl, confirmationUrl: callback }),
     },
     { subject: "[TARINEO] Bienvenue en Pro", react: BillingProWelcomeEmail({ appUrl }) },
+    { subject: "[TARINEO] Bienvenue Starter", react: BillingStarterWelcomeEmail({ appUrl }) },
     { subject: "[TARINEO] Merci, Fondateur", react: BillingFounderEmail({ appUrl }) },
     {
       subject: "[TARINEO] Prix fidélité",
@@ -136,9 +151,11 @@ async function main() {
     },
   ];
 
-  console.log(`Envoi de ${sends.length} emails → ${to} (from: ${from})`);
+  const sample = process.argv.includes("--sample");
+  const batch = sample ? sends.slice(0, 4) : sends;
+  console.log(`Envoi de ${batch.length} emails → ${to} (from: ${from})${sample ? " [sample]" : ""}`);
 
-  for (const s of sends) {
+  for (const s of batch) {
     const html = await render(s.react);
     const { data, error } = await resend.emails.send({ from, to, subject: s.subject, html });
     if (error) console.error("✗", s.subject, error);

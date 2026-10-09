@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { AuthMagicLinkEmail } from "@/emails/auth-magic-link";
 import { AuthResetPasswordEmail } from "@/emails/auth-reset-password";
 import { AuthSignupEmail } from "@/emails/auth-signup";
-import { sendEmail } from "@/lib/email/send";
+import { authEmailShouldUseSupabaseFallback, isResendSendEnabled, sendEmail } from "@/lib/email/send";
 import { getSiteUrl } from "@/lib/site-url";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -32,22 +32,25 @@ function originFrom(host: string | null) {
   return `${local ? "http" : "https"}://${value}`;
 }
 
-async function appOrigin() {
+export async function getAuthAppOrigin() {
   const h = await headers();
   return originFrom(h.get("x-forwarded-host") ?? h.get("host"));
 }
 
-async function findUser(email: string) {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!base || !key) return null;
-  const res = await fetch(`${base}/auth/v1/admin/users?filter=${encodeURIComponent(email)}`, {
-    headers: { Authorization: `Bearer ${key}`, apikey: key },
-    cache: "no-store",
-  });
-  if (!res.ok) return null;
-  const json = (await res.json()) as { users?: { email?: string | null }[] };
-  return json.users?.find((user) => user.email?.toLowerCase() === email) ?? null;
+/** `null` = pas de compte ; `undefined` = lookup impossible (pas de service role). */
+async function findUser(email: string): Promise<{ email?: string | null } | null | undefined> {
+  const needle = email.trim().toLowerCase();
+  let admin: ReturnType<typeof createAdminClient> | null = null;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return undefined;
+  }
+
+  const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  if (error) return undefined;
+  const hit = data.users.find((user) => user.email?.toLowerCase() === needle);
+  return hit ?? null;
 }
 
 /** Lien sur notre site : la session se pose ici, pas dans un fragment perdu après supabase.co. */
@@ -70,14 +73,26 @@ function alreadyRegistered(error: { message?: string; code?: string } | null) {
   return text.includes("already") || text.includes("registered") || text.includes("exists");
 }
 
+function authMailSendFailure(sent: { ok: false; skipped?: boolean; error?: string }): AuthMailResult {
+  if (authEmailShouldUseSupabaseFallback(sent)) {
+    return { ok: false, error: "fallback" };
+  }
+  return {
+    ok: false,
+    error: sent.error ?? "L’email n’est pas parti. Réessaie dans un moment.",
+  };
+}
+
 /** Lien + code de connexion. Ne crée pas de compte si l’email est inconnu. */
 export async function sendLoginCode(emailRaw: string, next: string): Promise<AuthMailResult> {
   const email = emailRaw.trim().toLowerCase();
   if (!email.includes("@")) return { ok: false, error: "Vérifie l’adresse, puis réessaie." };
   const known = await findUser(email);
-  if (!known) return { ok: true, mode: "email" };
+  if (known === null) {
+    return { ok: false, error: "Aucun compte avec cet email. Crée un compte pour commencer." };
+  }
 
-  const origin = await appOrigin();
+  const origin = await getAuthAppOrigin();
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.generateLink({
@@ -99,17 +114,7 @@ export async function sendLoginCode(emailRaw: string, next: string): Promise<Aut
     }),
     `login/${email}/${data.properties.email_otp}`,
   );
-  if (!sent.ok) {
-    return {
-      ok: false,
-      error:
-        sent.skipped && process.env.NODE_ENV !== "production"
-          ? "fallback"
-          : sent.skipped
-            ? "L’envoi d’e-mail n’est pas configuré."
-            : sent.error ?? "L’email n’est pas parti. Réessaie dans un moment.",
-    };
-  }
+  if (!sent.ok) return authMailSendFailure(sent);
   return { ok: true, mode: "email" };
 }
 
@@ -117,10 +122,19 @@ export async function sendLoginCode(emailRaw: string, next: string): Promise<Aut
 export async function sendRecoveryCode(emailRaw: string): Promise<AuthMailResult> {
   const email = emailRaw.trim().toLowerCase();
   if (!email.includes("@")) return { ok: true, mode: "recovery" };
-  const known = await findUser(email);
-  if (!known) return { ok: true, mode: "recovery" };
 
-  const origin = await appOrigin();
+  /**
+   * Sans Resend valide : un seul envoi via Supabase (évite generateLink + reset = double quota).
+   * Si Resend renvoie 403 en local, retire RESEND_API_KEY ou mets AUTH_PASSWORD_RESET_SUPABASE_ONLY=true.
+   */
+  if (!isResendSendEnabled() || process.env.AUTH_PASSWORD_RESET_SUPABASE_ONLY === "true") {
+    return { ok: false, error: "fallback" };
+  }
+
+  const known = await findUser(email);
+  if (known === null) return { ok: true, mode: "recovery" };
+
+  const origin = await getAuthAppOrigin();
   const redirectTo = `${origin}/auth/callback?next=/nouveau-mot-de-passe`;
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.generateLink({
@@ -142,17 +156,7 @@ export async function sendRecoveryCode(emailRaw: string): Promise<AuthMailResult
     }),
     `recovery/${email}/${data.properties.email_otp}`,
   );
-  if (!sent.ok) {
-    return {
-      ok: false,
-      error:
-        sent.skipped && process.env.NODE_ENV !== "production"
-          ? "fallback"
-          : sent.skipped
-            ? "L’envoi d’e-mail n’est pas configuré."
-            : sent.error ?? "L’email n’est pas parti. Réessaie dans un moment.",
-    };
-  }
+  if (!sent.ok) return authMailSendFailure(sent);
   return { ok: true, mode: "recovery" };
 }
 
@@ -170,7 +174,7 @@ export async function sendSignupCode(input: {
     return { ok: false, error: "Vérifie l’email et le mot de passe (8 caractères minimum)." };
   }
 
-  const origin = await appOrigin();
+  const origin = await getAuthAppOrigin();
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(input.next)}`;
   const admin = createAdminClient();
   const { data, error } = await admin.auth.admin.generateLink({
@@ -205,15 +209,7 @@ export async function sendSignupCode(input: {
   );
   if (!sent.ok) {
     if (data.user?.id) await admin.auth.admin.deleteUser(data.user.id);
-    return {
-      ok: false,
-      error:
-        sent.skipped && process.env.NODE_ENV !== "production"
-          ? "fallback"
-          : sent.skipped
-            ? "L’envoi d’e-mail n’est pas configuré."
-            : sent.error ?? "L’email n’est pas parti. Réessaie dans un moment.",
-    };
+    return authMailSendFailure(sent);
   }
   return { ok: true, mode: "signup" };
 }

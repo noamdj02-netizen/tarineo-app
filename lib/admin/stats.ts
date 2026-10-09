@@ -3,7 +3,7 @@ import type { User } from "@supabase/supabase-js";
 import type { PlanId } from "@/lib/billing/plans";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const STEPS = ["Inscrit", "Connecté", "Toi", "Projets", "Analyse", "Goût", "Cockpit", "Abonné"] as const;
+const STEPS = ["Inscrit", "Connecté", "Identité", "Wizard fini", "Import PDF", "Abonné"] as const;
 export type Stop = (typeof STEPS)[number];
 
 const PAID_PLANS = new Set<PlanId>(["starter", "pro", "founder"]);
@@ -88,7 +88,16 @@ export async function loadAdminStats(): Promise<AdminStats> {
   const projects = await eachPage(async (from) => {
     const { data, error } = await admin
       .from("projects")
-      .select("user_id, pitch, next")
+      .select("user_id")
+      .range(from, from + 999);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+  const documents = await eachPage(async (from) => {
+    const { data, error } = await admin
+      .from("documents")
+      .select("user_id, direction")
       .range(from, from + 999);
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -103,12 +112,13 @@ export async function loadAdminStats(): Promise<AdminStats> {
     return data ?? [];
   });
 
-  const projectByUser = new Map<string, { count: number; analyzed: boolean }>();
+  const projectCountByUser = new Map<string, number>();
   for (const row of projects) {
-    const cur = projectByUser.get(row.user_id) ?? { count: 0, analyzed: false };
-    cur.count += 1;
-    if (row.pitch.trim() || row.next.trim()) cur.analyzed = true;
-    projectByUser.set(row.user_id, cur);
+    projectCountByUser.set(row.user_id, (projectCountByUser.get(row.user_id) ?? 0) + 1);
+  }
+  const inboundDocByUser = new Map<string, boolean>();
+  for (const row of documents) {
+    if (row.direction === "in") inboundDocByUser.set(row.user_id, true);
   }
   const subByUser = new Map(subscriptions.map((row) => [row.user_id, row]));
 
@@ -116,17 +126,14 @@ export async function loadAdminStats(): Promise<AdminStats> {
   const people: AdminPerson[] = users.map((user) => {
     const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
     const name = metaName(meta);
-    const work = projectByUser.get(user.id) ?? { count: 0, analyzed: false };
     const sub = subByUser.get(user.id);
     const paid = isPaid(sub);
     const flags = [
       true,
       Boolean(user.last_sign_in_at),
       name.length > 0,
-      work.count > 0,
-      work.analyzed,
-      typeof meta.theme === "string" && meta.theme.length > 0,
       meta.onboarding_done === true,
+      inboundDocByUser.get(user.id) === true,
       paid,
     ];
     const email = user.email ?? "";
@@ -139,7 +146,7 @@ export async function loadAdminStats(): Promise<AdminStats> {
       stop: stopAt(flags),
       plan: planOf(sub),
       paid,
-      projects: work.count,
+      projects: projectCountByUser.get(user.id) ?? 0,
     };
   });
 
@@ -193,7 +200,7 @@ export async function loadAdminStats(): Promise<AdminStats> {
     activeWeek: people.filter(
       (person) => person.lastSignIn && now - Date.parse(person.lastSignIn) <= WEEK_MS,
     ).length,
-    onboarded: people.filter((person) => STEPS.indexOf(person.stop) >= STEPS.indexOf("Cockpit")).length,
+    onboarded: people.filter((person) => STEPS.indexOf(person.stop) >= STEPS.indexOf("Wizard fini")).length,
     paid: people.filter((person) => person.paid).length,
     newSignups: recent,
     signupDelta: prior === 0 ? null : Math.round(((recent - prior) / prior) * 100),

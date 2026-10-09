@@ -17,18 +17,25 @@ import { R } from "@/lib/routes";
 
 export function FournisseursInsights({
   articles,
-  enseignes,
+  enseignesYear,
+  enseignesMonth,
   alerts,
   sampleDoc,
   distributorGoalsHt,
+  distributorGoalsMonthlyHt,
 }: {
   articles: { label: string; amount: number; qty: number }[];
-  enseignes: { label: string; amount: number }[];
+  enseignesYear: { label: string; amount: number }[];
+  enseignesMonth: { label: string; amount: number }[];
   alerts: PriceAlert[];
   sampleDoc: DocumentCard | null;
   distributorGoalsHt?: Record<string, number>;
+  distributorGoalsMonthlyHt?: Record<string, number>;
 }) {
-  const distributors = adaptAnnualGoals(enseignes, distributorGoalsHt);
+  const distributors = adaptAnnualGoals(enseignesYear, distributorGoalsHt, {
+    amounts: enseignesMonth,
+    goals: distributorGoalsMonthlyHt,
+  });
   const top = distributors[0] ?? null;
   const featured = articles[0];
   const product = featured

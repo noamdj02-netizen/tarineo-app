@@ -8,8 +8,8 @@ import { resolveWebsiteLogo } from "@/lib/company/website-logo";
 const API = "https://recherche-entreprises.api.gouv.fr/search";
 const TIMEOUT_MS = 8_000;
 const MAX_CANDIDATES = 6;
-const AUTO_MIN_SCORE = 72;
-const AUTO_GAP = 18;
+const AUTO_MIN_SCORE = 68;
+const AUTO_GAP = 14;
 
 type ApiSiege = {
   siret?: string | null;
@@ -49,7 +49,7 @@ export async function lookupCompany(query: string): Promise<CompanyLookupRespons
   }
 
   try {
-    const rows = await searchApi(parsed.searchText, parsed.digits);
+    const rows = await searchApiWithVariants(parsed.searchText, parsed.searchVariants, parsed.digits);
     if (!rows.length) {
       return { status: "not_found", query: parsed.raw };
     }
@@ -91,11 +91,12 @@ export async function lookupCompany(query: string): Promise<CompanyLookupRespons
     const second = mapped[1];
     const confidentAlone =
       top &&
-      top.matchScore >= AUTO_MIN_SCORE &&
       top.siretValid &&
-      (!second || top.matchScore - second.matchScore >= AUTO_GAP);
+      ((top.matchScore >= AUTO_MIN_SCORE && (!second || top.matchScore - second.matchScore >= AUTO_GAP)) ||
+        // Un seul établissement valide après expansion de marque (INKFLOW → ink flow)
+        (!second && mapped.length === 1));
 
-    if (confidentAlone) {
+    if (confidentAlone && top) {
       return { status: "found", company: await withLogo(top, parsed.domain, parsed.website) };
     }
 
@@ -115,6 +116,42 @@ export async function lookupCompany(query: string): Promise<CompanyLookupRespons
       message: "Le service de recherche est temporairement indisponible. Vous pouvez continuer manuellement.",
     };
   }
+}
+
+async function searchApiWithVariants(
+  searchText: string,
+  variants: string[],
+  digits: string | null,
+): Promise<ApiEntreprise[]> {
+  const attempts = digits
+    ? [digits]
+    : uniqueSearchTexts([searchText, ...variants]).slice(0, 4);
+
+  let best: ApiEntreprise[] = [];
+  for (const q of attempts) {
+    const rows = await searchApi(q, digits);
+    if (rows.length > best.length) best = rows;
+    if (rows.length > 0 && (digits || rows.length >= 1)) {
+      // Premier hit non vide : suffisant (variantes = filet si 0 résultat)
+      if (!digits) return rows;
+      return rows;
+    }
+  }
+  return best;
+}
+
+function uniqueSearchTexts(values: string[]) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of values) {
+    const t = v.trim();
+    if (!t) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
 }
 
 async function searchApi(searchText: string, digits: string | null): Promise<ApiEntreprise[]> {
@@ -206,10 +243,12 @@ async function withLogo(
   domain: string | null,
   website: string | null,
 ): Promise<CompanyLookupResult> {
-  // Logo uniquement si un site a été fourni / détecté — jamais inventé depuis le nom.
-  if (!website && !domain) return company;
-  const logoUrl = await resolveWebsiteLogo(website ?? company.website, domain);
-  return { ...company, website: website ?? company.website, logoUrl };
+  const site = website ?? company.website;
+  const logoUrl = await resolveWebsiteLogo(site, domain, {
+    legalName: company.legalName,
+    tradeName: company.tradeName,
+  });
+  return { ...company, website: site, logoUrl };
 }
 
 function streetFromSiege(siege: ApiSiege | null): string | null {

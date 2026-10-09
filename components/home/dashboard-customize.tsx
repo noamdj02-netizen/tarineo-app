@@ -119,7 +119,7 @@ export function DashboardCustomize({
         }
       >
         <LayoutGrid className="size-3.5" aria-hidden />
-        {editMode ? "Terminer" : "Composer"}
+        {editMode ? "Terminer" : "Personnaliser"}
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -137,7 +137,7 @@ export function DashboardCustomize({
         <DialogContent className="flex max-h-[min(88vh,640px)] max-w-lg flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
           <DialogHeader className="border-b border-line px-5 pt-5 pb-4">
             <DialogTitle className="font-display text-lg tracking-tight">
-              Composer ton tableau
+              Personnaliser ton tableau
             </DialogTitle>
             <DialogDescription>
               Choisis ce qui s’affiche sur l’accueil. « Mettre devant » épingle le bloc en haut de

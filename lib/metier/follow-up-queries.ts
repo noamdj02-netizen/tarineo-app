@@ -192,13 +192,20 @@ export async function sendDocumentMail(input: {
   ]);
   if (!doc) return { ok: false, error: "Pièce introuvable." };
   const { buffer, filename } = await pdfFromDocument(doc, viewer?.email);
+  const { getCompanyMailIdentity } = await import("@/lib/metier/company-mail-identity");
+  const identity = await getCompanyMailIdentity();
+  const bodyAlreadySigned =
+    Boolean(identity.signOff) && input.body.includes(identity.signOff.slice(0, 24));
   const html = pieceMailHtml({
     body: input.body,
-    company: company?.raison_sociale || "L’entreprise",
-    phone: company?.telephone,
-    email: company?.email_contact || viewer?.email || undefined,
-    address: [company?.adresse_rue, company?.adresse_code_postal, company?.adresse_ville].filter(Boolean).join(", "),
+    company: identity.companyName || company?.raison_sociale || "L’entreprise",
+    phone: identity.phone || company?.telephone,
+    email: identity.email || company?.email_contact || viewer?.email || undefined,
+    address: identity.address || [company?.adresse_rue, company?.adresse_code_postal, company?.adresse_ville].filter(Boolean).join(", "),
     logoCid: logo?.cid,
+    // Si le body contient déjà la signature (brouillon IA), ne pas la dupliquer en pied HTML.
+    signatureFooter:
+      !bodyAlreadySigned && identity.signatureText ? identity.closingBlock : null,
   });
   const res = await sendEmailWithPdf({
     to: input.to,
@@ -408,12 +415,29 @@ async function sendFollowUpAsUser(
 ): Promise<SendPdfResult> {
   const profile = await getCompanyProfileForUser(admin, userId);
   const { buffer, filename } = await pdfFromDocument(doc, profile?.email_contact, profile);
+  const { data: settingsRow } = await admin
+    .from("company_profiles")
+    .select("settings")
+    .eq("user_id", userId)
+    .maybeSingle();
+  const { parseWorkspaceSettings } = await import("@/lib/settings/workspace-settings");
+  const { formatMailClosing } = await import("@/lib/metier/mail-closing");
+  const emailSettings = parseWorkspaceSettings(settingsRow?.settings).email;
+  const companyName = profile?.raison_sociale || "L’entreprise";
+  const closingBlock = formatMailClosing({
+    signOff: emailSettings.signOff,
+    signatureText: emailSettings.signatureText,
+    companyName,
+    phone: profile?.telephone,
+    email: profile?.email_contact,
+  });
   const html = pieceMailHtml({
     body: fu.body,
-    company: profile?.raison_sociale || "L’entreprise",
+    company: companyName,
     phone: profile?.telephone,
     email: profile?.email_contact,
     address: [profile?.adresse_rue, profile?.adresse_code_postal, profile?.adresse_ville].filter(Boolean).join(", "),
+    signatureFooter: emailSettings.signatureText ? closingBlock : null,
   });
   const seq = fu.sequence_number ?? 1;
   return sendEmailWithPdf({

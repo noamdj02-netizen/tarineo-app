@@ -5,8 +5,9 @@ import { KeyRound, Mail } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { FollowAuthTab } from "@/components/auth/follow-auth";
+import { FollowAuthTab, publishAuthLanding } from "@/components/auth/follow-auth";
 import { continueAfterAuth } from "@/lib/auth/continue-after-auth";
+import { loginErrorMessage } from "@/lib/auth/login-errors";
 import { kindFromEmailType } from "@/lib/auth/verified";
 import {
   AuthFieldGroup,
@@ -80,21 +81,22 @@ export function LoginForm({
     setBusy(true);
     setMsg(null);
     const { error } = await createClient().auth.signInWithPassword({
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       password,
     });
-    setBusy(false);
     if (error) {
-      setMsg(
-        error.code === "email_not_confirmed"
-          ? "Confirme d’abord ton email : clique sur le lien reçu à l’inscription."
-          : error.status === 429
-            ? "Trop d’essais. Attends un moment, puis réessaie."
-            : "Email ou mot de passe incorrect. Si le compte est nouveau, confirme d’abord l’email.",
-      );
+      setBusy(false);
+      setMsg(loginErrorMessage(error));
       return;
     }
-    router.replace(target);
+    const settled = await continueAfterAuth(target, "login");
+    setBusy(false);
+    if (!settled.ok) {
+      window.location.assign(`/auth/callback?next=${encodeURIComponent(target)}&verified=login`);
+      return;
+    }
+    publishAuthLanding(settled.path);
+    router.replace(settled.path);
     router.refresh();
   }
 
@@ -102,7 +104,7 @@ export function LoginForm({
     e.preventDefault();
     setBusy(true);
     setMsg(null);
-    const mailed = await sendLoginCode(email.trim(), target);
+    const mailed = await sendLoginCode(email.trim().toLowerCase(), target);
     if (mailed.ok) {
       setBusy(false);
       setMode("code");
@@ -114,7 +116,7 @@ export function LoginForm({
       return;
     }
     const { error } = await createClient().auth.signInWithOtp({
-      email: email.trim(),
+      email: email.trim().toLowerCase(),
       options: {
         // le lien ne crée pas de compte : on passe par /inscription pour ça
         shouldCreateUser: false,
@@ -142,7 +144,11 @@ export function LoginForm({
     const otpType = pasted?.type ?? "email";
     let { error } = pasted
       ? await supabase.auth.verifyOtp({ token_hash: pasted.tokenHash, type: otpType })
-      : await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: "email" });
+      : await supabase.auth.verifyOtp({
+          email: email.trim().toLowerCase(),
+          token: code.trim(),
+          type: "email",
+        });
     if (error && pasted?.tokenHash.startsWith("pkce_")) {
       ({ error } = await supabase.auth.verifyOtp({ token_hash: pasted.tokenHash.slice(5), type: otpType }));
     }
@@ -159,6 +165,7 @@ export function LoginForm({
       window.location.assign(`/auth/callback?next=${encodeURIComponent(dest)}${verified}`);
       return;
     }
+    publishAuthLanding(settled.path);
     router.replace(settled.path);
     router.refresh();
   }

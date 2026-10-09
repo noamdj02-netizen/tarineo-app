@@ -14,6 +14,10 @@ export type Party = {
   name: string;
   address: string;
   seed_key: string | null;
+  /** Commercial / contact enseigne (optionnel, migration parties_contacts). */
+  contact_name?: string | null;
+  contact_email?: string | null;
+  contact_phone?: string | null;
 };
 
 export type Product = {
@@ -91,6 +95,7 @@ export type PriceAlert = {
   new_price: number;
   created_at: string;
   chantier_name?: string | null;
+  seed_key?: string | null;
 };
 
 export type ExtractTotals = {
@@ -140,7 +145,15 @@ export type ExtractResult = {
   document_number?: string;
   /** Date d’émission AAAA-MM-JJ si lue. */
   issue_date?: string;
+  /** Date de livraison prévue AAAA-MM-JJ (lue ou planifiée). */
+  delivery_date?: string;
   party_address?: string;
+  /** Commercial / interlocuteur écrit sur le document (jamais inventé). */
+  contact_name?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  /** Ex. « commercial », « chargé d’affaires » — tel qu’écrit ou déduit du libellé. */
+  contact_role?: string;
   /** Récap et auto-évaluation de lisibilité (modèle). */
   read_assessment?: ExtractReadAssessment;
 };

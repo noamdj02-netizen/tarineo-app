@@ -39,3 +39,62 @@ test("parseExtractResponse n’invente pas Dupont / PVC / 442.8", () => {
     assert.equal(/Dupont|Cedeo|PVC|442/.test(msg + JSON.stringify(e)), false);
   }
 });
+
+test("parseExtractResponse lit le contact commercial", () => {
+  const raw = JSON.stringify({
+    direction: "in",
+    kind: "devis",
+    title: "Devis Point P",
+    party_name: "Point P Lyon",
+    party_kind: "distributeur",
+    chantier_hint: "",
+    contact_name: "Marie Dupont",
+    contact_email: "marie.dupont@point-p.fr",
+    contact_phone: "06 00 00 00 00",
+    contact_role: "commercial",
+    totals: { ht: 120 },
+    lines: [{ label: "Tuile", qty: 10, unit: "u", buy_price: 12 }],
+  });
+  const out = parseExtractResponse(raw, "scan.pdf");
+  assert.equal(out.contact_name, "Marie Dupont");
+  assert.equal(out.contact_email, "marie.dupont@point-p.fr");
+  assert.equal(out.contact_phone, "06 00 00 00 00");
+  assert.equal(out.contact_role, "commercial");
+});
+
+test("parseExtractResponse lit delivery_date ISO", () => {
+  const raw = JSON.stringify({
+    direction: "in",
+    kind: "bl",
+    title: "BL Point P",
+    party_name: "Point P",
+    party_kind: "distributeur",
+    chantier_hint: "",
+    delivery_date: "2026-10-15",
+    issue_date: "pas-une-date",
+    totals: { ht: 10 },
+    lines: [{ label: "A", qty: 1, unit: "u", buy_price: 10 }],
+  });
+  const out = parseExtractResponse(raw, "bl.pdf");
+  assert.equal(out.delivery_date, "2026-10-15");
+  assert.equal(out.issue_date, undefined);
+});
+
+test("parseExtractResponse ignore un contact entièrement vide", () => {
+  const raw = JSON.stringify({
+    direction: "in",
+    kind: "devis",
+    title: "Devis",
+    party_name: "Cedeo",
+    party_kind: "distributeur",
+    chantier_hint: "",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    totals: { ht: 10 },
+    lines: [{ label: "A", qty: 1, unit: "u", buy_price: 10 }],
+  });
+  const out = parseExtractResponse(raw, "scan.pdf");
+  assert.equal(out.contact_name, undefined);
+  assert.equal(out.contact_email, undefined);
+});

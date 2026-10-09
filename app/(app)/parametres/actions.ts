@@ -1,15 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { extractEmailSignatureFromPaste } from "@/lib/metier/email-signature-extract";
 import { getEntrepriseConfig, saveWorkspaceSettings } from "@/lib/settings/entreprise-config";
 import { canEditSection } from "@/lib/settings/roles";
 import {
   emptyAiSettings,
   emptyCommercial,
   emptyDocumentSettings,
+  emptyEmailSettings,
   type AiSettings,
   type CommercialSettings,
   type DocumentSettings,
+  type EmailSettings,
 } from "@/lib/settings/workspace-settings";
 
 function refresh() {
@@ -17,6 +20,7 @@ function refresh() {
   revalidatePath("/parametres/tarification");
   revalidatePath("/parametres/documents");
   revalidatePath("/parametres/ia");
+  revalidatePath("/parametres/entreprise");
   revalidatePath("/entreprise");
   revalidatePath("/accueil");
   revalidatePath("/fournisseurs");
@@ -55,16 +59,30 @@ export async function saveDistributorGoalsAction(form: FormData) {
   if (!canEditSection(role, "tarification")) {
     return { ok: false as const, error: "Permission refusée." };
   }
-  const goals: Record<string, number> = { ...settings.commercial.distributorGoalsHt };
+  const annual: Record<string, number> = { ...settings.commercial.distributorGoalsHt };
+  const monthly: Record<string, number> = { ...settings.commercial.distributorGoalsMonthlyHt };
   for (const [key, value] of form.entries()) {
-    if (!key.startsWith("goal:")) continue;
-    const label = key.slice(5).trim();
-    if (!label) continue;
-    const n = numOrNull(value);
-    if (n != null && n > 0) goals[label] = n;
-    else delete goals[label];
+    if (key.startsWith("goal:")) {
+      const label = key.slice(5).trim();
+      if (!label) continue;
+      const n = numOrNull(value);
+      if (n != null && n > 0) annual[label] = n;
+      else delete annual[label];
+      continue;
+    }
+    if (key.startsWith("goalMonth:")) {
+      const label = key.slice("goalMonth:".length).trim();
+      if (!label) continue;
+      const n = numOrNull(value);
+      if (n != null && n > 0) monthly[label] = n;
+      else delete monthly[label];
+    }
   }
-  const commercial: CommercialSettings = { ...settings.commercial, distributorGoalsHt: goals };
+  const commercial: CommercialSettings = {
+    ...settings.commercial,
+    distributorGoalsHt: annual,
+    distributorGoalsMonthlyHt: monthly,
+  };
   const res = await saveWorkspaceSettings({ ...settings, commercial });
   if (!res.ok) return res;
   refresh();
@@ -104,4 +122,48 @@ export async function saveAiSettingsAction(form: FormData) {
   if (!res.ok) return res;
   refresh();
   return { ok: true as const };
+}
+
+export async function extractEmailSignatureAction(raw: string) {
+  const { role } = await getEntrepriseConfig();
+  if (!canEditSection(role, "entreprise")) {
+    return { ok: false as const, error: "Permission refusée." };
+  }
+  const text = String(raw ?? "").trim();
+  if (text.length < 20) {
+    return { ok: false as const, error: "Collez un e-mail plus complet (au moins la signature)." };
+  }
+  const extracted = await extractEmailSignatureFromPaste(text);
+  if (!extracted.signatureText && !extracted.signOff) {
+    return { ok: false as const, error: "Aucune signature détectée. Vérifiez le collage." };
+  }
+  return { ok: true as const, extracted };
+}
+
+export async function saveEmailSignatureAction(input: {
+  signOff: string;
+  signatureText: string;
+  fromName: string;
+  logoFromEmailUrl: string;
+}) {
+  const { role, settings } = await getEntrepriseConfig();
+  if (!canEditSection(role, "entreprise")) {
+    return { ok: false as const, error: "Permission refusée." };
+  }
+  const email: EmailSettings = {
+    ...emptyEmailSettings(),
+    signOff: String(input.signOff ?? "").trim().slice(0, 120),
+    signatureText: String(input.signatureText ?? "").trim().slice(0, 2000),
+    fromName: String(input.fromName ?? "").trim().slice(0, 120),
+    logoFromEmailUrl: String(input.logoFromEmailUrl ?? "").trim().slice(0, 500),
+  };
+  const res = await saveWorkspaceSettings({ ...settings, email });
+  if (!res.ok) return res;
+  refresh();
+  return { ok: true as const };
+}
+
+export async function getCompanyMailIdentityAction() {
+  const { getCompanyMailIdentity } = await import("@/lib/metier/company-mail-identity");
+  return getCompanyMailIdentity();
 }

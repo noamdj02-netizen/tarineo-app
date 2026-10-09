@@ -10,6 +10,10 @@ export const DEMO_IDS = {
   chantier: "demo-chantier-dupont",
   docIn: "demo-doc-devis-cedeo",
   docOut: "demo-doc-devis-client",
+  docOutPret: "demo-doc-devis-client-pret",
+  docOutCommande: "demo-doc-devis-client-commande",
+  docBc: "demo-doc-bc-client",
+  docFacture: "demo-doc-facture-client",
   alert: "demo-alert-pvc",
 } as const;
 

@@ -1,8 +1,13 @@
 /** Normalise une saisie nom / site / SIRET pour la recherche. */
 export type ParsedCompanyQuery = {
   raw: string;
-  /** Texte envoyé à l’API. */
+  /** Texte envoyé à l’API (premier essai). */
   searchText: string;
+  /**
+   * Variantes supplémentaires à essayer si le 1er essai est vide
+   * (ex. INKFLOW → « ink flow », domaine → tokens).
+   */
+  searchVariants: string[];
   /** Nom normalisé pour le matching (sans forme juridique ni ville). */
   nameForMatch: string;
   /** Ville éventuelle détectée dans la requête. */
@@ -45,6 +50,7 @@ export function parseCompanyQuery(input: string): ParsedCompanyQuery | null {
     return {
       raw,
       searchText: digitsOnly,
+      searchVariants: [],
       nameForMatch: "",
       cityHint: null,
       postalHint: null,
@@ -62,6 +68,7 @@ export function parseCompanyQuery(input: string): ParsedCompanyQuery | null {
       return {
         raw,
         searchText: d,
+        searchVariants: [],
         nameForMatch: "",
         cityHint: null,
         postalHint: null,
@@ -74,15 +81,18 @@ export function parseCompanyQuery(input: string): ParsedCompanyQuery | null {
 
   const domain = extractDomain(raw);
   if (domain) {
-    const tokens = domain
-      .replace(/\.(fr|com|net|org|eu|io|co|app|dev)$/i, "")
+    const label = domain.replace(/\.(fr|com|net|org|eu|io|co|app|dev|me|studio|agency)$/i, "");
+    const tokens = label
       .split(/[.\-_]+/)
+      .flatMap((p) => splitGluedBrand(p))
       .filter((p) => p.length > 1 && !/^(www|app|m)$/i.test(p))
       .join(" ");
+    const spaced = tokens || label.replace(/[-_]+/g, " ");
     return {
       raw,
-      searchText: tokens || domain,
-      nameForMatch: normalizeName(tokens || domain),
+      searchText: spaced || domain,
+      searchVariants: uniqueVariants([spaced, label.replace(/[-_]+/g, " "), label]),
+      nameForMatch: normalizeName(spaced || domain),
       cityHint: null,
       postalHint: null,
       domain,
@@ -94,10 +104,13 @@ export function parseCompanyQuery(input: string): ParsedCompanyQuery | null {
   const postalHint = raw.match(/\b(\d{5})\b/)?.[1] ?? null;
   const withoutPostal = postalHint ? raw.replace(postalHint, " ") : raw;
   const { name, city } = splitNameAndCity(withoutPostal);
+  const primary = [name, city, postalHint].filter(Boolean).join(" ");
+  const brandVariants = expandBrandQuery(name);
 
   return {
     raw,
-    searchText: [name, city, postalHint].filter(Boolean).join(" "),
+    searchText: primary,
+    searchVariants: uniqueVariants(brandVariants.filter((v) => v.toLowerCase() !== primary.toLowerCase())),
     nameForMatch: normalizeName(name),
     cityHint: city,
     postalHint,
@@ -105,6 +118,60 @@ export function parseCompanyQuery(input: string): ParsedCompanyQuery | null {
     digits: null,
     website: null,
   };
+}
+
+/** INKFLOW → ink flow ; InkFlow → Ink Flow. Ne découpe pas les noms ordinaires (Dupont…). */
+export function splitGluedBrand(token: string): string[] {
+  const t = token.trim();
+  if (!t || t.includes(" ")) return t ? [t] : [];
+  // CamelCase / PascalCase
+  const camel = t
+    .replace(/([a-zà-ÿ])([A-ZÀ-Ÿ])/g, "$1 $2")
+    .replace(/([A-ZÀ-Ÿ]+)([A-ZÀ-Ÿ][a-zà-ÿ])/g, "$1 $2");
+  if (camel !== t && camel.includes(" ")) return camel.split(/\s+/).filter(Boolean);
+  // Marque tout en majuscules collée (INKFLOW, TARINEO…)
+  if (/^[A-ZÀ-Ÿ]{6,18}$/.test(t)) {
+    const lower = t.toLowerCase();
+    for (const cut of [3, 4, 5, Math.floor(lower.length / 2)]) {
+      if (cut >= 3 && lower.length - cut >= 3) {
+        return [lower.slice(0, cut), lower.slice(cut)];
+      }
+    }
+  }
+  // Minuscules collées : suffixe marque courant
+  if (/^[a-zà-ÿ]{6,18}$/.test(t)) {
+    for (const suf of ["flow", "soft", "lab", "tech", "group", "bat", "btp", "pro"]) {
+      if (t.endsWith(suf) && t.length - suf.length >= 3) {
+        return [t.slice(0, -suf.length), suf];
+      }
+    }
+  }
+  return [t];
+}
+
+function expandBrandQuery(name: string): string[] {
+  const parts = name.trim().split(/\s+/);
+  const out: string[] = [];
+  if (parts.length === 1) {
+    const splits = splitGluedBrand(parts[0]);
+    if (splits.length > 1) out.push(splits.join(" "));
+  }
+  if (name.includes("-")) out.push(name.replace(/-/g, " "));
+  return out;
+}
+
+function uniqueVariants(values: string[]) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const v of values) {
+    const t = v.trim();
+    if (!t || t.length < 2) continue;
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(t);
+  }
+  return out;
 }
 
 /** Strip forme juridique + accents pour comparer deux noms. */

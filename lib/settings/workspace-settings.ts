@@ -12,6 +12,8 @@ export type CommercialSettings = {
   validiteDevisJours: number | null;
   /** Objectifs d’achat HT annuels par enseigne (libellé → montant €). */
   distributorGoalsHt: Record<string, number>;
+  /** Objectifs d’achat HT mensuels par enseigne (plafond / mois en cours). */
+  distributorGoalsMonthlyHt: Record<string, number>;
 };
 
 export type DocumentSettings = {
@@ -27,10 +29,23 @@ export type AiSettings = {
   copilote: boolean;
 };
 
+/** Signature / identité mail (relances, acceptation, renégociation). */
+export type EmailSettings = {
+  /** Formule de politesse courte, ex. « Cordialement, ». */
+  signOff: string;
+  /** Bloc signature (nom, titre, tél, site…). */
+  signatureText: string;
+  /** Nom affiché optionnel. */
+  fromName: string;
+  /** URL logo détectée dans un mail collé (indicatif). */
+  logoFromEmailUrl: string;
+};
+
 export type CompanyWorkspaceSettings = {
   commercial: CommercialSettings;
   documents: DocumentSettings;
   ai: AiSettings;
+  email: EmailSettings;
 };
 
 export function emptyCommercial(): CommercialSettings {
@@ -43,6 +58,7 @@ export function emptyCommercial(): CommercialSettings {
     acomptePct: null,
     validiteDevisJours: 30,
     distributorGoalsHt: {},
+    distributorGoalsMonthlyHt: {},
   };
 }
 
@@ -75,11 +91,21 @@ export function emptyAiSettings(): AiSettings {
   };
 }
 
+export function emptyEmailSettings(): EmailSettings {
+  return {
+    signOff: "",
+    signatureText: "",
+    fromName: "",
+    logoFromEmailUrl: "",
+  };
+}
+
 export function emptyWorkspaceSettings(): CompanyWorkspaceSettings {
   return {
     commercial: emptyCommercial(),
     documents: emptyDocumentSettings(),
     ai: emptyAiSettings(),
+    email: emptyEmailSettings(),
   };
 }
 
@@ -90,7 +116,9 @@ export function parseWorkspaceSettings(raw: unknown): CompanyWorkspaceSettings {
   const c = (o.commercial && typeof o.commercial === "object" ? o.commercial : {}) as Record<string, unknown>;
   const d = (o.documents && typeof o.documents === "object" ? o.documents : {}) as Record<string, unknown>;
   const a = (o.ai && typeof o.ai === "object" ? o.ai : {}) as Record<string, unknown>;
+  const e = (o.email && typeof o.email === "object" ? o.email : {}) as Record<string, unknown>;
   const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
   return {
     commercial: {
       tauxHoraireHt: num(c.tauxHoraireHt),
@@ -101,6 +129,7 @@ export function parseWorkspaceSettings(raw: unknown): CompanyWorkspaceSettings {
       acomptePct: num(c.acomptePct),
       validiteDevisJours: num(c.validiteDevisJours) ?? 30,
       distributorGoalsHt: parseDistributorGoals(c.distributorGoalsHt),
+      distributorGoalsMonthlyHt: parseDistributorGoals(c.distributorGoalsMonthlyHt),
     },
     documents: {
       mentionPiedPage: typeof d.mentionPiedPage === "string" ? d.mentionPiedPage : "",
@@ -112,6 +141,12 @@ export function parseWorkspaceSettings(raw: unknown): CompanyWorkspaceSettings {
       analyseFacture: typeof a.analyseFacture === "boolean" ? a.analyseFacture : true,
       detectionHausses: typeof a.detectionHausses === "boolean" ? a.detectionHausses : true,
       copilote: typeof a.copilote === "boolean" ? a.copilote : true,
+    },
+    email: {
+      signOff: str(e.signOff, 120),
+      signatureText: str(e.signatureText, 2000),
+      fromName: str(e.fromName, 120),
+      logoFromEmailUrl: str(e.logoFromEmailUrl, 500),
     },
   };
 }

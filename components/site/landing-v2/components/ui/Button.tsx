@@ -10,7 +10,7 @@ const buttonVariants = cva(
   [
     "inline-flex touch-manipulation items-center justify-center gap-2 rounded-full text-center font-medium",
     "transition-colors duration-200 ease-out select-none outline-none",
-    "focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper-100",
+    "focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper-100",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
   ].join(" "),
@@ -18,10 +18,10 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-accent text-white shadow-[0_6px_16px_-10px_rgb(120_58_32/0.35)] hover:bg-accent-hover active:bg-accent-active",
+          "bg-accent text-white hover:bg-accent-hover active:scale-[0.98] active:bg-accent-active",
         secondary:
-          "border border-line bg-paper-0 text-ink-900 hover:border-line-strong hover:bg-paper-50 active:bg-paper-200",
-        ghost: "text-ink-900 hover:bg-paper-0/90 hover:text-accent-700 active:bg-paper-50",
+          "border border-line bg-paper-0/80 text-ink-900 backdrop-blur-sm hover:border-line-strong hover:bg-paper-200/60 active:scale-[0.98]",
+        ghost: "text-ink-700 hover:bg-paper-0/50 hover:text-accent-700 active:scale-[0.98]",
       },
       size: {
         /** Barre de navigation — compact, aligné au header */

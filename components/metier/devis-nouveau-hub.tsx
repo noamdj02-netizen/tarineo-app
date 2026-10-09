@@ -15,9 +15,9 @@ import {
   structureDevisFromSpeech,
   createDevisFromProposalAction,
   type DevisMatchResult,
-  type DevisProposal,
 } from "@/app/(app)/devis/actions";
-import { DevisTemplates } from "@/components/metier/devis-templates";
+import type { DevisProposal } from "@/lib/metier/devis/from-proposal";
+import { DevisCreateForm } from "@/components/metier/devis-create-form";
 import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -181,9 +181,18 @@ export function DevisNouveauHub({
           <Back onClick={() => openMode("hub")} />
           <h2 className="font-display text-[22px] font-semibold tracking-tight text-ink">Créer manuellement</h2>
           <p className="text-[14px] text-muted-foreground">
-            Choisissez un modèle, liez un chantier et un client, puis ajustez les lignes sur la pièce.
+            Renseignez le client, le chantier et les lignes. Les totaux se calculent tout de suite — aucun prix n’est inventé.
           </p>
-          <DevisTemplates chantiers={chantiers} clients={clients} />
+          <DevisCreateForm
+            chantiers={chantiers}
+            clients={clients}
+            defaultChantierId={chantier?.id ?? null}
+            defaultClientId={
+              chantier?.client_name
+                ? clients.find((c) => c.name === chantier.client_name)?.id ?? null
+                : null
+            }
+          />
         </section>
       ) : null}
 

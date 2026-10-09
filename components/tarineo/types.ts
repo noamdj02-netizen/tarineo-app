@@ -12,6 +12,8 @@ export type TarineoDistributor = {
   name: string;
   amountHt?: number;
   goalHt?: number | null;
+  monthlyAmountHt?: number;
+  monthlyGoalHt?: number | null;
 };
 
 export type PriceHistoryPoint = {

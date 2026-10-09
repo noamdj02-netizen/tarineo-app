@@ -10,13 +10,12 @@ export type PendingAction = {
   exp: number;
 };
 
+/**
+ * Ne jamais dériver le HMAC depuis SUPABASE_SERVICE_ROLE_KEY :
+ * un secret d’action assistant ne doit pas réutiliser la clé d’admin DB.
+ */
 function secret(env: NodeJS.Dict<string> = process.env) {
-  return (
-    env.ASSISTANT_ACTION_SECRET?.trim() ||
-    env.CRON_SECRET?.trim() ||
-    env.SUPABASE_SERVICE_ROLE_KEY?.trim() ||
-    ""
-  );
+  return env.ASSISTANT_ACTION_SECRET?.trim() || env.CRON_SECRET?.trim() || "";
 }
 
 function b64url(buf: Buffer | string) {

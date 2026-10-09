@@ -35,7 +35,7 @@ export const LANDING_PRODUCT_SIDEBAR: LandingSidebarGroup[] = [
       { icon: "box", label: "Bons de commande", nested: true },
       { icon: "invoice", label: "Bons d'enlèvement", nested: true },
       { icon: "invoice", label: "Factures fournisseur", nested: true },
-      { icon: "site", label: "Documents entreprise" },
+      { icon: "site", label: "Documents client" },
       { icon: "doc", label: "Devis client", nested: true },
       { icon: "invoice", label: "Factures client", nested: true },
     ],

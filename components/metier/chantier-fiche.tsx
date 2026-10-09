@@ -7,8 +7,13 @@ import { ChantierStatusToggle } from "@/components/metier/chantier-status";
 import { DocumentDrop } from "@/components/metier/document-drop";
 import { DocumentList } from "@/components/metier/document-list";
 import { CancelFollowUpButton, MarkAnsweredButton, RelanceButton, RelanceStatus } from "@/components/metier/relance-dialog";
+import { UpcomingDeliveries } from "@/components/metier/upcoming-deliveries";
 import { SupplierLogo } from "@/components/site/supplier-logo";
 import { StatusBadge } from "@/components/tarineo/status-badge";
+import {
+  formatDeliveryDateFr,
+  upcomingDeliveries,
+} from "@/lib/metier/delivery";
 import {
   documentAmountHt,
   documentChains,
@@ -69,7 +74,15 @@ export function ChantierFiche({
   const relances = followUps.filter((f) => f.status === "due" || f.status === "scheduled");
   const marginPct = sellHt > 0 ? Math.round((marginHt / sellHt) * 1000) / 10 : null;
   const pendingInbound = inbound.filter((d) => !isDocumentTransformed(d, documents));
+  const deliveries = useMemo(() => upcomingDeliveries(documents, { limit: 8 }), [documents]);
   const todos: { key: string; title: string; hint: string; href?: string; tone: "warn" | "focus" | "muted" }[] = [
+    ...deliveries.map((d) => ({
+      key: `del-${d.documentId}`,
+      title: `Livraison le ${formatDeliveryDateFr(d.day)}`,
+      hint: `${d.title}${d.partyName ? ` · ${d.partyName}` : ""} — préparer le chantier`,
+      href: `/pieces/${d.documentId}` as string | undefined,
+      tone: "focus" as const,
+    })),
     ...relances.map((f) => ({
       key: `fu-${f.id}`,
       title: `Relancer ${f.document_title}`,
@@ -208,6 +221,14 @@ export function ChantierFiche({
 
       {tab === "vue" ? (
         <div className="flex flex-col gap-8">
+          <UpcomingDeliveries
+            items={deliveries}
+            title={
+              chantier.client_name
+                ? `Livraisons — client ${chantier.client_name}`
+                : "Livraisons prévues sur ce chantier"
+            }
+          />
           {todos.length ? (
             <section className="rounded-[16px] border border-line bg-surface px-4 py-4">
               <div className="mb-3 flex items-baseline justify-between gap-2">
@@ -220,7 +241,16 @@ export function ChantierFiche({
                     <span className="flex items-center justify-between gap-3 px-1 py-2">
                       <span className="min-w-0">
                         <span className="flex items-center gap-2">
-                          <StatusBadge label={item.tone === "warn" ? "Action" : "Pièce"} tone={item.tone} />
+                          <StatusBadge
+                            label={
+                              item.key.startsWith("del-")
+                                ? "Livraison"
+                                : item.tone === "warn"
+                                  ? "Action"
+                                  : "Pièce"
+                            }
+                            tone={item.tone}
+                          />
                           <span className="truncate font-medium">{item.title}</span>
                         </span>
                         <span className="mt-0.5 block pl-7 text-[13px] text-muted-foreground">{item.hint}</span>

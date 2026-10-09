@@ -9,6 +9,7 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { R } from "@/lib/routes";
 
 export type AutomationCategory = "focus" | "communication" | "produit" | "design";
 
@@ -138,43 +139,43 @@ export type CopilotFeatureLink = {
 
 export const COPILOT_FEATURE_LINKS: CopilotFeatureLink[] = [
   {
-    href: "/schemas",
+    href: R.hausses,
     label: "Alertes",
     description: "Hausses relevées sur tes documents.",
     icon: Shapes,
   },
   {
-    href: "/anatomie",
+    href: R.achats,
     label: "Classement",
     description: "Tes factures, rangées par mois et par enseigne.",
     icon: Layers,
   },
   {
-    href: "/composants",
+    href: R.clientDevis,
     label: "Devis client",
     description: "Matériel, main-d’œuvre, PDF à ton logo.",
     icon: Sparkles,
   },
   {
-    href: "/projets",
+    href: R.chantiers,
     label: "Chantiers",
     description: "Documents, étape en cours et marge.",
     icon: LayoutDashboard,
   },
   {
-    href: "/outils",
+    href: R.fournisseurs,
     label: "Fournisseurs",
     description: "Achats par enseigne et export comptable.",
     icon: Sparkles,
   },
   {
-    href: "/ressources",
+    href: R.distributeur,
     label: "Documents",
     description: "Devis, factures et bons à importer.",
     icon: FileText,
   },
   {
-    href: "/audit",
+    href: R.comparateur,
     label: "Comparateur",
     description: "Le meilleur prix entre tes enseignes.",
     icon: Target,

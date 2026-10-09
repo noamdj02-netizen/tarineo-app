@@ -4,21 +4,15 @@ import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef } from "react";
 
 import { Button } from "@/components/site/landing-v2/components/ui/Button";
-import { LANDING_LOGIN, LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
+import { LANDING_LOGIN, LANDING_PRIMARY_CTA_LABEL, LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
 import { landingNavGroups, type LandingNavGroup } from "@/lib/site/landing-v2-content";
+import { landingNavHref } from "@/lib/site/landing-nav";
 import { cn } from "@/lib/utils";
 
 type Props = {
   open: boolean;
   onClose: () => void;
 };
-
-function resolveLandingHref(href: string, pathname: string) {
-  if (href.startsWith("#")) {
-    return pathname === "/" ? href : `/${href}`;
-  }
-  return href;
-}
 
 function NavLink({
   href,
@@ -31,7 +25,7 @@ function NavLink({
   onNavigate: () => void;
   pathname: string;
 }) {
-  const resolved = resolveLandingHref(href, pathname);
+  const resolved = landingNavHref(href, pathname);
   const isExternal = resolved.startsWith("http") || resolved.startsWith("mailto:");
   const className =
     "block rounded-lg px-3 py-2.5 text-[0.9375rem] text-ink-600 outline-none transition-colors hover:bg-paper-50 hover:text-ink-900 focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-inset";
@@ -121,7 +115,7 @@ export function LandingNavDrawer({ open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-full w-full max-w-[min(100%,22rem)] flex-col border-l border-line bg-paper-100 shadow-float motion-safe:animate-in motion-safe:slide-in-from-right motion-safe:duration-200"
+        className="relative flex h-full w-full max-w-[min(100%,22rem)] flex-col border-l border-line bg-paper-0 shadow-float motion-safe:animate-in motion-safe:slide-in-from-right motion-safe:duration-200"
       >
         <div className="flex items-center justify-between border-b border-line px-4 py-3.5 sm:px-5">
           <p id={titleId} className="text-sm font-semibold text-ink-900">Menu</p>
@@ -156,7 +150,7 @@ export function LandingNavDrawer({ open, onClose }: Props) {
         <div className="border-t border-line px-4 py-4 sm:px-5">
           <div className="flex flex-col gap-2">
             <Button href={LANDING_SIGNUP} className="w-full justify-center" onClick={onClose}>
-              Commencer avec Tarinéo
+              {LANDING_PRIMARY_CTA_LABEL}
             </Button>
             <Button href={LANDING_LOGIN} variant="secondary" className="w-full justify-center" onClick={onClose}>
               Connexion

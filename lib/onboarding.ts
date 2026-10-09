@@ -26,7 +26,7 @@ export async function getOnboarding(): Promise<OnboardingStep[]> {
 
   if (!wizardDone) {
     return [
-      { label: "Parcours guidé (entreprise, chantier, tableau)", href: "/onboarding", done: false },
+      { label: "Parcours guidé (2 min — vous + premier PDF)", href: "/onboarding", done: false },
       ...checklist,
     ];
   }
