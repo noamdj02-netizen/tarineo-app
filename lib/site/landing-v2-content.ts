@@ -1,5 +1,7 @@
 /** Contenus landing Tarineo — structure 6 écrans (brief conversion). */
 
+import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
+
 export type IconName =
   | "mail"
   | "spark"
@@ -235,7 +237,7 @@ export const pricingIntro = {
   title: "Tarifs",
   headline: "Des formules claires pour le terrain.",
   headlineMuted: "Vous payez pour protéger vos marges, pas pour des options floues.",
-  founder: "500 premières places — lancement",
+  founder: `${PRO_TRIAL_DAYS} jours gratuits — sans carte`,
 };
 
 export const pricingTrust = [

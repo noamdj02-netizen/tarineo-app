@@ -11,9 +11,7 @@ import {
   listDocuments,
   listParties,
   rankingRows,
-  spendByMonth,
 } from "@/lib/metier/queries";
-import { getEntrepriseConfig } from "@/lib/settings/entreprise-config";
 import { getViewer } from "@/lib/session";
 import { siteMetadata } from "@/lib/seo";
 
@@ -23,7 +21,7 @@ export const metadata = {
 };
 
 export default async function AccueilPage() {
-  const [viewer, chantiers, clients, inbound, outbound, alerts, ranking, stored, company, entreprise] =
+  const [viewer, chantiers, clients, inbound, outbound, alerts, ranking, stored, company] =
     await Promise.all([
     getViewer(),
     listChantiers(),
@@ -34,9 +32,7 @@ export default async function AccueilPage() {
     rankingRows(),
     listStoredFollowUps(),
     getCompanyProfile(),
-    getEntrepriseConfig(),
   ]);
-  const distributorGoalsHt = entreprise.settings.commercial.distributorGoalsHt;
   const pending = inbound.filter((d) => !outbound.some((o) => o.source_document_id === d.id));
   const nextKinds = new Set(
     outbound.filter((d) => d.kind === "bon_commande" || d.kind === "facture").map((d) => d.source_document_id),
@@ -90,15 +86,12 @@ export default async function AccueilPage() {
       relancesDue={relancesDue}
       followUps={followUps}
       alerts={alerts}
-      months={spendByMonth(inbound)}
-      enseignes={ranking.enseignes}
       articles={ranking.articles}
       outbound={outbound}
       documents={allDocs}
       recentPieces={recentPieces}
       company={company}
       actionNotifications={actionNotifs}
-      distributorGoalsHt={distributorGoalsHt}
       showDashboardTour={viewer?.needsTour === true}
     />
   );

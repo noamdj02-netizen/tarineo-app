@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Loader2 } from "lucide-react";
+import { Camera, FileText, Loader2 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -33,6 +33,13 @@ function numField(raw: FormDataEntryValue | null, fallback: number | null | unde
   return Number.isFinite(n) ? n : fallback ?? null;
 }
 
+export type DocumentSavedInfo = {
+  id: string;
+  chantierSlug?: string | null;
+  direction?: DocDirection;
+  kind?: DocKind;
+};
+
 export function DocumentDrop({
   chantiers,
   clients = [],
@@ -46,6 +53,7 @@ export function DocumentDrop({
   filmLecture,
   onDocumentSaved,
   onDraftActive,
+  stayAfterSave,
 }: {
   chantiers: ChantierCard[];
   clients?: Party[];
@@ -58,13 +66,16 @@ export function DocumentDrop({
   onAgentMetaChange?: (meta: DocumentAgentMeta | null) => void;
   /** Préremplit la lecture Cedeo (captures film, `?film=lecture`). */
   filmLecture?: boolean;
-  onDocumentSaved?: () => void;
+  onDocumentSaved?: (info?: DocumentSavedInfo) => void;
   /** true dès qu’une lecture est prête (vue revue) ; false après annulation / enregistrement. */
   onDraftActive?: (active: boolean) => void;
+  /** Reste sur la page après enregistrement (CTAs post-validation). */
+  stayAfterSave?: boolean;
 }) {
   const reduce = useReducedMotion();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const [over, setOver] = useState(false);
   const [pending, start] = useTransition();
@@ -224,13 +235,25 @@ export function DocumentDrop({
         setError("error" in res ? res.error : "Enregistrement impossible.");
         return;
       }
+      const info: DocumentSavedInfo = {
+        id: res.id,
+        chantierSlug: res.chantierSlug,
+        direction: res.direction,
+        kind: res.kind,
+      };
+      if (stayAfterSave) {
+        clearDraft();
+        onDocumentSaved?.(info);
+        router.refresh();
+        return;
+      }
       // Toujours la fiche pièce (modifiable). Fermer le modal avant, sans clearDraft
       // qui réafficherait l’import sur /accueil.
       const href = hrefAfterDocumentSave({
         id: res.id,
         chantierSlug: res.chantierSlug,
       });
-      onDocumentSaved?.();
+      onDocumentSaved?.(info);
       router.replace(href);
       // Si le Dialog Accueil bloque la soft-nav, forcer l’ouverture de la pièce.
       if (typeof window !== "undefined") {
@@ -275,7 +298,14 @@ export function DocumentDrop({
         setError(res.error);
         return;
       }
-      onDocumentSaved?.();
+      const info: DocumentSavedInfo = { id: res.id, kind: outKind, direction: "out" };
+      if (stayAfterSave) {
+        clearDraft();
+        onDocumentSaved?.(info);
+        router.refresh();
+        return;
+      }
+      onDocumentSaved?.(info);
       router.replace(R.piece(res.id));
       router.refresh();
     } finally {
@@ -288,87 +318,111 @@ export function DocumentDrop({
   return (
     <div id="import" className="flex flex-col gap-4 scroll-mt-24">
       {showDropZone ? (
-        <motion.button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setOver(true);
-          }}
-          onDragLeave={() => setOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setOver(false);
-            handleFiles(e.dataTransfer.files);
-          }}
-          animate={
-            reduce
-              ? undefined
-              : over
-                ? { scale: 1.01 }
-                : pending
-                  ? { opacity: 0.85 }
-                  : { scale: 1 }
-          }
-          className={cn(
-            "relative flex w-full flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed px-4 text-center transition-[border-color,background-color,transform] duration-200 md:rounded-[28px]",
-            compact ? "min-h-[140px] py-6" : "min-h-[180px] py-8 md:min-h-[220px] md:py-10",
-            over ? "border-brand-orange bg-wash-orange" : "border-line bg-surface-2",
-          )}
-        >
-          <input
-            ref={inputRef}
-            type="file"
-            accept="application/pdf,image/jpeg,image/png,image/heic,image/webp"
-            className="sr-only"
-            onChange={(e) => handleFiles(e.target.files)}
-          />
-          {pending ? (
-            <Loader2 className="size-9 animate-spin text-brand-orange" aria-hidden />
-          ) : (
-            <span className="grid size-14 place-items-center rounded-full bg-[#FF6B1A]/10 text-[#E85A12]">
-              <FileText className="size-7 stroke-[1.5]" aria-hidden />
-            </span>
-          )}
-          <p className="font-display text-[19px] font-semibold tracking-tight md:text-[20px]">
-            {pending
-              ? "Lecture du document…"
-              : over
-                ? "Déposez ici"
-                : hint || "Glissez vos documents ici"}
-          </p>
-          <p className="max-w-[42ch] text-[13px] text-muted-foreground md:text-[14px]">
-            PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers
-          </p>
-          {!pending ? (
-            <span className="mt-1 inline-flex h-11 items-center rounded-[12px] bg-[#FF6B1A] px-4 text-[14px] font-medium text-white md:hidden">
-              Choisir un fichier
-            </span>
-          ) : null}
-          <ul className="hidden flex-wrap justify-center gap-1.5 md:flex">
-            {["PDF", "JPEG", "PNG", "HEIC"].map((fmt) => (
-              <li
-                key={fmt}
-                className="rounded-full border border-line bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground uppercase"
-              >
-                {fmt}
-              </li>
-            ))}
-          </ul>
-          {pending && !reduce ? (
-            <motion.span
-              className="absolute inset-x-10 bottom-5 h-1 overflow-hidden rounded-full bg-line"
-              aria-hidden
-            >
+        <div className="flex flex-col gap-2">
+          <motion.button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setOver(true);
+            }}
+            onDragLeave={() => setOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setOver(false);
+              handleFiles(e.dataTransfer.files);
+            }}
+            animate={
+              reduce
+                ? undefined
+                : over
+                  ? { scale: 1.01 }
+                  : pending
+                    ? { opacity: 0.85 }
+                    : { scale: 1 }
+            }
+            className={cn(
+              "relative flex w-full flex-col items-center justify-center gap-2 rounded-[16px] border border-dashed px-4 text-center transition-[border-color,background-color,transform] duration-200 md:rounded-[28px]",
+              compact ? "min-h-[140px] py-6" : "min-h-[180px] py-8 md:min-h-[220px] md:py-10",
+              over ? "border-brand-orange bg-wash-orange" : "border-line bg-surface-2",
+            )}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/heic,image/webp"
+              className="sr-only"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/jpeg,image/png,image/heic,image/webp"
+              capture="environment"
+              className="sr-only"
+              onChange={(e) => handleFiles(e.target.files)}
+            />
+            {pending ? (
+              <Loader2 className="size-9 animate-spin text-brand-orange" aria-hidden />
+            ) : (
+              <span className="grid size-14 place-items-center rounded-full bg-tarineo-orange-soft text-tarineo-orange">
+                <FileText className="size-7 stroke-[1.5]" aria-hidden />
+              </span>
+            )}
+            <p className="font-display text-[19px] font-semibold tracking-tight md:text-[20px]">
+              {pending
+                ? "Lecture du document…"
+                : over
+                  ? "Déposez ici"
+                  : hint || "Glissez vos documents ici"}
+            </p>
+            <p className="max-w-[42ch] text-[13px] text-muted-foreground md:text-[14px]">
+              PDF, JPEG, PNG ou HEIC — cliquez pour parcourir vos dossiers
+            </p>
+            {!pending ? (
+              <span className="mt-1 inline-flex h-11 items-center rounded-[12px] bg-tarineo-orange px-4 text-[14px] font-medium text-white md:hidden">
+                Choisir un fichier
+              </span>
+            ) : null}
+            <ul className="hidden flex-wrap justify-center gap-1.5 md:flex">
+              {["PDF", "JPEG", "PNG", "HEIC"].map((fmt) => (
+                <li
+                  key={fmt}
+                  className="rounded-full border border-line bg-surface px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-muted-foreground uppercase"
+                >
+                  {fmt}
+                </li>
+              ))}
+            </ul>
+            {pending && !reduce ? (
               <motion.span
-                className="block h-full bg-brand-orange"
-                initial={{ x: "-100%" }}
-                animate={{ x: "100%" }}
-                transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
-              />
-            </motion.span>
+                className="absolute inset-x-10 bottom-5 h-1 overflow-hidden rounded-full bg-line"
+                aria-hidden
+              >
+                <motion.span
+                  className="block h-full bg-brand-orange"
+                  initial={{ x: "-100%" }}
+                  animate={{ x: "100%" }}
+                  transition={{ repeat: Infinity, duration: 1.1, ease: "easeInOut" }}
+                />
+              </motion.span>
+            ) : null}
+          </motion.button>
+          {!pending ? (
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className={cn(
+                "inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-surface text-[14px] font-medium text-ink",
+                "transition-[background-color,border-color] hover:border-tarineo-orange/35 hover:bg-wash-orange",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange-ring md:hidden",
+              )}
+            >
+              <Camera className="size-4 text-tarineo-orange" aria-hidden />
+              Prendre en photo
+            </button>
           ) : null}
-        </motion.button>
+        </div>
       ) : null}
       {error ? (
         <p role="alert" className="text-[14px] text-destructive">
@@ -602,7 +656,11 @@ export function DocumentDrop({
           )}
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={saving} className="rounded-full bg-brand-orange text-white hover:brightness-[0.96]">
-              {saving ? "Enregistrement…" : "Enregistrer et ouvrir"}
+              {saving
+                ? "Enregistrement…"
+                : stayAfterSave
+                  ? "Enregistrer"
+                  : "Enregistrer et ouvrir"}
             </Button>
             <Button type="button" variant="ghost" className="rounded-full" onClick={clearDraft} disabled={saving}>
               Annuler

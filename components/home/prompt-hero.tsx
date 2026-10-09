@@ -42,7 +42,7 @@ export function PromptHero({
           "gap-4 px-5 py-5 sm:gap-5 sm:px-7 sm:py-6 lg:px-8 lg:py-7",
         featured &&
           inWidget &&
-          "gap-3 px-4 py-4 sm:gap-4 sm:px-5 sm:py-5",
+          "gap-2 px-4 py-3.5 sm:px-5 sm:py-4",
         className,
       )}
     >
@@ -54,7 +54,7 @@ export function PromptHero({
           className={cn(
             "pointer-events-none absolute z-10 flex items-end justify-end",
             inWidget
-              ? "top-0 right-0 h-[112px] w-[96px] sm:h-[120px] sm:w-[104px]"
+              ? "top-0 right-0 h-[88px] w-[76px] sm:h-[96px] sm:w-[84px]"
               : "top-0 right-2 h-[140px] w-[120px] sm:right-4 sm:h-[163px] sm:w-[140px]",
           )}
         />
@@ -63,13 +63,13 @@ export function PromptHero({
         className={cn(
           (landscape || featured) && "min-w-0",
           featured && !inWidget && "pr-[7.5rem] sm:pr-[9.5rem]",
-          featured && inWidget && "pr-[5.5rem] sm:pr-[6.25rem]",
+          featured && inWidget && "pr-[4.75rem] sm:pr-[5.5rem]",
         )}
       >
         <p
           className={cn(
             "font-mono font-medium tracking-[0.12em] text-muted-foreground uppercase",
-            featured ? "text-[11px]" : "text-[10px]",
+            featured && inWidget ? "text-[10px]" : featured ? "text-[11px]" : "text-[10px]",
           )}
         >
           {new Date().toLocaleDateString("fr-FR", {
@@ -81,33 +81,35 @@ export function PromptHero({
         {/* h2 : le h1 Accueil reste dans PageHeader (un seul greeting document). */}
         <h2
           className={cn(
-            "mt-1.5 font-display font-semibold tracking-tightest text-balance",
+            "mt-1 font-display font-semibold tracking-tightest text-balance",
             featured && inWidget
-              ? "max-w-[14ch] text-[clamp(22px,5vw,28px)] leading-[1.08]"
+              ? "max-w-[20ch] text-[clamp(18px,2.4vw,22px)] leading-[1.12]"
               : featured
-              ? "max-w-[22ch] text-[clamp(28px,3.2vw,40px)] leading-[1.04] sm:max-w-none"
+              ? "mt-1.5 max-w-[22ch] text-[clamp(28px,3.2vw,40px)] leading-[1.04] sm:max-w-none"
               : landscape
-                ? "text-[18px] leading-[1.15] xl:text-[20px]"
+                ? "mt-1.5 text-[18px] leading-[1.15] xl:text-[20px]"
                 : compact
-                  ? "max-w-[16ch] text-[clamp(22px,2.2vw,30px)] leading-[1.08]"
-                  : "max-w-[16ch] text-[clamp(28px,5vw,40px)] leading-[1.04]",
+                  ? "mt-1.5 max-w-[16ch] text-[clamp(22px,2.2vw,30px)] leading-[1.08]"
+                  : "mt-1.5 max-w-[16ch] text-[clamp(28px,5vw,40px)] leading-[1.04]",
           )}
         >
           Quels prix ont bougé ?
         </h2>
-        <p
-          className={cn(
-            "mt-1.5 max-w-[36ch] text-muted-foreground",
-            featured ? "text-[15px] leading-snug sm:text-[16px]" : "text-[14.5px] leading-snug",
-          )}
-        >
-          {firstName ? `${firstName}, d` : "D"}emandez à l’assistant — sans inventer de prix.
-        </p>
+        {featured && inWidget ? null : (
+          <p
+            className={cn(
+              "mt-1.5 max-w-[36ch] text-muted-foreground",
+              featured ? "text-[15px] leading-snug sm:text-[16px]" : "text-[14.5px] leading-snug",
+            )}
+          >
+            {firstName ? `${firstName}, d` : "D"}emandez à l’assistant — sans inventer de prix.
+          </p>
+        )}
       </div>
       <PromptBox
         band={band}
-        large={featured}
-        className={cn("min-w-0", !band && "mt-4 sm:mt-5")}
+        large={featured && !inWidget}
+        className={cn("min-w-0", !band && "mt-4 sm:mt-5", featured && inWidget && "mt-2.5")}
       />
     </GlowCard>
   );

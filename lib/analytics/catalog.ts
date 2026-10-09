@@ -34,6 +34,9 @@ export const EVENT_NAMES = [
   "demo_pdf_generated",
   "demo_pdf_downloaded",
   "demo_signup_clicked",
+  "document_ingested",
+  "document_confirmed",
+  "document_transform_failed",
 ] as const;
 
 export type EventName = (typeof EVENT_NAMES)[number];
@@ -55,6 +58,9 @@ export const FEATURES = [
   "pricing",
   "heros",
   "libs",
+  "analyses",
+  "pieces",
+  "relances",
 ] as const;
 
 export type FeatureKey = (typeof FEATURES)[number];
@@ -72,11 +78,17 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
   pricing: "Prix",
   heros: "Heros",
   libs: "Libs UI",
+  analyses: "Analyses docs",
+  pieces: "Pièces",
+  relances: "Relances",
 };
 
 export function featureFromPath(path: string): FeatureKey | "" {
   if (path.startsWith("/chantiers") || path.startsWith("/projets")) return "projets";
   if (path.startsWith("/copilote")) return "copilote";
+  if (path.startsWith("/devis/analyser")) return "analyses";
+  if (path.startsWith("/pieces")) return "pieces";
+  if (path.startsWith("/relances")) return "relances";
   if (path.startsWith("/distributeur") || path.startsWith("/ressources")) return "ressources";
   if (path.startsWith("/hausses") || path.startsWith("/schemas")) return "schemas";
   if (path.startsWith("/achats") || path.startsWith("/anatomie")) return "anatomie";

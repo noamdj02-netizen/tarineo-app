@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Calendar, FolderKanban, Inbox, LayoutGrid, MessageSquare, RotateCcw, Sparkles, Star } from "lucide-react";
+import { Calendar, LayoutGrid, RotateCcw, Sparkles, Star } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -34,12 +34,13 @@ type CatalogItem = {
     group: "board" | "library";
 };
 
+/** Blocs optionnels uniquement — À traiter / chantiers / hausses sont toujours en triage. */
 const CATALOG: CatalogItem[] = [
   {
-    key: "prompt",
-    title: "Dépôt",
-    description: "Glissez un devis ou une facture",
-    icon: MessageSquare,
+    key: "focus",
+    title: "Chantier en cours",
+    description: "Carte focus sous le triage",
+    icon: Star,
     group: "board",
   },
   {
@@ -47,34 +48,6 @@ const CATALOG: CatalogItem[] = [
     title: "Planning",
     description: "RDV chantier et relances",
     icon: Calendar,
-    group: "board",
-  },
-  {
-    key: "focus",
-    title: "Chantier en cours",
-    description: "Le chantier ouvert",
-    icon: Star,
-    group: "board",
-  },
-  {
-    key: "actions",
-    title: "À traiter",
-    description: "Devis importés à transformer",
-    icon: Inbox,
-    group: "board",
-  },
-  {
-    key: "projects",
-    title: "Chantiers",
-    description: "Ouverts et en pause",
-    icon: FolderKanban,
-    group: "board",
-  },
-  {
-    key: "schemas",
-    title: "Hausses",
-    description: "Derniers écarts de prix",
-    icon: Bell,
     group: "board",
   },
 ];
@@ -140,8 +113,8 @@ export function DashboardCustomize({
               Personnaliser ton tableau
             </DialogTitle>
             <DialogDescription>
-              Choisis ce qui s’affiche sur l’accueil. « Mettre devant » épingle le bloc en haut de
-              sa colonne.
+              Copilote + triage restent toujours en tête. Ajoute ici des blocs optionnels sous
+              ce bureau.
             </DialogDescription>
           </DialogHeader>
 

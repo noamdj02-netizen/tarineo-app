@@ -20,10 +20,10 @@ import { getDocument, listDocuments } from "@/lib/metier/queries";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { DocumentCard } from "@/lib/metier/types";
-import { loadCompanyLogo } from "@/lib/metier/brand-assets";
+import { COMPANY_LOGO_CID, companyLogoFromBuffer, loadCompanyLogo } from "@/lib/metier/brand-assets";
 import { pieceMailHtml } from "@/lib/metier/draft-mail";
 import { pdfFromDocument } from "@/lib/metier/pdf/from-document";
-import { sendEmailWithPdf } from "@/lib/email/send";
+import { sendEmailWithPdf, type InlineMailImage } from "@/lib/email/send";
 import { getViewer } from "@/lib/session";
 import { getCompanyProfile } from "@/lib/metier/queries";
 import { getCompanyProfileForUser, listDocumentsForUser } from "@/lib/metier/documents-for-user";
@@ -196,13 +196,32 @@ export async function sendDocumentMail(input: {
   const identity = await getCompanyMailIdentity();
   const bodyAlreadySigned =
     Boolean(identity.signOff) && input.body.includes(identity.signOff.slice(0, 24));
+  const remoteLogo = identity.logoFromEmailUrl.startsWith("http") ? identity.logoFromEmailUrl : "";
+  const inline: InlineMailImage[] | undefined = logo
+    ? [
+        {
+          filename: logo.filename,
+          content: logo.buffer,
+          contentId: logo.cid,
+          contentType: logo.mime,
+        },
+      ]
+    : remoteLogo
+      ? [
+          {
+            filename: "logo.png",
+            path: remoteLogo,
+            contentId: COMPANY_LOGO_CID,
+          },
+        ]
+      : undefined;
   const html = pieceMailHtml({
     body: input.body,
     company: identity.companyName || company?.raison_sociale || "L’entreprise",
     phone: identity.phone || company?.telephone,
     email: identity.email || company?.email_contact || viewer?.email || undefined,
     address: identity.address || [company?.adresse_rue, company?.adresse_code_postal, company?.adresse_ville].filter(Boolean).join(", "),
-    logoCid: logo?.cid,
+    logoCid: logo || remoteLogo ? COMPANY_LOGO_CID : undefined,
     // Si le body contient déjà la signature (brouillon IA), ne pas la dupliquer en pied HTML.
     signatureFooter:
       !bodyAlreadySigned && identity.signatureText ? identity.closingBlock : null,
@@ -215,13 +234,15 @@ export async function sendDocumentMail(input: {
     filename,
     pdf: buffer,
     replyTo: company?.email_contact || viewer?.email,
-    inline: logo ? [{ filename: logo.filename, content: logo.buffer, contentId: logo.cid }] : undefined,
+    inline,
     idempotencyKey: `doc-mail:${input.documentId}:${input.to}`,
   });
   if (!res.ok) {
     return {
       ok: false,
-      error: res.skipped ? "E-mail non configuré. Le document n’a pas été envoyé." : (res.error ?? "Envoi impossible."),
+      error: res.skipped
+        ? "Envoi Tarinéo indisponible : RESEND_API_KEY manquant, ou RESEND_ENABLE_DEV=true requis en local."
+        : (res.error ?? "Envoi impossible."),
     };
   }
   await markDocumentSent(doc.id, { last_sent_to: input.to });
@@ -431,12 +452,37 @@ async function sendFollowUpAsUser(
     phone: profile?.telephone,
     email: profile?.email_contact,
   });
+
+  let logo = null as ReturnType<typeof companyLogoFromBuffer>;
+  if (profile?.logo_path) {
+    const { data: logoBlob, error: logoErr } = await admin.storage.from("documents").download(profile.logo_path);
+    if (!logoErr && logoBlob) {
+      logo = companyLogoFromBuffer(Buffer.from(await logoBlob.arrayBuffer()), profile.logo_path);
+    }
+  }
+  const remoteLogo = emailSettings.logoFromEmailUrl.trim().startsWith("http")
+    ? emailSettings.logoFromEmailUrl.trim()
+    : "";
+  const inline: InlineMailImage[] | undefined = logo
+    ? [
+        {
+          filename: logo.filename,
+          content: logo.buffer,
+          contentId: logo.cid,
+          contentType: logo.mime,
+        },
+      ]
+    : remoteLogo
+      ? [{ filename: "logo.png", path: remoteLogo, contentId: COMPANY_LOGO_CID }]
+      : undefined;
+
   const html = pieceMailHtml({
     body: fu.body,
     company: companyName,
     phone: profile?.telephone,
     email: profile?.email_contact,
     address: [profile?.adresse_rue, profile?.adresse_code_postal, profile?.adresse_ville].filter(Boolean).join(", "),
+    logoCid: logo || remoteLogo ? COMPANY_LOGO_CID : undefined,
     signatureFooter: emailSettings.signatureText ? closingBlock : null,
   });
   const seq = fu.sequence_number ?? 1;
@@ -448,6 +494,7 @@ async function sendFollowUpAsUser(
     filename,
     pdf: buffer,
     replyTo: profile?.email_contact,
+    inline,
     idempotencyKey: quoteFollowupSendKey(doc.id, seq),
   });
 }

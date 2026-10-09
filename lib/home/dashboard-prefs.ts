@@ -27,7 +27,8 @@ export type DashboardPrefs = {
   columnSplit: number;
 };
 
-const STORAGE_KEY = "navpit:home-dashboard-v3";
+/** v4 = Accueil triage-first (plus de prompt/planning/hausses en widgets par défaut). */
+const STORAGE_KEY = "navpit:home-dashboard-v4";
 
 export const WIDGET_LABELS: Record<WidgetKey, string> = {
   prompt: "Analyser un document",
@@ -41,8 +42,11 @@ export const WIDGET_LABELS: Record<WidgetKey, string> = {
   metier: "Sections métier",
 };
 
-export const DEFAULT_LEFT_COLUMN: WidgetKey[] = ["prompt", "focus", "actions", "projects"];
-export const DEFAULT_RIGHT_COLUMN: WidgetKey[] = ["schemas", "calendar"];
+/** Widgets déjà rendus en bandeau triage fixe (hors colonnes personnalisables). */
+export const TRIAGE_PINNED_WIDGETS: WidgetKey[] = ["prompt", "actions", "projects", "schemas"];
+
+export const DEFAULT_LEFT_COLUMN: WidgetKey[] = [];
+export const DEFAULT_RIGHT_COLUMN: WidgetKey[] = [];
 
 const DEFAULT_POSTITS: PostIt[] = [
   {
@@ -55,9 +59,9 @@ const DEFAULT_POSTITS: PostIt[] = [
 export const DEFAULT_DASHBOARD_PREFS: DashboardPrefs = {
   widgets: {
     prompt: true,
-    calendar: true,
+    calendar: false,
     week: false,
-    focus: true,
+    focus: false,
     actions: true,
     postits: false,
     projects: true,
@@ -223,8 +227,7 @@ export function loadDashboardPrefsLocal(): DashboardPrefs {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const legacy = localStorage.getItem("navpit:home-dashboard-v1");
-      if (legacy) return normalizeDashboardPrefs(JSON.parse(legacy) as Partial<DashboardPrefs>);
+      // Pas de migration v3 → v4 : on repart du layout triage (évite warehouse local).
       return DEFAULT_DASHBOARD_PREFS;
     }
     return normalizeDashboardPrefs(JSON.parse(raw) as Partial<DashboardPrefs>);

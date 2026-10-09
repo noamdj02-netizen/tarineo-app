@@ -4,7 +4,10 @@ export const ADMIN_NAV: { id: string; label: string; items: AdminNavItem[] }[] =
   {
     id: "overview",
     label: "Overview",
-    items: [{ href: "/admin/overview", label: "Vue générale" }],
+    items: [
+      { href: "/admin/cockpit", label: "Cockpit" },
+      { href: "/admin/overview", label: "Vue générale" },
+    ],
   },
   {
     id: "users",

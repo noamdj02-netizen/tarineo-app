@@ -22,6 +22,7 @@ import {
   uploadLandingDemoExtract,
   type LandingDemoLine,
 } from "@/lib/site/landing-quote-transform-demo";
+import { SuccessPop } from "@/components/motion/success-pop";
 import { Button } from "@/components/site/landing-v2/components/ui/Button";
 import { LandingPillButton } from "@/components/site/landing-v2/components/ui/LandingPillButton";
 import { Badge } from "@/components/site/landing-v2/components/ui/Badge";
@@ -327,35 +328,33 @@ export function LandingQuoteTransformPanel({
       ) : null}
 
       {downloadDone ? (
-        <LandingAlert variant="success" className="mt-6 !flex-col !items-stretch gap-4 px-5 py-5">
-          <div>
-            <h4 className="text-lg font-semibold text-ink-900">Votre document est prêt</h4>
-            <p className="mt-2 text-sm text-ink-700">
-              <span className="font-medium">{outputLabel}</span>
-              {clientName.trim() ? ` — ${clientName.trim()}` : null}
-            </p>
-            <p className="mt-2 text-sm text-ink-600">
-              Marge appliquée : <span className="font-medium nums">{marginPct} %</span> · Total client :{" "}
-              <span className="font-medium nums">{formatEuroHt(clientHt)} HT</span>
-            </p>
-            <p className="mt-4 text-sm text-ink-600">
+        <div className="mt-6 overflow-hidden rounded-[20px] border border-accent/25 bg-canvas shadow-soft">
+          <SuccessPop
+            size="md"
+            title="Votre document est prêt"
+            hint={`${outputLabel}${clientName.trim() ? ` — ${clientName.trim()}` : ""} · Marge ${marginPct} % · ${formatEuroHt(clientHt)} HT`}
+            className="px-5 py-8"
+            action={
+              <>
+                <Button
+                  href={LANDING_SIGNUP}
+                  size="md"
+                  onClick={() => trackDemoSignupClick("post_download")}
+                >
+                  Créer mon compte gratuitement
+                </Button>
+                <Button href="#top" variant="secondary" size="md">
+                  Voir comment fonctionne TARINEO
+                </Button>
+              </>
+            }
+          >
+            <p className="mx-auto max-w-[40ch] text-sm text-ink-600">
               Vous venez de transformer votre premier document en quelques secondes. Avec un compte TARINEO,
               conservez vos pièces, ajustez vos marges et suivez vos chantiers.
             </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              href={LANDING_SIGNUP}
-              size="md"
-              onClick={() => trackDemoSignupClick("post_download")}
-            >
-              Créer mon compte gratuitement
-            </Button>
-            <Button href="#top" variant="secondary" size="md">
-              Voir comment fonctionne TARINEO
-            </Button>
-          </div>
-        </LandingAlert>
+          </SuccessPop>
+        </div>
       ) : null}
 
       {!downloadDone ? (

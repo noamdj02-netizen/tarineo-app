@@ -24,9 +24,11 @@
 /.tmp/
 /recordly/
 .impeccable/
+/NullMotion/
 
-# Finder / iCloud duplicate copies (« file 2.ext »)
+# Finder / iCloud duplicate copies (« file 2.ext » / « file 2 »)
 **/* 2.*
+**/* 2
 
 # production
 /build

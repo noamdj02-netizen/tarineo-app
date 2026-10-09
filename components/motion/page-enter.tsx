@@ -1,21 +1,25 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { EASE } from "@/components/motion/reveal";
+import { POP_PAGE } from "@/components/motion/pop";
 
 type Variant = "app" | "auth" | "site" | "onboard";
 
 const presets: Record<
   Variant,
-  { y: number; duration: number; opacityOnly?: boolean }
+  { y: number; scale: number; opacityOnly?: boolean }
 > = {
-  app: { y: 8, duration: 0.28 },
-  auth: { y: 10, duration: 0.32 },
-  onboard: { y: 10, duration: 0.32 },
-  site: { y: 0, duration: 0.38, opacityOnly: true },
+  app: { y: 10, scale: 0.985 },
+  auth: { y: 12, scale: 0.98 },
+  onboard: { y: 12, scale: 0.98 },
+  /** Landing : fade + léger pop (même famille spring). */
+  site: { y: 0, scale: 0.992, opacityOnly: true },
 };
 
-/** Transition légère à chaque changement de route (template.tsx). */
+/**
+ * Transition de route — même référence **Pop in** que les validations
+ * (`SuccessPop` / Relances), en version discrète.
+ */
 export function PageEnter({
   children,
   variant = "app",
@@ -25,7 +29,6 @@ export function PageEnter({
 }) {
   const reduce = useReducedMotion();
   const p = presets[variant];
-
   const box = variant === "onboard" ? "flex h-full min-h-0 flex-col" : "min-h-0";
 
   if (reduce) return <div className={box}>{children}</div>;
@@ -33,9 +36,13 @@ export function PageEnter({
   return (
     <motion.div
       className={box}
-      initial={{ opacity: 0, y: p.opacityOnly ? 0 : p.y }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: p.duration, ease: EASE }}
+      initial={{
+        opacity: 0,
+        y: p.opacityOnly ? 0 : p.y,
+        scale: p.scale,
+      }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={POP_PAGE}
     >
       {children}
     </motion.div>

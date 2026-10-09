@@ -6,6 +6,7 @@ import {
   getMem,
   memAddDocument,
   memCreateChantier,
+  memDeleteChantier,
   memGetCompany,
   memSetChantierStatus,
   memSetCompany,
@@ -275,6 +276,36 @@ export async function listParties(kind?: Party["kind"]): Promise<Party[]> {
     return [];
   }
   return (data ?? []) as Party[];
+}
+
+/**
+ * Ids des pièces d’achat déjà transformées (source_document_id des docs sortants).
+ * Léger : pas de lignes / parties — pour éviter les faux +/- avec des listes plafonnées.
+ */
+export async function listTransformedSourceIds(): Promise<Set<string>> {
+  const db = await getRemote();
+  if (!db) {
+    if (!allowLocalMemory()) persistUnavailable("listTransformedSourceIds");
+    const outs = docCardsFromMem("local", { direction: "out" });
+    return new Set(outs.map((d) => d.source_document_id).filter((id): id is string => Boolean(id)));
+  }
+  await ensureMetierSeed();
+  const { data, error } = await db.supabase
+    .from("documents")
+    .select("source_document_id")
+    .eq("user_id", db.user.id)
+    .eq("direction", "out")
+    .not("source_document_id", "is", null);
+  if (error) {
+    if (!allowLocalMemory()) failRead("listTransformedSourceIds", error);
+    logMetier("listTransformedSourceIds", error);
+    return new Set();
+  }
+  return new Set(
+    (data ?? [])
+      .map((row) => row.source_document_id as string | null)
+      .filter((id): id is string => Boolean(id)),
+  );
 }
 
 export async function listDocuments(filter?: DocumentListFilter): Promise<DocumentCard[]> {
@@ -648,6 +679,35 @@ export async function createChantier(input: { name: string; address?: string; cl
     .maybeSingle();
   if (!focus) await setChantierStatus(created.id, "focus");
   return created;
+}
+
+/** Supprime un chantier. Les documents restent ; leur chantier_id passe à null (FK ON DELETE SET NULL). */
+export async function deleteChantier(id: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const chantierId = id.trim();
+  if (!chantierId) return { ok: false, error: "Chantier manquant." };
+  const db = await getRemote();
+  if (!db) {
+    if (!allowLocalMemory()) return { ok: false, error: "Connexion requise." };
+    const removed = memDeleteChantier("local", chantierId);
+    return removed ? { ok: true } : { ok: false, error: "Chantier introuvable." };
+  }
+  const { data: owned, error: lookupError } = await db.supabase
+    .from("chantiers")
+    .select("id")
+    .eq("user_id", db.user.id)
+    .eq("id", chantierId)
+    .maybeSingle();
+  if (lookupError) {
+    logMetier("deleteChantier.lookup", lookupError);
+    return { ok: false, error: "Impossible de vérifier le chantier." };
+  }
+  if (!owned) return { ok: false, error: "Chantier introuvable." };
+  const { error } = await db.supabase.from("chantiers").delete().eq("id", chantierId).eq("user_id", db.user.id);
+  if (error) {
+    logMetier("deleteChantier", error);
+    return { ok: false, error: "Suppression impossible." };
+  }
+  return { ok: true };
 }
 
 export async function setChantierStatus(id: string, status: ChantierStatus) {

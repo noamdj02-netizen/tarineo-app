@@ -370,6 +370,17 @@ export function memSetChantierStatus(userId: string, id: string, status: Chantie
   }
 }
 
+export function memDeleteChantier(userId: string, id: string): boolean {
+  const u = seedMem(userId);
+  const before = u.chantiers.length;
+  u.chantiers = u.chantiers.filter((c) => c.id !== id);
+  if (u.chantiers.length === before) return false;
+  for (const d of u.documents) {
+    if (d.chantier_id === id) d.chantier_id = null;
+  }
+  return true;
+}
+
 export function memAddDocument(userId: string, row: DocumentRow, lines: DocumentLine[]) {
   const u = seedMem(userId);
   u.documents.unshift(row);

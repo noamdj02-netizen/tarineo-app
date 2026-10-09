@@ -1,4 +1,4 @@
-import { CreditCard, Languages, Palette } from "lucide-react";
+import { CreditCard, Languages, LayoutDashboard, Palette } from "lucide-react";
 import Link from "next/link";
 import { SettingsSection } from "@/components/settings/settings-section";
 import { AppearanceSettings } from "@/components/theme/appearance-settings";
@@ -43,6 +43,27 @@ export default async function ParametresComptePage() {
       scope="utilisateur"
     >
       <div className="flex flex-col gap-4">
+        {owner ? (
+          <div className="card-soft flex flex-col gap-3 border-tarineo-orange/25 bg-wash-orange/40 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div className="min-w-0">
+              <p className="mono-label mb-1">/ Studio ///</p>
+              <p className="font-display text-[18px] font-semibold tracking-tight text-ink">
+                Cockpit admin
+              </p>
+              <p className="mt-0.5 text-[13px] text-muted-foreground">
+                Analyses, abos, usage et erreurs — réservé à Noam &amp; Alan.
+              </p>
+            </div>
+            <Link
+              href="/admin/cockpit"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-pill bg-tarineo-orange px-5 text-[14px] font-medium text-white transition-[filter] hover:brightness-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange-ring"
+            >
+              <LayoutDashboard className="size-4" aria-hidden />
+              Ouvrir le cockpit
+            </Link>
+          </div>
+        ) : null}
+
         <div className="card-soft p-5 sm:p-6">
           <p className="mono-label mb-3">/ Configuration initiale ///</p>
           <ol className="flex flex-col gap-2">

@@ -56,10 +56,17 @@ export function ActionsSection({ actions }: { actions: ActionItem[] }) {
           ))}
         </ul>
       ) : (
-        <p className="flex items-center gap-2 py-1 text-[14px] text-muted-foreground">
-          <span aria-hidden className="text-[#16A34A]">✓</span>
-          Rien à traiter
-        </p>
+        <div className="flex flex-col gap-2 py-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-center gap-2 text-[14px] text-muted-foreground">
+            <span aria-hidden className="text-[#16A34A]">
+              ✓
+            </span>
+            Rien à traiter pour le moment
+          </p>
+          <Link href={R.devisNouveau} className="text-[13px] font-medium text-tarineo-orange hover:underline">
+            Créer un devis
+          </Link>
+        </div>
       )}
     </section>
   );
@@ -160,7 +167,12 @@ export function SchemasSection({ alerts, documents }: { alerts: PriceAlert[]; do
           })}
         </ul>
       ) : (
-        <p className="text-[14px] text-muted-foreground">Pas encore de hausse relevée.</p>
+        <p className="text-[14px] text-muted-foreground">
+          Pas encore de hausse relevée.{" "}
+          <Link href={R.achats} className="font-medium text-tarineo-orange">
+            Voir les achats
+          </Link>
+        </p>
       )}
     </section>
   );

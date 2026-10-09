@@ -21,7 +21,7 @@ const PRO_ONLY = new Set<TarineoFeature>([
   "advanced_integrations",
 ]);
 
-/** Pro effectif : abonnement Pro, Fondateur, ou essai Pro 14 j. */
+/** Pro effectif : abonnement Pro, Fondateur, ou essai Pro 7 j. */
 export function hasProEntitlements(plan: PlanInfo): boolean {
   return plan.plan === "pro" || plan.plan === "founder" || plan.isFreeTrial;
 }

@@ -11,11 +11,16 @@ export function TransformForm({
   clients,
   defaultClientId,
   defaultMarginPct = 35,
+  onSuccess,
+  className,
 }: {
   source: DocumentCard;
   clients: Party[];
   defaultClientId: string | null;
   defaultMarginPct?: number;
+  /** Si fourni : pas de navigation automatique (ex. drawer). */
+  onSuccess?: (createdId: string) => void;
+  className?: string;
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -24,7 +29,9 @@ export function TransformForm({
 
   return (
     <form
-      className="mt-4 flex flex-col gap-2 rounded-[22px] border border-line bg-surface-2 p-4"
+      className={
+        className ?? "mt-4 flex flex-col gap-2 rounded-[22px] border border-line bg-surface-2 p-4"
+      }
       onSubmit={(e) => {
         e.preventDefault();
         const fd = new FormData(e.currentTarget);
@@ -35,6 +42,11 @@ export function TransformForm({
           const res = await transformQuoteAction(fd);
           if (!res.ok) {
             setError(res.error);
+            return;
+          }
+          if (onSuccess) {
+            onSuccess(res.id);
+            router.refresh();
             return;
           }
           router.push(`/pieces/${res.id}`);

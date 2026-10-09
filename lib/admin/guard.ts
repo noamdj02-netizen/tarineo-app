@@ -1,17 +1,13 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
-import { OWNER_EMAIL } from "@/lib/billing/plan";
+import { isOwner } from "@/lib/billing/plan";
 import { isOpenAccess } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
 
-function isAdmin(email: string | undefined) {
-  return email?.trim().toLowerCase() === OWNER_EMAIL;
-}
-
 /**
- * Email qui a le droit de voir Analyses.
+ * Email qui a le droit de voir /admin.
  * Session réelle d’abord. En accès libre local, le site est déjà le compte seed :
- * on l’accepte seulement si c’est cette adresse, et jamais en production.
+ * on l’accepte seulement si c’est un owner, et jamais en production.
  */
 async function adminEmail() {
   const supabase = await createClient();
@@ -25,15 +21,15 @@ async function adminEmail() {
   return undefined;
 }
 
-/** Vrai droit d’afficher le lien Analyses. */
+/** Vrai droit d’afficher le lien Analyses / admin. */
 export async function sessionIsOwner() {
-  return isAdmin(await adminEmail());
+  return isOwner(await adminEmail());
 }
 
-/** Réservé à noamdj02@gmail.com. Sans droit : connexion, ou 404 si un autre compte est connecté. */
+/** Réservé aux comptes studio (Noam, Alan, NAVPIT_OWNER_EMAILS). */
 export async function requireOwner() {
   const email = await adminEmail();
   if (!email) redirect("/login?next=/admin");
-  if (!isAdmin(email)) notFound();
+  if (!isOwner(email)) notFound();
   return email;
 }

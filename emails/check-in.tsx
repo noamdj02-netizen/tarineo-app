@@ -42,7 +42,7 @@ export const CHECK_IN_CTA_VARIANTS = [
 export function CheckInEmail({
   firstName,
   appUrl,
-  replyTo = `bonjour@${BRAND.domain}`,
+  replyTo = BRAND.contactEmail,
 }: CheckInEmailProps) {
   const base = appUrl.replace(/\/$/, "");
   const hello = firstName?.trim() ? `Salut ${firstName.trim()},` : "Salut,";
@@ -102,7 +102,7 @@ export function CheckInEmail({
 export function CheckInEmailShort({
   firstName,
   appUrl,
-  replyTo = `bonjour@${BRAND.domain}`,
+  replyTo = BRAND.contactEmail,
 }: CheckInEmailProps) {
   const base = appUrl.replace(/\/$/, "");
   const hello = firstName?.trim() ? `Salut ${firstName.trim()},` : "Salut,";

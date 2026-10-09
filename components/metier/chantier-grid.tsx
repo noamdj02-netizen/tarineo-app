@@ -1,13 +1,13 @@
 "use client";
 
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/app-ui/empty-state";
 import { FilterPills } from "@/components/app-ui/filter-pills";
 import { StatusBadge, chantierTone } from "@/components/tarineo/status-badge";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { createChantierAction } from "@/app/(app)/metier/actions";
+import { createChantierAction, deleteChantierAction } from "@/app/(app)/metier/actions";
 import { ChantierStatusToggle } from "@/components/metier/chantier-status";
 import type { ChantierCard } from "@/lib/metier/types";
 import { DEMO_MARK } from "@/lib/site/tarineo";
@@ -82,7 +82,10 @@ export function ChantierGrid({
               {dueOf(c.id)} relance{dueOf(c.id) > 1 ? "s" : ""} à traiter
             </p>
           ) : null}
-          <p className="text-[13px] font-medium text-tarineo-orange">Voir le chantier →</p>
+          <div className="relative z-10 flex items-center justify-between gap-2">
+            <p className="text-[13px] font-medium text-tarineo-orange">Voir le chantier →</p>
+            <DeleteChantierButton id={c.id} name={c.name} docsCount={c.docs_count} />
+          </div>
           <div className="relative z-10 hidden md:block" onClick={(e) => e.preventDefault()}>
             <ChantierStatusToggle id={c.id} status={c.status} />
           </div>
@@ -91,6 +94,63 @@ export function ChantierGrid({
       <NewChantier />
     </div>
       )}
+    </div>
+  );
+}
+
+function DeleteChantierButton({
+  id,
+  name,
+  docsCount,
+}: {
+  id: string;
+  name: string;
+  docsCount: number;
+}) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        disabled={pending}
+        aria-label={`Supprimer le chantier ${name}`}
+        title="Supprimer le chantier"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const docsNote =
+            docsCount > 0
+              ? `\n\n${docsCount} document${docsCount > 1 ? "s" : ""} resteront dans vos pièces (sans chantier).`
+              : "";
+          if (
+            !window.confirm(
+              `Supprimer le chantier « ${name} » ?${docsNote}\n\nCette action est définitive.`,
+            )
+          ) {
+            return;
+          }
+          setError(null);
+          start(async () => {
+            const res = await deleteChantierAction(id);
+            if (!res.ok) {
+              setError(res.error);
+              return;
+            }
+            router.refresh();
+          });
+        }}
+        className="inline-flex size-9 items-center justify-center rounded-[10px] border border-line text-muted-foreground transition-colors hover:border-destructive/40 hover:bg-destructive/5 hover:text-destructive disabled:opacity-50"
+      >
+        {pending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Trash2 className="size-3.5" aria-hidden />}
+      </button>
+      {error ? (
+        <p className="max-w-[12rem] text-right text-[11px] text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

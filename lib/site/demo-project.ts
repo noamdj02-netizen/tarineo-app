@@ -50,7 +50,7 @@ export const DEMO_PROJECT: ProjectFull = {
     "Ils publient au feeling, le ton change à chaque post, et le prochain contenu n’est jamais prêt.",
   business: {
     Pro: "29 € / mois · 80 pièces",
-    Offre: "14 jours offerts",
+    Offre: "7 jours offerts",
     Starter: "15 € / mois · 30 pièces",
     Équipe: "49 € / mois · 200 pièces",
     Objectif: "1ère vente",

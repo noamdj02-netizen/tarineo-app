@@ -1,7 +1,8 @@
 # Mail check-in nouveaux utilisateurs
 
-**Statut :** brouillon — ne pas envoyer tant que tu n’as pas validé.  
+**Statut :** actif — cron quotidien `GET /api/cron/check-in` (Vercel, 09:00 UTC).  
 **Template React :** `emails/check-in.tsx`  
+**Envoi :** `lib/email/check-in.ts` → J+2 après inscription, idempotent (`user_metadata.check_in_sent`).  
 **Objectif unique :** que l’utilisateur réponde au mail.
 
 ## 1. Les 5 objets

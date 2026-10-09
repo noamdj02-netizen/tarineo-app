@@ -12,7 +12,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-bg">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-[228px] flex-col bg-side px-3 pt-5 pb-4 text-side-ink lg:flex">
-        <Link href="/admin/overview" className="px-2 font-grotesk text-[18px] font-bold tracking-[-0.04em]">
+        <Link href="/admin/cockpit" className="px-2 font-grotesk text-[18px] font-bold tracking-[-0.04em]">
           {BRAND.name}
           <span className="text-side-muted"> / admin</span>
         </Link>

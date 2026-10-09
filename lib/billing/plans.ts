@@ -37,7 +37,7 @@ export const PRO = { month: 30, year: 300 } as const;
 export const FOUNDER = { price: 149, seats: 100 } as const;
 
 /** Essai Pro sans carte bancaire (durée alignée sur la migration SQL). */
-export const PRO_TRIAL_DAYS = 14;
+export const PRO_TRIAL_DAYS = 7;
 
 /**
  * Prix Création / Pro selon l’ancienneté (anniversaire de facturation).

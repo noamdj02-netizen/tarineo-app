@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Files, Loader2, Upload, XCircle } from "lucide-react";
+import { Camera, CheckCircle2, Files, Loader2, Upload, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { confirmDocument, ingestDocument } from "@/app/(app)/metier/actions";
@@ -30,6 +30,8 @@ export function DocumentBulkImport({
   lockKind,
   lockDirection,
   defaultChantierId,
+  stayAfterSave,
+  onBulkComplete,
 }: {
   chantiers: ChantierCard[];
   clients?: Party[];
@@ -37,9 +39,13 @@ export function DocumentBulkImport({
   lockKind?: DocKind;
   lockDirection?: DocDirection;
   defaultChantierId?: string | null;
+  /** Reste sur la page après succès (hub Analyse IA). */
+  stayAfterSave?: boolean;
+  onBulkComplete?: (info: { savedCount: number; lastId: string | null }) => void;
 }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [running, setRunning] = useState(false);
@@ -75,6 +81,7 @@ export function DocumentBulkImport({
     setGlobalError(null);
     let failures = 0;
     let lastHref: string | null = null;
+    let lastId: string | null = null;
     let savedCount = 0;
 
     for (const item of queue) {
@@ -122,6 +129,7 @@ export function DocumentBulkImport({
       }
 
       savedCount += 1;
+      lastId = saved.id;
       lastHref = hrefAfterDocumentSave({
         id: saved.id,
         chantierSlug: saved.chantierSlug,
@@ -131,8 +139,12 @@ export function DocumentBulkImport({
 
     setRunning(false);
     router.refresh();
-      if (failures === 0 && savedCount > 0) {
+    if (failures === 0 && savedCount > 0) {
       setQueue([]);
+      if (stayAfterSave) {
+        onBulkComplete?.({ savedCount, lastId });
+        return;
+      }
       // Un fichier → fiche pièce (modifiable) ; plusieurs → liste métier.
       if (savedCount === 1 && lastHref) {
         router.replace(lastHref);
@@ -181,6 +193,17 @@ export function DocumentBulkImport({
             e.target.value = "";
           }}
         />
+        <input
+          ref={cameraRef}
+          type="file"
+          accept="image/jpeg,image/png,image/heic,image/webp"
+          capture="environment"
+          className="sr-only"
+          onChange={(e) => {
+            addFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
         <Files className="size-7 text-brand-orange" aria-hidden />
         <p className="font-display text-[16px] font-semibold tracking-tight text-ink">
           Import en masse
@@ -193,6 +216,20 @@ export function DocumentBulkImport({
           PDF · JPEG · PNG · HEIC
         </span>
       </button>
+      {!running ? (
+        <button
+          type="button"
+          onClick={() => cameraRef.current?.click()}
+          className={cn(
+            "inline-flex h-11 w-full items-center justify-center gap-2 rounded-[12px] border border-line bg-surface text-[14px] font-medium text-ink md:hidden",
+            "transition-[background-color,border-color] hover:border-tarineo-orange/35 hover:bg-wash-orange",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange-ring",
+          )}
+        >
+          <Camera className="size-4 text-tarineo-orange" aria-hidden />
+          Ajouter une photo
+        </button>
+      ) : null}
 
       {queue.length ? (
         <div className="rounded-card border border-line bg-surface">

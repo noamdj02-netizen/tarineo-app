@@ -1,11 +1,13 @@
 "use client";
 
 import { EmptyState } from "@/components/app-ui/empty-state";
+import { FilterPills } from "@/components/app-ui/filter-pills";
 import { PageHeader } from "@/components/app-ui/page-header";
 import { DocumentChain } from "@/components/metier/document-chain";
+import { ChantierClientPanel } from "@/components/metier/chantier-client-panel";
+import { ChantierDocRow } from "@/components/metier/chantier-doc-row";
 import { ChantierStatusToggle } from "@/components/metier/chantier-status";
 import { DocumentDrop } from "@/components/metier/document-drop";
-import { DocumentList } from "@/components/metier/document-list";
 import { CancelFollowUpButton, MarkAnsweredButton, RelanceButton, RelanceStatus } from "@/components/metier/relance-dialog";
 import { UpcomingDeliveries } from "@/components/metier/upcoming-deliveries";
 import { SupplierLogo } from "@/components/site/supplier-logo";
@@ -17,7 +19,6 @@ import {
 import {
   documentAmountHt,
   documentChains,
-  documentLifecycleLabel,
   formatRelativeFr,
   isDocumentTransformed,
   type FollowUpView,
@@ -28,16 +29,19 @@ import { R } from "@/lib/routes";
 import { signedPct, variation } from "@/lib/site/tarineo";
 import { DEMO_MARK, euro } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
-import { ArrowRight, FileText, User } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 
-type Tab = "vue" | "documents" | "achats" | "relances" | "activite";
+type Tab = "vue" | "pieces" | "relances" | "activite";
+type ScopeFilter = "all" | "client" | "fournisseur";
+type KindFilter = "all" | "devis" | "bon_commande" | "facture";
 
 function asTab(value?: string): Tab {
-  if (value === "documents" || value === "achats" || value === "relances" || value === "activite" || value === "vue") {
-    return value;
-  }
+  if (value === "pieces" || value === "relances" || value === "activite" || value === "vue") return value;
+  // Anciennes URLs ?tab=documents|achats
+  if (value === "documents" || value === "achats") return "pieces";
   return "vue";
 }
 
@@ -60,8 +64,32 @@ export function ChantierFiche({
   followUps?: FollowUpView[];
   initialTab?: string;
 }) {
-  const [tab, setTab] = useState<Tab>(asTab(initialTab));
+  const router = useRouter();
+  const pathname = usePathname();
+  const [tab, setTabState] = useState<Tab>(() => asTab(initialTab));
+  const [scope, setScope] = useState<ScopeFilter>("all");
+  const [kind, setKind] = useState<KindFilter>("all");
   void defaultMarginPct;
+
+  const setTab = useCallback(
+    (next: Tab) => {
+      setTabState(next);
+      const href = next === "vue" ? pathname : `${pathname}?tab=${next}`;
+      router.replace(href, { scroll: false });
+    },
+    [pathname, router],
+  );
+
+  const client = useMemo(
+    () => clients.find((c) => c.id === chantier.client_id) ?? null,
+    [clients, chantier.client_id],
+  );
+  const followUpByDoc = useMemo(() => {
+    const map = new Map<string, FollowUpView>();
+    for (const f of followUps) map.set(f.document_id, f);
+    return map;
+  }, [followUps]);
+
   const inbound = documents.filter((d) => d.direction === "in");
   const outbound = documents.filter((d) => d.direction === "out");
   const buyHt = inbound.reduce((s, d) => s + documentAmountHt(d), 0);
@@ -72,10 +100,11 @@ export function ChantierFiche({
   const commandes = outbound.filter((d) => d.kind === "bon_commande");
   const factures = outbound.filter((d) => d.kind === "facture");
   const relances = followUps.filter((f) => f.status === "due" || f.status === "scheduled");
+  const relancesDue = followUps.filter((f) => f.status === "due").length;
   const marginPct = sellHt > 0 ? Math.round((marginHt / sellHt) * 1000) / 10 : null;
   const pendingInbound = inbound.filter((d) => !isDocumentTransformed(d, documents));
   const deliveries = useMemo(() => upcomingDeliveries(documents, { limit: 8 }), [documents]);
-  const todos: { key: string; title: string; hint: string; href?: string; tone: "warn" | "focus" | "muted" }[] = [
+  const todos: { key: string; title: string; hint: string; href?: string; tone: "warn" | "focus" | "muted"; goTab?: Tab }[] = [
     ...deliveries.map((d) => ({
       key: `del-${d.documentId}`,
       title: `Livraison le ${formatDeliveryDateFr(d.day)}`,
@@ -89,6 +118,7 @@ export function ChantierFiche({
       hint: f.status === "due" ? "À relancer" : "Programmée",
       href: undefined as string | undefined,
       tone: "warn" as const,
+      goTab: "relances" as Tab,
     })),
     ...alerts.slice(0, 4).map((a) => ({
       key: `al-${a.id}`,
@@ -96,6 +126,7 @@ export function ChantierFiche({
       hint: `Hausse ${signedPct(variation(Number(a.old_price), Number(a.new_price)))}`,
       href: undefined as string | undefined,
       tone: "warn" as const,
+      goTab: "pieces" as Tab,
     })),
     ...pendingInbound.slice(0, 3).map((d) => ({
       key: `in-${d.id}`,
@@ -105,6 +136,7 @@ export function ChantierFiche({
       tone: "muted" as const,
     })),
   ];
+  const enCours = todos.slice(0, 3);
 
   const articles = new Map<
     string,
@@ -140,25 +172,78 @@ export function ChantierFiche({
   }
   const rows = [...articles.values()];
 
+  const filteredPieces = useMemo(() => {
+    return documents.filter((d) => {
+      if (scope === "client" && d.direction !== "out") return false;
+      if (scope === "fournisseur" && d.direction !== "in") return false;
+      if (kind !== "all" && d.kind !== kind) return false;
+      return true;
+    });
+  }, [documents, scope, kind]);
+
+  const filteredDevis = filteredPieces.filter((d) => d.direction === "out" && d.kind === "devis");
+  const filteredCommandes = filteredPieces.filter((d) => d.direction === "out" && d.kind === "bon_commande");
+  const filteredFactures = filteredPieces.filter((d) => d.direction === "out" && d.kind === "facture");
+  const filteredInbound = filteredPieces.filter((d) => d.direction === "in");
+
   const activity = useMemo(() => {
-    const items: { at: string; label: string }[] = [];
+    type Item = { at: string; label: string; tone: "ok" | "warn" | "focus" | "muted"; href?: string; badge: string };
+    const items: Item[] = [];
     for (const d of documents) {
-      items.push({ at: d.created_at, label: `${KIND_LABEL[d.kind]} « ${d.title} »` });
+      items.push({
+        at: d.created_at,
+        label: `${KIND_LABEL[d.kind]} « ${d.title} »`,
+        tone: d.direction === "in" ? "warn" : "muted",
+        href: R.piece(d.id),
+        badge: d.direction === "in" ? "Achat" : "Pièce",
+      });
       const sent = d.extract?.sent_at;
-      if (typeof sent === "string") items.push({ at: sent, label: `Envoyé : ${d.title}` });
+      if (typeof sent === "string") {
+        items.push({
+          at: sent,
+          label: `Envoyé : ${d.title}`,
+          tone: "ok",
+          href: R.piece(d.id),
+          badge: "Envoi",
+        });
+      }
     }
     for (const f of followUps) {
-      if (f.sent_at) items.push({ at: f.sent_at, label: `Relance : ${f.document_title}` });
+      if (f.sent_at) {
+        items.push({
+          at: f.sent_at,
+          label: `Relance : ${f.document_title}`,
+          tone: "warn",
+          href: R.piece(f.document_id),
+          badge: "Relance",
+        });
+      }
+      if (f.status === "due") {
+        items.push({
+          at: f.last_action_at || f.created_at,
+          label: `À relancer : ${f.document_title}`,
+          tone: "warn",
+          badge: "Due",
+        });
+      }
     }
-    return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 20);
-  }, [documents, followUps]);
+    for (const d of deliveries) {
+      items.push({
+        at: `${d.day}T09:00:00`,
+        label: `Livraison prévue — ${d.title}`,
+        tone: "focus",
+        href: R.piece(d.documentId),
+        badge: "Livraison",
+      });
+    }
+    return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 24);
+  }, [documents, followUps, deliveries]);
 
   const tabs: [Tab, string][] = [
     ["vue", "Vue d’ensemble"],
-    ["documents", "Documents"],
-    ["achats", "Achats"],
+    ["pieces", "Pièces"],
     ["relances", "Relances"],
-    ["activite", "Activité"],
+    ["activite", "Journal"],
   ];
 
   return (
@@ -175,18 +260,13 @@ export function ChantierFiche({
         }
         action={<ChantierStatusToggle id={chantier.id} status={chantier.status} />}
       />
-      <div className="inline-flex max-w-full items-center gap-2.5 rounded-[12px] border border-line bg-surface px-3 py-2 shadow-soft">
-        <User className="size-3.5 text-muted-foreground" strokeWidth={1.75} aria-hidden />
-        <div className="min-w-0">
-          <p className="text-[10.5px] font-medium tracking-[0.08em] text-muted-foreground uppercase">Client</p>
-          <p className="truncate text-[14px] font-medium">{chantier.client_name ?? "à lier"}</p>
-        </div>
-        <StatusBadge
-          label={chantier.status === "focus" ? "En cours" : chantier.status === "pause" ? "En pause" : "Terminé"}
-          tone={chantier.status === "focus" ? "focus" : chantier.status === "pause" ? "pause" : "fini"}
-          className="ml-1 shrink-0"
-        />
-      </div>
+
+      <ChantierClientPanel
+        chantier={chantier}
+        client={client}
+        devisCount={devis.length}
+        relancesDue={relancesDue}
+      />
 
       <ChantierKpis
         sellHt={sellHt}
@@ -197,6 +277,60 @@ export function ChantierFiche({
         buyCount={inbound.length}
         docsCount={documents.length}
       />
+
+      {enCours.length ? (
+        <section className="rounded-[16px] border border-line bg-surface px-4 py-3.5">
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className="text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">En cours</p>
+            <button
+              type="button"
+              onClick={() => setTab("vue")}
+              className="text-[12.5px] font-medium text-tarineo-orange hover:underline"
+            >
+              Tout voir
+            </button>
+          </div>
+          <ul className="grid gap-1">
+            {enCours.map((item) => (
+              <li key={item.key}>
+                {item.href ? (
+                  <Link
+                    href={item.href}
+                    className="flex min-h-11 items-center justify-between gap-3 rounded-[10px] px-1 py-1.5 hover:bg-wash-row-hover"
+                  >
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <StatusBadge
+                          label={item.key.startsWith("del-") ? "Livraison" : item.tone === "warn" ? "Action" : "Pièce"}
+                          tone={item.tone}
+                        />
+                        <span className="truncate text-[14px] font-medium">{item.title}</span>
+                      </span>
+                      <span className="mt-0.5 block pl-7 text-[12.5px] text-muted-foreground">{item.hint}</span>
+                    </span>
+                    <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="flex min-h-11 w-full items-center justify-between gap-3 rounded-[10px] px-1 py-1.5 text-left hover:bg-wash-row-hover"
+                    onClick={() => setTab(item.goTab ?? "vue")}
+                  >
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <StatusBadge label={item.tone === "warn" ? "Action" : "Pièce"} tone={item.tone} />
+                        <span className="truncate text-[14px] font-medium">{item.title}</span>
+                      </span>
+                      <span className="mt-0.5 block pl-7 text-[12.5px] text-muted-foreground">{item.hint}</span>
+                    </span>
+                    <ArrowRight className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <nav className="scroll-x border-b border-line" aria-label="Dossier chantier">
         {tabs.map(([id, label]) => (
@@ -214,6 +348,9 @@ export function ChantierFiche({
             {label}
             {id === "relances" && relances.length ? (
               <span className="ml-1.5 tabular-nums text-[12px] text-brand-orange">{relances.length}</span>
+            ) : null}
+            {id === "pieces" && documents.length ? (
+              <span className="ml-1.5 tabular-nums text-[12px] text-muted-foreground">{documents.length}</span>
             ) : null}
           </button>
         ))}
@@ -265,7 +402,11 @@ export function ChantierFiche({
                           {row}
                         </Link>
                       ) : (
-                        <button type="button" className="w-full text-left" onClick={() => setTab(item.key.startsWith("fu-") ? "relances" : "achats")}>
+                        <button
+                          type="button"
+                          className="w-full text-left"
+                          onClick={() => setTab(item.goTab ?? (item.key.startsWith("fu-") ? "relances" : "pieces"))}
+                        >
                           {row}
                         </button>
                       )}
@@ -322,29 +463,73 @@ export function ChantierFiche({
           ) : (
             <EmptyState
               title="Dossier encore vide"
-              text="Importez un document d’achat (onglet Achats) ou créez un devis client. La même pièce reste visible dans Documents entreprise."
+              text="Importez un devis fournisseur ou créez un devis client pour ce chantier."
+              action={
+                <button
+                  type="button"
+                  onClick={() => setTab("pieces")}
+                  className="btn-orange inline-flex h-9 items-center px-4 text-[13.5px] font-medium"
+                >
+                  Ajouter une pièce
+                </button>
+              }
             />
           )}
         </div>
       ) : null}
 
-      {tab === "documents" ? (
-        <div className="flex flex-col gap-8">
-          {!devis.length && !commandes.length && !factures.length && !inbound.length ? (
+      {tab === "pieces" ? (
+        <div className="flex flex-col gap-6">
+          <DocumentDrop chantiers={chantiers} clients={clients} defaultChantierId={chantier.id} />
+
+          <div className="flex flex-col gap-3">
+            <FilterPills
+              value={scope}
+              onChange={setScope}
+              options={[
+                { id: "all", label: `Toutes · ${documents.length}` },
+                { id: "client", label: `Client · ${outbound.length}` },
+                { id: "fournisseur", label: `Fournisseur · ${inbound.length}` },
+              ]}
+            />
+            <FilterPills
+              value={kind}
+              onChange={setKind}
+              options={[
+                { id: "all", label: "Tous types" },
+                { id: "devis", label: "Devis" },
+                { id: "bon_commande", label: "Commandes" },
+                { id: "facture", label: "Factures" },
+              ]}
+            />
+          </div>
+
+          {!filteredPieces.length ? (
             <EmptyState
-              title="Aucun document sur ce chantier"
-              text="Les devis et factures restent aussi visibles dans Documents entreprise. Reliez-les à ce chantier pour les retrouver ici."
-              actionHref={R.clientDevis}
-              actionLabel="Voir les devis"
+              title={documents.length ? "Aucune pièce dans ce filtre" : "Aucune pièce sur ce chantier"}
+              text={
+                documents.length
+                  ? "Changez le filtre client / fournisseur ou le type de document."
+                  : "Importez un PDF fournisseur ci-dessus, ou créez un devis client pour démarrer le dossier."
+              }
+              actionHref={R.devisNouveau}
+              actionLabel="Créer un devis"
             />
           ) : (
             <>
-              <DocGroup title="Devis" docs={devis} all={documents} />
-              <DocGroup title="Commandes" docs={commandes} all={documents} />
-              <DocGroup title="Factures" docs={factures} all={documents} />
-              <DocGroup title="Documents fournisseur" docs={inbound} all={documents} inbound />
+              <DocGroup title="Devis client" docs={filteredDevis} all={documents} followUpByDoc={followUpByDoc} />
+              <DocGroup title="Bons de commande" docs={filteredCommandes} all={documents} followUpByDoc={followUpByDoc} />
+              <DocGroup title="Factures" docs={filteredFactures} all={documents} followUpByDoc={followUpByDoc} />
+              <DocGroup
+                title="Achats fournisseur"
+                docs={filteredInbound}
+                all={documents}
+                followUpByDoc={followUpByDoc}
+                inbound
+              />
             </>
           )}
+
           <p className="text-[13px] text-muted-foreground">
             <Link href={`${R.clientDevis}?chantier=${chantier.slug}`} className="underline underline-offset-2">
               Tous les devis
@@ -358,51 +543,6 @@ export function ChantierFiche({
               Documents fournisseur
             </Link>
           </p>
-        </div>
-      ) : null}
-
-      {tab === "achats" ? (
-        <div className="flex flex-col gap-6">
-          <DocumentDrop chantiers={chantiers} clients={clients} defaultChantierId={chantier.id} />
-          {inbound.length ? (
-            <ul className="grid gap-2">
-              {inbound.map((d) => {
-                const ht = documentAmountHt(d);
-                const alert = alerts.find((a) => a.document_id === d.id);
-                const pct = alert ? variation(Number(alert.old_price), Number(alert.new_price)) : null;
-                const critical = pct != null && pct >= 20;
-                return (
-                  <li key={d.id}>
-                    <Link
-                      href={`/pieces/${d.id}`}
-                      className="flex items-center justify-between gap-3 rounded-[14px] border border-brand-orange/20 bg-wash-orange-strong px-4 py-3 transition-colors duration-150 hover:bg-wash-orange-hover"
-                    >
-                      <span className="flex min-w-0 items-center gap-2">
-                        {d.party_name ? <SupplierLogo name={d.party_name} size={28} /> : null}
-                        <span className="min-w-0">
-                          <span className="block truncate font-medium">{d.party_name ?? d.title}</span>
-                          <span className="block truncate text-[13px] text-muted-foreground">{d.title}</span>
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-right">
-                        <span className="block tabular-nums text-[14px] font-medium">{euro(ht)} HT</span>
-                        {pct != null ? (
-                          <span className={cn("tabular-nums text-[12.5px]", critical ? "text-red-600" : "text-nav-orange")}>
-                            {signedPct(pct)}
-                          </span>
-                        ) : null}
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : null}
-          <DocumentList
-            docs={inbound}
-            empty="Pas encore de devis ou facture fournisseur."
-            className="sm:grid-cols-1 xl:grid-cols-2"
-          />
         </div>
       ) : null}
 
@@ -429,22 +569,75 @@ export function ChantierFiche({
             })}
           </ul>
         ) : (
-          <p className="text-[14px] text-muted-foreground">Aucune relance en cours.</p>
+          <EmptyState
+            title="Aucune relance en cours"
+            text="Les devis clients envoyés sans suite apparaissent ici. Vous pouvez aussi relancer depuis une pièce."
+            action={
+              <button
+                type="button"
+                onClick={() => setTab("pieces")}
+                className="btn-orange inline-flex h-9 items-center px-4 text-[13.5px] font-medium"
+              >
+                Voir les pièces
+              </button>
+            }
+          />
         )
       ) : null}
 
       {tab === "activite" ? (
         activity.length ? (
-          <ol className="relative ml-2 border-l border-line pl-5">
-            {activity.map((a, i) => (
-              <li key={`${a.at}-${i}`} className="mb-4">
-                <p className="text-[12px] text-muted-foreground">{formatRelativeFr(a.at)}</p>
-                <p className="text-[14.5px]">{a.label}</p>
-              </li>
-            ))}
+          <ol className="relative ml-1 border-l border-line pl-5">
+            {activity.map((a, i) => {
+              const body = (
+                <>
+                  <p className="flex flex-wrap items-center gap-2">
+                    <StatusBadge label={a.badge} tone={a.tone} />
+                    <span className="text-[12px] text-muted-foreground">{formatRelativeFr(a.at)}</span>
+                  </p>
+                  <p className="mt-1 text-[14.5px] font-medium text-ink">{a.label}</p>
+                </>
+              );
+              return (
+                <li key={`${a.at}-${a.label}-${i}`} className="relative mb-5">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute top-1.5 -left-[1.4rem] size-2.5 rounded-full border-2 border-bg",
+                      a.tone === "warn"
+                        ? "bg-tarineo-orange"
+                        : a.tone === "focus"
+                          ? "bg-[#16A34A]"
+                          : a.tone === "ok"
+                            ? "bg-[#16A34A]"
+                            : "bg-[#C4C4C4]",
+                    )}
+                  />
+                  {a.href ? (
+                    <Link href={a.href} className="block rounded-[10px] hover:bg-wash-row-hover">
+                      {body}
+                    </Link>
+                  ) : (
+                    body
+                  )}
+                </li>
+              );
+            })}
           </ol>
         ) : (
-          <p className="text-[14px] text-muted-foreground">Pas encore d’activité sur ce dossier.</p>
+          <EmptyState
+            title="Pas encore d’activité"
+            text="Dès qu’une pièce est importée, envoyée ou relancée, le journal se remplit ici."
+            action={
+              <button
+                type="button"
+                onClick={() => setTab("pieces")}
+                className="btn-orange inline-flex h-9 items-center px-4 text-[13.5px] font-medium"
+              >
+                Ajouter une pièce
+              </button>
+            }
+          />
         )
       ) : null}
     </div>
@@ -529,21 +722,17 @@ function ChantierKpis({
   );
 }
 
-function lifecycleTone(label: string): "ok" | "muted" | "warn" {
-  if (label === "Prêt" || label === "Facturé" || label === "Commande créée" || label === "Lié") return "ok";
-  if (label === "Envoyé" || label === "Envoyée" || label === "Facturée") return "ok";
-  return "muted";
-}
-
 function DocGroup({
   title,
   docs,
   all,
+  followUpByDoc,
   inbound,
 }: {
   title: string;
   docs: DocumentCard[];
   all: DocumentCard[];
+  followUpByDoc: Map<string, FollowUpView>;
   inbound?: boolean;
 }) {
   if (!docs.length) return null;
@@ -551,33 +740,15 @@ function DocGroup({
     <section>
       <p className="mb-3 text-[11px] font-medium tracking-[0.08em] text-muted-foreground uppercase">{title}</p>
       <ul className="grid gap-2">
-        {docs.map((d) => {
-          const life = documentLifecycleLabel(d, all);
-          return (
-            <li key={d.id}>
-              <Link
-                href={`/pieces/${d.id}`}
-                className={cn(
-                  "flex items-center justify-between gap-3 rounded-[14px] border px-4 py-3 transition-colors duration-150",
-                  inbound
-                    ? "border-brand-orange/20 bg-wash-orange-strong hover:bg-wash-orange-hover"
-                    : "border-line bg-surface hover:bg-surface-2",
-                )}
-              >
-                <span className="flex min-w-0 items-start gap-2.5">
-                  <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={1.6} aria-hidden />
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{d.title}</span>
-                    <StatusBadge label={life} tone={lifecycleTone(life)} className="mt-1" />
-                  </span>
-                </span>
-                <span className="shrink-0 tabular-nums text-[13.5px] text-muted-foreground">
-                  {euro(documentAmountHt(d))} HT
-                </span>
-              </Link>
-            </li>
-          );
-        })}
+        {docs.map((d) => (
+          <ChantierDocRow
+            key={d.id}
+            doc={d}
+            all={all}
+            followUp={followUpByDoc.get(d.id)}
+            inbound={inbound}
+          />
+        ))}
       </ul>
     </section>
   );

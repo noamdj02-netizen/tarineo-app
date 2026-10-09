@@ -1,5 +1,4 @@
-import { PageEnter } from "@/components/motion/page-enter";
-
+/** Pas de PageEnter ici — déjà dans `app/(app)/layout.tsx` (évite double POP_PAGE). */
 export default function AppTemplate({ children }: { children: React.ReactNode }) {
-  return <PageEnter variant="app">{children}</PageEnter>;
+  return children;
 }

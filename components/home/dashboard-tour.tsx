@@ -10,20 +10,20 @@ const SPOTS = [
   {
     id: "prompt",
     art: "03-salut" as TarineoHdMascotName,
-    title: "Analyse un document ici",
-    text: "Dépose un devis ou une facture. TARINEO compare aux prix déjà payés.",
+    title: "Ton copilote",
+    text: "Pose une question ou dépose un devis. TARINEO compare aux prix déjà payés.",
   },
   {
     id: "actions",
     art: "07-ordinateur" as TarineoHdMascotName,
-    title: "Ta prochaine action",
-    text: "Chantier, document, fournisseur. Un geste, pas une liste de 20.",
+    title: "Ton bureau de triage",
+    text: "Ce qui mérite un geste aujourd’hui : devis, hausses, relances.",
   },
   {
     id: "compose",
     art: "01-pouce-leve" as TarineoHdMascotName,
-    title: "Composer le tableau de bord",
-    text: "Tu ajoutes ou retires des blocs. Rien n’est figé.",
+    title: "Blocs optionnels",
+    text: "Dans Plus → Personnaliser, tu peux ajouter planning ou focus chantier.",
   },
 ] as const;
 

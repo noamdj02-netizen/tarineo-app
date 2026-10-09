@@ -58,17 +58,26 @@ export function authEmailShouldUseSupabaseFallback(result: {
 
 let client: Resend | null = null;
 
+export type SendEmailOptions = {
+  idempotencyKey?: string;
+  replyTo?: string;
+};
+
 /** Envoie un email React via Resend. Sans RESEND_API_KEY, ne fait rien (dev local). */
 export async function sendEmail(
   to: string,
   subject: string,
   react: React.ReactElement,
-  idempotencyKey?: string,
+  idempotencyKeyOrOpts?: string | SendEmailOptions,
 ) {
   if (!isResendSendEnabled()) {
     if (process.env.NODE_ENV === "production") console.error("[email] RESEND_API_KEY manquant");
     return { ok: false as const, skipped: true as const };
   }
+  const opts: SendEmailOptions =
+    typeof idempotencyKeyOrOpts === "string"
+      ? { idempotencyKey: idempotencyKeyOrOpts }
+      : (idempotencyKeyOrOpts ?? {});
   const key = process.env.RESEND_API_KEY!.trim();
   client ??= new Resend(key);
   const { error } = await client.emails.send(
@@ -77,8 +86,9 @@ export async function sendEmail(
       to,
       subject,
       react,
+      ...(opts.replyTo ? { replyTo: opts.replyTo } : {}),
     },
-    idempotencyKey ? { idempotencyKey } : undefined,
+    opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : undefined,
   );
   if (error) {
     console.error("[email]", subject, fromAddress(), error);
@@ -117,6 +127,20 @@ export async function sendPlainEmail(input: {
   return { ok: true as const, skipped: false as const, id: data?.id ?? null };
 }
 
+export type InlineMailImage =
+  | {
+      filename: string;
+      content: Buffer;
+      contentId: string;
+      contentType: string;
+    }
+  | {
+      filename: string;
+      path: string;
+      contentId: string;
+      contentType?: string;
+    };
+
 export async function sendEmailWithPdf(input: {
   to: string;
   subject: string;
@@ -125,7 +149,8 @@ export async function sendEmailWithPdf(input: {
   filename: string;
   pdf: Buffer;
   replyTo?: string;
-  inline?: { filename: string; content: Buffer; contentId: string }[];
+  /** Images embarquées (CID) — Resend exige content en base64 ou path distant. */
+  inline?: InlineMailImage[];
   idempotencyKey?: string;
 }) {
   if (!isResendSendEnabled()) {
@@ -135,13 +160,26 @@ export async function sendEmailWithPdf(input: {
   const key = process.env.RESEND_API_KEY!.trim();
   client ??= new Resend(key);
   const attachments = [
-    { filename: input.filename, content: input.pdf },
-    ...(input.inline ?? []).map((f) => ({
-      filename: f.filename,
-      content: f.content,
-      contentId: f.contentId,
-      content_id: f.contentId,
-    })),
+    {
+      filename: input.filename,
+      content: input.pdf.toString("base64"),
+      contentType: "application/pdf",
+    },
+    ...(input.inline ?? []).map((f) =>
+      "path" in f
+        ? {
+            path: f.path,
+            filename: f.filename,
+            contentId: f.contentId,
+            ...(f.contentType ? { contentType: f.contentType } : {}),
+          }
+        : {
+            filename: f.filename,
+            content: f.content.toString("base64"),
+            contentType: f.contentType,
+            contentId: f.contentId,
+          },
+    ),
   ];
   const { data, error } = await client.emails.send(
     {
@@ -152,10 +190,13 @@ export async function sendEmailWithPdf(input: {
       html: input.html ?? `<p style="font:15px/1.5 sans-serif;white-space:pre-wrap">${escapeHtml(input.text)}</p>`,
       replyTo: input.replyTo,
       attachments,
-    } as Parameters<Resend["emails"]["send"]>[0],
+    },
     input.idempotencyKey ? { idempotencyKey: input.idempotencyKey } : undefined,
   );
-  if (error) return { ok: false as const, skipped: false as const, error: error.message };
+  if (error) {
+    console.error("[email] sendWithPdf", input.subject, error);
+    return { ok: false as const, skipped: false as const, error: error.message };
+  }
   return { ok: true as const, skipped: false as const, id: data?.id ?? null };
 }
 

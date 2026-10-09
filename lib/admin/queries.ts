@@ -11,7 +11,17 @@ const PAID = new Set(["active", "trialing", "past_due", "lifetime"]);
 const COST_PER_AI = 0.018;
 
 type Event = AnalyticsEventRow;
-type Sub = Pick<SubscriptionRow, "user_id" | "plan" | "status" | "billing_interval">;
+type Sub = Pick<
+  SubscriptionRow,
+  | "user_id"
+  | "plan"
+  | "status"
+  | "billing_interval"
+  | "started_at"
+  | "current_period_end"
+  | "cancel_at_period_end"
+  | "stripe_subscription_id"
+>;
 type Project = Pick<ProjectRow, "id" | "user_id" | "status" | "next" | "pitch">;
 
 export type AdminUser = {
@@ -24,7 +34,27 @@ export type AdminUser = {
   paid: boolean;
   projects: number;
   hasFocus: boolean;
+  status: string;
+  periodEnd: string | null;
+  startedAt: string | null;
+  cancelAtPeriodEnd: boolean;
+  isFreeTrial: boolean;
+  daysRemaining: number | null;
 };
+
+function daysRemainingOf(periodEnd: string | null): number | null {
+  if (!periodEnd) return null;
+  const ms = Date.parse(periodEnd) - Date.now();
+  if (!Number.isFinite(ms)) return null;
+  return Math.max(0, Math.ceil(ms / 864e5));
+}
+
+function isFreeTrialOf(row: Sub | undefined) {
+  if (!row || row.status !== "trialing") return false;
+  if (row.stripe_subscription_id) return false;
+  const end = row.current_period_end ? Date.parse(row.current_period_end) : NaN;
+  return Number.isFinite(end) && end > Date.now();
+}
 
 async function pages<T>(load: (from: number) => Promise<T[]>) {
   const rows: T[] = [];
@@ -107,7 +137,9 @@ export async function loadAdminBase() {
   const subscriptions = await pages(async (from) => {
     const { data, error } = await admin
       .from("subscriptions")
-      .select("user_id, plan, status, billing_interval")
+      .select(
+        "user_id, plan, status, billing_interval, started_at, current_period_end, cancel_at_period_end, stripe_subscription_id",
+      )
       .range(from, from + 999);
     if (error) throw new Error(error.message);
     return (data ?? []) as Sub[];
@@ -124,6 +156,7 @@ export async function loadAdminBase() {
   const people: AdminUser[] = users.map((user) => {
     const list = projectsByUser.get(user.id) ?? [];
     const sub = subByUser.get(user.id);
+    const periodEnd = sub?.current_period_end ?? null;
     return {
       id: user.id,
       email: user.email ?? "",
@@ -134,6 +167,12 @@ export async function loadAdminBase() {
       paid: isPaid(sub),
       projects: list.length,
       hasFocus: list.some((project) => project.status === "focus"),
+      status: sub?.status ?? "none",
+      periodEnd,
+      startedAt: sub?.started_at ?? null,
+      cancelAtPeriodEnd: Boolean(sub?.cancel_at_period_end),
+      isFreeTrial: isFreeTrialOf(sub),
+      daysRemaining: daysRemainingOf(periodEnd),
     };
   });
 
@@ -549,7 +588,168 @@ export async function loadBusiness(range: DateRange) {
   }));
   const mrr = subscriptions.reduce((sum, row) => sum + mrrOf(row), 0);
   const newPaid = people.filter((user) => user.paid && inRange(user.createdAt, range.from, range.to)).length;
-  return { byPlan, mrr, paid: people.filter((user) => user.paid).length, newPaid, users: people.length };
+  const withPeriod = people
+    .filter((user) => user.plan !== "free" || user.isFreeTrial)
+    .map((user) => ({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      plan: user.plan,
+      status: user.status,
+      periodEnd: user.periodEnd,
+      daysRemaining: user.daysRemaining,
+      isFreeTrial: user.isFreeTrial,
+      cancelAtPeriodEnd: user.cancelAtPeriodEnd,
+      paid: user.paid,
+    }))
+    .sort((a, b) => (a.daysRemaining ?? 9999) - (b.daysRemaining ?? 9999));
+  return {
+    byPlan,
+    mrr,
+    paid: people.filter((user) => user.paid).length,
+    newPaid,
+    users: people.length,
+    withPeriod,
+  };
+}
+
+const DOC_ANALYSIS_EVENTS = new Set([
+  "document_ingested",
+  "document_confirmed",
+  "demo_document_analyzed",
+]);
+const ERROR_EVENTS = new Set([
+  "copilot_error",
+  "copilot_tool_failed",
+  "document_transform_failed",
+]);
+
+export async function loadCockpit(range: DateRange) {
+  const { people } = await loadAdminBase();
+  const events = await loadEvents(range.from, range.to);
+  const admin = createAdminClient();
+
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  let docsInRange: { user_id: string; created_at: string }[] = [];
+  let docsThisMonth: { user_id: string }[] = [];
+  try {
+    const [rangeDocs, monthDocs] = await Promise.all([
+      pages(async (from) => {
+        const { data, error } = await admin
+          .from("documents")
+          .select("user_id, created_at")
+          .gte("created_at", iso(range.from))
+          .lte("created_at", iso(range.to))
+          .range(from, from + 999);
+        if (error) throw error;
+        return (data ?? []) as { user_id: string; created_at: string }[];
+      }),
+      pages(async (from) => {
+        const { data, error } = await admin
+          .from("documents")
+          .select("user_id")
+          .gte("created_at", iso(monthStart))
+          .range(from, from + 999);
+        if (error) throw error;
+        return (data ?? []) as { user_id: string }[];
+      }),
+    ]);
+    docsInRange = rangeDocs;
+    docsThisMonth = monthDocs;
+  } catch {
+    docsInRange = [];
+    docsThisMonth = [];
+  }
+
+  const sessions = sessionsFrom(events);
+  const activeUserIds = new Set(
+    events.filter((e) => e.user_id).map((e) => e.user_id as string),
+  );
+  const trials = people.filter((u) => u.isFreeTrial).length;
+  const paidPro = people.filter((u) => u.paid && (u.plan === "pro" || u.plan === "founder")).length;
+  const paidStarter = people.filter((u) => u.paid && u.plan === "starter").length;
+  const analysesEvents = events.filter((e) => DOC_ANALYSIS_EVENTS.has(e.name)).length;
+  const analysesDocs = docsInRange.length;
+  const errors = events.filter((e) => ERROR_EVENTS.has(e.name) || e.name.endsWith("_error")).length;
+
+  const sessionsByUser = new Map<string, number>();
+  for (const s of sessions) {
+    if (!s.userId) continue;
+    sessionsByUser.set(s.userId, (sessionsByUser.get(s.userId) ?? 0) + 1);
+  }
+  const pageViewsByUser = new Map<string, number>();
+  const analysesByUser = new Map<string, number>();
+  const errorsByUser = new Map<string, number>();
+  const lastSeenByUser = new Map<string, string>();
+  for (const e of events) {
+    if (!e.user_id) continue;
+    if (e.name === "page_viewed") {
+      pageViewsByUser.set(e.user_id, (pageViewsByUser.get(e.user_id) ?? 0) + 1);
+    }
+    if (DOC_ANALYSIS_EVENTS.has(e.name)) {
+      analysesByUser.set(e.user_id, (analysesByUser.get(e.user_id) ?? 0) + 1);
+    }
+    if (ERROR_EVENTS.has(e.name) || e.name.endsWith("_error")) {
+      errorsByUser.set(e.user_id, (errorsByUser.get(e.user_id) ?? 0) + 1);
+    }
+    const prev = lastSeenByUser.get(e.user_id);
+    if (!prev || Date.parse(e.created_at) > Date.parse(prev)) {
+      lastSeenByUser.set(e.user_id, e.created_at);
+    }
+  }
+  const docsByUserRange = new Map<string, number>();
+  for (const d of docsInRange) {
+    docsByUserRange.set(d.user_id, (docsByUserRange.get(d.user_id) ?? 0) + 1);
+  }
+  const docsByUserMonth = new Map<string, number>();
+  for (const d of docsThisMonth) {
+    docsByUserMonth.set(d.user_id, (docsByUserMonth.get(d.user_id) ?? 0) + 1);
+  }
+
+  const accounts = people
+    .map((user) => {
+      const sessionsCount = sessionsByUser.get(user.id) ?? 0;
+      const pageViews = pageViewsByUser.get(user.id) ?? 0;
+      const analyses = (analysesByUser.get(user.id) ?? 0) + (docsByUserRange.get(user.id) ?? 0);
+      const errCount = errorsByUser.get(user.id) ?? 0;
+      const docsMonth = docsByUserMonth.get(user.id) ?? 0;
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        plan: user.plan,
+        status: user.status,
+        paid: user.paid,
+        isFreeTrial: user.isFreeTrial,
+        daysRemaining: user.daysRemaining,
+        periodEnd: user.periodEnd,
+        cancelAtPeriodEnd: user.cancelAtPeriodEnd,
+        sessions: sessionsCount,
+        pageViews,
+        analyses,
+        errors: errCount,
+        docsThisMonth: docsMonth,
+        usageScore: sessionsCount * 2 + pageViews + analyses * 3 + docsMonth * 2,
+        lastSeen: lastSeenByUser.get(user.id) ?? user.lastSignIn,
+      };
+    })
+    .sort((a, b) => b.usageScore - a.usageScore);
+
+  return {
+    kpis: {
+      activeUsers: activeUserIds.size,
+      trials,
+      paidPro,
+      paidStarter,
+      analyses: analysesEvents + analysesDocs,
+      errors,
+      sessions: sessions.length,
+    },
+    accounts,
+  };
 }
 
 export function formatMoney(value: number) {

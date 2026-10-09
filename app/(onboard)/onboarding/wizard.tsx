@@ -3,11 +3,12 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { IdentiteScreen } from "@/components/onboarding/screens/identite-screen";
 import { OnboardingPdfStep } from "@/components/onboarding/screens/onboarding-pdf-step";
 import { WizardStepBg } from "@/components/onboarding/wizard-step-bg";
-import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
+import { POP_PAGE } from "@/components/motion/pop";
+import { SuccessPop, SuccessPopOverlay } from "@/components/motion/success-pop";
 import { EASE } from "@/components/motion/reveal";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,12 @@ import { ONBOARD_STEPS } from "@/lib/onboarding/catalog";
 import type { ChantierCard, Party } from "@/lib/metier/types";
 import { cn } from "@/lib/utils";
 import { finishOnboarding, saveOnboardingStep, saveWelcome } from "./actions";
+
+function wait(ms: number) {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
 
 const PDF_STEP = 1;
 const FIN_STEP = 2;
@@ -52,6 +59,17 @@ export function Wizard({
   const [family, setFamily] = useState(lastName);
   const [lang, setLang] = useState<Locale>(locale);
   const [imported, setImported] = useState(hasInboundDoc);
+  const [celebrate, setCelebrate] = useState<{ title: string; hint: string } | null>(null);
+  const celebrateGen = useRef(0);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      celebrateGen.current += 1;
+    };
+  }, []);
 
   const hideFooter = step === PDF_STEP || step === FIN_STEP;
   const dest = ask ? `/accueil?ask=${encodeURIComponent(ask)}` : (next ?? "/accueil");
@@ -67,23 +85,32 @@ export function Wizard({
     });
   }
 
+  async function celebrateThen(title: string, hint: string, next: () => void) {
+    const token = ++celebrateGen.current;
+    setCelebrate({ title, hint });
+    await wait(reduce ? 180 : 950);
+    if (!mounted.current || token !== celebrateGen.current) return;
+    setCelebrate(null);
+    next();
+  }
+
   async function advance() {
     if (step === 0) {
       const res = await saveWelcome(name, lang, family);
       if (!res.ok) throw new Error(res.error);
-      setStep(PDF_STEP);
+      await celebrateThen("Identité enregistrée", "Prochaine étape : un document BTP.", () => setStep(PDF_STEP));
     }
   }
 
   async function skipDocument() {
     await saveOnboardingStep("document_skipped");
-    setStep(FIN_STEP);
+    await celebrateThen("C’est noté", "Vous pourrez importer un PDF plus tard.", () => setStep(FIN_STEP));
   }
 
   function afterPdfSaved() {
     setImported(true);
     void saveOnboardingStep("document");
-    setStep(FIN_STEP);
+    void celebrateThen("Document importé", "Il est prêt dans TARINEO.", () => setStep(FIN_STEP));
   }
 
   async function enter() {
@@ -96,14 +123,19 @@ export function Wizard({
   const motionProps = reduce
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
     : {
-        initial: { opacity: 0, y: 16 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: -10 },
-        transition: { duration: 0.4, ease: EASE },
+        initial: { opacity: 0, y: 12, scale: 0.98 },
+        animate: { opacity: 1, y: 0, scale: 1 },
+        exit: { opacity: 0, y: -8, scale: 0.99 },
+        transition: POP_PAGE,
       };
 
   return (
     <div className="relative grid h-full min-h-0 flex-1 grid-rows-[auto_auto_minmax(0,1fr)]">
+      <SuccessPopOverlay
+        open={Boolean(celebrate)}
+        title={celebrate?.title ?? ""}
+        hint={celebrate?.hint}
+      />
       <WizardStepBg step={step} />
       <div className="mb-3 flex items-center gap-3 px-0.5">
         <div className="flex min-w-0 flex-1 gap-1" aria-label={`Étape ${step + 1} sur ${ONBOARD_STEPS.length}`}>
@@ -139,20 +171,27 @@ export function Wizard({
                 />
               ) : null}
               {step === FIN_STEP ? (
-                <div className="flex flex-1 flex-col items-center justify-center text-center">
-                  <TarineoHdMascot name="01-pouce-leve" className="h-36 w-40" label="" priority />
-                  <h2 className="mt-4 font-display text-[28px] font-semibold tracking-tight">
-                    {imported ? "Votre devis est dans TARINEO." : "C’est prêt."}
-                  </h2>
-                  <p className="mt-2 max-w-[40ch] text-[15px] text-muted-foreground">
-                    {imported
+                <SuccessPop
+                  size="lg"
+                  className="flex-1 justify-center py-8"
+                  title={imported ? "Votre devis est dans TARINEO." : "C’est prêt."}
+                  hint={
+                    imported
                       ? "Affinez la marge, transformez pour le client. L’entreprise (SIRET) sera demandée à l’envoi de la pièce client."
-                      : "Explorez le tableau de bord — vous pourrez importer un PDF depuis Documents fournisseur."}
-                  </p>
-                  <Button type="button" size="lg" className="mt-6 min-h-12 rounded-full" disabled={pending} onClick={() => go(enter)}>
-                    {pending ? <Loader2 className="animate-spin" /> : "Ouvrir le tableau de bord"}
-                  </Button>
-                </div>
+                      : "Explorez le tableau de bord — vous pourrez importer un PDF depuis Documents fournisseur."
+                  }
+                  action={
+                    <Button
+                      type="button"
+                      size="lg"
+                      className="min-h-12 rounded-full"
+                      disabled={pending}
+                      onClick={() => go(enter)}
+                    >
+                      {pending ? <Loader2 className="animate-spin" /> : "Ouvrir le tableau de bord"}
+                    </Button>
+                  }
+                />
               ) : null}
             </motion.div>
           </AnimatePresence>

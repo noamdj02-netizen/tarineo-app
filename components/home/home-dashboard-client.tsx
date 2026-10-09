@@ -11,13 +11,12 @@ import { DashboardWidget } from "@/components/home/dashboard-widget";
 import { HomeImportButton } from "@/components/home/home-import-button";
 import {
   buildActions,
-  buildActivity,
   BTN_PRIMARY,
   BTN_SECONDARY,
   EASE,
+  SURFACE,
 } from "@/components/home/home-dashboard-model";
 import {
-  AchatsActivitySection,
   ActionsSection,
   CalendarWidget,
   DevisFacturesSection,
@@ -26,7 +25,6 @@ import {
   PostitsWidget,
   ProjectsSection,
   PromptWidget,
-  SchemasSection,
   WeekWidget,
 } from "@/components/home/home-dashboard-sections";
 import type { CompanyProfile } from "@/lib/metier/company";
@@ -39,6 +37,7 @@ import {
   normalizeDashboardPrefs,
   reorderWidget,
   saveDashboardPrefsLocal,
+  TRIAGE_PINNED_WIDGETS,
   type DashboardPrefs,
   type WidgetKey,
 } from "@/lib/home/dashboard-prefs";
@@ -46,7 +45,6 @@ import type { WeekStats } from "@/lib/home/week";
 import { TopPriceIncreases } from "@/components/tarineo/analytics/top-price-increases";
 import { adaptTopPriceIncreases } from "@/lib/tarineo/adapters";
 import { R } from "@/lib/routes";
-import { euroInt, variation } from "@/lib/site/tarineo";
 import { DashboardTour } from "@/components/home/dashboard-tour";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
 import { cn } from "@/lib/utils";
@@ -121,10 +119,10 @@ export function HomeDashboardClient({
   devisAEnvoyer = [],
   facturesClient = 0,
   relancesDue = [],
-  followUps = [],
+  followUps: _followUps = [],
   alerts = [],
-  months = [],
-  enseignes = [],
+  months: _months = [],
+  enseignes: _enseignes = [],
   articles = [],
   documents = [],
   recentPieces = [],
@@ -156,9 +154,6 @@ export function HomeDashboardClient({
     });
   }, []);
 
-  const thisMonth = months.at(-1)?.amount ?? 0;
-  const lastMonth = months.at(-2)?.amount ?? 0;
-  const monthDelta = lastMonth > 0 ? variation(lastMonth, thisMonth) : null;
   const actifs = useMemo(
     () =>
       [...chantiers.filter((c) => c.status === "focus"), ...chantiers.filter((c) => c.status === "pause")].slice(0, 3),
@@ -173,20 +168,19 @@ export function HomeDashboardClient({
         relancesDue,
         documents,
         actionNotifications,
-      }).slice(0, 4),
+      }).slice(0, 6),
     [devisAEnvoyer, alerts, pendingDocs, relancesDue, documents, actionNotifications],
   );
-  const activity = useMemo(() => buildActivity(documents, followUps).slice(0, 5), [documents, followUps]);
-  const buyTotal = enseignes.reduce((s, r) => s + r.amount, 0);
-  const topEnseigne = enseignes[0];
 
-  /** Toujours affichés sous les KPI (pas dans les colonnes déplaçables). */
-  const PINNED_UNDER_KPIS: WidgetKey[] = ["prompt", "calendar"];
-
-  const leftKeys = prefs.leftColumn.filter((k) => prefs.widgets[k] && !PINNED_UNDER_KPIS.includes(k));
-  const rightKeys = prefs.rightColumn.filter((k) => prefs.widgets[k] && !PINNED_UNDER_KPIS.includes(k));
+  /** Colonnes optionnelles uniquement (triage fixe hors widgets). */
+  const leftKeys = prefs.leftColumn.filter(
+    (k) => prefs.widgets[k] && !TRIAGE_PINNED_WIDGETS.includes(k),
+  );
+  const rightKeys = prefs.rightColumn.filter(
+    (k) => prefs.widgets[k] && !TRIAGE_PINNED_WIDGETS.includes(k),
+  );
   const mobileKeys = [...leftKeys, ...rightKeys.filter((k) => !leftKeys.includes(k))];
-  const showPinnedHero = prefs.widgets.prompt || prefs.widgets.calendar;
+  const showOptionalColumns = leftKeys.length > 0 || rightKeys.length > 0;
 
   const makeDropHandler = (targetKey: WidgetKey, targetColumn: "left" | "right") => {
     return (dragged: WidgetKey, _fromCol: "left" | "right") => {
@@ -200,14 +194,8 @@ export function HomeDashboardClient({
     switch (key) {
       case "prompt":
         return <PromptWidget firstName={firstName} />;
-      case "actions":
-        return <ActionsSection actions={actions} />;
       case "focus":
         return <FocusWidget chantiers={chantiers} />;
-      case "projects":
-        return <ProjectsSection actifs={actifs} documents={documents} />;
-      case "schemas":
-        return <SchemasSection alerts={alerts} documents={documents} />;
       case "calendar":
         return <CalendarWidget />;
       case "week":
@@ -259,121 +247,133 @@ export function HomeDashboardClient({
     <div className="mx-auto flex w-full max-w-[1200px] flex-col pb-4">
       <DashboardTour open={showDashboardTour} />
       <Reveal>
-      <PageHeader
-        dense
-        className="mb-6"
-        crumbs={[{ label: "Accueil" }]}
-        title={`Bonjour, ${who}`}
-        description="Voici ce qui mérite votre attention."
-        action={
-          <>
-            <Link href={R.devisNouveau} className={BTN_PRIMARY}>
-              <Plus className="mr-1.5 size-3.5" strokeWidth={2.2} aria-hidden />
-              Nouveau devis
-            </Link>
-            <details className="relative">
-              <summary
-                className={cn(
-                  BTN_SECONDARY,
-                  "cursor-pointer list-none [&::-webkit-details-marker]:hidden",
-                )}
-              >
-                Plus
-              </summary>
-              <div className="absolute right-0 z-20 mt-1.5 flex min-w-[12.5rem] flex-col gap-1 rounded-xl border border-line bg-surface p-1.5 shadow-lift">
-                <HomeImportButton
-                  chantiers={chantiers}
-                  clients={clients}
-                  className="justify-start rounded-lg border-0 bg-transparent px-3 py-2.5 text-left shadow-none hover:bg-surface-2"
-                />
-                <Link
-                  href={R.nouveauChantier}
-                  className="rounded-lg px-3 py-2.5 text-[13px] font-medium text-ink hover:bg-surface-2"
+        <PageHeader
+          dense
+          className="mb-6"
+          crumbs={[{ label: "Accueil" }]}
+          title={`Bonjour, ${who}`}
+          description="Ce qui mérite votre attention aujourd’hui."
+          action={
+            <>
+              <Link href={R.devisNouveau} className={BTN_PRIMARY}>
+                <Plus className="mr-1.5 size-3.5" strokeWidth={2.2} aria-hidden />
+                Nouveau devis
+              </Link>
+              <HomeImportButton chantiers={chantiers} clients={clients} className={BTN_SECONDARY} />
+              <details className="relative">
+                <summary
+                  className={cn(
+                    BTN_SECONDARY,
+                    "cursor-pointer list-none [&::-webkit-details-marker]:hidden",
+                  )}
                 >
-                  Nouveau chantier
-                </Link>
-                <div data-tour="compose" className="border-t border-line pt-1">
-                  <DashboardCustomize
-                    variant="header"
-                    prefs={prefs}
-                    editMode={editMode}
-                    onEditMode={setEditMode}
-                    onPrefs={persistPrefs}
-                  />
+                  Plus
+                </summary>
+                <div className="absolute right-0 z-20 mt-1.5 flex min-w-[12.5rem] flex-col gap-1 rounded-xl border border-line bg-surface p-1.5 shadow-lift">
+                  <Link
+                    href={R.nouveauChantier}
+                    className="rounded-lg px-3 py-2.5 text-[13px] font-medium text-ink hover:bg-surface-2"
+                  >
+                    Nouveau chantier
+                  </Link>
+                  <div data-tour="compose" className="border-t border-line pt-1">
+                    <DashboardCustomize
+                      variant="header"
+                      prefs={prefs}
+                      editMode={editMode}
+                      onEditMode={setEditMode}
+                      onPrefs={persistPrefs}
+                    />
+                  </div>
                 </div>
-              </div>
-            </details>
-          </>
-        }
-      />
+              </details>
+            </>
+          }
+        />
       </Reveal>
 
-      <RevealGroup className="mb-6 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-5" stagger={0.05} delay={0.04}>
+      <RevealGroup className="mb-6 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4" stagger={0.05} delay={0.04}>
         <Reveal className="min-w-0">
-        <Kpi
-          href={R.clientDevis}
-          label="Devis à envoyer"
-          value={String(devisAEnvoyer.length)}
-          hint={devisAEnvoyer.length ? "prêts côté client" : "aucun en attente"}
-          accent="bg-[#FF6B1A]"
-        />
+          <Kpi
+            href={R.clientDevis}
+            label="Devis à envoyer"
+            value={String(devisAEnvoyer.length)}
+            hint={devisAEnvoyer.length ? "prêts côté client" : "aucun en attente"}
+            accent="bg-tarineo-orange"
+          />
         </Reveal>
         <Reveal className="min-w-0">
-        <Kpi
-          href={R.hausses}
-          label="Hausses"
-          value={String(alerts.length)}
-          hint={alerts.length ? "prix fournisseur" : "aucune alerte"}
-          accent="bg-[#F59E0B]"
-        />
+          <Kpi
+            href={R.hausses}
+            label="Hausses"
+            value={String(alerts.length)}
+            hint={alerts.length ? "prix fournisseur" : "aucune alerte"}
+            accent="bg-[#F59E0B]"
+          />
         </Reveal>
         <Reveal className="min-w-0">
-        <Kpi
-          href={R.clientFacture}
-          label="Factures client"
-          value={String(facturesClient)}
-          hint={facturesClient ? "pièces émises" : "aucune pièce"}
-          accent="bg-[#16A34A]"
-        />
+          <Kpi
+            href={R.clientFacture}
+            label="Factures client"
+            value={String(facturesClient)}
+            hint={facturesClient ? "pièces émises" : "aucune pièce"}
+            accent="bg-[#16A34A]"
+          />
         </Reveal>
         <Reveal className="min-w-0">
-        <Kpi
-          href={R.relances}
-          label="Relances"
-          value={String(relancesDue.length)}
-          hint={relancesDue.length ? "à traiter" : "rien de dû"}
-          accent="bg-[#9A9A9A]"
-        />
-        </Reveal>
-        <Reveal className="min-w-0 col-span-2 lg:col-span-1">
-        <Kpi
-          href={R.achats}
-          label="Achats du mois"
-          value={thisMonth ? euroInt(thisMonth) : "—"}
-          hint="HT lignes"
-          accent="bg-[#9A9A9A]"
-          className="col-span-2 lg:col-span-1"
-        />
+          <Kpi
+            href={R.relances}
+            label="Relances"
+            value={String(relancesDue.length)}
+            hint={relancesDue.length ? "à traiter" : "rien de dû"}
+            accent="bg-[#9A9A9A]"
+          />
         </Reveal>
       </RevealGroup>
 
-      {showPinnedHero ? (
-        <Reveal>
-          <div
-            data-tour="hero-prompt"
-            className="mb-6 grid gap-6 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)] lg:items-start"
-          >
-            {prefs.widgets.prompt ? (
-              <div className="min-w-0">
-                <PromptWidget firstName={firstName} wide />
-              </div>
-            ) : null}
-            {prefs.widgets.calendar ? <div className="min-w-0">{renderWidgetBody("calendar")}</div> : null}
-          </div>
-        </Reveal>
-      ) : null}
+      <Reveal>
+        <div data-tour="prompt" className="mb-6">
+          <PromptWidget firstName={firstName} />
+        </div>
+      </Reveal>
 
-      {(leftKeys.length > 0 || rightKeys.length > 0) && (
+      {/* Bandeau triage fixe : À traiter → chantiers + hausses */}
+      <Reveal>
+        <div className="mb-6">
+          <ActionsSection actions={actions} />
+        </div>
+      </Reveal>
+
+      <Reveal>
+        <div
+          data-tour="triage-board"
+          className="mb-8 grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]"
+        >
+          <ProjectsSection actifs={actifs} documents={documents} />
+          {alerts.length > 0 ? (
+            <TopPriceIncreases
+              items={adaptTopPriceIncreases(alerts, 5, articles)}
+              title="Hausses à surveiller"
+              href={R.hausses}
+              compact
+            />
+          ) : (
+            <section className={cn(SURFACE, "px-5 py-[18px]")}>
+              <p className="text-[11px] font-medium tracking-[0.05em] text-muted-foreground uppercase">
+                Hausses
+              </p>
+              <p className="mt-2 text-[14px] text-muted-foreground">
+                Importez un devis fournisseur pour détecter les écarts de prix.
+              </p>
+              <div className="mt-4">
+                <HomeImportButton chantiers={chantiers} clients={clients} />
+              </div>
+            </section>
+          )}
+        </div>
+      </Reveal>
+
+      {showOptionalColumns ? (
         <>
           <div
             id="home-dashboard-columns"
@@ -391,30 +391,9 @@ export function HomeDashboardClient({
             {mobileKeys.map((k) => wrapWidget(k, leftKeys.includes(k) ? "left" : "right"))}
           </div>
         </>
-      )}
-
-      {/* Accueil triage : une seule bande analytics, le reste vit sur /achats /fournisseurs */}
-      {alerts.length > 0 ? (
-        <Reveal>
-          <div className="mb-8">
-            <TopPriceIncreases
-              items={adaptTopPriceIncreases(alerts, 5, articles)}
-              title="Hausses à surveiller"
-              href={R.hausses}
-              compact
-            />
-          </div>
-        </Reveal>
       ) : null}
 
       <DevisFacturesSection recentPieces={recentPieces} company={company} />
-
-      <AchatsActivitySection
-        buyTotal={buyTotal}
-        monthDelta={monthDelta}
-        topEnseigne={topEnseigne}
-        activity={activity}
-      />
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   addDocumentLine,
   createChantier,
   createParty,
+  deleteChantier,
   getDocument,
   listChantiers,
   listDocuments,
@@ -22,6 +23,7 @@ import {
   updateDocument,
 } from "@/lib/metier/queries";
 import {
+  markDocumentSent,
   scheduleFollowUpForDocument,
   sendDocumentMail,
   setFollowUpStatus,
@@ -87,6 +89,14 @@ export async function ingestDocument(form: FormData) {
       fileName: file.name,
       mime: file.type || "application/octet-stream",
       base64: buf.toString("base64"),
+    });
+    const { track } = await import("@/lib/analytics/track");
+    void track({
+      name: "document_ingested",
+      userId: db?.user.id ?? null,
+      feature: "analyses",
+      path: "/devis/analyser",
+      properties: { kind: extracted.kind, mime: file.type || null },
     });
     return { ok: true as const, extracted, agent, recap, filePath, fileName: file.name, fileSha256 };
   } catch (err) {
@@ -276,6 +286,19 @@ export async function confirmDocument(input: {
   } catch (err) {
     console.error("[confirmDocument] notifications", err);
   }
+  try {
+    const { track } = await import("@/lib/analytics/track");
+    const dbUser = await getDb();
+    void track({
+      name: "document_confirmed",
+      userId: dbUser?.user.id ?? null,
+      feature: "analyses",
+      path: "/devis/analyser",
+      properties: { kind: doc.kind, direction: doc.direction, documentId: doc.id },
+    });
+  } catch {
+    /* analytics best-effort */
+  }
   refresh();
   return {
     ok: true as const,
@@ -373,6 +396,13 @@ export async function setChantierStatusAction(id: string, status: ChantierStatus
   refresh();
 }
 
+export async function deleteChantierAction(id: string) {
+  const res = await deleteChantier(id);
+  if (!res.ok) return res;
+  refresh();
+  return { ok: true as const };
+}
+
 export async function saveDocumentAction(form: FormData) {
   const id = String(form.get("documentId") ?? "");
   if (!id) return { ok: false as const, error: "Pièce manquante." };
@@ -432,6 +462,19 @@ export async function transformQuoteAction(form: FormData) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Transformation impossible.";
     console.error("[metier] transformQuoteAction", err);
+    try {
+      const { track } = await import("@/lib/analytics/track");
+      const dbUser = await getDb();
+      void track({
+        name: "document_transform_failed",
+        userId: dbUser?.user.id ?? null,
+        feature: "analyses",
+        path: "/devis/analyser",
+        properties: { sourceId, kind, error: message.slice(0, 200) },
+      });
+    } catch {
+      /* analytics best-effort */
+    }
     return { ok: false as const, error: message };
   }
 }
@@ -440,7 +483,8 @@ export async function draftDocumentMailAction(documentId: string) {
   const doc = await getDocument(documentId);
   if (!doc) return { ok: false as const, error: "Pièce introuvable." };
   const draft = await draftDocumentMail(doc);
-  return { ok: true as const, ...draft };
+  const { isResendSendEnabled } = await import("@/lib/email/send");
+  return { ok: true as const, ...draft, canSendEmail: isResendSendEnabled() };
 }
 
 export async function sendDocumentAction(form: FormData) {
@@ -513,6 +557,35 @@ export async function sendFollowUpNowAction(form: FormData) {
     body: note,
   });
   if (!saved.ok) return saved;
+  refresh();
+  return { ok: true as const };
+}
+
+/** Marque la relance envoyée après ouverture du client mail (mailto) — pas d’envoi Resend. */
+export async function recordFollowUpSentExternalAction(form: FormData) {
+  const id = String(form.get("documentId") ?? "");
+  const to = String(form.get("to") ?? "").trim();
+  const note = String(form.get("note") ?? "").trim();
+  const subject = String(form.get("subject") ?? "").trim();
+  const followUpId = String(form.get("followUpId") ?? "");
+  if (!id) return { ok: false as const, error: "Document manquant." };
+  if (!to.includes("@")) return { ok: false as const, error: "E-mail invalide." };
+  const all = await listDocuments();
+  const doc = all.find((d) => d.id === id);
+  if (!doc) return { ok: false as const, error: "Pièce introuvable." };
+  if (isDocumentTransformed(doc, all)) {
+    return { ok: false as const, error: "Ce document a déjà une suite. Relance non enregistrée." };
+  }
+  const saved = await upsertFollowUp({
+    id: followUpId && !followUpId.startsWith("virtual:") ? followUpId : undefined,
+    documentId: id,
+    status: "sent",
+    toEmail: to,
+    subject,
+    body: note,
+  });
+  if (!saved.ok) return saved;
+  await markDocumentSent(doc.id, { last_sent_to: to });
   refresh();
   return { ok: true as const };
 }
