@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { LandingHeaderNav } from "@/components/site/landing-v2/components/layout/LandingHeaderNav";
@@ -33,13 +34,13 @@ export function Header() {
               elevated ? "landing-header-bar-elevated" : "landing-header-bar-top",
             )}
           >
-            <a
+            <Link
               href="/"
               className="shrink-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-accent/45"
               aria-label="Tarineo — accueil"
             >
               <Logo markClassName="h-8 w-8 sm:h-9 sm:w-9" />
-            </a>
+            </Link>
 
             <div className="hidden min-w-0 flex-1 justify-center lg:flex">
               <LandingHeaderNav />
