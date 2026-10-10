@@ -30,7 +30,7 @@ export function LandingUploadDropzone({ children, disabled, onClick, className =
           ? undefined
           : { borderColor: "color-mix(in srgb, var(--color-accent) 38%, transparent)", transition: { duration: 0.2 } }
       }
-      whileTap={reduce || disabled ? undefined : { scale: 0.995 }}
+      whileTap={reduce || disabled ? undefined : { scale: 0.96 }}
     >
       <LandingScanPass />
       {!disabled && !reduce ? (

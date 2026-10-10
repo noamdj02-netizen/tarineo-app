@@ -27,5 +27,5 @@ export function LandingDeltaBar({
 }
 
 function cnBar(className: string) {
-  return `h-full rounded-full transition-all duration-500 ${className}`;
+  return `h-full rounded-full transition-[width,background-color] duration-500 ease-out ${className}`;
 }

@@ -7,14 +7,14 @@ import { priceAlertProductHref } from "@/lib/tarineo/alert-product";
 import { R } from "@/lib/routes";
 import { signedPct, variation } from "@/lib/site/tarineo";
 
-export const EASE = "duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]";
+export const EASE = "duration-150 ease-out";
 export const SURFACE =
-  "h-fit rounded-[16px] border border-line bg-surface shadow-soft transition-[border-color,box-shadow,background-color] duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)]";
+  "h-fit rounded-[16px] border border-line bg-surface shadow-soft transition-[border-color,box-shadow,background-color] duration-150 ease-out";
 export const SURFACE_HOVER = "hover:border-line-strong hover:shadow-lift hover:bg-surface-2";
 export const ACTION_LINK =
-  "inline-flex items-center gap-1 text-[13px] font-medium text-tarineo-orange transition-colors duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:text-tarineo-orange";
+  "inline-flex items-center gap-1 text-[13px] font-medium text-tarineo-orange transition-colors duration-150 ease-out hover:text-tarineo-orange";
 export const BTN =
-  "inline-flex h-11 items-center rounded-[12px] px-4 text-[13px] font-medium transition-colors duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/35 md:h-[38px] md:rounded-[10px]";
+  "inline-flex h-11 items-center rounded-[12px] px-4 text-[13px] font-medium transition-[color,background-color,border-color,transform,filter] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/35 active:scale-[0.96] disabled:active:scale-100 [-webkit-tap-highlight-color:transparent] md:h-[38px] md:rounded-[10px]";
 export const BTN_PRIMARY = `${BTN} bg-tarineo-orange text-white hover:brightness-[0.96]`;
 export const BTN_SECONDARY = `${BTN} border border-line bg-surface text-ink hover:bg-surface-2`;
 

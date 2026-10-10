@@ -34,13 +34,14 @@ export const SECTION_VIEW = {
   margin: "0px 0px -6% 0px",
 } as const;
 
+/** Entrée stagger infrequente — better-ui: blur 4 + y 12 / 300ms / 100ms apart. */
 const item: Variants = {
-  hidden: { opacity: 0, y: 14, scale: 0.985 },
+  hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: APPLE_SPRING,
+    filter: "blur(0px)",
+    transition: { duration: 0.3, ease: "easeOut" },
   },
 };
 
@@ -50,7 +51,7 @@ const itemReduced: Variants = {
 };
 
 export function RevealGroup({
-  stagger = 0.06,
+  stagger = 0.1,
   delay = 0,
   ...props
 }: HTMLMotionProps<"div"> & { stagger?: number; delay?: number }) {

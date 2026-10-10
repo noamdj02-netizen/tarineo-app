@@ -53,7 +53,7 @@ const CATALOG: CatalogItem[] = [
 ];
 
 const HEADER_BTN =
-  "inline-flex h-11 items-center gap-1.5 rounded-[12px] border border-line bg-surface px-3.5 text-[13px] font-medium text-ink transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/35 md:h-[38px] md:rounded-[10px]";
+  "inline-flex h-11 items-center gap-1.5 rounded-[12px] border border-line bg-surface px-3.5 text-[13px] font-medium text-ink transition-[color,background-color,border-color,transform] duration-150 ease-out hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/35 active:scale-[0.96] [-webkit-tap-highlight-color:transparent] md:h-[38px] md:rounded-[10px]";
 const HEADER_BTN_ACTIVE = "border-ink/20 bg-ink text-white hover:bg-ink/90";
 
 export function DashboardCustomize({

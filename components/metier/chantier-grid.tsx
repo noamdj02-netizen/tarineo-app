@@ -3,15 +3,19 @@
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/app-ui/empty-state";
 import { FilterPills } from "@/components/app-ui/filter-pills";
-import { StatusBadge, chantierTone } from "@/components/tarineo/status-badge";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { createChantierAction, deleteChantierAction } from "@/app/(app)/metier/actions";
+import { FolderTabCard } from "@/components/metier/folder-tab-card";
 import { ChantierStatusToggle } from "@/components/metier/chantier-status";
 import type { ChantierCard } from "@/lib/metier/types";
 import { DEMO_MARK } from "@/lib/site/tarineo";
-import { cn } from "@/lib/utils";
+
+const STATUS_LABEL: Record<ChantierCard["status"], string> = {
+  focus: "En cours",
+  pause: "En pause",
+  fini: "Terminé",
+};
 
 export function ChantierGrid({
   chantiers,
@@ -44,55 +48,38 @@ export function ChantierGrid({
           actionLabel="Nouveau chantier"
         />
       ) : (
-      <div className="grid gap-3.5 sm:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]">
-      {rows.map((c) => (
-        <article
-          key={c.id}
-          className={cn(
-            "card-soft card-lift relative flex flex-col gap-3 p-5",
-            c.status === "focus" && "border-l-[3px] border-l-nav-orange",
-            c.status === "pause" && "border-l-[3px] border-l-st-pause",
-            c.status === "fini" && "border-l-[3px] border-l-line-strong",
-          )}
-        >
-          <div>
-            {c.seed_key ? <p className="mono-label text-[10px]">{DEMO_MARK}</p> : null}
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="font-display text-[16px] leading-snug font-semibold tracking-[-0.02em]">
-                <Link
-                  href={`/chantiers/${c.slug}`}
-                  className="outline-none after:absolute after:inset-0 after:rounded-card"
-                >
-                  {c.name}
-                </Link>
-              </h3>
-              <StatusBadge
-                label={c.status === "focus" ? "En cours" : c.status === "pause" ? "Pause" : "Fini"}
-                tone={chantierTone(c.status)}
-                className="relative z-10 shrink-0"
+        <div className="grid gap-4 sm:grid-cols-[repeat(auto-fill,minmax(260px,1fr))] lg:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]">
+          {rows.map((c) => {
+            const due = dueOf(c.id);
+            return (
+              <FolderTabCard
+                key={c.id}
+                href={`/chantiers/${c.slug}`}
+                title={c.name}
+                subtitle={[c.client_name ?? "Client à lier", c.address || "Lieu à préciser"]
+                  .filter(Boolean)
+                  .join(" · ")}
+                metricValue={String(c.docs_count)}
+                metricLabel={c.docs_count > 1 ? "docs" : "doc"}
+                meta={
+                  due > 0
+                    ? `${due} relance${due > 1 ? "s" : ""}`
+                    : STATUS_LABEL[c.status]
+                }
+                eyebrow={c.seed_key ? DEMO_MARK : undefined}
+                footer={
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="hidden min-w-0 flex-1 md:block" onClick={(e) => e.preventDefault()}>
+                      <ChantierStatusToggle id={c.id} status={c.status} />
+                    </div>
+                    <DeleteChantierButton id={c.id} name={c.name} docsCount={c.docs_count} />
+                  </div>
+                }
               />
-            </div>
-            <p className="mt-1 text-[13.5px] text-muted-foreground">{c.address || "Lieu à préciser"}</p>
-          </div>
-          <p className="text-[14px]">
-            {c.client_name ?? "Client à lier"} · {c.docs_count} document{c.docs_count > 1 ? "s" : ""}
-          </p>
-          {dueOf(c.id) > 0 ? (
-            <p className="text-[13px] text-brand-orange">
-              {dueOf(c.id)} relance{dueOf(c.id) > 1 ? "s" : ""} à traiter
-            </p>
-          ) : null}
-          <div className="relative z-10 flex items-center justify-between gap-2">
-            <p className="text-[13px] font-medium text-tarineo-orange">Voir le chantier →</p>
-            <DeleteChantierButton id={c.id} name={c.name} docsCount={c.docs_count} />
-          </div>
-          <div className="relative z-10 hidden md:block" onClick={(e) => e.preventDefault()}>
-            <ChantierStatusToggle id={c.id} status={c.status} />
-          </div>
-        </article>
-      ))}
-      <NewChantier />
-    </div>
+            );
+          })}
+          <NewChantier />
+        </div>
       )}
     </div>
   );
@@ -169,7 +156,10 @@ function NewChantier() {
   }, []);
 
   return (
-    <div id="nouveau" className="flex min-h-[180px] flex-col rounded-card border border-dashed border-ink/15">
+    <div
+      id="nouveau"
+      className="flex aspect-[4/5] max-h-[min(420px,100%)] flex-col overflow-hidden rounded-[28px] border border-dashed border-ink/15 bg-wash-orange/30 sm:rounded-[32px]"
+    >
       {open ? (
         <form
           className="flex flex-1 flex-col justify-center gap-2 p-5"
@@ -187,9 +177,9 @@ function NewChantier() {
             });
           }}
         >
-          <input name="name" required placeholder="Nom du chantier" className="h-12 rounded-[12px] border border-line px-3 text-base md:h-9 md:rounded-[10px] md:text-[14px]" />
-          <input name="client" placeholder="Client (ex. Madame Dupont)" className="h-12 rounded-[12px] border border-line px-3 text-base md:h-9 md:rounded-[10px] md:text-[14px]" />
-          <input name="address" placeholder="Lieu du chantier" className="h-9 rounded-[10px] border border-line px-3 text-[14px]" />
+          <input name="name" required placeholder="Nom du chantier" className="h-12 rounded-[12px] border border-line bg-surface px-3 text-base md:h-9 md:rounded-[10px] md:text-[14px]" />
+          <input name="client" placeholder="Client (ex. Madame Dupont)" className="h-12 rounded-[12px] border border-line bg-surface px-3 text-base md:h-9 md:rounded-[10px] md:text-[14px]" />
+          <input name="address" placeholder="Lieu du chantier" className="h-9 rounded-[10px] border border-line bg-surface px-3 text-[14px]" />
           {error ? <p className="text-[13px] text-destructive">{error}</p> : null}
           <button type="submit" disabled={pending} className="btn-orange inline-flex h-9 w-fit items-center gap-2 px-3 text-[13.5px] font-medium">
             {pending ? <Loader2 className="size-4 animate-spin" /> : "Créer"}

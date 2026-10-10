@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { TarineoHdMascot } from "@/components/tarineo-hd-mascot";
-import { EASE } from "@/components/motion/reveal";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TABS } from "@/lib/nav";
@@ -143,10 +142,10 @@ export function CommandPalette({
             aria-modal="true"
             aria-label="Recherche"
             className="card-soft w-full max-w-lg overflow-hidden max-md:flex max-md:h-dvh max-md:max-w-none max-md:flex-col max-md:rounded-none"
-            initial={{ opacity: 0, y: 14, filter: "blur(6px)", scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)", scale: 1 }}
-            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-            transition={{ duration: 0.35, ease: EASE }}
+            initial={{ opacity: 0, y: 12, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: -12, filter: "blur(4px)", transition: { duration: 0.15, ease: "easeOut" } }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             onKeyDown={onKeyDown}
           >
             <div className="flex items-center gap-3 border-b border-line px-4 py-1">
@@ -166,7 +165,7 @@ export function CommandPalette({
                 ÉCHAP
               </kbd>
             </div>
-            <ScrollArea className="max-h-[50vh] max-md:max-h-none max-md:flex-1">
+            <ScrollArea className="max-h-[50vh] overscroll-contain max-md:max-h-none max-md:flex-1">
             <ul
               className="p-2"
               role="listbox"

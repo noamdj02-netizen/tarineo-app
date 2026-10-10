@@ -42,7 +42,7 @@ export function SectionHeading({
   return (
     <LandingStagger
       className={align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}
-      stagger={0.07}
+      stagger={0.1}
     >
       <LandingStaggerItem>
         <SectionLabel>{label}</SectionLabel>

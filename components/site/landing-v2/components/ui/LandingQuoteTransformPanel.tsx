@@ -535,7 +535,8 @@ export function LandingQuoteTransformPanel({
             <motion.div
               className="w-full sm:w-auto"
               whileHover={reduce || !extracted || downloading ? undefined : { y: -2 }}
-              whileTap={reduce ? undefined : { scale: 0.98 }}
+              whileTap={reduce ? undefined : { scale: 0.96 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
             >
               <Button
                 type="button"

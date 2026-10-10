@@ -148,7 +148,7 @@ function MarginBridge({
             : "color-mix(in srgb, var(--color-accent) 18%, transparent)",
         }}
         transition={{ duration: 0.28, ease: LANDING_EASE }}
-        whileTap={reduce ? undefined : { scale: 0.97 }}
+        whileTap={reduce ? undefined : { scale: 0.96 }}
       >
         <motion.span
           className="flex size-7 items-center justify-center rounded-full bg-paper-0 text-accent-700"

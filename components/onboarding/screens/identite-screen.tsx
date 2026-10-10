@@ -20,47 +20,63 @@ export function IdentiteScreen({
   onLang: (v: Locale) => void;
 }) {
   return (
-    <>
-      <TarineoHdMascot name="03-salut" className="mb-3 h-28 w-32 self-center" label="" />
-      <h1 className="font-display text-[clamp(1.5rem,5vw,2rem)] font-semibold leading-[1.08] tracking-tight">
-        Déposez un devis. Envoyez la facture.
+    <div className="flex flex-col">
+      <TarineoHdMascot
+        name="03-salut"
+        className="mb-5 h-24 w-28 self-center sm:h-28 sm:w-32"
+        label=""
+      />
+      <p className="mono-label mb-2">/ Bienvenue ///</p>
+      <h1 className="font-display text-[clamp(1.65rem,5.2vw,2.15rem)] font-semibold leading-[1.05] tracking-[-0.04em] text-ink text-balance">
+        Protégez votre marge dès le premier PDF.
       </h1>
-      <h2 className="mt-4 font-serif text-[1.35rem] leading-[1.1] tracking-[-0.02em]">
-        Comment vous appeler ?
-      </h2>
-      <p className="mt-2 text-[14.5px] leading-relaxed text-muted-foreground">
-        Prénom et nom pour vos devis et factures.
+      <p className="mt-3 max-w-[36ch] text-[15px] leading-relaxed text-muted-foreground">
+        Deux minutes pour personnaliser TARINEO — puis déposez un devis distributeur.
       </p>
-      <FieldGroup className="mt-6 gap-3">
-        <AuthField
-          label="Prénom"
-          value={first}
-          onChange={(e) => onFirst(e.target.value)}
-          autoComplete="given-name"
-          required
-        />
-        <AuthField
-          label="Nom"
-          value={last}
-          onChange={(e) => onLast(e.target.value)}
-          autoComplete="family-name"
-        />
-      </FieldGroup>
-      <div className="mt-5 flex gap-2">
-        {(Object.keys(LOCALE_LABEL) as Locale[]).map((id) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onLang(id)}
-            className={cn(
-              "pressable rounded-pill border px-3.5 py-1.5 text-[13.5px]",
-              lang === id ? "border-ink bg-ink text-accent-ink" : "border-line",
-            )}
-          >
-            {LOCALE_LABEL[id]}
-          </button>
-        ))}
+
+      <div className="mt-8 border-t border-line/80 pt-6">
+        <h2 className="font-serif text-[1.4rem] leading-[1.12] tracking-[-0.02em] text-ink">
+          Comment vous appeler&nbsp;?
+        </h2>
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-muted-foreground">
+          Prénom et nom sur vos devis et factures clients.
+        </p>
+        <FieldGroup className="mt-5 gap-3">
+          <AuthField
+            label="Prénom"
+            value={first}
+            onChange={(e) => onFirst(e.target.value)}
+            autoComplete="given-name"
+            required
+          />
+          <AuthField
+            label="Nom"
+            value={last}
+            onChange={(e) => onLast(e.target.value)}
+            autoComplete="family-name"
+          />
+        </FieldGroup>
+        <div className="mt-5">
+          <p className="mb-2 text-[12px] font-medium text-muted-foreground">Langue</p>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(LOCALE_LABEL) as Locale[]).map((id) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onLang(id)}
+                className={cn(
+                  "pressable min-h-10 rounded-pill border px-4 text-[13.5px] font-medium transition-colors",
+                  lang === id
+                    ? "border-tarineo-orange bg-tarineo-orange text-white"
+                    : "border-line bg-surface text-ink hover:border-ink/25",
+                )}
+              >
+                {LOCALE_LABEL[id]}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }

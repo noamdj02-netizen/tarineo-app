@@ -137,7 +137,7 @@ export function DevisNouveauHub({
                 key={m.id}
                 type="button"
                 onClick={() => openMode(m.id)}
-                className="card-soft flex min-h-[88px] w-full items-start gap-4 px-4 py-4 text-left transition hover:ring-1 hover:ring-[#FF6B1A]/35 active:scale-[0.995]"
+                className="card-soft flex min-h-[88px] w-full items-start gap-4 px-4 py-4 text-left transition-[box-shadow,transform] duration-150 ease-out hover:ring-1 hover:ring-[#FF6B1A]/35 active:scale-[0.96] [-webkit-tap-highlight-color:transparent]"
               >
                 <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[#FF6B1A]/12 text-[#FF6B1A]">
                   <Icon className="size-5" aria-hidden />

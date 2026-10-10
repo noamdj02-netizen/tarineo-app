@@ -148,20 +148,63 @@
     color: var(--color-accent-700);
   }
 
-  /* Hero — surlignage orange clair (2e ligne du H1), plus compact que le display */
+  /* Hero — display ink + marqueur orange */
+  .landing-v2 .hero-display {
+    font-size: clamp(2.35rem, 5.4vw, 3.75rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    text-wrap: balance;
+  }
+
   .landing-v2 h1 .hero-title-mark {
     display: inline-block;
-    margin-top: 0.2em;
-    padding: 0.05em 0.22em 0.07em;
-    font-size: clamp(2.05rem, 5vw, 2.85rem);
-    line-height: 1.12;
-    letter-spacing: -0.03em;
-    color: var(--color-accent-700);
-    background-color: var(--color-accent-soft);
-    border-radius: 0.12em 0.22em 0.14em 0.18em;
+    margin-top: 0.08em;
+    font-size: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    color: var(--color-accent);
+    background: none;
     box-shadow: none;
-    transform: rotate(-0.45deg);
+    transform: none;
     text-wrap: balance;
+  }
+
+  /* Launch UI — glows orange derrière mockups / CTA */
+  .landing-v2 .landing-launch-glow {
+    background: radial-gradient(
+      ellipse 70% 55% at 50% 80%,
+      color-mix(in srgb, var(--color-accent) 42%, transparent),
+      transparent 70%
+    );
+    filter: blur(28px);
+  }
+
+  .landing-v2 .landing-launch-glow-sm {
+    background: radial-gradient(
+      circle at center,
+      color-mix(in srgb, var(--color-accent) 35%, transparent),
+      transparent 68%
+    );
+    filter: blur(18px);
+  }
+
+  .landing-v2 .landing-launch-pricing-featured {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-accent) 25%, transparent),
+      0 24px 48px -28px color-mix(in srgb, var(--color-accent) 45%, transparent);
+  }
+
+  .landing-v2 .landing-launch-pricing-glow {
+    pointer-events: none;
+    position: absolute;
+    inset: -40% -20% auto;
+    height: 70%;
+    background: radial-gradient(
+      ellipse at 50% 0%,
+      color-mix(in srgb, var(--color-accent) 38%, transparent),
+      transparent 70%
+    );
+    filter: blur(24px);
   }
 
   .surface {

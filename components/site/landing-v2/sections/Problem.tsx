@@ -65,7 +65,7 @@ export function Problem() {
               </div>
             </LandingReveal>
 
-            <LandingStagger className="flex flex-col gap-3" stagger={0.07} delay={0.05}>
+            <LandingStagger className="flex flex-col gap-3" stagger={0.1} delay={0.05}>
               {problemOutputs.map((output) => (
                 <LandingStaggerItem key={output}>
                   <motion.div

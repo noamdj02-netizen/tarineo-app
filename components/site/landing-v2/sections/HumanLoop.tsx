@@ -31,7 +31,7 @@ export function HumanLoop() {
           subtitle="Trois niveaux, toujours les mêmes. Vous savez exactement ce qui se fait sans vous, ce qui attend votre accord et ce qui ne partira jamais tout seul."
         />
 
-        <LandingStagger className="mt-14 grid gap-4 lg:grid-cols-3" stagger={0.08}>
+        <LandingStagger className="mt-14 grid gap-4 lg:grid-cols-3" stagger={0.1}>
           {controlLevels.map((level, index) => (
             <LandingFeatureCard key={level.title} className="surface flex flex-col p-6 sm:p-7">
               <span

@@ -28,7 +28,7 @@ export function Learning() {
             <LearningAnalysisPanel />
           </LandingFloatCard>
 
-          <LandingStagger className="flex flex-col gap-6" stagger={0.08}>
+          <LandingStagger className="flex flex-col gap-6" stagger={0.1}>
             <LandingStaggerItem className="surface p-6 sm:p-7">
               <SectionLabel>Fournisseurs détectés</SectionLabel>
               <p className="mt-2 text-sm text-ink-400">

@@ -223,7 +223,7 @@ function CarouselControls({
             aria-label={`Témoignage ${i + 1}`}
             onClick={() => onPick(i)}
             className={cn(
-              "h-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/40",
+              "h-2 rounded-full transition-[width,background-color] duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tarineo-orange/40",
               i === index ? "w-6 bg-tarineo-orange" : "w-2 bg-line hover:bg-ink-400/40",
             )}
           />

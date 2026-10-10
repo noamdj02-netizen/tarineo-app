@@ -58,7 +58,8 @@ export function ActionCards({
                 </span>
               </span>
               <ArrowUpRight
-                className="size-3.5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                className="size-3.5 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                strokeWidth={2}
                 aria-hidden
               />
             </Link>
@@ -75,8 +76,8 @@ export function ActionCards({
           <Reveal key={href + n}>
             <motion.div
               whileHover={reduce ? undefined : { y: -3 }}
-              whileTap={reduce ? undefined : { scale: 0.97 }}
-              transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+              whileTap={reduce ? undefined : { scale: 0.96 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
               className="h-full"
             >
               <Link

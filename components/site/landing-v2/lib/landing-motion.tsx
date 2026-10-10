@@ -48,13 +48,14 @@ const fadeUpReduced: Variants = {
   show: { opacity: 1, transition: { duration: 0.2 } },
 };
 
+/** Entrée stagger infrequente — better-ui: blur 4 + y 12 / 300ms / 100ms apart. */
 const staggerItem: Variants = {
-  hidden: { opacity: 0, y: 14, scale: 0.98 },
+  hidden: { opacity: 0, y: 12, filter: "blur(4px)" },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { duration: 0.45, ease: LANDING_EASE },
+    filter: "blur(0px)",
+    transition: { duration: 0.3, ease: "easeOut" },
   },
 };
 
@@ -65,7 +66,7 @@ const staggerItemReduced: Variants = {
 
 /** Entrée hero au chargement (pas au scroll). */
 export function LandingHeroStagger({
-  stagger = 0.08,
+  stagger = 0.1,
   delay = 0,
   className,
   children,
@@ -89,7 +90,7 @@ export function LandingHeroStagger({
 }
 
 export function LandingStagger({
-  stagger = 0.07,
+  stagger = 0.1,
   delay = 0,
   className,
   children,

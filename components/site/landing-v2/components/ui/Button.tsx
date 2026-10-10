@@ -9,19 +9,22 @@ import { cn } from "@/lib/utils";
 const buttonVariants = cva(
   [
     "inline-flex touch-manipulation items-center justify-center gap-2 rounded-full text-center font-medium",
-    "transition-colors duration-200 ease-out select-none outline-none",
+    "transition-[color,background-color,border-color,transform] duration-150 ease-out select-none outline-none",
     "focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-paper-100",
     "disabled:pointer-events-none disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
+    "[-webkit-tap-highlight-color:transparent]",
   ].join(" "),
   {
     variants: {
       variant: {
         primary:
-          "bg-accent text-white hover:bg-accent-hover active:scale-[0.98] active:bg-accent-active",
+          "bg-accent text-white hover:bg-accent-hover active:scale-[0.96] active:bg-accent-active disabled:active:scale-100",
+        /** Launch UI — CTA ink (noir chaud) */
+        ink: "rounded-md bg-ink-900 text-paper-0 shadow-sm hover:bg-ink-700 active:scale-[0.96] disabled:active:scale-100",
         secondary:
-          "border border-line bg-paper-0/80 text-ink-900 backdrop-blur-sm hover:border-line-strong hover:bg-paper-200/60 active:scale-[0.98]",
-        ghost: "text-ink-700 hover:bg-paper-0/50 hover:text-accent-700 active:scale-[0.98]",
+          "border border-ink-900/20 bg-gradient-to-t from-ink-900/5 to-ink-900/10 text-ink-900 hover:border-ink-900/30 active:scale-[0.96] disabled:active:scale-100",
+        ghost: "text-ink-700 hover:bg-paper-0/50 hover:text-accent-700 active:scale-[0.96] disabled:active:scale-100",
       },
       size: {
         /** Barre de navigation — compact, aligné au header */

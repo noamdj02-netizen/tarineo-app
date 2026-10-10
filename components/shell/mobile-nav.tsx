@@ -71,11 +71,11 @@ function NavSideItem({
       aria-current={on ? "page" : undefined}
       aria-label={label}
       className={cn(
-        "relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 text-[10px] font-medium leading-none tracking-[-0.01em] transition-colors duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] active:scale-[0.98] motion-reduce:transition-none",
+        "relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 text-[10px] font-medium leading-none tracking-[-0.01em] transition-[color,transform] duration-150 ease-out active:scale-[0.96] motion-reduce:transition-none motion-reduce:active:scale-100 [-webkit-tap-highlight-color:transparent]",
         on ? "text-white" : "text-white/55 hover:text-white/85",
       )}
     >
-      <Icon className="size-[20px]" strokeWidth={on ? 2.1 : 1.7} aria-hidden />
+      <Icon className="size-[20px]" strokeWidth={on ? 2.25 : 1.75} aria-hidden />
       <span className="truncate">{label}</span>
       {on ? (
         <span className="absolute bottom-2 size-1 rounded-full bg-[#FF6B1A]" aria-hidden />

@@ -113,7 +113,7 @@ export function FluidChip({
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true, amount: 0.35 }}
       whileHover={reduce ? undefined : { y: -2, scale: 1.02 }}
-      whileTap={reduce ? undefined : { scale: 0.98 }}
+      whileTap={reduce ? undefined : { scale: 0.96 }}
       transition={reduce ? { duration: 0.15 } : { ...APPLE_SPRING, delay }}
       className={cn(
         "inline-flex items-center gap-2 rounded-full border border-[rgba(10,10,10,0.06)] bg-[#FFFFFF]/90 px-3 py-1.5 shadow-[0_1px_2px_rgba(10,10,10,0.04)] backdrop-blur-sm",

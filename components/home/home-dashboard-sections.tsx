@@ -36,8 +36,8 @@ export function ActionsSection({ actions }: { actions: ActionItem[] }) {
               <Link
                 href={item.href}
                 className={cn(
-                  "grid min-h-[52px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[8px] px-3 py-2.5 transition-colors duration-150",
-                  "hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none",
+                  "grid min-h-[52px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[8px] px-3 py-2.5 transition-colors duration-150 ease-out",
+                  "hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:outline-none [-webkit-tap-highlight-color:transparent]",
                 )}
               >
                 <span className="min-w-0">
@@ -47,9 +47,9 @@ export function ActionsSection({ actions }: { actions: ActionItem[] }) {
                   </span>
                   <span className="mt-0.5 block truncate pl-3 text-[12px] text-muted-foreground">{item.hint}</span>
                 </span>
-                <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-medium text-nav-orange">
+                <span className="inline-flex shrink-0 items-center gap-1 pe-0.5 text-[13px] font-medium text-nav-orange">
                   {item.cta}
-                  <ArrowRight className="size-3.5" aria-hidden />
+                  <ArrowRight className="size-3.5" strokeWidth={2} aria-hidden />
                 </span>
               </Link>
             </li>

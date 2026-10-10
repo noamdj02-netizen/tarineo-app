@@ -7,26 +7,40 @@ import { Footer } from "@/components/site/landing-v2/components/layout/Footer";
 import { Header } from "@/components/site/landing-v2/components/layout/Header";
 import { enableMotion } from "@/components/site/landing-v2/lib/motion";
 import { Hero } from "@/components/site/landing-v2/sections/Hero";
+import { LaunchLogoCloud } from "@/components/site/landing-v2/sections/LaunchLogoCloud";
 
-const JourneyFiveSteps = dynamic(
-  () => import("@/components/site/landing-v2/sections/JourneyFiveSteps").then((m) => m.JourneyFiveSteps),
-  { loading: () => null },
-);
-const ProofTable = dynamic(
-  () => import("@/components/site/landing-v2/sections/ProofTable").then((m) => m.ProofTable),
-  { loading: () => null },
-);
-const TerrainStories = dynamic(
-  () => import("@/components/site/landing-v2/sections/TerrainStories").then((m) => m.TerrainStories),
-  { loading: () => null },
-);
-const NegotiationTransform = dynamic(
+const LaunchFeatureBento = dynamic(
   () =>
-    import("@/components/site/landing-v2/sections/NegotiationTransform").then((m) => m.NegotiationTransform),
+    import("@/components/site/landing-v2/sections/LaunchFeatureBento").then(
+      (m) => m.LaunchFeatureBento,
+    ),
   { loading: () => null },
 );
-const AppCapturePastilles = dynamic(
-  () => import("@/components/site/landing-v2/sections/AppCapturePastilles").then((m) => m.AppCapturePastilles),
+const LaunchFeatureIcons = dynamic(
+  () =>
+    import("@/components/site/landing-v2/sections/LaunchFeatureIcons").then(
+      (m) => m.LaunchFeatureIcons,
+    ),
+  { loading: () => null },
+);
+const PriceTrend = dynamic(
+  () => import("@/components/site/landing-v2/sections/PriceTrend").then((m) => m.PriceTrend),
+  { loading: () => null },
+);
+const Notifications = dynamic(
+  () =>
+    import("@/components/site/landing-v2/sections/Notifications").then((m) => m.Notifications),
+  { loading: () => null },
+);
+const Relances = dynamic(
+  () => import("@/components/site/landing-v2/sections/Relances").then((m) => m.Relances),
+  { loading: () => null },
+);
+const LaunchSpotlight = dynamic(
+  () =>
+    import("@/components/site/landing-v2/sections/LaunchSpotlight").then(
+      (m) => m.LaunchSpotlight,
+    ),
   { loading: () => null },
 );
 const Pricing = dynamic(
@@ -38,7 +52,7 @@ const FaqFinal = dynamic(
   { loading: () => null },
 );
 
-/** Landing marketing — 6 écrans (brief conversion). */
+/** Landing Launch UI (Figma) adaptée Tarineo — structure + tokens métier. */
 export function LandingV2Page() {
   useLayoutEffect(() => {
     enableMotion();
@@ -59,11 +73,13 @@ export function LandingV2Page() {
       <Header />
       <main id="contenu-landing">
         <Hero />
-        <JourneyFiveSteps />
-        <ProofTable />
-        <TerrainStories />
-        <NegotiationTransform />
-        <AppCapturePastilles />
+        <LaunchLogoCloud />
+        <LaunchFeatureBento />
+        <LaunchFeatureIcons />
+        <PriceTrend />
+        <Notifications />
+        <Relances />
+        <LaunchSpotlight />
         <Pricing />
         <FaqFinal />
       </main>

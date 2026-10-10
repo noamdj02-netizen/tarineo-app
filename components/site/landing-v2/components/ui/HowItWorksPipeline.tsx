@@ -16,7 +16,7 @@ export function HowItWorksPipeline() {
   return (
     <LandingStagger
       className="mt-10 grid gap-3 sm:grid-cols-5"
-      stagger={0.09}
+      stagger={0.1}
       delay={0.05}
     >
       {steps.map((step, index) => (

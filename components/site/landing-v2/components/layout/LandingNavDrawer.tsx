@@ -115,7 +115,7 @@ export function LandingNavDrawer({ open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-full w-full max-w-[min(100%,22rem)] flex-col border-l border-line bg-paper-0 shadow-float motion-safe:animate-in motion-safe:slide-in-from-right motion-safe:duration-200"
+        className="relative flex h-full w-full max-w-[min(100%,22rem)] flex-col border-l border-line bg-paper-0 shadow-float overscroll-contain motion-safe:animate-in motion-safe:slide-in-from-right motion-safe:duration-200"
       >
         <div className="flex items-center justify-between border-b border-line px-4 py-3.5 sm:px-5">
           <p id={titleId} className="text-sm font-semibold text-ink-900">Menu</p>
@@ -123,7 +123,7 @@ export function LandingNavDrawer({ open, onClose }: Props) {
             type="button"
             onClick={onClose}
             aria-label="Fermer"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-paper-0 text-ink-900 outline-none transition-colors hover:bg-paper-50 focus-visible:ring-2 focus-visible:ring-accent/45"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-line bg-paper-0 text-ink-900 outline-none transition-[background-color,transform] duration-150 ease-out hover:bg-paper-50 focus-visible:ring-2 focus-visible:ring-accent/45 active:scale-[0.96] [-webkit-tap-highlight-color:transparent]"
           >
             <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.6} aria-hidden>
               <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
@@ -133,7 +133,7 @@ export function LandingNavDrawer({ open, onClose }: Props) {
 
         <nav
           aria-label="Navigation du site"
-          className="flex-1 overflow-y-auto px-3 py-4 sm:px-4"
+          className="flex-1 overflow-y-auto overscroll-contain px-3 py-4 sm:px-4"
         >
           <div className="flex flex-col gap-6">
             {landingNavGroups.map((group) => (

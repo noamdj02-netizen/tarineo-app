@@ -49,7 +49,7 @@ export function DashboardWidget({
         if (dragged) onDrop(dragged, fromCol);
       }}
       className={cn(
-        "relative transition-shadow",
+        "relative transition-[box-shadow] duration-150 ease-out",
         ring && "rounded-card ring-2 ring-ink/12 ring-offset-2 ring-offset-bg",
         editMode && "rounded-card ring-1 ring-dashed ring-ink/15",
       )}
@@ -57,7 +57,7 @@ export function DashboardWidget({
       {editMode ? (
         <div className="mb-1.5 flex items-center gap-1 px-1 text-[11px] text-muted-foreground">
           <div className="flex min-w-0 flex-1 cursor-grab items-center gap-1 active:cursor-grabbing">
-            <GripVertical className="size-3.5 shrink-0" aria-hidden />
+            <GripVertical className="size-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
             <span className="truncate">{WIDGET_LABELS[id]}</span>
           </div>
           {onRemove ? (
@@ -67,10 +67,10 @@ export function DashboardWidget({
                 e.stopPropagation();
                 onRemove();
               }}
-              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-ink transition-colors hover:bg-surface-2"
+              className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md px-2 text-[12px] font-medium text-ink transition-[background-color,transform] duration-150 ease-out hover:bg-surface-2 active:scale-[0.96] [-webkit-tap-highlight-color:transparent]"
               aria-label={`Retirer ${WIDGET_LABELS[id]}`}
             >
-              <X className="size-3.5" aria-hidden />
+              <X className="size-3.5" strokeWidth={2} aria-hidden />
               Retirer
             </button>
           ) : null}

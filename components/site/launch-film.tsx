@@ -36,8 +36,8 @@ export function LaunchFilm({
         className="block aspect-video h-auto max-h-[70dvh] w-full max-w-full rounded-[19px] bg-ink object-contain sm:rounded-[27px]"
         width={1280}
         height={720}
-        src="/videos/launch.mp4"
-        poster="/videos/launch-poster.jpg"
+        src="/videos/motion-tarineo-3.mp4"
+        poster="/videos/motion-tarineo-3-poster.jpg"
         controls
         playsInline
         preload={concealed ? "none" : "metadata"}

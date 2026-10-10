@@ -130,32 +130,46 @@ export function Wizard({
       };
 
   return (
-    <div className="relative grid h-full min-h-0 flex-1 grid-rows-[auto_auto_minmax(0,1fr)]">
+    <div className="relative grid h-full min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)]">
       <SuccessPopOverlay
         open={Boolean(celebrate)}
         title={celebrate?.title ?? ""}
         hint={celebrate?.hint}
       />
       <WizardStepBg step={step} />
-      <div className="mb-3 flex items-center gap-3 px-0.5">
-        <div className="flex min-w-0 flex-1 gap-1" aria-label={`Étape ${step + 1} sur ${ONBOARD_STEPS.length}`}>
+
+      <div className="mb-4 px-0.5">
+        <div
+          className="flex min-w-0 gap-1.5"
+          aria-label={`Étape ${step + 1} sur ${ONBOARD_STEPS.length}`}
+        >
           {ONBOARD_STEPS.map((s, i) => (
-            <motion.i
-              key={s.id}
-              layout
-              className={cn("h-1 flex-1 rounded-pill", i <= step ? "bg-brand-orange" : "bg-ink/12")}
-              transition={{ duration: 0.35, ease: EASE }}
-            />
+            <div key={s.id} className="flex min-w-0 flex-1 flex-col gap-1.5">
+              <motion.i
+                layout
+                className={cn(
+                  "h-1.5 rounded-pill",
+                  i < step && "bg-tarineo-orange/55",
+                  i === step && "bg-tarineo-orange",
+                  i > step && "bg-ink/10",
+                )}
+                transition={{ duration: 0.35, ease: EASE }}
+              />
+              <span
+                className={cn(
+                  "truncate font-mono text-[10px] tracking-wide uppercase",
+                  i === step ? "text-tarineo-orange" : "text-muted-foreground/80",
+                )}
+              >
+                {s.label}
+              </span>
+            </div>
           ))}
         </div>
-        <p className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-          {step + 1}/{ONBOARD_STEPS.length}
-        </p>
       </div>
-      <p className="mono-label mb-3 px-0.5">{`/ ${ONBOARD_STEPS[step]?.label ?? ""} ///`}</p>
 
-      <Card className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden border-line bg-surface/90 py-0 shadow-soft ring-1 ring-line lg:rounded-card">
-        <CardContent className="min-h-0 overflow-y-auto overscroll-contain px-4 py-5 sm:px-8 sm:py-8">
+      <Card className="grid min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-0 overflow-hidden rounded-[28px] border-0 bg-surface/95 py-0 shadow-[0_20px_50px_-28px_rgba(26,16,12,0.35)] ring-1 ring-ink/6 lg:rounded-[32px]">
+        <CardContent className="min-h-0 overflow-y-auto overscroll-contain px-5 py-6 sm:px-9 sm:py-9">
           <AnimatePresence mode="wait">
             <motion.div key={step} className="flex min-h-full flex-col" {...motionProps}>
               {step === 0 ? (
@@ -173,18 +187,18 @@ export function Wizard({
               {step === FIN_STEP ? (
                 <SuccessPop
                   size="lg"
-                  className="flex-1 justify-center py-8"
+                  className="flex-1 justify-center py-6 sm:py-10"
                   title={imported ? "Votre devis est dans TARINEO." : "C’est prêt."}
                   hint={
                     imported
-                      ? "Affinez la marge, transformez pour le client. L’entreprise (SIRET) sera demandée à l’envoi de la pièce client."
-                      : "Explorez le tableau de bord — vous pourrez importer un PDF depuis Documents fournisseur."
+                      ? "Affinez la marge, transformez pour le client. Le SIRET sera demandé à l’envoi de la pièce client."
+                      : "Explorez le tableau de bord — importez un PDF quand vous voulez depuis Documents fournisseur."
                   }
                   action={
                     <Button
                       type="button"
                       size="lg"
-                      className="min-h-12 rounded-full"
+                      className="min-h-12 rounded-full bg-tarineo-orange px-7 text-white hover:bg-tarineo-orange/92"
                       disabled={pending}
                       onClick={() => go(enter)}
                     >
@@ -202,7 +216,7 @@ export function Wizard({
           ) : null}
         </CardContent>
         {!hideFooter ? (
-          <CardFooter className="shrink-0 gap-2 border-line bg-surface/95 px-4 py-3 sm:px-6">
+          <CardFooter className="shrink-0 gap-2 border-t border-line/70 bg-wash-orange-strong/40 px-5 py-3.5 sm:px-8">
             {step > 0 ? (
               <Button type="button" variant="ghost" className="min-h-11" disabled={pending} onClick={() => setStep((s) => Math.max(0, s - 1))}>
                 <ArrowLeft data-icon="inline-start" aria-hidden />
@@ -211,7 +225,12 @@ export function Wizard({
             ) : (
               <span />
             )}
-            <Button type="button" className="ml-auto min-h-11 rounded-full" disabled={pending} onClick={() => go(advance)}>
+            <Button
+              type="button"
+              className="ml-auto min-h-11 rounded-full bg-tarineo-orange px-6 text-white hover:bg-tarineo-orange/92"
+              disabled={pending}
+              onClick={() => go(advance)}
+            >
               {pending ? <Loader2 className="animate-spin" data-icon="inline-start" /> : null}
               Continuer
               {!pending ? <ArrowRight data-icon="inline-end" /> : null}

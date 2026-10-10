@@ -69,7 +69,7 @@ function Kpi({
       <Link
         href={href}
         className={cn(
-          "block rounded-[14px] border border-line bg-surface px-4 py-3.5 shadow-soft transition-[border-color,box-shadow,background-color]",
+          "pressable block rounded-[14px] border border-line bg-surface px-4 py-3.5 shadow-soft transition-[border-color,box-shadow,background-color,transform]",
           EASE,
           "hover:border-line-strong hover:bg-surface-2 hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nav-orange/30",
         )}
@@ -255,7 +255,7 @@ export function HomeDashboardClient({
           description="Ce qui mérite votre attention aujourd’hui."
           action={
             <>
-              <Link href={R.devisNouveau} className={BTN_PRIMARY}>
+              <Link href={R.devisNouveau} className={cn(BTN_PRIMARY, "ps-3.5 pe-4")}>
                 <Plus className="mr-1.5 size-3.5" strokeWidth={2.2} aria-hidden />
                 Nouveau devis
               </Link>
@@ -292,7 +292,7 @@ export function HomeDashboardClient({
         />
       </Reveal>
 
-      <RevealGroup className="mb-6 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4" stagger={0.05} delay={0.04}>
+      <RevealGroup className="mb-6 grid list-none grid-cols-2 gap-3 p-0 lg:grid-cols-4" stagger={0.1} delay={0.04}>
         <Reveal className="min-w-0">
           <Kpi
             href={R.clientDevis}

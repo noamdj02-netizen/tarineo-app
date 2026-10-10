@@ -20,10 +20,8 @@ export type IconName =
 export type NavItem = { label: string; href: string };
 export type LandingNavGroup = { title: string; items: NavItem[] };
 
+/** Nav mobile / drawer — groupes. Desktop = mega-menu (header/nav-data). */
 export const landingNavPrimary: NavItem[] = [
-  { label: "Parcours", href: "#parcours" },
-  { label: "Preuve", href: "#preuve" },
-  { label: "Terrain", href: "#terrain" },
   { label: "Produit", href: "#produit" },
   { label: "Tarifs", href: "#tarifs" },
   { label: "FAQ", href: "#faq" },
@@ -32,11 +30,19 @@ export const landingNavPrimary: NavItem[] = [
 
 export const landingNavGroups: LandingNavGroup[] = [
   {
-    title: "Page",
+    title: "Produit",
     items: [
-      { label: "Parcours", href: "/#parcours" },
-      { label: "Tableau de preuve", href: "/#preuve" },
-      { label: "Sur le terrain", href: "/#terrain" },
+      { label: "Comment ça marche", href: "/#parcours" },
+      { label: "Fonctionnalités", href: "/#preuve" },
+      { label: "Hausses de prix", href: "/#hausses" },
+      { label: "Alertes", href: "/#alertes" },
+      { label: "Relances", href: "/#relances" },
+      { label: "Fiches chantier", href: "/#produit" },
+    ],
+  },
+  {
+    title: "Aller plus loin",
+    items: [
       { label: "Tarifs", href: "/#tarifs" },
       { label: "FAQ", href: "/#faq" },
       { label: "Blog", href: "/blog" },
@@ -51,6 +57,147 @@ export const heroProof = [
   "Documents",
   "Factures",
   "Automatisations",
+];
+
+/** Launch UI — bandeau compatibilité (texte, pas logos enseignes). */
+export const launchCompatStrip = [
+  "Point P",
+  "Cedeo",
+  "Rexel",
+  "Brossette",
+  "Richardson",
+  "Aubade",
+];
+
+export const launchBento = {
+  title: "Protégez votre marge, plus vite.",
+  items: [
+    {
+      title: "Scannez n’importe quel devis",
+      text: "Photo, PDF ou mail : Tarineo lit la mise en page de vos distributeurs et structure les lignes.",
+      icon: "scan" as const,
+    },
+    {
+      title: "Vous gardez la main",
+      text: "Chaque alerte est vérifiable. Rien n’est envoyé au client sans votre validation.",
+      icon: "alert" as const,
+    },
+    {
+      title: "S’intègre à votre routine",
+      text: "Importez depuis le comptoir ou le bureau. Pas de migration lourde ni de formation d’une journée.",
+      icon: "history" as const,
+    },
+    {
+      title: "Historique qui parle métier",
+      text: "Comparez chaque référence à vos prix habituels — pas à un indice abstrait.",
+      icon: "margin" as const,
+    },
+  ],
+};
+
+export const launchFeatureIcons = {
+  title: "Tout ce qu’il faut. Rien de superflu.",
+  items: [
+    {
+      title: "Lecture de devis",
+      text: "OCR + structure lignes, quantités et prix unitaires.",
+    },
+    {
+      title: "Alertes de hausses",
+      text: "Dès qu’une référence sort de vos habitudes d’achat.",
+    },
+    {
+      title: "Devis client",
+      text: "Reprenez les pièces fournisseur avec votre marge.",
+    },
+    {
+      title: "Parcours chantier",
+      text: "Documents rattachés au bon dossier, sans tableur.",
+    },
+    {
+      title: "Temps d’analyse court",
+      text: "Quelques secondes par pièce pour une première lecture.",
+    },
+    {
+      title: "Données en Europe",
+      text: "Hébergement RGPD, session chiffrée.",
+    },
+    {
+      title: "Mobile & bureau",
+      text: "Même compte sur téléphone, tablette et ordinateur.",
+    },
+    {
+      title: "Sans engagement",
+      text: "Changez de formule selon votre volume de devis.",
+    },
+  ],
+};
+
+export const launchSpotlight = {
+  title: "Faites la bonne impression — sur vos marges.",
+  points: [
+    {
+      title: "Intuitif, moderne",
+      text: "Une interface claire pour lire une hausse en un coup d’œil.",
+    },
+    {
+      title: "Fait pour l’artisan",
+      text: "Vocabulaire métier, pas de jargon SaaS inutile.",
+    },
+    {
+      title: "Prêt pour la prod",
+      text: "Compte sécurisé, exports et devis client inclus selon la formule.",
+    },
+  ],
+};
+
+/** Trois chantiers démo — même logique que le dashboard (Exemple). */
+export const landingChantierCards = [
+  {
+    title: "Rénovation SDB — Dupont",
+    client: "Dupont",
+    address: "Lyon 3e",
+    status: "focus" as const,
+    lastUpdated: "Il y a 2 j",
+    description:
+      "Devis Cedeo rattaché : 3 hausses vs votre historique. Relance fournisseur prête.",
+    tags: ["Plomberie", "Cedeo", "12 docs"],
+    docsCount: 12,
+    people: [{ initials: "ND" }, { initials: "MD" }],
+    coverMetric: "+12 %",
+    coverLabel: "Hausse max",
+    coverLines: ["Chauffe-eau 200 L", "Mitigeur therm.", "Tube PER Ø16"],
+  },
+  {
+    title: "Mise aux normes — Martin",
+    client: "Martin",
+    address: "Tassin",
+    status: "focus" as const,
+    lastUpdated: "Il y a 5 j",
+    description:
+      "Devis Rexel analysé. Marge chantier à 31 % sur les lignes validées.",
+    tags: ["Électricité", "Rexel", "8 docs"],
+    docsCount: 8,
+    people: [{ initials: "AM" }, { initials: "ND" }, { initials: "+1" }],
+    coverMetric: "31 %",
+    coverLabel: "Marge chantier",
+    coverLines: ["Câble U1000", "Disjoncteur 20 A", "Tableau 3 rangées"],
+  },
+  {
+    title: "Réfection cuisine — Benali",
+    client: "Benali",
+    address: "Vénissieux",
+    status: "pause" as const,
+    lastUpdated: "Il y a 12 j",
+    description:
+      "En pause client. Documents Point P classés — reprise en un clic.",
+    tags: ["Cuisine", "Point P", "5 docs"],
+    docsCount: 5,
+    people: [{ initials: "KB" }],
+    coverMetric: "5",
+    coverLabel: "Docs classés",
+    coverLines: ["Devis Point P", "Plan cuisine", "Photos avant"],
+  },
 ];
 
 export type QuoteLine = {
@@ -124,28 +271,28 @@ export const heroQuote = {
 export const journeySteps = [
   {
     step: 1,
-    title: "Importez votre historique",
-    detail: "PDF ou photo : Tarineo apprend vos prix habituels.",
+    title: "Importez l’historique",
+    detail: "PDF ou photo — Tarineo apprend vos prix habituels.",
   },
   {
     step: 2,
-    title: "Scannez un document fournisseur",
-    detail: "Devis, bon d’enlèvement, bon de commande ou facture. L’IA lit chaque ligne.",
+    title: "Scannez un devis",
+    detail: "Fournisseur lu ligne à ligne, tout de suite.",
   },
   {
     step: 3,
-    title: "Voyez chaque hausse et chaque baisse",
-    detail: "En % et en euros, comparé à vos achats.",
+    title: "Hausses & baisses",
+    detail: "En % et en euros, face à vos achats.",
   },
   {
     step: 4,
     title: "Validez ou renégociez",
-    detail: "Un clic pour valider, ou un mail déjà rédigé pour votre commercial.",
+    detail: "Un clic, ou un mail déjà prêt pour le commercial.",
   },
   {
     step: 5,
-    title: "Transformez-le pour votre client",
-    detail: "Devis client, commande client ou facture client.",
+    title: "Facturez le client",
+    detail: "Devis, commande ou facture — avec votre marge.",
     pills: ["Devis client", "Commande client", "Facture client"],
   },
 ];
@@ -235,9 +382,11 @@ export const captureSection = {
 
 export const pricingIntro = {
   title: "Tarifs",
-  headline: "Des formules claires pour le terrain.",
-  headlineMuted: "Vous payez pour protéger vos marges, pas pour des options floues.",
+  headline: "Un tarif adapté à la taille de votre activité",
+  headlineMuted: "",
   founder: `${PRO_TRIAL_DAYS} jours gratuits — sans carte`,
+  subtitle:
+    "Sans engagement. Changez de formule à tout moment, en fonction de votre volume de devis.",
 };
 
 export const pricingTrust = [
@@ -246,39 +395,32 @@ export const pricingTrust = [
   "Prix HT, sans engagement",
 ];
 
+/** FAQ calquée sur Figma `22:802` (questions reconstruites — le fichier mélangeait parfois réponses et titres). */
 export const faqItems: { q: string; a: string }[] = [
   {
-    q: "À qui s’adresse Tarinéo ?",
-    a: "Aux artisans et petites entreprises du bâtiment qui reçoivent des devis et factures fournisseurs et veulent suivre leurs achats, leurs chantiers et leur marge sans ressaisir tout dans un tableur.",
+    q: "Puis-je utiliser Tarineo pour plusieurs chantiers ?",
+    a: "Oui, vous pouvez suivre les devis de tous vos chantiers depuis un seul compte, avec un historique complet par fournisseur.",
   },
   {
-    q: "Et si je n’ai pas d’historique ?",
-    a: "Vous pouvez commencer avec un seul devis ou une facture : Tarineo structure le document et enrichit la comparaison au fil des pièces importées.",
+    q: "Quels distributeurs sont compatibles ?",
+    a: "Cedeo, Point P, Rexel, Brossette, Richardson, Aubade et plus de 30 enseignes. Photo, PDF ou mail : Tarineo lit le format de vos devis.",
   },
   {
-    q: "Quels documents peut-on importer ?",
-    a: "Devis, factures, bons de commande et bons d’enlèvement fournisseur en PDF ou en photo. L’extraction lit la mise en page de vos distributeurs habituels (Point P, Cedeo, Rexel, etc.).",
+    q: "Comment personnaliser mon entreprise ?",
+    a: "Depuis Mon entreprise dans votre espace : logo, SIRET, marge par défaut et coordonnées. Modifiable à tout moment.",
   },
   {
-    q: "Comment la marge est-elle suivie ?",
-    a: "Les achats sont rattachés aux chantiers ; vous définissez votre coefficient sur les lignes transformées en devis client. Les hausses fournisseur sont comparées à vos prix habituels pour agir avant de signer ou d’envoyer au client.",
+    q: "Que se passe-t-il si je dépasse mon volume de documents ?",
+    a: "Le plan Équipe couvre jusqu’à 1000 documents par mois. Pour des volumes supérieurs, contactez-nous pour une offre sur mesure.",
   },
   {
-    q: "Est-ce que ça remplace mon logiciel de devis ?",
-    a: "Non : Tarineo vérifie vos achats, prépare la renégociation et produit vos documents client à partir des pièces fournisseur — vous gardez la main sur l’envoi.",
-  },
-  {
-    q: "Mes données sont-elles sécurisées ?",
-    a: "Connexion chiffrée, hébergement en Europe, aucun envoi sans votre validation. Vos documents restent rattachés à votre compte.",
-  },
-  {
-    q: "Comment commencer ?",
-    a: "Créez un compte, importez un premier document fournisseur et laissez Tarineo le comparer à vos références. Les tarifs Starter, Pro et Équipe sont détaillés plus haut sur la page.",
+    q: "Tarineo fonctionne-t-il sur mobile ?",
+    a: "Oui. Votre compte est accessible depuis ordinateur, tablette et téléphone avec la même session sécurisée.",
   },
 ];
 
 export const finalCta = {
-  title: "Votre prochain devis fournisseur mérite d’être vérifié.",
+  title: "Commencez à protéger votre marge.",
 };
 
 export const footerColumns: { title: string; links: { label: string; href: string }[] }[] = [

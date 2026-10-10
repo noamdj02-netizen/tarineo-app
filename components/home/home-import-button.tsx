@@ -47,7 +47,7 @@ export function HomeImportButton({
           <button
             type="button"
             className={cn(
-              "inline-flex h-[38px] items-center rounded-[10px] border border-line bg-surface px-4 text-[13px] font-medium text-ink transition-colors duration-150 ease-[cubic-bezier(0.2,0.8,0.2,1)] hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nav-orange/35",
+              "inline-flex h-[38px] items-center rounded-[10px] border border-line bg-surface px-4 text-[13px] font-medium text-ink transition-[background-color,border-color,transform] duration-150 ease-out hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-nav-orange/35 active:scale-[0.96] [-webkit-tap-highlight-color:transparent]",
               className,
             )}
           />

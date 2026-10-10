@@ -5,15 +5,20 @@ import { ArrowRight } from "lucide-react";
 export function OnboardingAppBanner({ resumeStep = 0 }: { resumeStep?: number }) {
   return (
     <div
-      className="mb-4 flex flex-col gap-2 rounded-card border border-brand-orange/30 bg-[#fff5ef] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+      className="mb-4 flex flex-col gap-3 rounded-[22px] border border-tarineo-orange/25 bg-wash-orange/70 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
       role="status"
     >
-      <p className="text-[13.5px] leading-snug text-ink">
-        <span className="font-medium">2 minutes pour finir l’accueil</span> — prénom et premier PDF distributeur.
-      </p>
+      <div className="min-w-0">
+        <p className="font-display text-[15px] font-semibold tracking-tight text-ink">
+          2 minutes pour finir l’accueil
+        </p>
+        <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
+          Prénom, puis un premier PDF distributeur.
+        </p>
+      </div>
       <Link
         href={`/onboarding?step=${resumeStep}`}
-        className="inline-flex min-h-9 shrink-0 items-center justify-center gap-1 rounded-pill bg-ink px-4 text-[13px] font-medium text-accent-ink"
+        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-pill bg-tarineo-orange px-4 text-[13px] font-medium text-white transition-[filter] hover:brightness-[0.96]"
       >
         Continuer
         <ArrowRight className="size-3.5" aria-hidden />

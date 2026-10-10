@@ -70,7 +70,7 @@ export function Automations() {
           </LandingFloatCard>
 
           <div className="flex flex-col gap-6">
-            <LandingStagger className="flex flex-col gap-3" stagger={0.07}>
+            <LandingStagger className="flex flex-col gap-3" stagger={0.1}>
               {guarantees.map((item) => (
                 <LandingFeatureCard key={item.title} className="surface-flat flex items-start gap-3.5 p-4">
                   <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-accent-soft text-accent-700">
