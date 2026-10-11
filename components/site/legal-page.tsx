@@ -9,21 +9,23 @@ export function LegalPage({
   sections: { h: string; p: string[] }[];
 }) {
   return (
-    <article className="mx-auto max-w-[720px] px-5 pt-14 pb-20 sm:px-8 sm:pt-20">
-      <p className="mono-label">/ Légal ///</p>
-      <h1 className="mt-3 font-display text-[clamp(32px,5vw,46px)] leading-[1.05] font-semibold tracking-tightest">
+    <article className="mx-auto max-w-[720px] px-5 pb-20 pt-10 sm:px-8 sm:pt-14">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-tarineo-orange">
+        Légal
+      </p>
+      <h1 className="mt-3 text-balance text-[clamp(2rem,4vw,2.75rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink-900">
         {title}
       </h1>
-      <p className="mt-3 text-[14px] text-muted-foreground">Mise à jour : {updated}</p>
+      <p className="mt-3 text-[14px] font-medium text-ink-400">Mise à jour : {updated}</p>
       <div className="mt-10 flex flex-col gap-8">
         {sections.map((s) => (
           <section key={s.h} className="flex flex-col gap-3">
-            <h2 className="text-[19px] font-semibold tracking-[-0.02em]">{s.h}</h2>
+            <h2 className="text-[19px] font-semibold tracking-[-0.02em] text-ink-900">{s.h}</h2>
             {s.p.map((t) => (
-              <p key={t} className="text-[15px] leading-relaxed text-ink/75">
+              <p key={t} className="text-[15px] leading-relaxed text-ink-600">
                 {t.split(/(\[À compléter[^\]]*\])/).map((part, i) =>
                   part.startsWith("[À compléter") ? (
-                    <mark key={i} className="rounded-[4px] bg-st-pause-soft px-1 text-st-pause-ink">
+                    <mark key={i} className="rounded-[4px] bg-tarineo-orange/15 px-1 text-ink-800">
                       {part}
                     </mark>
                   ) : (

@@ -21,48 +21,11 @@ export type NavLink = {
   menu?: NavMenu;
 };
 
-/** Nav desktop Tarineo — mega menus (tokens landing). */
+/** Nav desktop Tarineo — alignée Hero / marketing-nav (liens plats). */
 export const LANDING_NAV_LINKS: NavLink[] = [
-  {
-    label: "Produit",
-    menu: {
-      id: "produit",
-      columns: [
-        {
-          heading: "Produit",
-          items: [
-            {
-              label: "Fonctionnalités",
-              description: "Copilote, chantiers, alertes",
-              href: "/#fonctionnalites",
-            },
-            {
-              label: "Film",
-              description: "Voir Tarineo en action",
-              href: "/#film",
-            },
-            {
-              label: "Relances",
-              description: "Fournisseurs & clients",
-              href: "/#relances",
-            },
-          ],
-        },
-        {
-          heading: "Chantiers",
-          accent: true,
-          items: [
-            {
-              label: "Fiches chantier",
-              description: "Aperçu produit",
-              href: "/#produit",
-            },
-          ],
-        },
-      ],
-    },
-  },
+  { label: "Accueil", href: "/#top" },
+  { label: "Fonctionnalités", href: "/#fonctionnalites" },
+  { label: "Produit", href: "/#produit" },
   { label: "Tarifs", href: "/#tarifs" },
-  { label: "FAQ", href: "/#faq" },
   { label: "Blog", href: "/blog" },
 ];

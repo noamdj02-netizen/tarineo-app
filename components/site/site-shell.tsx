@@ -3,15 +3,11 @@
 import { usePathname } from "next/navigation";
 import { Footer as LandingFooter } from "@/components/site/landing-v2/components/layout/Footer";
 import { Header as LandingHeader } from "@/components/site/landing-v2/components/layout/Header";
-import { SiteFooter } from "@/components/site/site-footer";
-import { SiteNav } from "@/components/site/site-nav";
-import { isBlogPath } from "@/lib/site/is-blog-path";
 
-/** Chrome marketing (nav + footer) ; la landing v2 gère son propre header/footer sur `/`. */
+/** Chrome marketing unique (nav + footer landing-v2) ; `/` garde son Hero intégré. */
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLandingV2 = pathname === "/";
-  const isBlog = isBlogPath(pathname);
   const skipTarget = isLandingV2 ? "#contenu-landing" : "#contenu";
 
   const skipLink = (
@@ -32,27 +28,14 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isBlog) {
-    return (
-      <div className="landing-v2 flex min-h-dvh flex-col bg-paper-100 text-ink-600 pb-[env(safe-area-inset-bottom,0px)]">
-        {skipLink}
-        <LandingHeader />
-        <main id="contenu" className="flex-1 min-h-0">
-          {children}
-        </main>
-        <LandingFooter />
-      </div>
-    );
-  }
-
   return (
-    <div className="theme-tarineo dark flex min-h-dvh flex-col overflow-x-clip bg-bg text-ink pb-[env(safe-area-inset-bottom,0px)]">
+    <div className="landing-v2 flex min-h-dvh flex-col bg-paper-100 text-ink-600 pb-[env(safe-area-inset-bottom,0px)]">
       {skipLink}
-      <SiteNav />
-      <main id="contenu" className="flex-1">
+      <LandingHeader />
+      <main id="contenu" className="min-h-0 flex-1">
         {children}
       </main>
-      <SiteFooter />
+      <LandingFooter />
     </div>
   );
 }

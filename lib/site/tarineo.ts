@@ -737,11 +737,13 @@ export const FINAL_CTA = {
 /* Navigation                                                          */
 /* ------------------------------------------------------------------ */
 
+/** @deprecated Préférer `MARKETING_NAV_LINKS` — gardé pour SiteNav legacy. */
 export const NAV_LINKS = [
-  { href: "/#produit", label: "Produit" },
+  { href: "/#top", label: "Accueil" },
   { href: "/#fonctionnalites", label: "Fonctionnalités" },
-  { href: "/#film", label: "Film" },
+  { href: "/#produit", label: "Produit" },
   { href: "/#tarifs", label: "Tarifs" },
+  { href: "/blog", label: "Blog" },
 ] as const;
 
 export const FOOTER_COLS = [

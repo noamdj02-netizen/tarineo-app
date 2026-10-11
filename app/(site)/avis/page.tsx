@@ -31,12 +31,14 @@ export default function AvisPage() {
           { name: "Avis", path: "/avis" },
         ])}
       />
-      <RevealGroup className="mx-auto flex max-w-[720px] flex-col items-center gap-3 px-4 pt-12 text-center sm:px-8 sm:pt-20">
+      <RevealGroup className="mx-auto flex max-w-[720px] flex-col items-center gap-3 px-4 pt-10 text-center sm:px-8 sm:pt-14">
         <Reveal>
-          <p className="mono-label">/ Avis ///</p>
+          <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-tarineo-orange">
+            Avis
+          </p>
         </Reveal>
         <Reveal>
-          <h1 className="font-display text-[clamp(34px,6vw,56px)] leading-[1.02] font-semibold tracking-tightest text-balance">
+          <h1 className="text-balance text-[clamp(2rem,5vw,3.25rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-ink-900">
             Artisans,{" "}
             <span className="text-accent-2">ils voient ce qui mange la marge.</span>
           </h1>

@@ -17,18 +17,11 @@ import {
 } from "@/components/site/landing-v2/lib/landing-motion";
 import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { LANDING_LOGIN, LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
+import { marketingNavItems } from "@/lib/site/marketing-nav";
 import { KNOWN_SUPPLIERS } from "@/lib/metier/suppliers";
 import { ALERT_THRESHOLD, HERO } from "@/lib/site/tarineo";
 
 const ASSET = "/illustrations/landing-hero-24";
-
-const NAV_LINKS: { label: string; href: string; active?: boolean }[] = [
-  { label: "Accueil", href: "/#top", active: true },
-  { label: "Fonctionnalités", href: "/#fonctionnalites" },
-  { label: "Produit", href: "/#produit" },
-  { label: "Tarifs", href: "/#tarifs" },
-  { label: "Blog", href: "/blog" },
-];
 
 /** Preuves produit réelles — jamais de métriques inventées. */
 const TRUST = [
@@ -95,7 +88,7 @@ export function Hero() {
 
           {desktopNav ? (
             <LandingNavMenu
-              items={NAV_LINKS}
+              items={marketingNavItems("/")}
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
             />
           ) : null}
