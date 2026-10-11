@@ -1,107 +1,89 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { type ChangeEvent, useEffect, useState } from "react";
+
+import { useTheme } from "@/components/theme/theme-provider";
 import { useMounted } from "@/lib/hooks/use-mounted";
 import { cn } from "@/lib/utils";
-import { useTheme } from "./theme-provider";
 
-const MOTION =
-  "transition-[opacity,transform] duration-[180ms] ease-[cubic-bezier(0.2,0.8,0.2,1)] motion-reduce:transition-none motion-reduce:transform-none";
-
-function labelFor(dark: boolean) {
-  return dark ? "Passer en mode clair" : "Passer en mode sombre";
-}
-
-const BTN_CLASS = cn(
-  "size-9 shrink-0 rounded-[10px] border border-line bg-transparent text-ink shadow-none",
-  "hover:bg-[rgba(10,10,10,0.04)] hover:text-ink",
-  "dark:border-[rgba(255,255,255,0.08)] dark:hover:bg-[rgba(255,255,255,0.06)]",
-  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0",
-);
-
-function ThemeIcons() {
-  return (
-    <span className="relative block size-4">
-      <Moon
-        aria-hidden
-        className={cn(
-          "absolute inset-0 size-4 rotate-0 text-current opacity-100",
-          "dark:rotate-180 dark:opacity-0",
-          MOTION,
-        )}
-        strokeWidth={1.8}
-      />
-      <Sun
-        aria-hidden
-        className={cn(
-          "absolute inset-0 size-4 -rotate-180 text-current opacity-0",
-          "dark:rotate-0 dark:opacity-100",
-          MOTION,
-        )}
-        strokeWidth={1.8}
-      />
-    </span>
-  );
-}
-
-export function ThemeToggle() {
-  const { setTheme } = useTheme();
-  /** Tooltip (Base UI useId) seulement après mount → HTML SSR = premier paint client. */
+/**
+ * Toggle clair / sombre — style rocker skeuomorphique.
+ * Actif (sombre) = orange Tarineo, jamais bleu.
+ */
+export function ThemeToggle({ className }: { className?: string }) {
+  const { resolved, setTheme } = useTheme();
   const mounted = useMounted();
-  const [label, setLabel] = useState("Passer en mode sombre");
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    setLabel(labelFor(document.documentElement.classList.contains("dark")));
-  }, []);
+    setChecked(resolved === "dark");
+  }, [resolved]);
 
-  function onToggle() {
-    const dark = document.documentElement.classList.contains("dark");
-    setTheme(dark ? "light" : "dark");
-    setLabel(labelFor(!dark));
-  }
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const next = event.target.checked;
+    setChecked(next);
+    setTheme(next ? "dark" : "light");
+  };
 
-  if (!mounted) {
-    return (
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-lg"
-        aria-label={label}
-        onClick={onToggle}
-        className={BTN_CLASS}
-      >
-        <ThemeIcons />
-      </Button>
-    );
-  }
+  const dark = mounted ? checked : false;
+
+  const toggleWrapperClassName = dark
+    ? "bg-gradient-to-b from-[#111827] to-[#273244] shadow-[inset_0_1px_0_rgb(255_255_255/0.08),0_1px_1px_rgb(0_0_0/0.5)]"
+    : "bg-gradient-to-b from-[#d5d5d5] to-[#e8e8e8] shadow-[0_1px_1px_rgb(255_255_255/0.6)]";
+
+  const containerClassName = dark
+    ? "bg-[#f7562c] shadow-[inset_0_0_0.0625em_0.125em_rgb(255_255_255/0.18),inset_0_0.0625em_0.125em_rgb(0_0_0/0.28)]"
+    : "bg-[#e8e8e8] shadow-[inset_0_0_0.0625em_0.125em_rgb(255_255_255/0.2),inset_0_0.0625em_0.125em_rgb(0_0_0/0.4)]";
+
+  const buttonClassName = dark
+    ? "translate-x-[1.5em] bg-[#fff4f0] shadow-[inset_0_-0.0625em_0.0625em_0.125em_rgb(0_0_0/0.12),inset_0_-0.125em_0.0625em_rgb(0_0_0/0.18),inset_0_0.1875em_0.0625em_rgb(255_255_255/0.55),0_0.125em_0.125em_rgb(0_0_0/0.35)]"
+    : "translate-x-0 bg-[#e8e8e8] shadow-[inset_0_-0.0625em_0.0625em_0.125em_rgb(0_0_0/0.1),inset_0_-0.125em_0.0625em_rgb(0_0_0/0.2),inset_0_0.1875em_0.0625em_rgb(255_255_255/0.3),0_0.125em_0.125em_rgb(0_0_0/0.5)]";
+
+  const circleClassName = dark
+    ? "bg-[radial-gradient(circle_at_50%_0,#fff7f4,#f7562c)]"
+    : "bg-[radial-gradient(circle_at_50%_0,#f5f5f5,#c4c4c4)]";
 
   return (
-    <TooltipProvider delay={600}>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-lg"
-              aria-label={label}
-              onClick={onToggle}
-              className={BTN_CLASS}
-            />
-          }
+    <div
+      className={cn(
+        "relative flex size-11 shrink-0 items-center justify-center rounded-[0.5em] p-[0.125em] text-[18px]",
+        toggleWrapperClassName,
+        className,
+      )}
+    >
+      <input
+        aria-label={dark ? "Passer en mode clair" : "Passer en mode sombre"}
+        checked={dark}
+        className="absolute inset-0 z-[1] h-full w-full cursor-pointer appearance-none rounded-[inherit] opacity-0"
+        onChange={handleChange}
+        type="checkbox"
+        role="switch"
+        aria-checked={dark}
+      />
+      <div
+        className={cn(
+          "relative flex h-[1.5em] w-[3em] items-center rounded-[0.375em] transition-[background-color] duration-[400ms] ease-linear motion-reduce:duration-[120ms]",
+          containerClassName,
+        )}
+      >
+        <div
+          className={cn(
+            "absolute left-[0.0625em] flex h-[1.375em] w-[1.375em] items-center justify-center rounded-[0.3125em] transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] [will-change:transform] motion-reduce:duration-[120ms]",
+            buttonClassName,
+          )}
+          data-toggle-button
+          aria-hidden
         >
-          <ThemeIcons />
-        </TooltipTrigger>
-        <TooltipContent side="bottom">{label}</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+          <div className="absolute mx-auto grid grid-cols-[repeat(3,min-content)] gap-[0.125em]">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <div
+                className={cn("size-[0.125em] rounded-full", circleClassName)}
+                key={index}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -28,7 +28,7 @@ function NavLink({
   const resolved = landingNavHref(href, pathname);
   const isExternal = resolved.startsWith("http") || resolved.startsWith("mailto:");
   const className =
-    "block rounded-lg px-3 py-2.5 text-[0.9375rem] text-ink-600 outline-none transition-colors hover:bg-paper-50 hover:text-ink-900 focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-inset";
+    "flex min-h-11 items-center rounded-lg px-3 py-2.5 text-[0.9375rem] text-ink-600 outline-none transition-colors hover:bg-paper-50 hover:text-ink-900 focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-inset";
 
   return (
     <a

@@ -16,6 +16,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { euroInt, PRICING, PRICING_NOTE, type TarineoPlan } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 

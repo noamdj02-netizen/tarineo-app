@@ -1,3 +1,5 @@
+import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
+
 /** Copy des pages app. Données chiffrées des cartes = démo (DEMO_MARK). */
 
 export const APP_PAGES = {
@@ -53,7 +55,7 @@ export const APP_PAGES = {
     label: "Tarifs",
     title: "Votre formule",
     tail: "TARINEO.",
-    text: "1er mois offert, sans carte. Puis Starter, Pro ou Équipe, sans engagement.",
+    text: `${PRO_TRIAL_DAYS} jours d’essai Pro, sans carte. Puis Starter, Pro ou Équipe, sans engagement.`,
   },
 } as const;
 

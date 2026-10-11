@@ -4,18 +4,10 @@ import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect } from "react";
 
 import { Footer } from "@/components/site/landing-v2/components/layout/Footer";
-import { Header } from "@/components/site/landing-v2/components/layout/Header";
 import { enableMotion } from "@/components/site/landing-v2/lib/motion";
 import { Hero } from "@/components/site/landing-v2/sections/Hero";
 import { LaunchLogoCloud } from "@/components/site/landing-v2/sections/LaunchLogoCloud";
 
-const LaunchFeatureBento = dynamic(
-  () =>
-    import("@/components/site/landing-v2/sections/LaunchFeatureBento").then(
-      (m) => m.LaunchFeatureBento,
-    ),
-  { loading: () => null },
-);
 const LaunchFeatureIcons = dynamic(
   () =>
     import("@/components/site/landing-v2/sections/LaunchFeatureIcons").then(
@@ -23,13 +15,11 @@ const LaunchFeatureIcons = dynamic(
     ),
   { loading: () => null },
 );
-const PriceTrend = dynamic(
-  () => import("@/components/site/landing-v2/sections/PriceTrend").then((m) => m.PriceTrend),
-  { loading: () => null },
-);
-const Notifications = dynamic(
+const LaunchFeaturesSwitch = dynamic(
   () =>
-    import("@/components/site/landing-v2/sections/Notifications").then((m) => m.Notifications),
+    import("@/components/site/landing-v2/sections/LaunchFeaturesSwitch").then(
+      (m) => m.LaunchFeaturesSwitch,
+    ),
   { loading: () => null },
 );
 const Relances = dynamic(
@@ -70,14 +60,12 @@ export function LandingV2Page() {
 
   return (
     <div className="landing-v2 min-h-dvh bg-paper-100 text-ink-600">
-      <Header />
+      {/* Nav intégrée dans Hero Designs-24 (Figma 183:3794) — pas de Header flottant */}
       <main id="contenu-landing">
         <Hero />
         <LaunchLogoCloud />
-        <LaunchFeatureBento />
+        <LaunchFeaturesSwitch />
         <LaunchFeatureIcons />
-        <PriceTrend />
-        <Notifications />
         <Relances />
         <LaunchSpotlight />
         <Pricing />

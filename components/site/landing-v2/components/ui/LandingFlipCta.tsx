@@ -94,58 +94,55 @@ export function LandingFlipCta({
   return (
     <MotionLink
       href={href}
+      aria-label={label}
       className={cls}
       initial="initial"
       whileHover="hover"
       whileFocus="hover"
       variants={{ initial: {}, hover: {} }}
     >
-      <span className="invisible relative z-0 inline-flex" aria-hidden>
-        <FlipLabel label={label} withArrow={withArrow} />
-      </span>
-
-      <motion.span
-        className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center"
-        variants={{
-          initial: { y: 0, scale: 1, rotate: 0 },
-          hover: { y: "-120%", scale: 0.55, rotate: -28 },
-        }}
-        transition={SPRING_TEXT}
-        aria-hidden
-      >
-        <FlipLabel label={label} withArrow={withArrow} />
-      </motion.span>
-
-      <motion.span
-        className="pointer-events-none absolute inset-0 z-[1] bg-accent will-change-transform"
-        variants={{
-          initial: { y: "125%", rotate: -36, opacity: 0 },
-          hover: { y: 0, rotate: 0, opacity: 1 },
-        }}
-        transition={EASE_WIPE}
-        aria-hidden
-      >
+      <span aria-hidden className="inline-flex h-full w-full items-center justify-center">
+        <span className="invisible relative z-0 inline-flex">
+          <FlipLabel label={label} withArrow={withArrow} />
+        </span>
         <motion.span
-          className="absolute inset-0 bg-ink-900 will-change-transform"
+          className="absolute inset-0 z-[2] flex items-center justify-center"
           variants={{
-            initial: { y: "145%", rotate: -52, opacity: 0 },
+            initial: { y: 0, scale: 1, rotate: 0 },
+            hover: { y: "-120%", scale: 0.55, rotate: -28 },
+          }}
+          transition={SPRING_TEXT}
+        >
+          <FlipLabel label={label} withArrow={withArrow} />
+        </motion.span>
+        <motion.span
+          className="absolute inset-0 z-[1] bg-accent will-change-transform"
+          variants={{
+            initial: { y: "125%", rotate: -36, opacity: 0 },
             hover: { y: 0, rotate: 0, opacity: 1 },
           }}
           transition={EASE_WIPE}
-        />
-      </motion.span>
-
-      <motion.span
-        className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center text-paper-0"
-        variants={{
-          initial: { y: "165%", rotate: -48, scale: 0.55, opacity: 0 },
-          hover: { y: 0, rotate: 0, scale: 1, opacity: 1 },
-        }}
-        transition={SPRING_TEXT}
-        aria-hidden
-      >
-        <FlipLabel label={label} withArrow={withArrow} />
-      </motion.span>
+        >
+          <motion.span
+            className="absolute inset-0 bg-ink-900 will-change-transform"
+            variants={{
+              initial: { y: "145%", rotate: -52, opacity: 0 },
+              hover: { y: 0, rotate: 0, opacity: 1 },
+            }}
+            transition={EASE_WIPE}
+          />
+        </motion.span>
+        <motion.span
+          className="absolute inset-0 z-[2] flex items-center justify-center text-paper-0"
+          variants={{
+            initial: { y: "165%", rotate: -48, scale: 0.55, opacity: 0 },
+            hover: { y: 0, rotate: 0, scale: 1, opacity: 1 },
+          }}
+          transition={SPRING_TEXT}
+        >
+          <FlipLabel label={label} withArrow={withArrow} />
+        </motion.span>
+      </span>
     </MotionLink>
   );
 }
@@ -165,16 +162,17 @@ export function LandingFlipButton({
 }) {
   const reduce = useReducedMotion();
   const base = cn(
-    "relative inline-flex min-h-10 items-center justify-center isolate overflow-clip rounded-md px-4 text-sm font-medium outline-none",
+    "relative inline-flex min-h-11 items-center justify-center isolate overflow-clip rounded-md px-4 text-sm font-medium outline-none",
     "focus-visible:ring-2 focus-visible:ring-accent/45",
     pressed ? "bg-paper-0 text-ink-900 shadow-sm" : "text-ink-500 hover:text-ink-800",
     className,
   );
+  const face = children ?? label;
 
   if (reduce) {
     return (
       <button type="button" aria-pressed={pressed} className={base} onClick={onClick}>
-        {children ?? label}
+        {face}
       </button>
     );
   }
@@ -182,6 +180,7 @@ export function LandingFlipButton({
   return (
     <motion.button
       type="button"
+      aria-label={label}
       aria-pressed={pressed}
       className={base}
       onClick={onClick}
@@ -190,49 +189,46 @@ export function LandingFlipButton({
       whileFocus="hover"
       variants={{ initial: {}, hover: {} }}
     >
-      <span className="invisible relative z-0" aria-hidden>
-        {children ?? label}
-      </span>
-      <motion.span
-        className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center"
-        variants={{
-          initial: { y: 0, scale: 1, rotate: 0 },
-          hover: { y: "-120%", scale: 0.55, rotate: -28 },
-        }}
-        transition={SPRING_TEXT}
-        aria-hidden
-      >
-        {children ?? label}
-      </motion.span>
-      <motion.span
-        className="pointer-events-none absolute inset-0 z-[1] bg-accent will-change-transform"
-        variants={{
-          initial: { y: "125%", rotate: -36, opacity: 0 },
-          hover: { y: 0, rotate: 0, opacity: 1 },
-        }}
-        transition={EASE_WIPE}
-        aria-hidden
-      >
+      <span aria-hidden className="inline-flex h-full w-full items-center justify-center">
+        <span className="invisible relative z-0">{face}</span>
         <motion.span
-          className="absolute inset-0 bg-ink-900 will-change-transform"
+          className="absolute inset-0 z-[2] flex items-center justify-center"
           variants={{
-            initial: { y: "145%", rotate: -52, opacity: 0 },
+            initial: { y: 0, scale: 1, rotate: 0 },
+            hover: { y: "-120%", scale: 0.55, rotate: -28 },
+          }}
+          transition={SPRING_TEXT}
+        >
+          {face}
+        </motion.span>
+        <motion.span
+          className="absolute inset-0 z-[1] bg-accent will-change-transform"
+          variants={{
+            initial: { y: "125%", rotate: -36, opacity: 0 },
             hover: { y: 0, rotate: 0, opacity: 1 },
           }}
           transition={EASE_WIPE}
-        />
-      </motion.span>
-      <motion.span
-        className="pointer-events-none absolute inset-0 z-[2] flex items-center justify-center text-paper-0"
-        variants={{
-          initial: { y: "165%", rotate: -48, scale: 0.55, opacity: 0 },
-          hover: { y: 0, rotate: 0, scale: 1, opacity: 1 },
-        }}
-        transition={SPRING_TEXT}
-        aria-hidden
-      >
-        {children ?? label}
-      </motion.span>
+        >
+          <motion.span
+            className="absolute inset-0 bg-ink-900 will-change-transform"
+            variants={{
+              initial: { y: "145%", rotate: -52, opacity: 0 },
+              hover: { y: 0, rotate: 0, opacity: 1 },
+            }}
+            transition={EASE_WIPE}
+          />
+        </motion.span>
+        <motion.span
+          className="absolute inset-0 z-[2] flex items-center justify-center text-paper-0"
+          variants={{
+            initial: { y: "165%", rotate: -48, scale: 0.55, opacity: 0 },
+            hover: { y: 0, rotate: 0, scale: 1, opacity: 1 },
+          }}
+          transition={SPRING_TEXT}
+        >
+          {face}
+        </motion.span>
+      </span>
     </motion.button>
   );
 }

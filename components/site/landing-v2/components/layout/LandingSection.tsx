@@ -3,9 +3,11 @@
 import { motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
 
+import { LANDING_EASE } from "@/components/site/landing-v2/lib/landing-motion";
 import { cn } from "@/lib/utils";
 
-const EASE = [0.22, 1, 0.36, 1] as const;
+/** Rythme vertical unique pour toutes les sections landing-v2. */
+export const LANDING_SECTION_PAD = "py-10 sm:py-14 lg:py-16";
 
 export function LandingSection({
   id,
@@ -24,15 +26,11 @@ export function LandingSection({
   return (
     <motion.section
       id={id}
-      className={cn(
-        "relative py-20 sm:py-28 lg:py-32",
-        bleed && "border-y border-line/80 bg-paper-50/40",
-        className,
-      )}
-      initial={reduce ? false : { opacity: 0, y: 28 }}
+      className={cn("relative", LANDING_SECTION_PAD, bleed && "bg-paper-50/40", className)}
+      initial={reduce ? false : { opacity: 0, y: 16 }}
       whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-8% 0px -8% 0px" }}
-      transition={{ duration: 0.65, ease: EASE }}
+      viewport={{ once: true, margin: "-6% 0px -6% 0px" }}
+      transition={{ duration: 0.5, ease: LANDING_EASE }}
     >
       {children}
     </motion.section>

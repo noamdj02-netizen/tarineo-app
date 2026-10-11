@@ -1,43 +1,54 @@
-// Génère les icônes PWA + logoNavPit.png à partir de public/icons/logoNavPit-source.jpg
+// Génère les icônes PWA (clair + sombre) depuis les sources brand.
 // Usage : npm run icons
-import { mkdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
-const BG = { r: 243, g: 243, b: 242, alpha: 1 }; // --color-bg
+const ROOT = fileURLToPath(new URL("../", import.meta.url));
+const FAVICON = `${ROOT}public/brand/favicon/`;
+const ICONS = `${ROOT}public/icons/`;
+const LIGHT = `${FAVICON}tarineo-icon-light-source.png`;
+const DARK = `${FAVICON}tarineo-icon-dark-source.png`;
 
-const OUT = fileURLToPath(new URL("../public/icons/", import.meta.url));
-const SRC = fileURLToPath(new URL("../public/icons/logoNavPit-source.jpg", import.meta.url));
-
-/** Mascotte centrée sur fond Mono Lead ; `inset` = marge (ratio) pour zone sûre maskable. */
-async function renderIcon(size, inset = 0.08) {
+async function square(src, size, out, inset = 0) {
   const margin = Math.round(size * inset);
   const inner = size - margin * 2;
-  const mascot = await sharp(SRC)
-    .resize(inner, inner, { fit: "contain", background: BG })
+  const img = await sharp(src)
+    .resize(inner, inner, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
 
-  return sharp({
-    create: { width: size, height: size, channels: 4, background: BG },
+  const buf = await sharp({
+    create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
   })
-    .composite([{ input: mascot, gravity: "centre" }])
+    .composite([{ input: img, gravity: "centre" }])
     .png()
     .toBuffer();
+
+  await writeFile(out, buf);
+  console.log(out.replace(ROOT, ""), `(${size}×${size})`);
 }
 
-await mkdir(OUT, { recursive: true });
+await mkdir(FAVICON, { recursive: true });
+await mkdir(ICONS, { recursive: true });
 
-const files = [
-  ["icon-192.png", 192, 0.08],
-  ["icon-512.png", 512, 0.08],
-  ["maskable-512.png", 512, 0.18],
-  ["apple-touch-icon.png", 180, 0.1],
-  ["logoNavPit.png", 512, 0.08],
-];
+await square(LIGHT, 192, `${FAVICON}icon-192.png`);
+await square(LIGHT, 512, `${FAVICON}icon-512.png`);
+await square(LIGHT, 180, `${FAVICON}apple-touch-icon.png`);
+await square(LIGHT, 32, `${FAVICON}icon-32.png`);
+await square(LIGHT, 32, `${FAVICON}favicon-32.png`);
 
-for (const [name, size, inset] of files) {
-  const png = await renderIcon(size, inset);
-  await writeFile(`${OUT}/${name}`, png);
-  console.log(`public/icons/${name} (${size}×${size})`);
+await square(DARK, 192, `${FAVICON}icon-192-dark.png`);
+await square(DARK, 512, `${FAVICON}icon-512-dark.png`);
+await square(DARK, 180, `${FAVICON}apple-touch-icon-dark.png`);
+await square(DARK, 512, `${FAVICON}maskable-512.png`, 0.1);
+
+for (const name of [
+  "icon-192.png",
+  "icon-512.png",
+  "maskable-512.png",
+  "apple-touch-icon.png",
+]) {
+  await copyFile(`${FAVICON}${name}`, `${ICONS}${name}`);
+  console.log(`public/icons/${name} (mirror)`);
 }

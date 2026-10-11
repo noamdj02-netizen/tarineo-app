@@ -42,10 +42,12 @@
   --radius-xl: 24px;
   --radius-2xl: 32px;
 
-  /* Ombres */
-  --shadow-card: 0 1px 2px rgb(10 10 10 / 0.04), 0 10px 26px -18px rgb(10 10 10 / 0.16);
-  --shadow-float: 0 2px 6px rgb(10 10 10 / 0.04), 0 34px 64px -30px rgb(10 10 10 / 0.24);
-  --shadow-accent: 0 8px 20px -14px rgb(120 58 32 / 0.22);
+  /* Ombres — langage Parcours / Framer (brun chaud) */
+  --shadow-card:
+    0 2px 4px rgb(97 44 0 / 0.04), 0 8px 16px rgb(97 44 0 / 0.06), 0 24px 40px rgb(156 156 156 / 0.1);
+  --shadow-float:
+    0 4px 8px rgb(97 44 0 / 0.06), 0 16px 28px rgb(97 44 0 / 0.08), 0 40px 56px rgb(156 156 156 / 0.14);
+  --shadow-accent: 0 8px 20px -14px rgb(247 86 44 / 0.28);
 
   /* Échelle typographique */
   --text-display: clamp(2.5rem, 6vw, 3.5rem);
@@ -148,11 +150,15 @@
     color: var(--color-accent-700);
   }
 
-  /* Hero — display ink + marqueur orange */
+  /* Hero — Bebas Neue Regular (400) ; override h1 weight 600 */
   .landing-v2 .hero-display {
-    font-size: clamp(2.35rem, 5.4vw, 3.75rem);
-    line-height: 1.05;
-    letter-spacing: -0.04em;
+    font-family: "Bebas Neue", Impact, sans-serif;
+    font-weight: 400;
+    font-style: normal;
+    font-size: clamp(2.35rem, 7.2vw + 0.85rem, 3.875rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    max-width: 100%;
     text-wrap: balance;
   }
 
@@ -177,6 +183,18 @@
       transparent 70%
     );
     filter: blur(28px);
+  }
+
+  /* Shader orange en bas du hero (asset glows.svg + fondu paper) */
+  .landing-v2 .landing-hero-shader {
+    mask-image: linear-gradient(to top, black 0%, black 55%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, black 0%, black 55%, transparent 100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .landing-v2 .landing-hero-shader {
+      opacity: 0.55;
+    }
   }
 
   .landing-v2 .landing-launch-glow-sm {
@@ -512,8 +530,10 @@ html.js-motion [data-reveal-bar] {
   --color-accent-700: #c2410c;
   --color-accent-fill: #f97316;
 
-  --shadow-card: 0 1px 2px rgb(10 10 10 / 0.04), 0 10px 26px -18px rgb(10 10 10 / 0.14);
-  --shadow-float: 0 2px 6px rgb(10 10 10 / 0.04), 0 28px 56px -28px rgb(10 10 10 / 0.18);
+  --shadow-card:
+    0 2px 4px rgb(0 0 0 / 0.2), 0 8px 16px rgb(0 0 0 / 0.18), 0 24px 40px rgb(0 0 0 / 0.16);
+  --shadow-float:
+    0 4px 8px rgb(0 0 0 / 0.22), 0 16px 28px rgb(0 0 0 / 0.2), 0 40px 56px rgb(0 0 0 / 0.18);
 
   background-color: var(--color-paper-100);
   color: var(--color-ink-600);

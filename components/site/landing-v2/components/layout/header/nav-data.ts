@@ -29,32 +29,17 @@ export const LANDING_NAV_LINKS: NavLink[] = [
       id: "produit",
       columns: [
         {
-          heading: "Parcours",
+          heading: "Produit",
           items: [
-            {
-              label: "Comment ça marche",
-              description: "Du devis scrapé à la marge protégée",
-              href: "/#parcours",
-            },
             {
               label: "Fonctionnalités",
-              description: "Scan, alertes, devis client",
-              href: "/#preuve",
-            },
-          ],
-        },
-        {
-          heading: "Suivi terrain",
-          items: [
-            {
-              label: "Hausses de prix",
-              description: "Courbe sur une référence",
-              href: "/#hausses",
+              description: "Copilote, chantiers, alertes",
+              href: "/#fonctionnalites",
             },
             {
-              label: "Alertes",
-              description: "Fil d’activités en temps réel",
-              href: "/#alertes",
+              label: "Film",
+              description: "Voir Tarineo en action",
+              href: "/#film",
             },
             {
               label: "Relances",

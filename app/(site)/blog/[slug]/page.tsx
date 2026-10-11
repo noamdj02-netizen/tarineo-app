@@ -141,7 +141,7 @@ export default async function BlogArticlePage({ params }: Props) {
               Créer un compte
             </Link>
             <Link
-              href="/#devis-facture"
+              href="/#fonctionnalites"
               className="inline-flex min-h-11 items-center justify-center rounded-full border border-line bg-paper-0 px-5 text-sm font-medium text-ink-900 transition-colors hover:bg-paper-50"
             >
               Essai gratuit sur la landing

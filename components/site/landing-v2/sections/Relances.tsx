@@ -1,31 +1,29 @@
 "use client";
 
 import { LandingSection } from "@/components/site/landing-v2/components/layout/LandingSection";
-import { LandingRelanceTable } from "@/components/site/landing-v2/components/ui/LandingRelanceTable";
-import { SectionHeading } from "@/components/site/landing-v2/components/ui/SectionLabel";
-import { LandingFloatCard } from "@/components/site/landing-v2/lib/landing-motion";
+import { LandingCapabilitiesBento } from "@/components/site/landing-v2/components/ui/LandingCapabilitiesBento";
+import {
+  LandingSectionHeading,
+  LandingSurface,
+} from "@/components/site/landing-v2/components/ui/LandingSurface";
 
-/** Section landing — file de relances fournisseurs / clients. */
+/** Relances — bento Figma 196:1481, compact + polish landing. */
 export function Relances() {
   return (
-    <LandingSection id="relances" className="border-t border-line/60 py-16 sm:py-24">
+    <LandingSection id="relances">
       <div className="shell">
-        <SectionHeading
-          align="center"
-          label="Relances"
-          title="Fournisseurs à négocier, clients à suivre."
-          subtitle="Relances commerciales et devis clients — le statut passe de « en cours » à « répondu » pendant que vous travaillez (exemple)."
-        />
-
-        <div className="relative mx-auto mt-10 max-w-2xl sm:mt-14">
-          <div
-            className="landing-launch-glow pointer-events-none absolute -inset-8 opacity-30 sm:-inset-12"
-            aria-hidden
+        <LandingSurface
+          className="px-4 py-9 sm:px-8 sm:py-12"
+          contentClassName="mx-auto flex max-w-[1120px] flex-col items-center gap-7 sm:gap-9"
+        >
+          <LandingSectionHeading
+            badge="Suivi chantier"
+            title="Tout le suivi d’un chantier, au même endroit."
+            subtitle="Devis fournisseurs, alertes de hausses et relances dans le dossier du chantier — prêts à ouvrir, relancer ou envoyer au client."
           />
-          <LandingFloatCard className="relative z-10">
-            <LandingRelanceTable />
-          </LandingFloatCard>
-        </div>
+
+          <LandingCapabilitiesBento />
+        </LandingSurface>
       </div>
     </LandingSection>
   );

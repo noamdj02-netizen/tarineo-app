@@ -21,9 +21,9 @@ export function LandingMenuButton({ onClick, open, className }: Props) {
         "inline-flex shrink-0 touch-manipulation items-center justify-center rounded-full text-ink-600 outline-none transition-colors duration-200",
         "hover:bg-paper-0 hover:text-ink-900",
         "focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper-100",
-        "h-10 w-10",
-        "max-md:border max-md:border-line max-md:bg-paper-0 max-md:shadow-sm",
-        "md:h-9 md:w-9 md:text-ink-500",
+        "h-11 w-11 min-h-11 min-w-11",
+        "border border-line bg-paper-0 shadow-sm",
+        "text-ink-700",
         className,
       )}
     >

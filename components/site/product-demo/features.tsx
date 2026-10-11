@@ -8,13 +8,13 @@ import { cn } from "@/lib/utils";
 
 /** Ancres des sections démo sur la home. */
 const MODULE_HREF: Record<string, string> = {
-  "devis-ia": "#devis-ia",
-  chantiers: "#chantiers",
-  achats: "#chantiers",
-  documents: "#documents",
-  prix: "#documents",
-  facturation: "#comment-ca-marche",
-  copilote: "#copilote",
+  "devis-ia": "/#fonctionnalites",
+  chantiers: "/#produit",
+  achats: "/#produit",
+  documents: "/#fonctionnalites",
+  prix: "/#fonctionnalites",
+  facturation: "/#relances",
+  copilote: "/#fonctionnalites",
 };
 
 /** Index modules — grille bento, liens vers les démos au-dessus. */

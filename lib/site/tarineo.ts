@@ -7,6 +7,7 @@
  */
 
 import { BRAND } from "@/lib/brand";
+import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { supplierDomains } from "@/lib/metier/suppliers";
 
 /* ------------------------------------------------------------------ */
@@ -21,7 +22,7 @@ export type HeroVideo = {
 };
 
 /** Offre unique, reprise telle quelle partout sur le site. */
-export const OFFER = "1er mois offert, sans carte bancaire";
+export const OFFER = `${PRO_TRIAL_DAYS} jours d’essai Pro, sans carte bancaire`;
 
 /** CTA essai : court dans la nav / le footer, long dans le hero et le bandeau final. */
 export const CTA_TRIAL = {
@@ -41,7 +42,7 @@ export const HERO = {
   text:
     "TARINEO lit vos factures et vous alerte dès qu’une référence augmente, avant que ça mange la marge de vos chantiers.",
   primary: { label: "Essayer TARINEO gratuitement", href: "/inscription" },
-  secondary: { label: "Découvrir TARINEO", href: "/#devis-facture" },
+  secondary: { label: "Découvrir TARINEO", href: "/#fonctionnalites" },
   founderLine: "Créé par un ancien des Travaux Publics.",
   /** Hero sans vidéo — fichiers conservés dans /public/landing pour d’autres surfaces. */
   video: null as HeroVideo | null,
@@ -706,7 +707,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         q: "L’essai est-il vraiment sans carte ?",
-        a: "Oui : le 1er mois est offert, sans carte bancaire. Vous ajoutez un moyen de paiement seulement si TARINEO vous est utile.",
+        a: `Oui : ${PRO_TRIAL_DAYS} jours d’essai Pro, sans carte bancaire. Vous ajoutez un moyen de paiement seulement si TARINEO vous est utile. Sans paiement, le compte et les données associées sont supprimés à la fin de l’essai.`,
       },
       {
         q: "Puis-je annuler mon abonnement ?",
@@ -737,9 +738,9 @@ export const FINAL_CTA = {
 /* ------------------------------------------------------------------ */
 
 export const NAV_LINKS = [
-  { href: "/#devis-ia", label: "Produit" },
+  { href: "/#produit", label: "Produit" },
   { href: "/#fonctionnalites", label: "Fonctionnalités" },
-  { href: "/#comment-ca-marche", label: "Comment ça marche" },
+  { href: "/#film", label: "Film" },
   { href: "/#tarifs", label: "Tarifs" },
 ] as const;
 
@@ -747,16 +748,16 @@ export const FOOTER_COLS = [
   {
     title: "Produit",
     links: [
-      { href: "/#devis-ia", label: "Produit" },
+      { href: "/#produit", label: "Produit" },
       { href: "/#fonctionnalites", label: "Fonctionnalités" },
-      { href: "/#comment-ca-marche", label: "Comment ça marche" },
+      { href: "/#film", label: "Film" },
       { href: "/#tarifs", label: "Tarifs" },
     ],
   },
   {
     title: "Entreprise",
     links: [
-      { href: "/#qui", label: "À propos" },
+      { href: "/avis", label: "À propos" },
       { href: `mailto:${BRAND.contactEmail}`, label: "Contact" },
     ],
   },

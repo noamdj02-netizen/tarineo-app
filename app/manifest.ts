@@ -11,12 +11,39 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#0a0a0a",
+    background_color: "#F5F5F3",
     theme_color: "#0a0a0a",
     icons: [
-      { src: "/brand/favicon/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/brand/favicon/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/brand/favicon/maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      {
+        src: "/brand/favicon/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/brand/favicon/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/brand/favicon/icon-192-dark.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/brand/favicon/icon-512-dark.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/brand/favicon/maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
     ],
   };
 }

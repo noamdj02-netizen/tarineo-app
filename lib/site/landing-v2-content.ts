@@ -30,22 +30,21 @@ export const landingNavPrimary: NavItem[] = [
 
 export const landingNavGroups: LandingNavGroup[] = [
   {
-    title: "Produit",
+    title: "Navigation",
     items: [
-      { label: "Comment ça marche", href: "/#parcours" },
-      { label: "Fonctionnalités", href: "/#preuve" },
-      { label: "Hausses de prix", href: "/#hausses" },
-      { label: "Alertes", href: "/#alertes" },
-      { label: "Relances", href: "/#relances" },
-      { label: "Fiches chantier", href: "/#produit" },
+      { label: "Accueil", href: "/#top" },
+      { label: "Fonctionnalités", href: "/#fonctionnalites" },
+      { label: "Produit", href: "/#produit" },
+      { label: "Tarifs", href: "/#tarifs" },
+      { label: "Blog", href: "/blog" },
     ],
   },
   {
-    title: "Aller plus loin",
+    title: "Sur la page",
     items: [
-      { label: "Tarifs", href: "/#tarifs" },
+      { label: "Film", href: "/#film" },
+      { label: "Relances", href: "/#relances" },
       { label: "FAQ", href: "/#faq" },
-      { label: "Blog", href: "/blog" },
     ],
   },
 ];
@@ -164,9 +163,7 @@ export const landingChantierCards = [
     tags: ["Plomberie", "Cedeo", "12 docs"],
     docsCount: 12,
     people: [{ initials: "ND" }, { initials: "MD" }],
-    coverMetric: "+12 %",
-    coverLabel: "Hausse max",
-    coverLines: ["Chauffe-eau 200 L", "Mitigeur therm.", "Tube PER Ø16"],
+    coverImage: "/illustrations/landing-chantiers/renovation-interieur.jpg",
   },
   {
     title: "Mise aux normes — Martin",
@@ -179,9 +176,7 @@ export const landingChantierCards = [
     tags: ["Électricité", "Rexel", "8 docs"],
     docsCount: 8,
     people: [{ initials: "AM" }, { initials: "ND" }, { initials: "+1" }],
-    coverMetric: "31 %",
-    coverLabel: "Marge chantier",
-    coverLines: ["Câble U1000", "Disjoncteur 20 A", "Tableau 3 rangées"],
+    coverImage: "/illustrations/landing-chantiers/chantier-exterieur.jpg",
   },
   {
     title: "Réfection cuisine — Benali",
@@ -194,9 +189,7 @@ export const landingChantierCards = [
     tags: ["Cuisine", "Point P", "5 docs"],
     docsCount: 5,
     people: [{ initials: "KB" }],
-    coverMetric: "5",
-    coverLabel: "Docs classés",
-    coverLines: ["Devis Point P", "Plan cuisine", "Photos avant"],
+    coverImage: "/illustrations/landing-chantiers/renovation-equipe.jpg",
   },
 ];
 
@@ -384,9 +377,8 @@ export const pricingIntro = {
   title: "Tarifs",
   headline: "Un tarif adapté à la taille de votre activité",
   headlineMuted: "",
-  founder: `${PRO_TRIAL_DAYS} jours gratuits — sans carte`,
-  subtitle:
-    "Sans engagement. Changez de formule à tout moment, en fonction de votre volume de devis.",
+  founder: `${PRO_TRIAL_DAYS} jours d’essai Pro — sans carte bancaire`,
+  subtitle: `Commencez avec ${PRO_TRIAL_DAYS} jours d’essai Pro sur toutes les formules. Puis Starter, Pro ou Équipe — sans engagement, changez à tout moment.`,
 };
 
 export const pricingTrust = [
@@ -427,7 +419,8 @@ export const footerColumns: { title: string; links: { label: string; href: strin
   {
     title: "Produit",
     links: [
-      { label: "Parcours", href: "/#parcours" },
+      { label: "Film", href: "/#film" },
+      { label: "Fonctionnalités", href: "/#fonctionnalites" },
       { label: "Tarifs", href: "/#tarifs" },
       { label: "Blog", href: "/blog" },
     ],

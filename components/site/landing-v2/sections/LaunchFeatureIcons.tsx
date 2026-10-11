@@ -10,41 +10,71 @@ import {
   TrendingUp,
   Workflow,
 } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 
 import { LandingSection } from "@/components/site/landing-v2/components/layout/LandingSection";
+import {
+  LANDING_CARD_SHADOW,
+  LANDING_CARD_SHADOW_HOVER,
+  LandingSectionHeading,
+  LandingSurface,
+} from "@/components/site/landing-v2/components/ui/LandingSurface";
 import { LandingStagger, LandingStaggerItem } from "@/components/site/landing-v2/lib/landing-motion";
 import { launchFeatureIcons } from "@/lib/site/landing-v2-content";
+import { cn } from "@/lib/utils";
 
 const ICONS = [ScanLine, TrendingUp, FileText, Workflow, Gauge, Lock, Smartphone, Sparkles];
 
-/** Grille icônes 2×4 — structure Launch UI “Everything you need”. */
+/** Grille icônes 2×4 — rendu Parcours / Framer. */
 export function LaunchFeatureIcons() {
-  return (
-    <LandingSection id="preuve" className="border-t border-line/60 py-16 sm:py-20">
-      <div className="shell">
-        <h2 className="mx-auto max-w-2xl text-center text-title font-semibold tracking-tight text-ink-900">
-          {launchFeatureIcons.title}
-        </h2>
+  const reduce = useReducedMotion();
 
-        <LandingStagger
-          className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-10"
-          stagger={0.08}
-        >
-          {launchFeatureIcons.items.map((item, i) => {
-            const Icon = ICONS[i % ICONS.length];
-            return (
-              <LandingStaggerItem key={item.title}>
-                <div className="max-w-xs">
-                  <Icon className="size-5 text-ink-900" strokeWidth={1.75} aria-hidden />
-                  <h3 className="mt-3 text-sm font-semibold tracking-tight text-ink-900">
-                    {item.title}
-                  </h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-ink-500">{item.text}</p>
-                </div>
-              </LandingStaggerItem>
-            );
-          })}
-        </LandingStagger>
+  return (
+    <LandingSection id="preuve">
+      <div className="shell">
+        <LandingSurface contentClassName="mx-auto flex max-w-[1120px] flex-col items-center gap-12 sm:gap-16">
+          <LandingSectionHeading
+            badge="Tout inclus"
+            title={launchFeatureIcons.title}
+            subtitle="Les outils du devis au suivi — sans empiler cinq logiciels."
+          />
+
+          <LandingStagger
+            className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5"
+            stagger={0.07}
+          >
+            {launchFeatureIcons.items.map((item, i) => {
+              const Icon = ICONS[i % ICONS.length];
+              return (
+                <LandingStaggerItem key={item.title}>
+                  <motion.div
+                    whileHover={
+                      reduce
+                        ? undefined
+                        : { y: -4, transition: { type: "spring", stiffness: 380, damping: 28 } }
+                    }
+                    className={cn(
+                      "flex h-full flex-col rounded-[22px] border border-black/[0.04] bg-paper-0 p-5 transition-[box-shadow,border-color] duration-300",
+                      LANDING_CARD_SHADOW,
+                      "hover:border-black/[0.06]",
+                      LANDING_CARD_SHADOW_HOVER,
+                    )}
+                  >
+                    <span className="flex size-10 items-center justify-center rounded-2xl bg-[#fff4ee] ring-1 ring-[#f7562c]/15">
+                      <Icon className="size-5 text-[#f7562c]" strokeWidth={1.75} aria-hidden />
+                    </span>
+                    <h3 className="mt-4 text-[15px] font-semibold tracking-tight text-ink-900">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1.5 text-sm font-medium leading-relaxed text-ink-500">
+                      {item.text}
+                    </p>
+                  </motion.div>
+                </LandingStaggerItem>
+              );
+            })}
+          </LandingStagger>
+        </LandingSurface>
       </div>
     </LandingSection>
   );
