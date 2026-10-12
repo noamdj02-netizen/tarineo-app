@@ -17,6 +17,7 @@ import {
 } from "@/components/site/landing-v2/lib/landing-motion";
 import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { LANDING_LOGIN, LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
+import { LAUNCH_FREE_MONTHS, scrollToLaunchContactForm } from "@/lib/site/launch-offer";
 import { marketingNavItems } from "@/lib/site/marketing-nav";
 import { KNOWN_SUPPLIERS } from "@/lib/metier/suppliers";
 import { ALERT_THRESHOLD, HERO } from "@/lib/site/tarineo";
@@ -134,8 +135,7 @@ export function Hero() {
                 {HERO.badge}
               </div>
 
-              {/* Titre — ne pas modifier (Bebas Neue Regular) */}
-              <h1 className="hero-display uppercase">
+              <h1 className="hero-display">
                 Vos fournisseurs augmentent leurs prix.
                 <br />
                 <span className="hero-title-mark">Vous le voyez ?</span>
@@ -147,15 +147,28 @@ export function Hero() {
             </LandingStaggerItem>
 
             <LandingStaggerItem className="flex flex-col gap-3">
-              <TactileButton
-                href={LANDING_SIGNUP}
-                size="default"
-                indicatorColor="accent"
-                fullWidth
-                className="sm:w-auto"
-              >
-                {HERO.primary.label}
-              </TactileButton>
+              <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-3">
+                <TactileButton
+                  size="default"
+                  indicatorColor="accent"
+                  fullWidth
+                  className="sm:w-auto sm:flex-1 sm:min-w-0"
+                  onClick={scrollToLaunchContactForm}
+                >
+                  Rejoindre les 30 premiers artisans
+                </TactileButton>
+                <button
+                  type="button"
+                  onClick={scrollToLaunchContactForm}
+                  className="inline-flex min-h-[52px] w-full items-center justify-center rounded-md border border-ink-900/20 bg-gradient-to-t from-ink-900/5 to-ink-900/10 px-5 text-base font-medium text-ink-900 shadow-none outline-none transition-colors hover:border-ink-900/30 focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-paper-100 sm:min-h-[60px] sm:w-auto sm:min-w-[176px]"
+                >
+                  Nous contacter
+                </button>
+              </div>
+              <p className="text-sm text-ink-500">
+                Offre de lancement&nbsp;: gratuit pendant {LAUNCH_FREE_MONTHS}&nbsp;mois pour les
+                30&nbsp;premiers artisans.
+              </p>
               <p className="text-sm text-ink-400">{HERO.founderLine}</p>
             </LandingStaggerItem>
           </div>

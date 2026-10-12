@@ -18,8 +18,13 @@ import {
   LandingSurface,
 } from "@/components/site/landing-v2/components/ui/LandingSurface";
 import { LandingStagger, LandingStaggerItem } from "@/components/site/landing-v2/lib/landing-motion";
-import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
-import { LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
+import { ArtisanLaunchContactForm } from "@/components/site/landing-v2/components/ArtisanLaunchContactForm";
+import {
+  LAUNCH_CONTACT_FORM_ID,
+  LAUNCH_FREE_MONTHS,
+  LAUNCH_TOTAL_PLACES,
+  PLACES_RESTANTES,
+} from "@/lib/site/launch-offer";
 import { pricingIntro } from "@/lib/site/landing-v2-content";
 import { PRICING, euroInt, type TarineoPlan } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
@@ -162,6 +167,8 @@ function PricingCard({ plan, period }: { plan: TarineoPlan; period: BillingPerio
 }
 
 /** Pricing — 3 cartes, même langage visuel que Parcours. */
+const lowestMonthlyPrice = Math.min(...PRICING.map((p) => p.month));
+
 export function Pricing() {
   const [period, setPeriod] = useState<BillingPeriod>("month");
 
@@ -175,16 +182,19 @@ export function Pricing() {
             subtitle={pricingIntro.subtitle}
           />
 
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex max-w-xl flex-col items-center gap-2 text-center">
-              <p className="rounded-full border border-accent/20 bg-accent-soft px-4 py-2 text-sm font-semibold text-accent-700 shadow-[0_1px_0_rgba(0,0,0,0.04),0_2px_6px_color-mix(in_srgb,var(--color-accent)_8%,transparent)]">
-                {pricingIntro.founder}
-              </p>
-              <p className="text-sm font-medium leading-relaxed text-ink-500">
-                {PRO_TRIAL_DAYS} jours pour tester Pro sans carte, puis choisissez Starter, Pro
-                ou Équipe. Prix HT, sans engagement.
-              </p>
-            </div>
+          <div className="flex w-full max-w-3xl flex-col items-center gap-4 text-center">
+            <p
+              className="w-full rounded-2xl border border-accent/25 bg-accent-soft px-4 py-3 text-sm font-semibold leading-relaxed text-accent-800 shadow-[0_1px_0_rgba(0,0,0,0.04)] sm:px-6 sm:text-[15px]"
+              role="status"
+            >
+              Offre de lancement&nbsp;: {LAUNCH_TOTAL_PLACES} places gratuites pendant{" "}
+              {LAUNCH_FREE_MONTHS}&nbsp;mois. Remplissez le formulaire, on vous répond sous 24&nbsp;h.
+            </p>
+            <p className="text-sm font-semibold text-ink-800">
+              Il reste{" "}
+              <span className="nums text-accent">{PLACES_RESTANTES}</span> places sur{" "}
+              {LAUNCH_TOTAL_PLACES}
+            </p>
             <BillingToggle value={period} onChange={setPeriod} />
           </div>
 
@@ -199,6 +209,22 @@ export function Pricing() {
             ))}
           </LandingStagger>
 
+          <p className="max-w-xl text-center text-sm font-medium leading-relaxed text-ink-600">
+            Tarifs affichés pour après la période gratuite. Puis à partir de{" "}
+            <span className="nums font-semibold text-ink-900">{euroInt(lowestMonthlyPrice)}</span>
+            &nbsp;€ / mois HT, sans engagement.
+          </p>
+
+          <LandingFlipCta
+            href={`#${LAUNCH_CONTACT_FORM_ID}`}
+            label="Nous contacter"
+            variant="secondary"
+            size="lg"
+            className="min-h-11 w-full max-w-sm sm:w-auto"
+          />
+
+          <ArtisanLaunchContactForm />
+
           <p className="text-center text-sm text-ink-400">
             Besoin du détail ?{" "}
             <Link
@@ -206,10 +232,6 @@ export function Pricing() {
               className="font-medium text-ink-700 underline-offset-4 hover:text-accent hover:underline"
             >
               Voir la page Tarifs
-            </Link>
-            {" · "}
-            <Link href={LANDING_SIGNUP} className="font-medium text-ink-700 hover:text-accent">
-              Commencer
             </Link>
           </p>
         </LandingSurface>

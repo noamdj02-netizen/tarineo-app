@@ -206,6 +206,15 @@ export type AnalyticsEventRow = {
   created_at: string;
 };
 
+export type DemandeArtisanRow = {
+  id: string;
+  prenom: string;
+  metier: string;
+  telephone: string;
+  email: string;
+  created_at: string;
+};
+
 export type SubscriptionRow = {
   user_id: string;
   stripe_customer_id: string | null;
@@ -244,6 +253,10 @@ export type Database = {
       calendar_feeds: Table<CalendarFeedRow, "url">;
       subscriptions: Table<SubscriptionRow, "user_id">;
       analytics_events: Table<AnalyticsEventRow, "name" | "session_id">;
+      demandes_artisans: Table<
+        DemandeArtisanRow,
+        "prenom" | "metier" | "telephone" | "email"
+      >;
       user_dashboard: Table<
         { user_id: string; layout: Record<string, unknown>; updated_at: string },
         "user_id"

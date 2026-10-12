@@ -150,16 +150,17 @@
     color: var(--color-accent-700);
   }
 
-  /* Hero — Bebas Neue Regular (400) ; override h1 weight 600 */
+  /* Hero — même famille que les titres produit (Space Grotesk), corps en Barlow */
   .landing-v2 .hero-display {
-    font-family: "Bebas Neue", Impact, sans-serif;
-    font-weight: 400;
+    font-family: var(--font-space-grotesk);
+    font-weight: 700;
     font-style: normal;
-    font-size: clamp(2.35rem, 7.2vw + 0.85rem, 3.875rem);
-    line-height: 1.12;
-    letter-spacing: -0.02em;
+    font-size: clamp(2rem, 5.8vw + 0.65rem, 3.35rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
     max-width: 100%;
     text-wrap: balance;
+    color: var(--color-ink-900);
   }
 
   .landing-v2 h1 .hero-title-mark {
@@ -168,7 +169,7 @@
     font-size: inherit;
     line-height: inherit;
     letter-spacing: inherit;
-    color: var(--color-accent);
+    color: var(--color-hero-orange);
     background: none;
     box-shadow: none;
     transform: none;
@@ -521,6 +522,10 @@ html.js-motion [data-reveal-bar] {
   --color-success-soft: #e9f5ee;
   --color-warning: #8f6200;
   --color-warning-soft: #fdf3df;
+
+  /* Orange hero mockup (Figma / panneau téléphone) */
+  --color-hero-orange: #f7562c;
+  --color-hero-orange-deep: #e8451f;
 
   --color-accent: #f97316;
   --color-accent-hover: #ea580c;

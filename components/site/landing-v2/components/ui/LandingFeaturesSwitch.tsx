@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, ChevronRight, FileText, Send } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useState } from "react";
 
 import { TarineoCopilotAvatar } from "@/components/assistant/copilot-face";
+import { LandingHeroOrangeBackdrop } from "@/components/site/landing-v2/components/ui/LandingHeroOrangeBackdrop";
 import {
   LANDING_CARD_SHADOW,
   LANDING_CARD_SHADOW_HOVER,
@@ -17,8 +17,6 @@ import { LANDING_EASE } from "@/components/site/landing-v2/lib/landing-motion";
 import { LANDING_SIGNUP } from "@/lib/site/landing-v2-auth";
 import { DEMO_MARK } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
-
-const ASSET = "/illustrations/landing-features-193";
 
 const TABS = [
   { id: "copilote", label: "Copilote" },
@@ -167,26 +165,10 @@ export function LandingFeaturesSwitch({ className }: { className?: string }) {
             </div>
           </div>
 
-          <div className="relative min-h-[280px] overflow-hidden rounded-[30px] border-8 border-white sm:min-h-[360px] lg:min-h-[420px]">
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-[#fff4ee]"
-              style={{
-                backgroundImage: `url(${ASSET}/pattern.png)`,
-                backgroundSize: "11px 11px",
-              }}
-            />
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-[linear-gradient(194deg,rgba(255,248,242,0)_12%,#fff8f2_64%)]"
-            />
-            <Image
-              src={`${ASSET}/glow-a.svg`}
-              alt=""
-              width={400}
-              height={400}
-              className="pointer-events-none absolute -bottom-10 left-1/2 w-[90%] -translate-x-1/2 opacity-70"
-            />
+          <div
+            className="relative min-h-[280px] overflow-hidden rounded-[30px] border-8 border-white bg-gradient-to-b from-[#faad98] to-[#f7562c] to-[66.507%] sm:min-h-[360px] lg:min-h-[420px]"
+          >
+            <LandingHeroOrangeBackdrop />
             <AnimatePresence mode="wait">
               <motion.div
                 key={tab}
@@ -212,26 +194,10 @@ export function LandingFeaturesSwitch({ className }: { className?: string }) {
             LANDING_CARD_SHADOW_HOVER,
           )}
         >
-          <div className="relative order-2 min-h-[280px] overflow-hidden rounded-[30px] border-8 border-white sm:min-h-[360px] lg:order-1 lg:min-h-[420px]">
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-[#fff4ee]"
-              style={{
-                backgroundImage: `url(${ASSET}/pattern.png)`,
-                backgroundSize: "11px 11px",
-              }}
-            />
-            <div
-              aria-hidden
-              className="absolute inset-0 bg-[linear-gradient(194deg,rgba(255,248,242,0)_12%,#fff8f2_64%)]"
-            />
-            <Image
-              src={`${ASSET}/integ-glow-a.svg`}
-              alt=""
-              width={400}
-              height={400}
-              className="pointer-events-none absolute -bottom-8 left-1/2 w-[85%] -translate-x-1/2 opacity-60"
-            />
+          <div
+            className="relative order-2 min-h-[280px] overflow-hidden rounded-[30px] border-8 border-white bg-gradient-to-b from-[#faad98] to-[#f7562c] to-[66.507%] sm:min-h-[360px] lg:order-1 lg:min-h-[420px]"
+          >
+            <LandingHeroOrangeBackdrop />
             <div className="relative z-[1] flex h-full items-center justify-center p-5 sm:p-8">
               <DocsGridVisual />
             </div>

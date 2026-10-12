@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 
+import { LandingHeroOrangeBackdrop } from "@/components/site/landing-v2/components/ui/LandingHeroOrangeBackdrop";
+
 const ASSET = "/illustrations/landing-hero-24";
 
 /**
@@ -19,60 +21,7 @@ export function HeroPhonePanel({ className = "" }: { className?: string }) {
       data-node-id="183:3886"
       data-name="Frame 2147207272"
     >
-      {/* Base gradient — respirations de teinte */}
-      {!reduce ? (
-        <>
-          <motion.div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#ffc4b0] via-[#f7562c] to-[#e8451f]"
-            animate={{ opacity: [0.35, 0.75, 0.35] }}
-            transition={{ duration: 7, ease: "easeInOut", repeat: Infinity }}
-          />
-          <motion.div
-            aria-hidden
-            className="pointer-events-none absolute -left-1/4 top-[-20%] h-[70%] w-[150%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.35)_0%,transparent_65%)]"
-            animate={{ x: ["-8%", "12%", "-8%"], y: ["0%", "10%", "0%"], opacity: [0.4, 0.7, 0.4] }}
-            transition={{ duration: 9, ease: "easeInOut", repeat: Infinity }}
-          />
-          <motion.div
-            aria-hidden
-            className="pointer-events-none absolute -right-1/4 bottom-[10%] h-[55%] w-[120%] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,140,80,0.55)_0%,transparent_70%)]"
-            animate={{ x: ["10%", "-14%", "10%"], y: ["8%", "-6%", "8%"], opacity: [0.45, 0.8, 0.45] }}
-            transition={{ duration: 11, ease: "easeInOut", repeat: Infinity }}
-          />
-          <motion.div
-            aria-hidden
-            className="pointer-events-none absolute left-[-3px] top-[-80px] h-[851px] w-[681px] bg-gradient-to-b from-[#faad98]/80 to-transparent"
-            data-node-id="188:489"
-            animate={{ y: [-36, 48, -36], opacity: [0.25, 0.55, 0.25] }}
-            transition={{ duration: 8, ease: "easeInOut", repeat: Infinity }}
-          />
-        </>
-      ) : null}
-
-      {/* Texture — dérive lente */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute left-[calc(50%+0.28px)] top-[-9.52px] h-[709.086px] w-[997.152px] -translate-x-1/2 bg-left-top bg-repeat opacity-90"
-        style={{
-          backgroundImage: `url(${ASSET}/orange-texture.png)`,
-          backgroundSize: "600px 600px",
-        }}
-        data-node-id="183:3887"
-        animate={
-          reduce
-            ? undefined
-            : {
-                backgroundPosition: ["0px 0px", "48px 32px", "0px 0px"],
-                scale: [1, 1.04, 1],
-              }
-        }
-        transition={
-          reduce
-            ? undefined
-            : { duration: 18, ease: "linear", repeat: Infinity }
-        }
-      />
+      <LandingHeroOrangeBackdrop />
 
       {/* Canvas téléphone — 183:3888 (scale mobile pour cadrer dans le panneau réduit) */}
       <div
@@ -168,13 +117,14 @@ export function HeroPhonePanel({ className = "" }: { className?: string }) {
         </div>
       </div>
 
+      {/* Fondu bas — desktop uniquement (sur mobile il masquait l’écran du téléphone). */}
       <div
         aria-hidden
-        className="pointer-events-none absolute bottom-[-3px] left-1/2 h-[289.904px] w-[740.344px] -translate-x-1/2 bg-gradient-to-b from-transparent to-white"
+        className="pointer-events-none absolute bottom-[-3px] left-1/2 hidden h-[200px] w-full max-w-[740px] -translate-x-1/2 bg-gradient-to-b from-transparent to-paper-100 lg:block lg:h-[289px]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute bottom-[-3px] left-1/2 h-[76.927px] w-[740.344px] -translate-x-1/2 bg-gradient-to-b from-transparent to-white blur-[14px]"
+        className="pointer-events-none absolute bottom-[-3px] left-1/2 hidden h-16 w-full max-w-[740px] -translate-x-1/2 bg-gradient-to-b from-transparent to-paper-100 blur-[14px] lg:block lg:h-[77px]"
       />
     </div>
   );
