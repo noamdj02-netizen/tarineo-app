@@ -1,152 +1,91 @@
-import { BellRing, MapPin } from "lucide-react";
+import Image from "next/image";
 import { Reveal } from "@/components/motion/reveal";
-import { GrowBar } from "@/components/site/grow-bar";
 import { InView } from "@/components/site/in-view";
-import { LandingFrame } from "@/components/site/landing-frame";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { CHANTIER_DEMO, DEMO_MARK, euroInt } from "@/lib/site/tarineo";
+import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
+import { CHANTIER_DOSSIERS, CHANTIER_ISO, DEMO_MARK } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
-/** Section « Chantiers » : une fiche chantier + les documents qui y sont rattachés. */
+const AVATARS = [
+  "/landing/figma/avatar-1.jpg",
+  "/landing/figma/avatar-2.jpg",
+  "/landing/figma/avatar-3.jpg",
+] as const;
+
+/** Split Figma : liste de dossiers + fiche isométrique. */
 export function LandingChantiers() {
-  const c = CHANTIER_DEMO;
-  const margin = Math.round(((c.sales - c.purchases) / c.sales) * 100);
-  const step = c.steps[c.current - 1];
+  const featured = CHANTIER_DOSSIERS[0];
 
   return (
-    <InView className="mx-auto max-w-[1080px]">
-      <Reveal>
-        <LandingFrame>
-          <CardHeader className="flex-row flex-wrap items-start justify-between gap-4 border-b px-5 py-5 sm:px-6">
-            <div>
-              <CardTitle className="font-display text-[22px] font-semibold tracking-tight sm:text-[26px]">
-                {c.client}
-              </CardTitle>
-              <CardDescription className="mt-1 flex flex-wrap items-center gap-x-2 text-[15px]">
-                {c.kind}
-                <span aria-hidden>·</span>
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="size-3.5" aria-hidden />
-                  {c.city}
-                </span>
-              </CardDescription>
-            </div>
-            <Badge variant="outline" className="uppercase">
-              {DEMO_MARK}
-            </Badge>
-          </CardHeader>
-
-          <div className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-            <div className="flex flex-col gap-5 border-b border-border px-5 py-5 sm:px-6 lg:border-r lg:border-b-0">
-              <div>
-                <p className="text-[15px] font-semibold">
-                  Étape {c.current}/{c.steps.length} :{" "}
-                  <span className="text-brand-orange-light">{step}</span>
-                </p>
-                <ol
-                  className="mt-3 grid grid-cols-5 gap-1.5"
-                  aria-label="Étapes du chantier"
-                >
-                  {c.steps.map((s, i) => (
-                    <li key={s} className="flex flex-col gap-1.5">
-                      <span className="h-1.5 overflow-hidden rounded-full bg-white/10">
-                        {i < c.current ? (
-                          <GrowBar
-                            className={cn(
-                              "h-full rounded-full",
-                              i === c.current - 1
-                                ? "bg-brand-orange"
-                                : "bg-white/70",
-                            )}
-                            delay={0.15 + i * 0.1}
-                          />
-                        ) : null}
-                      </span>
-                      <span
-                        className={cn(
-                          "hidden text-[11px] leading-tight sm:block",
-                          i < c.current ? "text-foreground" : "text-white/40",
-                        )}
-                      >
-                        {s}
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-
-              <Alert className="border-brand-orange/35 bg-brand-orange/10">
-                <BellRing aria-hidden />
-                <AlertTitle>Prochaine action</AlertTitle>
-                <AlertDescription>{c.nextAction}</AlertDescription>
-              </Alert>
-
-              <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-xl bg-border">
-                {[
-                  { label: "Achats", value: euroInt(c.purchases) },
-                  { label: "Ventes", value: euroInt(c.sales) },
-                  { label: "Marge", value: `${margin} %`, accent: true },
-                ].map((k) => (
-                  <div
-                    key={k.label}
-                    className="bg-surface-2 px-3 py-3.5 sm:px-4"
-                  >
-                    <dt className="text-[12px] text-white/50">{k.label}</dt>
-                    <dd
-                      className={cn(
-                        "mt-1 font-display text-[20px] leading-none font-semibold tabular-nums sm:text-[24px]",
-                        k.accent && "text-brand-orange-light",
-                      )}
-                    >
-                      {k.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
-            <ol className="flex flex-col" aria-label="Documents du chantier">
-              {c.docs.map((d, i) => (
+    <LandingSection id="chantiers">
+      <InView className="mx-auto grid max-w-[1180px] items-center gap-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-16">
+        <div>
+          <LandingSectionHead
+            align="start"
+            label={CHANTIER_ISO.badge}
+            title={CHANTIER_ISO.title}
+            tail={CHANTIER_ISO.tail}
+            text={CHANTIER_ISO.text}
+            className="mb-8"
+          />
+          <Reveal>
+            <ul className="flex flex-col">
+              {CHANTIER_DOSSIERS.map((d, i) => (
                 <li
-                  key={d.id}
+                  key={d.name}
                   className={cn(
-                    "flex items-center gap-4 px-5 py-4 sm:px-6",
-                    i < c.docs.length - 1 && "border-b border-border",
-                    i === 1 && "bg-surface-2",
+                    "flex items-center gap-3 rounded-2xl px-3 py-3",
+                    i === 0 && "border border-line bg-white shadow-soft",
                   )}
                 >
-                  <span className="font-display text-[13px] font-semibold text-white/35 tabular-nums">
-                    0{i + 1}
-                  </span>
+                  <Image
+                    src={AVATARS[i] ?? AVATARS[0]}
+                    alt=""
+                    width={44}
+                    height={44}
+                    className="size-11 rounded-xl object-cover"
+                  />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[16px] font-semibold">{d.label}</p>
-                    <p className="text-[13px] text-muted-foreground">
-                      {d.detail}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="font-display text-[18px] font-semibold tabular-nums">
-                      {euroInt(d.amount)}
-                    </span>
-                    <span
-                      className={cn(
-                        "text-[12px]",
-                        d.state === "Analysé" && "text-brand-orange-light",
-                        d.state === "En attente" && "text-foreground",
-                        d.state === "Ensuite" && "text-white/40",
-                      )}
-                    >
-                      {d.state}
-                    </span>
+                    <p className="truncate text-[14px] font-semibold uppercase tracking-wide">{d.name}</p>
+                    <p className="truncate text-[13px] text-muted-foreground">{i === 0 ? d.note : d.place}</p>
                   </div>
                 </li>
               ))}
-            </ol>
+            </ul>
+          </Reveal>
+        </div>
+
+        <Reveal>
+          <div className="relative mx-auto w-full max-w-[460px]">
+            <div aria-hidden className="absolute top-10 right-4 h-[78%] w-[88%] rounded-[28px] border border-line bg-white/70" />
+            <div aria-hidden className="absolute top-16 right-0 h-[78%] w-[88%] rounded-[28px] border border-line bg-white/40" />
+            <article className="relative overflow-hidden rounded-[28px] border border-line bg-white shadow-lift">
+              <div className="relative h-[180px] overflow-hidden bg-surface-2">
+                <Image
+                  src="/landing/figma/footer-chantier.jpg"
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="460px"
+                />
+                <span className="absolute top-3 right-3 rounded-pill bg-brand-orange px-2.5 py-1 text-[11px] font-semibold text-white">
+                  {featured.status}
+                </span>
+              </div>
+              <div className="p-5">
+                <p className="font-display text-[22px] leading-tight font-semibold">{featured.name}</p>
+                <p className="mt-1 text-[14px] text-muted-foreground">{featured.place}</p>
+                <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">{featured.note}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-[12px]">{featured.trade}</span>
+                  <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-[12px]">{featured.supplier}</span>
+                  <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-[12px]">{featured.docs}</span>
+                  <span className="rounded-pill bg-surface-2 px-2.5 py-1 text-[11px] uppercase">{DEMO_MARK}</span>
+                </div>
+              </div>
+            </article>
           </div>
-        </LandingFrame>
-      </Reveal>
-    </InView>
+        </Reveal>
+      </InView>
+    </LandingSection>
   );
 }

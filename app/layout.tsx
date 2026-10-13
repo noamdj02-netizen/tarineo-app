@@ -1,12 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
-import {
-  Barlow,
-  Instrument_Serif,
-  Inter_Tight,
-  JetBrains_Mono,
-  Space_Grotesk,
-} from "next/font/google";
 import { NavigationProgress } from "@/components/motion/navigation-progress";
 import { PwaInstallBanner } from "@/components/shell/pwa-install-banner";
 import { ServiceWorker } from "@/components/shell/service-worker";
@@ -19,44 +12,12 @@ import { siteMetadata } from "@/lib/seo";
 import { getSiteUrl } from "@/lib/site-url";
 import "./globals.css";
 
-const interTight = Inter_Tight({
-  variable: "--font-inter-tight",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-/** Typo de marque Tarinéo (site public) — même police que l'app Tarinéo. */
-const barlow = Barlow({
-  variable: "--font-barlow",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const jetbrains = JetBrains_Mono({
-  variable: "--font-jetbrains",
-  subsets: ["latin"],
-  weight: ["400", "500"],
-});
-
-/** Deux entrées : Turbopack plante si `style` est un tableau (une seule requête font autorisée). */
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: "400",
-  style: "normal",
-});
-const instrumentSerifItalic = Instrument_Serif({
-  variable: "--font-instrument-serif-italic",
-  subsets: ["latin"],
-  weight: "400",
-  style: "italic",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
+/**
+ * Polices via <link> Google (pas next/font/google) :
+ * en dev, next/font timeout à 3s et bloque la compile de `/` → page blanche.
+ */
+const GOOGLE_FONTS_HREF =
+  "https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Space+Grotesk:wght@600;700&display=swap";
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
@@ -93,8 +54,12 @@ export default function RootLayout({
       lang="fr"
       // l'app est en clair : empêche studio.css de passer les couleurs d'état en mode sombre
       data-theme="light"
-      className={`${interTight.variable} ${barlow.variable} ${jetbrains.variable} ${instrumentSerif.variable} ${instrumentSerifItalic.variable} ${spaceGrotesk.variable}`}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href={GOOGLE_FONTS_HREF} rel="stylesheet" />
+      </head>
       <body className="antialiased">
         <Script id="gtm" strategy="beforeInteractive">
           {GTM_HEAD_SCRIPT}

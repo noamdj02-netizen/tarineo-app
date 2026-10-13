@@ -20,7 +20,11 @@ const landingButtonVariants = cva(
           "min-h-12 border border-transparent bg-accent-ink px-6 text-[15px] text-ink shadow-lift hover:-translate-y-0.5",
         navPrimary: "btn-dark min-h-10 border border-transparent px-4 text-[14px]",
         navGhost:
-          "min-h-10 border border-transparent bg-transparent px-4 text-[14px] text-muted-foreground shadow-none hover:bg-muted hover:text-foreground",
+          "min-h-10 border border-transparent bg-white px-4 text-[14px] text-ink shadow-soft hover:bg-surface-2",
+        pillWhite:
+          "min-h-12 border-0 bg-white px-6 text-[15px] font-semibold text-ink shadow-soft hover:-translate-y-0.5",
+        pillInk:
+          "min-h-12 border-0 bg-ink px-6 text-[15px] font-semibold text-white shadow-soft hover:-translate-y-0.5",
         pricingOnDark:
           "mt-auto min-h-12 border border-transparent bg-accent-ink px-5 text-[15px] text-ink hover:-translate-y-0.5",
         pricingOnLight: "btn-dark mt-auto min-h-12 border border-transparent px-5 text-[15px]",

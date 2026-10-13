@@ -1,139 +1,81 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowUpRight, Mail } from "lucide-react";
 import Link from "next/link";
 import { EASE } from "@/components/motion/reveal";
 import { InView } from "@/components/site/in-view";
-import { LandingButton } from "@/components/site/landing-button";
-import { SiteLogo } from "@/components/site/site-logo";
-import { Separator } from "@/components/ui/separator";
 import { BRAND } from "@/lib/brand";
-import { CTA_TRIAL, FINAL_CTA, FOOTER_COLS } from "@/lib/site/tarineo";
+import { FOOTER, FOOTER_COLS } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
-/** Usage : `<SiteFooter />` dans `app/(site)/layout.tsx`. */
-
-
-
 const rise = {
-  hidden: { opacity: 0, y: 14, scale: 0.98 },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.55, ease: EASE },
-  },
-} as const;
-
-const riseQuiet = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { duration: 0.2 } },
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: EASE } },
 } as const;
 
 export function SiteFooter() {
   const reduce = useReducedMotion();
-  const variants = reduce ? riseQuiet : rise;
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-bg px-4 pt-4 pb-8 sm:px-8 sm:pt-6 sm:pb-10">
-      <InView className="mx-auto max-w-[1080px]" stagger={0.1}>
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.18fr)] lg:gap-5">
-          <motion.article
-            variants={variants}
-            whileHover={reduce ? undefined : { y: -3 }}
-            transition={{ duration: 0.35, ease: EASE }}
-            className="relative isolate flex h-full min-h-[280px] flex-col overflow-hidden rounded-[22px] border border-line bg-surface px-6 py-7 text-white shadow-lift sm:min-h-[300px] sm:rounded-[28px] sm:px-8 sm:py-8"
-          >
-            <div
-              aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-[linear-gradient(180deg,rgba(255,255,255,0.05)_0%,transparent_100%)]"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-[18%] -bottom-[20%] h-[70%] w-[70%] rounded-full bg-[radial-gradient(closest-side,rgba(236,88,33,0.18),transparent_72%)] blur-3xl"
-            />
+    <footer className="relative isolate overflow-hidden px-4 pt-16 pb-0 sm:px-8">
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: "url(/landing/figma/footer-chantier.jpg)" }}
+      />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(20,16,14,0.92)_0%,rgba(20,16,14,0.55)_42%,rgba(20,16,14,0.2)_100%)]" />
 
-            <div className="relative flex flex-1 flex-col gap-5">
-              <SiteLogo
-                priority={false}
-                onDark
-                className="relative z-[1] w-fit"
-              />
-              <p className="max-w-[28ch] text-[17px] leading-snug font-medium tracking-[-0.03em] text-balance text-white/90 sm:text-[19px]">
-                {BRAND.tagline}
-              </p>
-              <LandingButton
-                href={FINAL_CTA.href}
-                variant="orange"
-                icon={<ArrowUpRight aria-hidden />}
-                className="w-fit"
-              >
-                {CTA_TRIAL.short}
-              </LandingButton>
-            </div>
+      <InView className="mx-auto max-w-[1180px] text-white" stagger={0.08}>
+        <div className="grid gap-10 pb-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+          <motion.div variants={reduce ? undefined : rise}>
+            <p className="font-display text-[32px] font-semibold tracking-tight">{BRAND.name.toUpperCase()}</p>
+            <p className="mt-4 max-w-[42ch] text-[16px] leading-relaxed text-white/85">{FOOTER.blurb}</p>
+            <a
+              href={`mailto:${BRAND.contactEmail}`}
+              className="mt-3 inline-block text-[16px] underline underline-offset-4"
+            >
+              {BRAND.contactEmail}
+            </a>
+          </motion.div>
 
-            <div className="relative mt-8 flex flex-col gap-2 sm:mt-10">
-              <a
-                href={`mailto:${BRAND.contactEmail}`}
-                className="inline-flex w-fit items-center gap-2 font-mono text-[13px] text-white/75 transition-colors duration-300 ease-out-soft hover:text-white"
-              >
-                <Mail className="size-3.5" aria-hidden />
-                {BRAND.contactEmail}
-              </a>
-              <p className="font-mono text-[12px] tracking-[0.08em] text-white/75 uppercase">
-                © {year} {BRAND.name} · Fait en France
-              </p>
-            </div>
-          </motion.article>
-
-          <motion.article
-            variants={variants}
-            whileHover={reduce ? undefined : { y: -3 }}
-            transition={{ duration: 0.35, ease: EASE }}
-            className="h-full rounded-[22px] border border-line bg-surface px-6 py-7 shadow-soft ring-1 ring-line sm:rounded-[28px] sm:px-8 sm:py-8"
-          >
-            <p className="mono-label mb-5">{`/ Aller plus loin ///`}</p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-8 sm:grid-cols-3 sm:gap-x-4">
-              {FOOTER_COLS.map((col) => (
-                <div key={col.title}>
-                  <p className="mb-3 font-mono text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
-                    {col.title}
-                  </p>
-                  <ul className="flex flex-col gap-2">
-                    {col.links.map((l) => (
-                      <li key={l.href}>
-                        <Link
-                          href={l.href}
-                          className="group inline-flex items-center gap-1 text-[15px] text-white/75 transition-[color,transform] duration-300 ease-out-soft hover:text-white"
-                        >
-                          {l.label}
-                          <ArrowUpRight
-                            aria-hidden
-                            className="size-3 opacity-0 transition-[opacity,transform] duration-300 ease-out-soft group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-60"
-                          />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </motion.article>
+          <motion.div variants={reduce ? undefined : rise} className="grid grid-cols-3 gap-4 sm:gap-8">
+            {FOOTER_COLS.map((col) => (
+              <div key={col.title}>
+                <p className="mb-3 text-[14px] font-semibold text-brand-orange">{col.title}</p>
+                <ul className="flex flex-col gap-2">
+                  {col.links.map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} className="text-[14px] text-white/85 transition-colors hover:text-white">
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </motion.div>
         </div>
 
-        <Separator className="mt-6 bg-line sm:mt-8" />
+        <motion.div
+          variants={reduce ? undefined : rise}
+          className="flex flex-col gap-2 border-t border-white/15 py-5 text-[13px] text-white/80 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <p>
+            © {year} {BRAND.name}. {FOOTER.legal}
+          </p>
+          <p>{FOOTER.site}</p>
+        </motion.div>
 
         <motion.p
           aria-hidden
-          variants={variants}
+          variants={reduce ? undefined : rise}
           className={cn(
-            "mt-6 select-none text-center font-display text-[clamp(4.75rem,20vw,12.5rem)] leading-[0.78] font-semibold tracking-tightest text-white/[0.06] sm:mt-8",
-            "[mask-image:linear-gradient(180deg,black_8%,transparent_88%)]",
+            "select-none text-center font-display text-[clamp(4.5rem,18vw,11rem)] leading-[0.78] font-semibold tracking-tightest text-white/55",
+            "[mask-image:linear-gradient(180deg,black_12%,transparent_92%)]",
           )}
         >
-          {BRAND.name}
+          TARINEO
         </motion.p>
       </InView>
     </footer>

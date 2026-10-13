@@ -3,6 +3,16 @@
 @import "shadcn/tailwind.css";
 @import "../styles/studio.css" layer(components);
 
+/* Polices chargées via <link> dans app/layout.tsx (évite next/font timeout en dev). */
+:root {
+  --font-inter-tight: "Inter Tight";
+  --font-barlow: "Barlow";
+  --font-jetbrains: "JetBrains Mono";
+  --font-instrument-serif: "Instrument Serif";
+  --font-instrument-serif-italic: "Instrument Serif";
+  --font-space-grotesk: "Space Grotesk";
+}
+
 /* Variantes `dark:` des primitives shadcn pilotées par la classe .dark (site public), pas par l'OS. */
 @custom-variant dark (&:where(.dark, .dark *):not(:where(.theme-light, .theme-light *)));
 
@@ -227,22 +237,22 @@
   --brand: var(--color-brand-orange);
 }
 
-/* Sections claires du site (Pour qui, FAQ) : alternance pour rythmer la lecture. */
+/* Canvas clair Figma (landing v2) : mêmes noms de tokens, valeurs ivoire. */
+.theme-tarineo.theme-canvas,
 .theme-tarineo .theme-light {
   color-scheme: light;
-  --color-bg: #f5f5f3;
+  --color-bg: #f5f5f5;
   --color-surface: #ffffff;
-  --color-surface-2: #ececea;
+  --color-surface-2: #f0f0f0;
   --color-ink: #111111;
   --color-muted-ink: #3d3d3d;
-  --color-line: rgba(17, 17, 17, 0.1);
+  --color-line: rgba(17, 17, 17, 0.08);
   --color-accent: #111111;
   --color-accent-ink: #ffffff;
-  --shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04),
-    0 16px 40px -18px rgba(0, 0, 0, 0.18);
-  --shadow-lift: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 10px rgba(0, 0, 0, 0.05),
-    0 24px 48px -20px rgba(0, 0, 0, 0.24);
-  background-color: #f5f5f3;
+  --color-alert-wash: #fff4ee;
+  --shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 8px 24px -12px rgba(0, 0, 0, 0.08);
+  --shadow-lift: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 18px 48px -20px rgba(0, 0, 0, 0.16);
+  background-color: #f5f5f5;
   color: #111111;
 }
 
@@ -252,8 +262,11 @@
   color: var(--color-brand-orange);
 }
 
-/* Évite le flash clair en overscroll (Safari) sous le site sombre. */
-body:has(.theme-tarineo) {
+/* Overscroll aligné sur le canvas marketing (clair) ou l’ancien thème sombre. */
+body:has(.theme-tarineo.theme-canvas) {
+  background-color: #f5f5f5;
+}
+body:has(.theme-tarineo:not(.theme-canvas)) {
   background-color: #050505;
 }
 

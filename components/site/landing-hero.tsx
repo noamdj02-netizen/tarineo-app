@@ -1,114 +1,152 @@
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-import { ArrowDownRight, ArrowUpRight, HardHat } from "lucide-react";
+import { ArrowDown, Bot, FileText, FolderOpen, Mail, MoreHorizontal, Phone } from "lucide-react";
+import Image from "next/image";
 import { Reveal, RevealGroup } from "@/components/motion/reveal";
-import { HeroBackdrop } from "@/components/site/hero-backdrop";
-import { DeltaBadge } from "@/components/site/delta-badge";
 import { LandingButton } from "@/components/site/landing-button";
-import { SupplierLogo } from "@/components/site/supplier-logo";
-import { DEMO_MARK, HERO, HERO_SAMPLE, euro, variation } from "@/lib/site/tarineo";
+import { LandingCircuit } from "@/components/site/landing-circuit";
+import { OFFER, CTA_TRIAL, CHANTIER_DOSSIERS, DEMO_MARK, HERO, HERO_PANELS } from "@/lib/site/tarineo";
 
-/** L'image n'est utilisée que si le fichier existe dans /public (sinon : scène de chantier vectorielle). */
-function publicFile(src: string | null) {
-  if (!src) return null;
-  return existsSync(join(process.cwd(), "public", src)) ? src : null;
-}
+const AVATARS = [
+  "/landing/figma/avatar-1.jpg",
+  "/landing/figma/avatar-2.jpg",
+  "/landing/figma/avatar-3.jpg",
+] as const;
 
-/** Hero plein cadre : photo de chantier + voile 60 %, promesse, deux CTA, une ligne analysée en exemple. */
+/** Hero clair Figma : titre, CTA produit, 4 cartes, circuits orange. */
 export function LandingHero() {
-  const change = variation(HERO_SAMPLE.before, HERO_SAMPLE.after);
-  const image = publicFile(HERO.image);
-
   return (
     <section
       id="top"
-      className="relative isolate -mt-[72px] flex min-h-[min(100svh,980px)] scroll-mt-24 flex-col justify-center overflow-clip px-4 pt-[120px] pb-16 text-white sm:px-8 sm:pt-[140px] sm:pb-24"
+      className="relative isolate overflow-clip px-4 pt-6 pb-10 sm:px-8 sm:pt-8 sm:pb-16"
     >
-      <HeroBackdrop video={HERO.video} image={image} alt={HERO.imageAlt} />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.045] [background-image:repeating-linear-gradient(135deg,#111_0_1px,transparent_1px_14px)]"
+      />
+      <LandingCircuit />
 
       <RevealGroup
-        stagger={0.1}
-        delay={0.1}
-        className="mx-auto flex w-full max-w-[1060px] flex-col items-center gap-5 text-center [text-shadow:0_1px_2px_rgba(0,0,0,0.35),0_2px_24px_rgba(0,0,0,0.45)] sm:gap-6"
+        stagger={0.08}
+        delay={0.05}
+        className="relative mx-auto flex w-full max-w-[1180px] flex-col items-center text-center"
       >
         <Reveal>
-          <p className="liquid-glass inline-flex items-center gap-2 rounded-pill py-1.5 pr-3.5 pl-2.5 font-mono text-[10.5px] font-medium tracking-[0.08em] text-white uppercase [text-shadow:none] sm:text-[11px] sm:tracking-[0.12em]">
-            <span className="relative flex size-2">
-              <span className="absolute inset-0 animate-[beacon_2.4s_ease-in-out_infinite] rounded-full bg-brand-orange/60 blur-[3px] motion-reduce:hidden" />
-              <span className="relative size-2 rounded-full bg-brand-orange" />
-            </span>
-            {HERO.badge}
+          <p className="mb-6 inline-flex items-center gap-2 rounded-pill border border-line bg-white py-1 pr-1 pl-2.5 text-[13px] shadow-soft">
+            <span className="text-muted-foreground">Alertes prix · artisans BTP</span>
+            <a
+              href="/inscription"
+              className="inline-flex items-center gap-1 rounded-pill bg-ink px-3 py-1.5 text-[12.5px] font-semibold text-white"
+            >
+              Importez un devis
+            </a>
           </p>
         </Reveal>
 
         <Reveal>
-          <h1 className="font-display text-[clamp(36px,8.4vw,80px)] leading-[1.0] font-semibold tracking-tightest text-balance">
+          <h1 className="max-w-[18ch] font-display text-[clamp(34px,5.6vw,64px)] leading-[1.08] font-semibold tracking-tight text-balance">
             {HERO.title}
             <br />
-            {HERO.titleTail}
+            <span className="text-brand-orange">{HERO.titleTail}</span>
           </h1>
         </Reveal>
 
         <Reveal>
-          <p className="max-w-[58ch] text-[16px] leading-relaxed font-medium text-white sm:text-[19px]">{HERO.text}</p>
+          <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-muted-foreground sm:text-[17px]">{HERO.text}</p>
         </Reveal>
 
-        <Reveal className="flex w-full max-w-[min(100%,360px)] flex-col gap-2.5 sm:max-w-none sm:flex-row sm:justify-center sm:gap-3">
-          <LandingButton
-            href={HERO.primary.href}
-            variant="orange"
-            icon={<ArrowUpRight aria-hidden />}
-            fullWidth
-            className="sm:w-auto"
-          >
-            {HERO.primary.label}
+        <Reveal className="mt-6 flex w-full max-w-[360px] flex-col gap-2.5 sm:max-w-none sm:flex-row sm:justify-center sm:gap-3">
+          <LandingButton href={HERO.primary.href} variant="orange" fullWidth className="sm:w-auto">
+            {CTA_TRIAL.long}
           </LandingButton>
-          <LandingButton
-            href={HERO.secondary.href}
-            variant="glass"
-            icon={<ArrowDownRight aria-hidden />}
-            fullWidth
-            prefetch={false}
-            className="sm:w-auto"
-          >
-            {HERO.secondary.label}
+          <LandingButton href="/#contact" variant="pillWhite" fullWidth prefetch={false} className="sm:w-auto">
+            Nous contacter
           </LandingButton>
+        </Reveal>
+
+        <Reveal className="mt-4 hidden md:grid">
+          <span className="grid size-8 place-items-center rounded-full border border-line bg-white text-muted-foreground shadow-soft">
+            <ArrowDown className="size-4" aria-hidden />
+          </span>
+        </Reveal>
+
+        <Reveal className="mt-8 grid w-full gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+          <HeroCard title={HERO_PANELS[0].title}>
+            <div className="relative mx-auto mt-3 flex h-[168px] w-full max-w-[220px] items-center justify-center rounded-[22px] bg-[linear-gradient(180deg,#ffd4b8_0%,#ec5821_100%)]">
+              <div className="w-[78%] rounded-2xl bg-white p-3 text-left shadow-lift">
+                <p className="text-[11px] font-medium text-muted-foreground">Devis fournisseur</p>
+                <p className="mt-2 rounded-lg bg-brand-orange px-2 py-1.5 text-[11px] font-semibold text-white">
+                  Transformer en devis client
+                </p>
+              </div>
+            </div>
+            <p className="mt-3 text-[13px] text-muted-foreground">{HERO_PANELS[0].text}</p>
+          </HeroCard>
+
+          <HeroCard title={HERO_PANELS[1].title}>
+            <div className="mx-auto mt-4 grid size-16 place-items-center overflow-hidden rounded-full bg-alert-wash ring-4 ring-white">
+              <Image src="/landing/figma/mascotte.jpg" alt="" width={64} height={64} className="size-16 object-cover" />
+            </div>
+            <p className="mt-3 flex items-center justify-center gap-1.5 text-[15px] font-semibold">
+              <Bot className="size-4 text-brand-orange" aria-hidden />
+              Copilote
+            </p>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">{HERO_PANELS[1].text}</p>
+          </HeroCard>
+
+          <HeroCard title={HERO_PANELS[2].title}>
+            <div className="mx-auto mt-4 grid size-16 place-items-center rounded-2xl bg-alert-wash">
+              <FileText className="size-7 text-brand-orange" aria-hidden />
+            </div>
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-pill bg-alert-wash px-3 py-1 text-[13px] font-semibold text-brand-orange">
+              <FolderOpen className="size-3.5" aria-hidden />
+              Pièces rattachées
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">{HERO_PANELS[2].text}</p>
+          </HeroCard>
+
+          <HeroCard title={HERO_PANELS[3].title}>
+            <ul className="mt-2 flex flex-col divide-y divide-line text-left">
+              {CHANTIER_DOSSIERS.map((d, i) => (
+                <li key={d.name} className="flex items-center gap-2.5 py-2.5">
+                  <Image
+                    src={AVATARS[i] ?? AVATARS[0]}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="size-9 rounded-full object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold">{d.name}</p>
+                    <p className="truncate text-[12px] text-muted-foreground">{d.place}</p>
+                  </div>
+                  <span className="rounded-pill bg-[#e8f7ee] px-2 py-0.5 text-[11px] font-semibold text-[#166534]">
+                    {d.status}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-1 flex justify-end gap-2 text-muted-foreground">
+              <Mail className="size-3.5" aria-hidden />
+              <Phone className="size-3.5" aria-hidden />
+              <MoreHorizontal className="size-3.5" aria-hidden />
+            </div>
+          </HeroCard>
         </Reveal>
 
         <Reveal>
-          <p className="flex items-center justify-center gap-2 text-[15px] font-medium text-white sm:text-base">
-            <HardHat className="size-4 text-brand-orange-light" aria-hidden />
-            {HERO.founderLine}
+          <p className="mt-6 text-[13px] text-muted-foreground">
+            {OFFER}. <span className="sr-only">{DEMO_MARK}</span>
           </p>
-        </Reveal>
-
-        {/* Exemple de ligne analysée : le produit compris en un coup d'œil */}
-        <Reveal className="mt-4 w-full max-w-[640px] sm:mt-8">
-          <figure className="liquid-glass rounded-[20px] border border-white/20 bg-black/55! p-2 text-left [text-shadow:none]">
-            <div className="flex items-center justify-between gap-3 px-3 pt-1.5 pb-2.5">
-              <p className="flex items-center gap-2 font-mono text-[10.5px] tracking-[0.12em] text-white/75 uppercase">
-                <SupplierLogo name={HERO_SAMPLE.supplier} size={22} priority className="rounded-md" />
-                {HERO_SAMPLE.supplier} · Devis analysé
-              </p>
-              <span className="rounded-pill border border-white/20 px-2 py-0.5 font-mono text-[9.5px] tracking-[0.12em] text-white/70 uppercase">
-                {DEMO_MARK}
-              </span>
-            </div>
-            <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 rounded-[14px] border border-white/10 bg-white/[0.06] px-4 py-3.5 sm:grid-cols-[1fr_auto_auto]">
-              <p className="text-[15px] font-medium text-white">{HERO_SAMPLE.product}</p>
-              <p className="order-3 col-span-2 flex items-center gap-2 font-mono text-[13px] text-white/70 tabular-nums sm:order-none sm:col-span-1">
-                <span className="line-through decoration-white/50">{euro(HERO_SAMPLE.before)}</span>
-                <span aria-hidden>→</span>
-                <span className="text-white">{euro(HERO_SAMPLE.after)}</span>
-              </p>
-              <DeltaBadge value={change} size="lg" solid />
-            </div>
-            <figcaption className="sr-only">
-              Exemple : {HERO_SAMPLE.product} passe de {euro(HERO_SAMPLE.before)} à {euro(HERO_SAMPLE.after)}.
-            </figcaption>
-          </figure>
         </Reveal>
       </RevealGroup>
     </section>
+  );
+}
+
+function HeroCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <article className="rounded-[28px] border border-line bg-white p-4 text-center shadow-soft">
+      <p className="text-[13px] font-medium text-ink">{title}</p>
+      {children}
+    </article>
   );
 }

@@ -1,47 +1,136 @@
-import { ArrowUpRight } from "lucide-react";
+"use client";
+
+import { useState } from "react";
 import { Reveal } from "@/components/motion/reveal";
 import { InView } from "@/components/site/in-view";
+import { HoneypotField } from "@/components/site/honeypot-field";
 import { LandingButton } from "@/components/site/landing-button";
-import { FINAL_CTA } from "@/lib/site/tarineo";
+import { LandingSection, LandingSectionHead } from "@/components/site/landing-section";
+import { BRAND } from "@/lib/brand";
+import { CONTACT, CTA_TRIAL, FINAL_CTA, OFFER } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
-/** CTA final : grand panneau sombre, trame de plan, halo orange discret. */
+/** Contact 2 colonnes Figma + CTA essai. Envoi via mailto. */
 export function LandingClosingCta({ className }: { className?: string }) {
+  const [bot, setBot] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [trade, setTrade] = useState(CONTACT.trades[0]);
+  const [company, setCompany] = useState("");
+  const [message, setMessage] = useState("");
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (bot) return;
+    const body = [
+      `Nom : ${name}`,
+      `Email : ${email}`,
+      `Métier : ${trade}`,
+      `Entreprise : ${company}`,
+      "",
+      message,
+    ].join("\n");
+    window.location.href = `mailto:${BRAND.contactEmail}?subject=${encodeURIComponent("Contact Tarinéo")}&body=${encodeURIComponent(body)}`;
+  }
+
   return (
-    <section className={cn("px-4 pt-6 pb-4 sm:px-8 sm:pb-6", className)}>
-      <InView className="relative isolate mx-auto max-w-[1080px] overflow-hidden rounded-[24px] border border-border bg-bg px-6 py-16 text-center shadow-lift sm:rounded-[32px] sm:px-12 sm:py-24">
-        {/* Trame de plan technique */}
-        <div
-          aria-hidden
-          className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:48px_48px] [mask-image:radial-gradient(ellipse_70%_70%_at_50%_50%,black_20%,transparent_80%)]"
-        />
-        <div
-          aria-hidden
-          className="absolute bottom-[-45%] left-1/2 -z-10 h-[90%] w-[80%] -translate-x-1/2 animate-[glow-drift_22s_ease-in-out_infinite] rounded-full bg-[radial-gradient(closest-side,rgba(236,88,33,0.28),transparent_72%)] blur-2xl motion-reduce:animate-none"
-        />
-        <div className="mx-auto flex max-w-[760px] flex-col items-center gap-6">
-          <Reveal>
-            <p className="mono-label">{`/ ${FINAL_CTA.label} ///`}</p>
-          </Reveal>
-          <Reveal>
-            <h2 className="font-display text-[clamp(32px,6.4vw,64px)] leading-[1.02] font-semibold tracking-tightest text-balance">
-              {FINAL_CTA.title} <span className="text-brand-orange">{FINAL_CTA.tail}</span>
-            </h2>
-          </Reveal>
-          <Reveal className="flex w-full max-w-[360px] flex-col items-center gap-3 sm:max-w-none">
-            <LandingButton
-              href={FINAL_CTA.href}
-              variant="orange"
-              icon={<ArrowUpRight aria-hidden />}
-              fullWidth
-              className="min-h-14 px-8 text-[16px] sm:w-auto"
-            >
-              {FINAL_CTA.cta}
+    <LandingSection id="contact" className={className}>
+      <LandingSectionHead label={CONTACT.badge} title={CONTACT.title} text={CONTACT.text} />
+      <InView className="mx-auto grid max-w-[1180px] overflow-hidden rounded-[32px] border border-line shadow-lift lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <Reveal className="flex flex-col justify-between gap-8 bg-brand-orange p-7 text-white sm:p-10">
+          <div className="flex flex-col gap-4">
+            <h3 className="font-display text-[clamp(26px,3.2vw,36px)] leading-tight font-semibold text-balance">
+              {CONTACT.panelTitle}
+            </h3>
+            <p className="text-[16px] leading-relaxed text-white/90">{CONTACT.text}</p>
+            <a href={`mailto:${BRAND.contactEmail}`} className="text-[15px] font-medium underline underline-offset-4">
+              {BRAND.contactEmail}
+            </a>
+          </div>
+          <div className="flex flex-col gap-3">
+            <LandingButton href={FINAL_CTA.href} variant="pillWhite" className="w-fit">
+              {CTA_TRIAL.long}
             </LandingButton>
-            <p className="text-[15px] sm:text-base text-muted-foreground">{FINAL_CTA.note}</p>
-          </Reveal>
-        </div>
+            <p className="text-[13px] text-white/80">{OFFER}.</p>
+          </div>
+        </Reveal>
+
+        <Reveal>
+          <form onSubmit={onSubmit} className="flex flex-col gap-4 bg-white p-7 sm:p-10">
+            <HoneypotField value={bot} onChange={setBot} />
+            <Field label={CONTACT.fields.name}>
+              <input
+                required
+                name="name"
+                autoComplete="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={fieldClass}
+              />
+            </Field>
+            <Field label={CONTACT.fields.email}>
+              <input
+                required
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={fieldClass}
+              />
+            </Field>
+            <Field label={CONTACT.fields.trade}>
+              <select
+                name="trade"
+                value={trade}
+                onChange={(e) => setTrade(e.target.value)}
+                className={fieldClass}
+              >
+                {CONTACT.trades.map((t) => (
+                  <option key={t}>{t}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label={CONTACT.fields.company}>
+              <input
+                name="company"
+                autoComplete="organization"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className={fieldClass}
+              />
+            </Field>
+            <Field label={CONTACT.fields.message}>
+              <textarea
+                required
+                name="message"
+                rows={4}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                className={cn(fieldClass, "min-h-28 resize-y")}
+              />
+            </Field>
+            <button
+              type="submit"
+              className="btn-orange mt-2 min-h-12 w-full rounded-pill px-6 text-[15px] font-semibold"
+            >
+              {CONTACT.submit}
+            </button>
+          </form>
+        </Reveal>
       </InView>
-    </section>
+    </LandingSection>
+  );
+}
+
+const fieldClass =
+  "min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-[15px] text-ink outline-none focus-visible:ring-2 focus-visible:ring-brand-orange/40";
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1.5 text-[13px] font-medium text-ink">
+      {label}
+      {children}
+    </label>
   );
 }

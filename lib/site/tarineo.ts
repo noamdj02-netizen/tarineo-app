@@ -741,27 +741,173 @@ export const FOOTER_COLS = [
   {
     title: "Produit",
     links: [
+      { href: "/#comment", label: "Film" },
       { href: "/#fonctionnalites", label: "Fonctionnalités" },
       { href: "/#tarifs", label: "Tarifs" },
-      { href: "/#comment", label: "Comment ça marche" },
     ],
   },
   {
-    title: "Entreprise",
+    title: "Compte",
     links: [
-      { href: "/#qui", label: "À propos" },
-      { href: `mailto:${BRAND.contactEmail}`, label: "Contact" },
+      { href: "/inscription", label: "Créer un compte" },
+      { href: "/login", label: "Connexion" },
+      { href: "/#contact", label: "Contact" },
     ],
   },
   {
     title: "Légal",
     links: [
+      { href: "/cgv", label: "CGV" },
       { href: "/confidentialite", label: "Confidentialité" },
-      { href: "/cgv", label: "CGV / CGU" },
       { href: "/mentions-legales", label: "Mentions légales" },
     ],
   },
 ] as const;
+
+/* ------------------------------------------------------------------ */
+/* Structure visuelle landing Figma (labels uniquement)                  */
+/* ------------------------------------------------------------------ */
+
+export const HERO_PANELS = [
+  {
+    id: "pdf",
+    title: "PDF fournisseurs, lus au même endroit",
+    text: "Tout le suivi d’un chantier, au même endroit.",
+  },
+  {
+    id: "copilote",
+    title: "Copilote",
+    text: "Posez une question sur une pièce fournisseur : Tarinéo résume les hausses et les lignes à valider.",
+  },
+  {
+    id: "pieces",
+    title: "Pièces rattachées",
+    text: "Devis, relances et photos dans le même dossier — prêts à ouvrir.",
+  },
+  {
+    id: "dossiers",
+    title: "Un dossier par chantier",
+  },
+] as const;
+
+export const FILM = {
+  badge: "Film",
+  title: "Voir Tarineo en action",
+  text: "Un aperçu statique du parcours devis → alertes → validation, sans tableur ni ressaisie.",
+  heading: "Devis → alertes → validation",
+  body: "Importez un document, comparez aux prix habituels et validez les lignes à risque avant d’envoyer au client.",
+  preview: "Aperçu statique",
+} as const;
+
+export const CHANTIER_ISO = {
+  badge: "Suivi chantier",
+  title: "Faites la bonne action",
+  tail: "sur vos marges.",
+  text: "Aperçu des fiches chantier de l’app",
+} as const;
+
+export const CHANTIER_DOSSIERS = [
+  {
+    name: "Rénovation SDB — Dupont",
+    place: "Dupont · Lyon 3e",
+    note: "Devis Cedeo rattaché : 3 hausses vs votre historique. Relance fournisseur prête.",
+    docs: "12 docs",
+    tag: "3 hausses",
+    trade: "Plomberie",
+    supplier: "Cedeo",
+    status: "En cours",
+  },
+  {
+    name: "Mise aux normes — Martin",
+    place: "Martin · Tassin",
+    note: "8 documents, marge estimée 31 %.",
+    docs: "8 docs",
+    tag: "Marge 31 %",
+    trade: "Électricité",
+    supplier: "Rexel",
+    status: "En cours",
+  },
+  {
+    name: "Réfection cuisine — Benali",
+    place: "Benali · Vénissieux",
+    note: "Documents rattachés, relances au même endroit.",
+    docs: "9 docs",
+    tag: "Actif",
+    trade: "Cuisine",
+    supplier: "Point.P",
+    status: "Actif",
+  },
+] as const;
+
+export const FEATURE_PILLS = [
+  {
+    title: "Copilote",
+    text: "Le copilote répond aux questions sur les pièces fournisseurs, résume hausses, lignes à risque et éléments à valider avant envoi client.",
+    points: ["Résumé des hausses et des lignes à risque", "Validation finale avant envoi client"],
+  },
+  {
+    title: "Chantiers",
+    text: "Un dossier par chantier, artisan et client liés, avec devis fournisseurs, alertes et relances rattachées.",
+    points: ["Documents et relances au même endroit", "Suivi chantier sans ressaisie"],
+  },
+  {
+    title: "Alertes",
+    text: "Lecture PDF ou photo, comparaison aux prix habituels et alertes de hausses avant validation finale.",
+    points: ["OCR, lignes, quantités et prix unitaires", "Alertes de hausses au-dessus de 3 %"],
+  },
+] as const;
+
+export const INCLUDED = {
+  badge: "Tout inclus",
+  title: "Tout ce qu’il faut. Rien de superflu.",
+  text: "Lecture de devis, alertes de hausses, devis client, parcours chantier et documents rattachés, sans engagement.",
+  cards: [
+    {
+      title: "Lecture de devis",
+      text: "OCR, lignes, quantités et prix unitaires sans ressaisie, à partir de PDF ou de photos.",
+      points: ["PDF et photos", "Quantités et prix unitaires"],
+    },
+    {
+      title: "Alertes de hausses",
+      text: "Comparaison aux prix habituels et alertes de hausses pour ne pas envoyer sans validation.",
+      points: ["Comparaison historique", "Alertes au-dessus de 3 %"],
+    },
+    {
+      title: "Devis client",
+      text: "Votre marge, vos documents et vos validations au même endroit, sans tableur supplémentaire.",
+      points: ["Marge et validation finale", "Parcours chantier inclus"],
+    },
+  ],
+} as const;
+
+export const SUIVI = {
+  badge: "Suivi chantier",
+  title: "Tout le suivi d’un chantier, au même endroit",
+  text: "Un dossier par chantier, artisan et client liés, avec devis fournisseurs, alertes et relances rattachés.",
+  examples: "Exemples de dossiers",
+} as const;
+
+export const CONTACT = {
+  badge: "Contact",
+  title: "Une question avant de commencer ?",
+  text: "Écrivez-nous, on vous répond sous 24 h.",
+  panelTitle: "On vous répond sous 24 h.",
+  submit: "Envoyer ma demande",
+  fields: {
+    name: "Nom",
+    email: "Email",
+    trade: "Métier",
+    company: "Entreprise",
+    message: "Message",
+  },
+  trades: ["Plombier", "Électricien", "Chauffagiste", "Climaticien", "Entreprise générale", "Autre"],
+} as const;
+
+export const FOOTER = {
+  blurb: "Tarineo lit vos documents, compare vos achats et prépare vos documents client.",
+  legal: "Conçu en France, données hébergées en Europe.",
+  site: `Site officiel · ${BRAND.domain}`,
+} as const;
 
 /* ------------------------------------------------------------------ */
 /* Formatage                                                           */
