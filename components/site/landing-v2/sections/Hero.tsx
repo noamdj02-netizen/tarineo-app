@@ -48,7 +48,7 @@ export function Hero() {
       id="top"
       data-node-id="235:33214"
       data-name="hero"
-      className="relative overflow-x-clip bg-[#f0f0f0] pb-4 text-[#262626]"
+      className="relative overflow-x-clip bg-[#f0f0f0] pb-8 text-[#262626] lg:pb-4"
     >
       <div
         aria-hidden
@@ -222,7 +222,7 @@ export function Hero() {
         {OFFER}
       </p>
 
-      <HeroFeatureCards className="mt-8 sm:mt-10 lg:mt-0" />
+      <HeroFeatureCards />
       </div>
     </section>
   );
