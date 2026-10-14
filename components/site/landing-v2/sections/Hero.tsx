@@ -58,7 +58,7 @@ export function Hero() {
             "repeating-linear-gradient(135deg, transparent, transparent 12px, rgba(0,0,0,0.03) 12px, rgba(0,0,0,0.03) 13px)",
         }}
       />
-      <div className="relative isolate mx-auto w-full max-w-[1440px] lg:min-h-[1050px]">
+      <div className="relative isolate mx-auto w-full min-w-0 max-w-[1440px] overflow-x-clip lg:min-h-[1050px]">
         <HeroFigmaDecor />
         <HeroFigmaCircuits />
 

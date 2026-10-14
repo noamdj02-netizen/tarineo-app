@@ -97,39 +97,58 @@ function HeroCardImage({
   card,
   className,
   style,
+  responsive,
 }: {
   card: ImageCard;
   className?: string;
   style?: CSSProperties;
+  responsive?: boolean;
 }) {
   return (
     <HeroCardShell nodeId={card.nodeId} label={card.label} style={style} className={className}>
       <article
-        className="overflow-hidden rounded-[20px] bg-[#fcfcfc] shadow-[0_0_0_4px_#ffffff] outline outline-1 outline-offset-[-1px] outline-[#f2f2f2]"
+        className={cn(
+          "overflow-hidden rounded-[20px] bg-[#fcfcfc] shadow-[0_0_0_4px_#ffffff] outline outline-1 outline-offset-[-1px] outline-[#f2f2f2]",
+          responsive && "w-full min-w-0",
+        )}
       >
         <Image
           src={card.src}
           alt=""
-          width={291}
+          width={card.width}
           height={card.height}
-          className="block w-[281px] max-w-none object-cover object-top"
-          style={{ height: card.height }}
-          sizes="281px"
+          className={cn(
+            responsive
+              ? "block h-auto w-full max-w-full object-cover object-top"
+              : "block w-[281px] max-w-none object-cover object-top",
+          )}
+          style={responsive ? undefined : { height: card.height }}
+          sizes={responsive ? "(max-width: 1023px) 100vw, 281px" : "281px"}
         />
       </article>
     </HeroCardShell>
   );
 }
 
-function HeroCard({ card, className, style }: { card: (typeof CARDS)[number]; className?: string; style?: CSSProperties }) {
+function HeroCard({
+  card,
+  className,
+  style,
+  responsive,
+}: {
+  card: (typeof CARDS)[number];
+  className?: string;
+  style?: CSSProperties;
+  responsive?: boolean;
+}) {
   if (card.kind === "chantiers") {
     return (
       <HeroCardShell nodeId={card.nodeId} label={card.label} style={style} className={className}>
-        <HeroChantiersCard />
+        <HeroChantiersCard className={responsive ? "w-full min-w-0 max-w-none" : undefined} />
       </HeroCardShell>
     );
   }
-  return <HeroCardImage card={card} className={className} style={style} />;
+  return <HeroCardImage card={card} className={className} style={style} responsive={responsive} />;
 }
 
 /** Quatre cartes hero — frame `235:33491` alignée sur Figma (bas de ligne commun). */
@@ -138,12 +157,14 @@ export function HeroFeatureCards({ className }: { className?: string }) {
     <>
       <div
         className={cn(
-          "mx-auto grid w-full max-w-[1240px] grid-cols-1 gap-3 px-5 pb-10 sm:grid-cols-2 sm:gap-4 lg:hidden",
+          "mx-auto grid w-full min-w-0 max-w-[1240px] grid-cols-1 gap-4 px-4 pb-10",
+          "md:grid-cols-2 md:gap-4 md:px-5",
+          "lg:hidden",
           className,
         )}
       >
         {CARDS.map((card) => (
-          <HeroCard key={card.nodeId} card={card} />
+          <HeroCard key={card.nodeId} card={card} className="min-w-0 w-full" responsive />
         ))}
       </div>
 

@@ -113,6 +113,9 @@ export const landingFilm = {
   poster: "/landing/film-motion-v2-poster.jpg",
   mock: "/landing/film-motion-v2-poster.jpg",
   video: "/landing/film-motion-v2.mp4",
+  /** Portrait — section film sur mobile (< lg). */
+  videoMobile: "/landing/film-motion-v2-vertical.mp4",
+  posterMobile: "/landing/film-motion-v2-vertical-poster.jpg",
   videoSectionId: "film-preview",
 } as const;
 

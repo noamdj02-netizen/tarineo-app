@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ArrowRight, Play } from "lucide-react";
 import { useReducedMotion } from "framer-motion";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { LandingSection } from "@/components/site/landing-v2/components/layout/LandingSection";
 import { LandingFigmaSectionHeader } from "@/components/site/landing-v2/components/ui/LandingFigmaSectionHeader";
@@ -16,6 +16,18 @@ export function FilmSection() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const reduce = useReducedMotion();
   const [playingLoud, setPlayingLoud] = useState(false);
+  const [portraitVideo, setPortraitVideo] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const sync = () => setPortraitVideo(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  const videoSrc = portraitVideo ? landingFilm.videoMobile : landingFilm.video;
+  const posterSrc = portraitVideo ? landingFilm.posterMobile : landingFilm.poster;
 
   function playWithSound() {
     const video = videoRef.current;
@@ -124,31 +136,41 @@ export function FilmSection() {
           <div
             id={landingFilm.videoSectionId}
             data-node-id="235:34158"
-            className="relative h-[428px] w-full max-w-[760px] shrink-0 overflow-hidden rounded-[23px] border border-[#e5e7eb] bg-[#111] shadow-[0_11px_27px_rgba(0,0,0,0.07)]"
+            className={cn(
+              "relative w-full shrink-0 overflow-hidden rounded-[23px] border border-[#e5e7eb] bg-[#111] shadow-[0_11px_27px_rgba(0,0,0,0.07)]",
+              portraitVideo
+                ? "mx-auto aspect-[9/16] max-h-[min(72dvh,640px)] max-w-[min(100%,360px)]"
+                : "h-[428px] max-w-[760px]",
+            )}
           >
             {reduce ? (
               <Image
-                src={landingFilm.poster}
+                src={posterSrc}
                 alt="Film Tarineo — aperçu du parcours devis, alertes et validation"
-                width={760}
-                height={428}
+                width={portraitVideo ? 720 : 760}
+                height={portraitVideo ? 1280 : 428}
                 className="size-full object-cover object-center"
-                sizes="(max-width: 1024px) 100vw, 760px"
+                sizes={portraitVideo ? "(max-width: 1023px) 90vw, 360px" : "(max-width: 1024px) 100vw, 760px"}
               />
             ) : (
               <video
+                key={videoSrc}
                 ref={videoRef}
                 className="size-full object-cover object-center"
-                src={landingFilm.video}
-                poster={landingFilm.poster}
-                width={760}
-                height={428}
+                src={videoSrc}
+                poster={posterSrc}
+                width={portraitVideo ? 720 : 760}
+                height={portraitVideo ? 1280 : 428}
                 autoPlay
                 muted
                 loop
                 playsInline
                 preload="metadata"
-                aria-label="Film Tarineo — Motion V2 paysage"
+                aria-label={
+                  portraitVideo
+                    ? "Film Tarineo — version mobile portrait"
+                    : "Film Tarineo — Motion V2 paysage"
+                }
                 onPlay={() => {
                   if (videoRef.current && !videoRef.current.muted) setPlayingLoud(true);
                 }}

@@ -43,10 +43,10 @@ function ChantierRow({
           <Image src={avatar} alt="" fill sizes="45px" className="object-cover" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-1">
-            <div className="min-w-0">
-              <p className="truncate text-[15px] font-semibold leading-[23px] text-[#3d3d3d]">{title}</p>
-              <p className="truncate text-[14px] font-medium leading-[21px] text-[#666666]">{meta}</p>
+          <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
+            <div className="min-w-0 flex-1 basis-[min(100%,12rem)]">
+              <p className="text-pretty text-[15px] font-semibold leading-snug text-[#3d3d3d]">{title}</p>
+              <p className="text-pretty text-[14px] font-medium leading-snug text-[#666666]">{meta}</p>
             </div>
             <StatusPill label={status} />
           </div>
@@ -72,7 +72,7 @@ export function HeroChantiersCard({ className }: { className?: string }) {
     <article
       data-node-id="235:33614"
       className={cn(
-        "flex h-[331px] w-[281px] max-w-none flex-col items-center overflow-hidden rounded-[20px] bg-[#fcfcfc]",
+        "flex min-h-[331px] w-[281px] max-w-full flex-col items-center overflow-hidden rounded-[20px] bg-[#fcfcfc]",
         "shadow-[0_0_0_4px_#ffffff] outline outline-1 outline-offset-[-1px] outline-[#f2f2f2]",
         className,
       )}
@@ -83,7 +83,7 @@ export function HeroChantiersCard({ className }: { className?: string }) {
         </p>
       </div>
 
-      <div className="flex w-full min-h-0 flex-1 flex-col items-stretch gap-3 overflow-hidden px-[30px] pb-3">
+      <div className="flex w-full min-h-0 flex-1 flex-col items-stretch gap-3 overflow-hidden px-4 pb-3 sm:px-[30px]">
         {rows.map((row, index) => (
           <ChantierRow
             key={row.id}
