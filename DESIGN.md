@@ -47,4 +47,4 @@ Toute donnée chiffrée démo = libellé **Exemple**. Section Terrain = **scéna
 | **Déploiement** | GitHub `tarineo-app` → Vercel projet `tarineo-app` (production) |
 | **Hors scope** | Ancienne landing v1 supprimée ; `/prix` partage `sections/Pricing.tsx` |
 
-Commit de référence : `e320da2` — *Ship landing v2 Figma as sole marketing home.*
+Commit de référence : `774179a` (landing v2 + correctif build Vercel).
