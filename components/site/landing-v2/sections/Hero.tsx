@@ -67,8 +67,9 @@ export function Hero() {
           <Link
             href="/"
             className={cn(
-              "relative flex min-h-11 items-center gap-2.5 rounded-[11px] bg-white px-3 py-2",
+              "relative flex min-h-10 items-center gap-2 rounded-[10px] bg-white px-2.5 py-1.5",
               "shadow-[0_4px_4px_#f8d3d4,0_4px_4px_rgba(0,0,0,0.25)] outline-none focus-visible:ring-2 focus-visible:ring-[#ff642b]/45",
+              "sm:min-h-11 sm:gap-2.5 sm:rounded-[11px] sm:px-3 sm:py-2",
             )}
             aria-label="Tarineo — accueil"
           >
@@ -77,10 +78,10 @@ export function Hero() {
               alt=""
               width={36}
               height={36}
-              className="size-9 rounded-[9px] object-cover"
+              className="size-8 rounded-[8px] object-cover sm:size-9 sm:rounded-[9px]"
               priority
             />
-            <span className="text-[1.35rem] font-bold leading-none tracking-tight text-[#0a0a0a]">
+            <span className="text-xl font-bold leading-none tracking-tight text-[#0a0a0a] sm:text-[1.35rem]">
               TARINEO
             </span>
           </Link>
