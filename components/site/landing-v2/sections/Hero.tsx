@@ -129,29 +129,43 @@ export function Hero() {
       <div className="relative z-20 mx-auto flex w-full max-w-[900px] flex-col items-center px-5 pt-6 text-center sm:px-10 lg:max-w-[1406px] lg:px-12 lg:pt-2">
         <div
           data-node-id="235:34086"
-          className="inline-flex max-w-full items-center justify-center gap-[5px] overflow-hidden rounded-[66px] border border-[#f4f4f4] bg-[#fcfcfc] py-[5px] pl-2.5 pr-[5px] shadow-[0_0_0_1px_#ffffff,0_4px_16px_rgba(176,176,176,0.08)]"
+          className={cn(
+            "inline-flex w-full max-w-[min(100%,22.5rem)] min-w-0 items-center justify-center gap-1 rounded-[66px] border border-[#f4f4f4] bg-[#fcfcfc] py-1 pl-2 pr-1",
+            "shadow-[0_0_0_1px_#ffffff,0_4px_16px_rgba(176,176,176,0.08)]",
+            "sm:w-auto sm:max-w-full sm:gap-[5px] sm:py-[5px] sm:pl-2.5 sm:pr-[5px]",
+          )}
         >
-          <span className="flex shrink-0 -space-x-2">
-            {AVATARS.map((src) => (
+          <span className="flex shrink-0 -space-x-1.5 sm:-space-x-2" aria-hidden>
+            {AVATARS.map((src, index) => (
               <Image
                 key={src}
                 src={src}
                 alt=""
                 width={22}
                 height={22}
-                className="size-[22px] rounded-full border border-white object-cover"
+                className={cn(
+                  "rounded-full border border-white object-cover",
+                  "size-[18px] sm:size-[22px]",
+                  index === 2 && "hidden min-[390px]:inline-block",
+                )}
               />
             ))}
           </span>
-          <span className="shrink-0 text-center text-sm font-medium leading-[21px] text-[#262626]">
-            Alertes prix · artisans BTP
+          <span
+            className="min-w-0 flex-1 truncate text-center text-[11px] font-medium leading-tight text-[#262626] sm:flex-none sm:text-sm sm:leading-[21px]"
+          >
+            <span className="min-[390px]:hidden">Alertes prix</span>
+            <span className="hidden min-[390px]:inline sm:hidden">Alertes prix · BTP</span>
+            <span className="hidden sm:inline">Alertes prix · artisans BTP</span>
           </span>
           <Link
             href={HERO.primary.href}
-            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-[3px] rounded-[66px] bg-[#333] px-2 py-[5px] text-sm font-medium leading-[21px] text-white outline-none transition-colors hover:bg-[#444] focus-visible:ring-2 focus-visible:ring-[#ff642b]/45"
+            aria-label="Importez un devis fournisseur"
+            className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-0.5 rounded-[66px] bg-[#333] px-1.5 py-1 text-[11px] font-medium leading-tight text-white outline-none transition-colors hover:bg-[#444] focus-visible:ring-2 focus-visible:ring-[#ff642b]/45 sm:gap-[3px] sm:px-2 sm:py-[5px] sm:text-sm sm:leading-[21px]"
           >
-            Importez un devis
-            <ArrowRight className="size-3.5 shrink-0" aria-hidden />
+            <span className="sm:hidden">Importer</span>
+            <span className="hidden sm:inline">Importez un devis</span>
+            <ArrowRight className="hidden size-3.5 shrink-0 sm:block" aria-hidden />
           </Link>
         </div>
 
