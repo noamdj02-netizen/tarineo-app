@@ -33,7 +33,6 @@ const SWAP = {
 const DOT: Record<Fiche["statusTone"], string> = {
   focus: "bg-[#77f673]",
   pause: "bg-[#ffcc66]",
-  fini: "bg-[#c6c6c6]",
 };
 
 /** ~32vh de scroll par fiche après la 1ʳᵉ — pas de 240vh vide. */
