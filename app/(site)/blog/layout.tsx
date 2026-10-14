@@ -1,4 +1,4 @@
-/** Blog : chrome et tokens via `SiteShell` (landing-v2). */
+/** Blog : tokens et `.shell` landing-v2 (voir `styles/landing-v2.css`). */
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <div className="landing-v2 min-h-full">{children}</div>;
 }

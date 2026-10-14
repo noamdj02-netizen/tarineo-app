@@ -11,7 +11,7 @@ import { SiteLogo } from "@/components/site/site-logo";
 import { Separator } from "@/components/ui/separator";
 import { FooterBrandWordmark } from "@/components/site/footer-brand-wordmark";
 import { BRAND } from "@/lib/brand";
-import { isBlogPath } from "@/lib/site/is-blog-path";
+import { isMarketingLightPath } from "@/lib/site/is-marketing-light-path";
 import { CTA_TRIAL, FINAL_CTA, FOOTER_COLS } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ export function SiteFooter() {
   const reduce = useReducedMotion();
   const variants = reduce ? riseQuiet : rise;
   const year = new Date().getFullYear();
-  const isLightFooter = isBlogPath(pathname);
+  const isLightFooter = isMarketingLightPath(pathname);
   const wordmarkTone = isLightFooter ? "on-light" : "on-dark";
 
   if (pathname === "/") return null;

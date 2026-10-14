@@ -24,7 +24,7 @@ export const metadata = {
 
 export default function AvisPage() {
   return (
-    <div className="pb-16 sm:pb-20">
+    <div className="landing-v2 pb-16 pt-2 sm:pb-20">
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Accueil", path: "/" },

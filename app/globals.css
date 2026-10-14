@@ -4,14 +4,8 @@
 @import "../styles/studio.css" layer(components);
 @import "../styles/landing-v2.css";
 
-/* Barlow / Space Grotesk : chargées via <link> dans app/layout (compat Turbopack). */
-:root {
-  --font-barlow: "Barlow", ui-sans-serif, system-ui, sans-serif;
-  --font-space-grotesk: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
-}
-
 /* Variantes `dark:` des primitives shadcn pilotées par la classe .dark (site public), pas par l'OS. */
-@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *):not(:where(.theme-light, .theme-light *)));
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.theme-light, .theme-light *)));
 
 /*
  * Direction artistique « Mono Lead ».
@@ -20,26 +14,23 @@
  */
 @theme {
   /* Couleurs */
-  --color-bg: #f5f5f3;
+  --color-bg: #f3f3f2;
   --color-surface: #ffffff;
   --color-surface-2: #f6f6f5;
-  --color-ink: #0a0a0a;
+  --color-ink: #111111;
   /* Texte secondaire (utiliser text-muted-foreground ; bg-muted = surface-2 via @theme inline) */
   /* ~4.6:1 sur bg pour le petit texte (WCAG AA). */
-  --color-muted-ink: #6e6e6e;
-  --color-line: rgba(10, 10, 10, 0.07);
+  --color-muted-ink: #6f6f6f;
+  --color-line: rgba(17, 17, 17, 0.08);
   --color-accent: #111111;
   --color-accent-ink: #ffffff;
   --color-accent-soft: #f4f4f3;
   --color-accent-2: #9a9a9a;
-  /* Barre latérale — défaut clair (sync data-sidebar / data-theme) */
-  --color-side: #ffffff;
-  --color-side-ink: #0a0a0a;
-  --color-side-muted: #525252;
-  --color-side-icon: #6e6e6e;
-  --color-side-line: rgba(10, 10, 10, 0.08);
-  --color-side-hint: #737373;
-  --color-side-card: #f7f7f5;
+  /* Barre latérale noire */
+  --color-side: #111111;
+  --color-side-ink: #ffffff;
+  --color-side-muted: rgba(255, 255, 255, 0.5);
+  --color-side-line: rgba(255, 255, 255, 0.08);
   /* Barre du bas mobile (même teinte que public/figma/navbar/notch.svg) */
   --color-nav: #1f1f1f;
   /* Halo pastel des cartes d'accueil (pêche, lavande, bleu doux) */
@@ -50,29 +41,9 @@
   --color-brand-violet: #6e5ce6;
   /* Ciel du closer alpin (match le film) */
   --color-closer-sky: #1d8fb8;
-  /* Orange TARINEO — source unique (CTA, nav active, tabs) */
-  --tarineo-orange: #ff6b1a;
-  --tarineo-orange-soft: rgba(255, 107, 26, 0.16);
-  --tarineo-orange-hover: rgba(255, 107, 26, 0.08);
-  --tarineo-orange-ring: rgba(255, 107, 26, 0.18);
-  --color-tarineo-orange: var(--tarineo-orange);
-  --color-tarineo-orange-soft: var(--tarineo-orange-soft);
-  --color-tarineo-orange-hover: var(--tarineo-orange-hover);
-  --color-tarineo-orange-ring: var(--tarineo-orange-ring);
-  --color-brand-orange: var(--tarineo-orange);
-  --color-brand-orange-light: var(--tarineo-orange);
-  --color-nav-orange: var(--tarineo-orange);
-  --color-nav-orange-hover: var(--tarineo-orange);
-  --color-nav-orange-press: var(--tarineo-orange);
-  --color-faint: #999999;
-  --color-line-strong: rgba(10, 10, 10, 0.12);
-  --color-info: #3b82f6;
-  --color-warning: #f59e0b;
-  --ease-nav: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --duration-fast: 120ms;
-  --duration-normal: 180ms;
-  --duration-slow: 280ms;
-  --radius-control: 10px;
+  /* Orange Tarinéo : CTA, accents, indicateurs — jamais en aplat large */
+  --color-brand-orange: #ec5821;
+  --color-brand-orange-light: #ff7a45;
   /* Papier devis + baisse (démos) */
   --color-paper: #f4f1ea;
   --color-paper-ink: #161412;
@@ -80,48 +51,17 @@
   --color-alert-wash: #1a100c;
   /* Statuts de projet (pastille + fond teinté) */
   --color-st-focus: #16a34a;
-  --color-st-focus-soft: #ecfdf3;
-  --color-st-focus-ink: #15803d;
-  --color-st-pause: #f59e0b;
-  --color-st-pause-soft: #fff7e6;
-  --color-st-pause-ink: #b45309;
-  --color-st-fini: #6b7280;
-  --color-st-fini-soft: #f3f4f6;
-  --color-st-fini-ink: #4b5563;
-  --color-search: #f3f3f2;
-
-  /* Surfaces teintées métier (KPI, inbound, alertes) — surchargées en dark */
-  --color-wash-orange: #fff8f3;
-  --color-wash-orange-hover: #fff4ec;
-  --color-wash-orange-strong: #fffaf6;
-  --color-wash-neutral: #f8f8f7;
-  --color-wash-neutral-2: #f7f7f6;
-  --color-wash-success: #f4fbf6;
-  --color-wash-success-track: #e8f5ec;
-  --color-wash-success-bar: #86c99a;
-  --color-wash-paper: #efe8e0;
-  --color-wash-badge: #fff1e8;
-  --color-wash-badge-ink: #c94f12;
-  --color-wash-amber: #fffbeb;
-  --color-wash-amber-ink: #92400e;
-  --color-wash-row-hover: #fafaf9;
-
-  /* Landing — toile claire (sections + hero, sous .theme-light) */
-  --color-landing-canvas: #f7f5f0;
-  --color-landing-hero: #faf8f4;
-  --color-landing-ink-muted: #5a5a5a;
-  --color-landing-chapter: color-mix(in oklab, var(--tarineo-orange) 82%, transparent);
-  --shadow-landing-cta: 0 10px 28px -16px color-mix(in oklab, var(--tarineo-orange) 42%, transparent);
-  /* Hero H1 — ligne question + marqueur */
-  --hero-headline-lead: clamp(1.625rem, 3.5vw, 2.625rem);
-  --hero-headline-highlight: clamp(2.25rem, 6vw, 5.25rem);
-  --hero-headline-lead-tracking: -0.035em;
-  --hero-headline-highlight-tracking: -0.048em;
-  --hero-marker-rotate-fill: -1.15deg;
-  --hero-marker-rotate-wash: -2.1deg;
+  --color-st-focus-soft: #e8f7ee;
+  --color-st-focus-ink: #166534;
+  --color-st-pause: #eab308;
+  --color-st-pause-soft: #fdf6dc;
+  --color-st-pause-ink: #854d0e;
+  --color-st-fini: #dc2626;
+  --color-st-fini-soft: #fdecec;
+  --color-st-fini-ink: #991b1b;
 
   /* Arrondis */
-  --radius-card: 16px;
+  --radius-card: 18px;
   --radius-pill: 999px;
 
   /* Polices (chargées par next/font dans app/layout.tsx) */
@@ -131,9 +71,11 @@
   --font-serif: var(--font-instrument-serif), Georgia, serif;
   --font-grotesk: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 
-  /* Ombres : la bordure porte la hiérarchie */
-  --shadow-soft: 0 1px 0 rgba(10, 10, 10, 0.03);
-  --shadow-lift: 0 4px 16px -10px rgba(10, 10, 10, 0.12);
+  /* Ombres douces multi-couches + reflet des boutons sombres */
+  --shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04),
+    0 16px 40px -18px rgba(0, 0, 0, 0.18);
+  --shadow-lift: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 10px rgba(0, 0, 0, 0.05),
+    0 24px 48px -20px rgba(0, 0, 0, 0.24);
   --shadow-dark: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 1px 2px rgba(0, 0, 0, 0.2),
     0 8px 20px -8px rgba(0, 0, 0, 0.45);
 
@@ -145,15 +87,6 @@
 
   --animate-marquee: marquee var(--marquee-duration, 52s) linear infinite;
   --animate-marquee-reverse: marquee-reverse var(--marquee-duration, 58s) linear infinite;
-}
-
-@keyframes terrain-progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
 }
 
 @keyframes marquee {
@@ -211,8 +144,8 @@
   --color-border: var(--color-line);
   --color-input: var(--color-line);
   --color-ring: var(--color-ink);
-  --radius-sm: 10px;
-  --radius-md: 10px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
   --radius-lg: 14px;
   --radius-xl: 18px;
   --radius-2xl: 22px;
@@ -249,96 +182,10 @@
   --f-disp: var(--font-display);
   --f-body: var(--font-sans);
   --f-mono: var(--font-mono);
-  --color-side-active: rgba(255, 107, 26, 0.1);
-  --color-side-hover: rgba(10, 10, 10, 0.045);
-  --color-row-hover: rgba(10, 10, 10, 0.025);
-  --color-search: #f5f5f3;
 }
 
 /*
- * Palette app sombre — tokens dédiés, pas une inversion.
- * Pilotée par html.dark / data-theme=dark (script synchrone + ThemeProvider).
- */
-html.dark,
-html[data-theme="dark"] {
-  color-scheme: dark;
-  --color-bg: #0a0a0a;
-  --color-surface: #111111;
-  --color-surface-2: #151515;
-  --color-ink: #f5f5f5;
-  /* Secondaire lisible (~#B8) ; faint pour labels très discrets */
-  --color-muted-ink: #b8b8b8;
-  --color-faint: #858585;
-  --color-line: rgba(255, 255, 255, 0.08);
-  --color-line-strong: rgba(255, 255, 255, 0.14);
-  --color-accent: #f5f5f5;
-  --color-accent-ink: #0a0a0a;
-  --color-accent-soft: #1a1a1a;
-  --color-accent-2: #858585;
-  --color-nav: #111111;
-  --color-st-focus-soft: rgba(22, 163, 74, 0.18);
-  --color-st-focus-ink: #4ade80;
-  --color-st-pause-soft: rgba(245, 158, 11, 0.18);
-  --color-st-pause-ink: #fbbf24;
-  --color-st-fini-soft: rgba(107, 114, 128, 0.2);
-  --color-st-fini-ink: #d1d5db;
-  --shadow-soft: 0 1px 0 rgba(255, 255, 255, 0.03);
-  --shadow-lift: 0 0 0 1px rgba(255, 255, 255, 0.06);
-  --bg: var(--color-bg);
-  --panel: var(--color-surface);
-  --panel2: var(--color-surface-2);
-  --ink: var(--color-ink);
-  --ink2: var(--color-muted-ink);
-  --line: var(--color-line);
-  --brand: var(--color-ink);
-  --brand-soft: var(--color-accent-soft);
-  --color-row-hover: rgba(255, 255, 255, 0.05);
-  --color-search: #151515;
-  /* Washes : teinte sombre, jamais un pastel clair (sinon text-ink clair illisible) */
-  --color-wash-orange: rgba(255, 107, 26, 0.12);
-  --color-wash-orange-hover: rgba(255, 107, 26, 0.18);
-  --color-wash-orange-strong: rgba(255, 107, 26, 0.1);
-  --color-wash-neutral: #151515;
-  --color-wash-neutral-2: #171717;
-  --color-wash-success: rgba(22, 163, 74, 0.14);
-  --color-wash-success-track: rgba(22, 163, 74, 0.22);
-  --color-wash-success-bar: #4ade80;
-  --color-wash-paper: #1a1816;
-  --color-wash-badge: rgba(255, 107, 26, 0.18);
-  --color-wash-badge-ink: #ffb088;
-  --color-wash-amber: rgba(245, 158, 11, 0.14);
-  --color-wash-amber-ink: #fbbf24;
-  --color-wash-row-hover: rgba(255, 255, 255, 0.04);
-}
-
-html[data-sidebar="dark"],
-html[data-theme="dark"] {
-  --color-side: #0a0a0a;
-  --color-side-ink: #f5f5f5;
-  --color-side-muted: #a0a0a0;
-  --color-side-icon: #a0a0a0;
-  --color-side-line: rgba(255, 255, 255, 0.08);
-  --color-side-active: rgba(255, 107, 26, 0.16);
-  --color-side-hover: rgba(255, 255, 255, 0.06);
-  --color-side-hint: #858585;
-  --color-side-card: #151515;
-}
-
-html[data-sidebar="light"],
-html[data-theme="light"] {
-  --color-side: #ffffff;
-  --color-side-ink: #0a0a0a;
-  --color-side-muted: #525252;
-  --color-side-icon: #6e6e6e;
-  --color-side-line: rgba(10, 10, 10, 0.08);
-  --color-side-active: rgba(255, 107, 26, 0.1);
-  --color-side-hover: rgba(10, 10, 10, 0.045);
-  --color-side-hint: #737373;
-  --color-side-card: #f7f7f5;
-}
-
-/*
- * Thème TARINEO (site public) : on remappe les tokens Mono Lead sur le wrapper
+ * Thème Tarinéo (site public) : on remappe les tokens Mono Lead sur le wrapper
  * du layout (site) — tous les composants existants (Card, Button, Faq…) passent
  * en noir / blanc / gris sans être réécrits. L'app connectée reste en clair.
  */
@@ -381,54 +228,6 @@ html[data-theme="light"] {
   --brand: var(--color-brand-orange);
 }
 
-/*
- * Login / inscription : fond clair même si l’utilisateur a choisi le thème sombre (app).
- */
-html:has(.auth-shell) {
-  background-color: #f5f5f3;
-  color-scheme: light;
-}
-
-.auth-shell {
-  color-scheme: light;
-  --color-bg: #f5f5f3;
-  --color-surface: #ffffff;
-  --color-surface-2: #ececea;
-  --color-ink: #111111;
-  --color-muted-ink: #525252;
-  --color-faint: #737373;
-  --color-line: rgba(17, 17, 17, 0.1);
-  --color-line-strong: rgba(17, 17, 17, 0.14);
-  --color-accent: #111111;
-  --color-accent-ink: #ffffff;
-  --color-accent-soft: #f4f4f3;
-  --color-accent-2: #6e6e6e;
-  --color-st-focus-soft: #ecfdf3;
-  --color-st-focus-ink: #15803d;
-  --color-st-pause-soft: #fff7e6;
-  --color-st-pause-ink: #b45309;
-  --color-st-fini-soft: #f3f4f6;
-  --color-st-fini-ink: #4b5563;
-  --color-search: #f3f3f2;
-  --shadow-soft: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.04),
-    0 16px 40px -18px rgba(0, 0, 0, 0.18);
-  --shadow-lift: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 10px rgba(0, 0, 0, 0.05),
-    0 24px 48px -20px rgba(0, 0, 0, 0.24);
-  --bg: var(--color-bg);
-  --panel: var(--color-surface);
-  --panel2: var(--color-surface-2);
-  --ink: var(--color-ink);
-  --ink2: var(--color-muted-ink);
-  --line: var(--color-line);
-  background-color: var(--color-bg);
-  color: var(--color-ink);
-}
-
-.auth-shell .mono-label {
-  font-size: 12px;
-  color: var(--color-brand-orange);
-}
-
 /* Sections claires du site (Pour qui, FAQ) : alternance pour rythmer la lecture. */
 .theme-tarineo .theme-light {
   color-scheme: light;
@@ -454,8 +253,13 @@ html:has(.auth-shell) {
   color: var(--color-brand-orange);
 }
 
-/* Évite le flash clair en overscroll (Safari) sous le site sombre. */
-body:has(.theme-tarineo) {
+/* Overscroll Safari — fond aligné sur la page (clair marketing ou sombre). */
+body:has(.theme-tarineo[data-marketing-light]),
+body:has(.theme-tarineo .landing-v2) {
+  background-color: #f0f0f0;
+}
+
+body:has(.theme-tarineo):not(:has([data-marketing-light])):not(:has(.landing-v2)) {
   background-color: #050505;
 }
 
@@ -467,8 +271,8 @@ body:has(.theme-tarineo) {
     -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
     scroll-behavior: smooth;
-    background-color: var(--color-bg);
-    transition: background-color 180ms ease, color 180ms ease;
+    /* Évite le flash / bandeau clair sous la barre Safari au-dessus du hero. */
+    background-color: var(--color-ink);
   }
   body {
     @apply bg-bg font-sans text-ink antialiased;
@@ -476,18 +280,6 @@ body:has(.theme-tarineo) {
     min-height: 100%;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
-    transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
-  }
-  input::placeholder,
-  textarea::placeholder {
-    color: var(--color-faint);
-    opacity: 1;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    html,
-    body {
-      transition: none;
-    }
   }
   :focus-visible {
     outline: 2px solid var(--color-ink);
@@ -505,137 +297,41 @@ body:has(.theme-tarineo) {
   }
   /* Carte Mono Lead */
   .card-soft {
-    @apply rounded-card border border-line bg-surface;
-    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+    @apply rounded-card border border-line bg-surface shadow-soft;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .card-soft {
-      transition: none;
-    }
-  }
+  /* Lift desktop only — pas de hover-translate au doigt */
   .card-lift {
-    @apply transition-[box-shadow,border-color] duration-[var(--duration-normal)] ease-nav;
+    @apply transition-[transform,box-shadow] duration-300 ease-out-soft;
   }
   @media (hover: hover) and (pointer: fine) {
     .card-lift:hover {
-      border-color: var(--color-line-strong);
+      transform: translateY(-2px);
       box-shadow: var(--shadow-lift);
     }
   }
+  /* Feedback au doigt (Apple : highlight on press, pas au relâchement) */
   .pressable {
-    transition: transform 150ms ease-out;
-    -webkit-tap-highlight-color: transparent;
+    transition: transform 100ms ease-out;
   }
   .pressable:active {
-    transform: scale(0.96);
-  }
-  .pressable:disabled:active,
-  .pressable[aria-disabled="true"]:active {
-    transform: none;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .pressable {
-      transition: none;
-    }
-    .pressable:active {
-      transform: none;
-    }
-  }
-  .app-table {
-    @apply w-full text-left text-[14px];
-  }
-  .app-table thead th {
-    @apply border-b border-line px-4 py-2.5 text-[12px] font-medium tracking-[0.04em] text-muted-foreground;
-  }
-  .app-table tbody td {
-    @apply border-b border-line px-4 py-[14px] align-middle;
-  }
-  .app-table tbody tr:last-child td {
-    @apply border-b-0;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .app-table tbody tr:hover td {
-      background: var(--color-row-hover);
-    }
+    transform: scale(0.97);
   }
   /* Chrome flottant de l’accueil */
   .dash-chip {
-    @apply inline-flex min-h-9 items-center gap-1.5 rounded-pill border border-line/80 bg-surface/70 px-3 text-[13px] font-medium backdrop-blur-xl transition-[background-color,transform] duration-150 ease-out active:scale-[0.96];
-    -webkit-tap-highlight-color: transparent;
-  }
-  @media (hover: hover) and (pointer: fine) {
-    .dash-chip:hover {
-      background-color: var(--color-surface);
-    }
+    @apply inline-flex min-h-9 items-center gap-1.5 rounded-pill border border-line/80 bg-surface/70 px-3 text-[13px] font-medium backdrop-blur-xl hover:bg-surface;
   }
   /* Bouton noir avec reflet interne */
   .btn-dark {
-    @apply bg-accent text-accent-ink transition-[background-color,transform] duration-150 ease-out hover:bg-ink/90 active:scale-[0.96] disabled:active:scale-100;
-    border-radius: var(--radius-control);
-    -webkit-tap-highlight-color: transparent;
+    @apply bg-accent text-accent-ink shadow-dark transition-[transform,box-shadow] duration-300 ease-out-soft hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98];
   }
 
+  /* CTA orange Tarinéo : même reflet et même lift que .btn-dark */
   .btn-orange {
-    background-color: var(--tarineo-orange);
-    color: #fff;
-    border-radius: var(--radius-control);
-    transition:
-      background-color 150ms ease-out,
-      filter 150ms ease-out,
-      transform 150ms ease-out;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .btn-orange:hover {
-    background-color: var(--tarineo-orange);
-    filter: brightness(0.96);
-  }
-  .btn-orange:active {
-    background-color: var(--tarineo-orange);
-    filter: brightness(0.92);
-    transform: scale(0.96);
-  }
-  .btn-orange:disabled:active {
-    transform: none;
-  }
-
-  .scroll-x {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 0.375rem;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-  .scroll-x::-webkit-scrollbar {
-    display: none;
-  }
-  @media (min-width: 768px) {
-    .scroll-x {
-      flex-wrap: wrap;
-      overflow: visible;
-    }
-  }
-
-  .nav-active {
-    background-color: var(--color-side-active);
-    color: var(--tarineo-orange);
-  }
-  .nav-active svg {
-    color: var(--tarineo-orange);
-  }
-  .nav-idle {
-    color: var(--color-side-muted);
-  }
-  .nav-idle svg {
-    color: var(--color-side-icon);
-  }
-  .nav-idle:hover {
-    background-color: var(--color-side-hover);
-    color: var(--color-side-ink);
-  }
-  .nav-idle:hover svg {
-    color: var(--color-side-ink);
+    @apply bg-brand-orange text-white transition-[transform,box-shadow,background-color] duration-300 ease-out-soft hover:-translate-y-0.5 hover:bg-brand-orange-light active:translate-y-0 active:scale-[0.98];
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 1px 2px rgba(0, 0, 0, 0.35),
+      0 10px 28px -10px color-mix(in srgb, var(--color-brand-orange) 70%, transparent);
   }
   /* Verre sombre (cartes flottantes du hero, navbar) */
   .glass-dark {
@@ -673,202 +369,6 @@ body:has(.theme-tarineo) {
     mask-composite: exclude;
     pointer-events: none;
   }
-  /* Halos landing (orange = token marque) */
-  .hero-backdrop-wash {
-    background:
-      linear-gradient(
-        108deg,
-        var(--color-landing-hero) 0%,
-        var(--color-landing-canvas) 48%,
-        color-mix(in oklab, var(--color-landing-canvas) 92%, var(--tarineo-orange)) 100%
-      );
-  }
-  .hero-card {
-    @apply rounded-2xl bg-surface shadow-soft ring-1 ring-line;
-  }
-  .hero-card-footer {
-    @apply border-t border-line bg-surface-2;
-  }
-  .hero-engine-progress {
-    background: linear-gradient(
-      90deg,
-      color-mix(in oklab, var(--tarineo-orange) 75%, white),
-      var(--tarineo-orange)
-    );
-  }
-  .hero-scan-sheen {
-    background: linear-gradient(
-      180deg,
-      transparent,
-      color-mix(in oklab, var(--tarineo-orange) 14%, transparent),
-      color-mix(in oklab, var(--tarineo-orange) 24%, transparent),
-      color-mix(in oklab, var(--tarineo-orange) 14%, transparent),
-      transparent
-    );
-  }
-
-  /* Nav landing — verre clair ivoire */
-  .site-nav-bar--light {
-    border-color: color-mix(in oklab, var(--color-ink) 7%, transparent);
-    background: color-mix(in oklab, var(--color-landing-hero) 62%, transparent);
-    backdrop-filter: blur(20px) saturate(1.45);
-  }
-  .site-nav-bar--light-scrolled {
-    border-color: color-mix(in oklab, var(--color-ink) 9%, transparent);
-    background: color-mix(in oklab, var(--color-landing-hero) 82%, transparent);
-    box-shadow: var(--shadow-soft);
-  }
-  .site-nav-bar--dark {
-    border-color: color-mix(in srgb, white 6%, transparent);
-    background: color-mix(in srgb, var(--color-nav) 74%, transparent);
-    backdrop-filter: blur(20px) saturate(1.35);
-  }
-  .site-nav-bar--dark-scrolled {
-    border-color: color-mix(in srgb, white 7%, transparent);
-    background: color-mix(in srgb, var(--color-nav) 88%, transparent);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
-  }
-  .site-nav-drawer--light {
-    border-color: color-mix(in oklab, var(--color-ink) 8%, transparent);
-    background: color-mix(in oklab, var(--color-surface) 92%, transparent);
-  }
-
-  /* Titre landing — deux lignes, même famille, contraste taille + italique */
-  .hero-headline-lead {
-    max-width: 22ch;
-    font-family: var(--font-display);
-    font-size: var(--hero-headline-lead);
-    line-height: 1.12;
-    font-weight: 600;
-    letter-spacing: var(--hero-headline-lead-tracking);
-  }
-  .hero-headline-highlight-wrap {
-    position: relative;
-    display: inline-block;
-    width: max-content;
-    max-width: 100%;
-    font-family: var(--font-display);
-    font-size: var(--hero-headline-highlight);
-    line-height: 1.04;
-    letter-spacing: var(--hero-headline-highlight-tracking);
-  }
-  .hero-headline-highlight-text {
-    position: relative;
-    isolation: isolate;
-    display: block;
-    font-weight: 600;
-    font-style: italic;
-    white-space: nowrap;
-  }
-  .hero-headline-marker {
-    pointer-events: none;
-    position: absolute;
-    z-index: -1;
-    display: block;
-  }
-  .hero-headline-marker--fill {
-    left: -0.11em;
-    right: -0.15em;
-    top: 0.08em;
-    bottom: 0.02em;
-    rotate: var(--hero-marker-rotate-fill);
-    border-radius: 0.12em 0.26em 0.14em 0.2em;
-    background: linear-gradient(
-      104deg,
-      color-mix(in oklab, var(--tarineo-orange) 36%, transparent) 0%,
-      color-mix(in oklab, var(--tarineo-orange) 62%, transparent) 42%,
-      color-mix(in oklab, var(--tarineo-orange) 54%, transparent) 78%,
-      color-mix(in oklab, var(--tarineo-orange) 38%, transparent) 100%
-    );
-    box-shadow:
-      inset 0 1px 0 color-mix(in srgb, white 42%, transparent),
-      0 2px 8px -4px color-mix(in oklab, var(--tarineo-orange) 35%, transparent);
-  }
-  .hero-headline-marker--wash {
-    left: -0.07em;
-    right: -0.11em;
-    top: 0.2em;
-    bottom: -0.04em;
-    rotate: var(--hero-marker-rotate-wash);
-    border-radius: 0.18em 0.12em 0.2em 0.14em;
-    background: color-mix(in oklab, var(--tarineo-orange) 30%, transparent);
-  }
-
-  /* Sections landing (ex. #probleme) — même ADN que le hero, plus compact */
-  .landing-stack-headline-lead {
-    max-width: 24ch;
-    font-family: var(--font-display);
-    font-size: clamp(1.625rem, 3.2vw, 2.5rem);
-    line-height: 1.1;
-    font-weight: 600;
-    letter-spacing: -0.034em;
-  }
-  .landing-stack-headline-tail-wrap {
-    position: relative;
-    display: inline-block;
-    width: max-content;
-    max-width: 100%;
-    font-family: var(--font-display);
-    font-size: clamp(1.75rem, 3.85vw, 2.875rem);
-    line-height: 1.05;
-    letter-spacing: -0.042em;
-  }
-  .landing-stack-headline-tail-text {
-    position: relative;
-    isolation: isolate;
-    display: block;
-    font-weight: 600;
-    font-style: italic;
-    text-wrap: balance;
-  }
-
-  .hero-backdrop-accent {
-    background:
-      radial-gradient(
-        ellipse 52% 46% at 82% 38%,
-        color-mix(in oklab, var(--tarineo-orange) 8%, transparent),
-        transparent 72%
-      ),
-      radial-gradient(
-        ellipse 40% 32% at 68% 62%,
-        color-mix(in oklab, var(--tarineo-orange) 5%, transparent),
-        transparent 70%
-      );
-  }
-
-  .landing-atmosphere-glow {
-    background:
-      radial-gradient(
-        ellipse 100% 70% at 18% 0%,
-        color-mix(in oklab, var(--tarineo-orange) 9%, transparent),
-        transparent 55%
-      ),
-      radial-gradient(
-        ellipse 80% 50% at 100% 40%,
-        color-mix(in oklab, var(--color-ink) 4%, transparent),
-        transparent 50%
-      );
-  }
-
-  .landing-editorial-grid {
-    background-image:
-      linear-gradient(to right, color-mix(in oklab, var(--color-ink) 5%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklab, var(--color-ink) 4%, transparent) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: linear-gradient(to bottom, black 0%, black 42%, transparent 100%);
-  }
-
-  .landing-showcase-bezel {
-    box-shadow:
-      0 0 0 1px color-mix(in oklab, var(--color-ink) 6%, transparent),
-      0 28px 64px -40px color-mix(in oklab, var(--color-ink) 22%, transparent);
-  }
-
-  .landing-surface .landing-stack-headline-lead,
-  .landing-surface .landing-stack-headline-tail-wrap {
-    font-family: var(--font-grotesk);
-  }
-
   /* Grain argentique très léger (hero) */
   .film-grain {
     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
@@ -1398,38 +898,6 @@ body:has(.theme-tarineo) {
   100% {
     transform: translateY(var(--scan-distance, 260px));
     opacity: 0;
-  }
-}
-
-@keyframes copilot-dot {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes copilot-live {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.5;
-  }
-  50% {
-    transform: scale(1.15);
-    opacity: 1;
-  }
-}
-
-@keyframes copilot-caret {
-  0%,
-  100% {
-    opacity: 0.2;
-  }
-  50% {
-    opacity: 1;
   }
 }
 

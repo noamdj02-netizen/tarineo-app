@@ -1,6 +1,10 @@
 /** Contenus landing Tarineo — structure 6 écrans (brief conversion). */
 
+/** Date de gel prod landing Figma v2 (`main` + Vercel production). */
+export const LANDING_V2_PRODUCTION_RELEASE = "2026-10-14";
+
 import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
+import { ARTISAN_LANDING_REVIEWS } from "@/lib/site/content";
 
 export type IconName =
   | "mail"
@@ -20,9 +24,9 @@ export type IconName =
 export type NavItem = { label: string; href: string };
 export type LandingNavGroup = { title: string; items: NavItem[] };
 
-/** Nav mobile / drawer — groupes. Desktop = mega-menu (header/nav-data). */
+/** Nav mobile / drawer — groupes. Desktop = `site-nav` + `marketingNavItems`. */
 export const landingNavPrimary: NavItem[] = [
-  { label: "Produit", href: "#produit" },
+  { label: "Terrain", href: "#terrain" },
   { label: "Tarifs", href: "#tarifs" },
   { label: "FAQ", href: "#faq" },
   { label: "Blog", href: "/blog" },
@@ -34,7 +38,7 @@ export const landingNavGroups: LandingNavGroup[] = [
     items: [
       { label: "Accueil", href: "/#top" },
       { label: "Fonctionnalités", href: "/#fonctionnalites" },
-      { label: "Produit", href: "/#produit" },
+      { label: "Terrain", href: "/#terrain" },
       { label: "Tarifs", href: "/#tarifs" },
       { label: "Blog", href: "/blog" },
     ],
@@ -58,7 +62,135 @@ export const heroProof = [
   "Automatisations",
 ];
 
-/** Launch UI — bandeau compatibilité (texte, pas logos enseignes). */
+/** Hero Designs-28 (Figma 235:33212) — titres visuels ; CTA inscription = `HERO.primary`. */
+export const heroDesigns28 = {
+  /** Figma `235:33481` / `235:33482` — trois lignes visuelles. */
+  titleLine1: "Vos fournisseurs",
+  titleLine2: "augmentent leurs prix.",
+  titleAccent: "Vous le voyez ?",
+  /** @deprecated Utiliser `titleLine1` + `titleLine2`. */
+  line1: "Vos fournisseurs augmentent leurs prix.",
+  /** @deprecated Utiliser `titleAccent`. */
+  line2: "Vous le voyez ?",
+  text:
+    "TARINEO lit vos factures et vous alerte dès qu'une référence augmente, avant que ça mange la marge de vos chantiers.",
+  primaryCta: "Tester gratuitement",
+  /** Figma hero `235:33488` */
+  launchPrimaryCta: "Rejoindre les 30 premiers artisans",
+  demoCta: "Voir la démo",
+  trustLead: "Ils nous font confiance pour optimiser leur rentabilité :",
+  searchTitle: "Rechercher un produit",
+  searchCategories: ["Menuiserie", "Plomberie", "Électricité", "Quincaillerie"],
+  alertTitle: "Alerte hausse",
+  alertSample: { product: "Tube PER 16×20", delta: "+12,4 %", supplier: "Cedeo" },
+  contactsTitle: "12 contacts fournisseurs",
+  contacts: [
+    { name: "Commercial Cedeo", status: "actif" as const },
+    { name: "Agence Point P", status: "actif" as const },
+    { name: "Rexel — suivi prix", status: "inactif" as const },
+  ],
+} as const;
+
+/** @deprecated Alias Designs-27 */
+export const heroDesigns27 = heroDesigns28;
+
+/** Figma section film — node `235:34129`. */
+export const landingFilm = {
+  badge: "Film",
+  title: "Voir Tarineo en action",
+  subtitle:
+    "Le parcours devis → alertes → validation, sans tableur ni ressaisie.",
+  blockTitle: "Devis → alertes → validation",
+  blockText:
+    "Importez un document, comparez aux prix habituels et validez les lignes à risque avant d’envoyer au client.",
+  steps: [
+    "Lecture PDF ou photo",
+    "Alertes de hausses et lignes à valider",
+    "Validation finale avant envoi client",
+  ],
+  cta: "Voir le film",
+  staticHint: "Lire avec le son",
+  poster: "/landing/film-motion-v2-poster.jpg",
+  mock: "/landing/film-motion-v2-poster.jpg",
+  video: "/landing/film-motion-v2.mp4",
+  videoSectionId: "film-preview",
+} as const;
+
+/** Section Fonctionnalités — fiches chantier (export UI designer). */
+export const landingFeaturesFiches = {
+  badge: "Suivi chantier",
+  titleLead: "Faites la bonne ",
+  titleAccent: "Action",
+  titleTail: " — sur vos marges.",
+  subtitle: "Aperçu des fiches chantier de l’app",
+  defaultId: "dupont",
+  /** Mêmes 3 chantiers / photos que `landingChantierCards`. */
+  items: [
+    {
+      id: "benali",
+      title: "Réfection cuisine — Benali",
+      excerpt: "En pause client. Documents Point P classés — reprise en un clic.",
+      cover: "/illustrations/landing-chantiers/renovation-equipe.jpg",
+      clientLine: "Benali · Vénissieux",
+      body: "En pause client. Documents Point P classés — reprise en un clic.",
+      tags: ["Cuisine", "Point P", "5 docs"],
+      status: "En pause",
+      statusTone: "pause" as const,
+    },
+    {
+      id: "dupont",
+      title: "Rénovation SDB — Dupont",
+      excerpt:
+        "Devis Cedeo rattaché : 3 hausses vs votre historique. Relance fournisseur prête.",
+      cover: "/illustrations/landing-chantiers/renovation-interieur.jpg",
+      clientLine: "Dupont · Lyon 3e",
+      body: "Devis Cedeo rattaché : 3 hausses vs votre historique. Relance fournisseur prête.",
+      tags: ["Plomberie", "Cedeo", "12 docs"],
+      status: "En cours",
+      statusTone: "focus" as const,
+    },
+    {
+      id: "martin",
+      title: "Mise aux normes — Martin",
+      excerpt: "Devis Rexel analysé. Marge chantier à 31 % sur les lignes validées.",
+      cover: "/illustrations/landing-chantiers/chantier-exterieur.jpg",
+      clientLine: "Martin · Tassin",
+      body: "Devis Rexel analysé. Marge chantier à 31 % sur les lignes validées.",
+      tags: ["Électricité", "Rexel", "8 docs"],
+      status: "En cours",
+      statusTone: "focus" as const,
+    },
+  ],
+} as const;
+
+/** Panneau contact Figma 223:2271 — copy produit (pas offre lancement). */
+export const landingContactPanel = {
+  title: "Une question avant de commencer ?",
+  points: [
+    "Réponse sous 24 h ouvrées",
+    "Démo sur vos vrais formats PDF",
+    "Sans engagement — vous gardez la main sur chaque envoi",
+  ],
+} as const;
+
+/** Contact lancement — Figma 235:34915 */
+export const sectionContact = {
+  badge: "Contact",
+  title: "Contact lancement",
+  subtitle:
+    "Coordonnées, réponse sous 24 h. Envoyez votre demande pour être contacté rapidement.",
+  panelTitle: "Réponse sous 24 h",
+  panelText:
+    "Prénom, métier, téléphone et e-mail. Nous revenons vers vous rapidement pour discuter de votre besoin.",
+  panelPhoto: "/landing/figma/contact/panel-photo.jpg",
+  panelOverlay: "/landing/figma/contact/panel-overlay.svg",
+  lines: [
+    { label: "Réponse sous 24 h ouvrées", icon: "phone" as const },
+    { label: "contact@tarineo.com", icon: "email" as const, href: "mailto:contact@tarineo.com" },
+    { label: "Support en ligne — France (UE)", icon: "location" as const },
+  ],
+} as const;
+
 export const launchCompatStrip = [
   "Point P",
   "Cedeo",
@@ -94,58 +226,87 @@ export const launchBento = {
   ],
 };
 
+/** Board Figma « Isometric Team » (235:34328) — 3 cartes preuve. */
 export const launchFeatureIcons = {
-  title: "Tout ce qu’il faut. Rien de superflu.",
-  items: [
+  badge: "Fonctionnalités",
+  title: "Tout ce qu’il faut pour piloter votre activité.",
+  subtitle: "Moins d’administratif. Plus de chantiers.",
+  cards: [
     {
-      title: "Lecture de devis",
-      text: "OCR + structure lignes, quantités et prix unitaires.",
+      kicker: "Analyse IA",
+      title: "PDF fournisseurs, lus au même endroit",
+      text: "Importez un devis ou une facture : Tarineo structure les lignes, quantités et PU pour comparer à votre historique — sans ressaisie dans un tableur.",
     },
     {
-      title: "Alertes de hausses",
-      text: "Dès qu’une référence sort de vos habitudes d’achat.",
+      kicker: "Copilote",
+      title: "Réponses nettes sur vos devis",
+      text: "Posez une question sur une pièce fournisseur : Tarineo résume les hausses, les lignes à risque et ce qu’il faut valider avant envoi client.",
     },
     {
-      title: "Devis client",
-      text: "Reprenez les pièces fournisseur avec votre marge.",
-    },
-    {
-      title: "Parcours chantier",
-      text: "Documents rattachés au bon dossier, sans tableur.",
-    },
-    {
-      title: "Temps d’analyse court",
-      text: "Quelques secondes par pièce pour une première lecture.",
-    },
-    {
-      title: "Données en Europe",
-      text: "Hébergement RGPD, session chiffrée.",
-    },
-    {
-      title: "Mobile & bureau",
-      text: "Même compte sur téléphone, tablette et ordinateur.",
-    },
-    {
-      title: "Sans engagement",
-      text: "Changez de formule selon votre volume de devis.",
+      kicker: "Transformez vos devis fournisseurs en devis clients",
+      title: "De vos documents à vos chantiers.",
+      text: "Centralisez vos documents, automatisez vos devis et gardez le contrôle sur vos coûts. Tarineo simplifie votre gestion pour vous concentrer sur l’essentiel.",
     },
   ],
 };
 
-export const launchSpotlight = {
-  title: "Faites la bonne impression — sur vos marges.",
-  points: [
+/** Section terrain — scénarios illustratifs (`ARTISAN_LANDING_REVIEWS`), pas d’avis tiers certifiés. */
+export const launchTerrain = {
+  badge: "Terrain",
+  title: "Sur le terrain, avant d’envoyer le devis client.",
+  disclaimer:
+    "Parcours types rédigés avec des artisans — illustrés pour montrer l’usage. Pas d’avis Trustpilot ni de notes agrégées.",
+  socialProof: {
+    eyebrow: "Preuve d’usage (lancement)",
+    stats: [
+      { value: "30", label: "places offre de lancement" },
+      { value: "4", label: "métiers du BTP représentés" },
+      { value: "PDF", label: "import devis fournisseur" },
+    ],
+    trustLine:
+      "Chaque carte décrit un cas métier réaliste. Vous pourrez remplacer ces exemples par vos retours clients vérifiés.",
+  },
+  reviews: ARTISAN_LANDING_REVIEWS.map((r) => ({
+    id: r.id,
+    brand: r.brand,
+    quote: r.quote,
+    name: r.name,
+    role: r.role,
+    photo: r.photo,
+    photoPosition: r.photoPosition,
+    insight: r.insight,
+    stackTools: r.stackTools.map((t) => t.label),
+    /** Étoiles = lisibilité du parcours type, pas une note publiée. */
+    scenarioRating: 5,
+  })),
+};
+
+/** Hero Figma `235:33614` — liste chantiers dans la carte produit. */
+export const heroChantiersCard = {
+  title: "Un dossier par chantier",
+  srLabel:
+    "Un dossier par chantier — Réfection cuisine Benali, Mise aux normes Martin, Rénovation SDB Dupont, statut Active.",
+  rows: [
     {
-      title: "Intuitif, moderne",
-      text: "Une interface claire pour lire une hausse en un coup d’œil.",
+      id: "benali",
+      title: "Réfection cuisine — Benali",
+      meta: "Benali · Vénissieux",
+      status: "Active",
+      avatar: "/landing/figma/hero/assets/rectangle-1888.jpg",
     },
     {
-      title: "Fait pour l’artisan",
-      text: "Vocabulaire métier, pas de jargon SaaS inutile.",
+      id: "martin",
+      title: "Mise aux normes — Martin",
+      meta: "Martin · Tassin",
+      status: "Active",
+      avatar: "/landing/figma/hero/assets/rectangle-1888-2.jpg",
     },
     {
-      title: "Prêt pour la prod",
-      text: "Compte sécurisé, exports et devis client inclus selon la formule.",
+      id: "dupont",
+      title: "Rénovation SDB — Dupont",
+      meta: "Dupont · Lyon 3e",
+      status: "Active",
+      avatar: "/landing/figma/hero/assets/rectangle-1888-3.jpg",
     },
   ],
 };
@@ -375,10 +536,11 @@ export const captureSection = {
 
 export const pricingIntro = {
   title: "Tarifs",
-  headline: "Un tarif adapté à la taille de votre activité",
+  headline: "Tarifs mensuels HT",
   headlineMuted: "",
   founder: `${PRO_TRIAL_DAYS} jours d’essai Pro — sans carte bancaire`,
-  subtitle: `Commencez avec ${PRO_TRIAL_DAYS} jours d’essai Pro sur toutes les formules. Puis Starter, Pro ou Équipe — sans engagement, changez à tout moment.`,
+  subtitle:
+    "14 jours d’essai Pro, sans engagement. Offre de lancement : 1 mois gratuit pour les 30 premiers artisans.",
 };
 
 export const pricingTrust = [
@@ -415,6 +577,17 @@ export const finalCta = {
   title: "Commencez à protéger votre marge.",
 };
 
+/** Bandeau CTA sous la FAQ — Figma 235:34983 */
+export const sectionCta = {
+  badge: "Découvrez",
+  title: "Vous travaillez sur votre entreprise. Tarineo travaille dans votre entreprise.",
+  subtitle:
+    "Importer un devis ou une facture, comparer aux prix habituels, sans journée d’installation ni engagement sur le logiciel actuel.",
+  primaryLabel: "Commencer avec Tarineo",
+  secondaryLabel: "Poser une question",
+  background: "/landing/figma/section-cta-chantier.jpg",
+} as const;
+
 export const footerColumns: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Produit",
@@ -430,7 +603,7 @@ export const footerColumns: { title: string; links: { label: string; href: strin
     links: [
       { label: "Créer un compte", href: "/inscription" },
       { label: "Connexion", href: "/login" },
-      { label: "Contact", href: "mailto:contact@tarineo.com" },
+      { label: "Contact", href: "/#contact" },
     ],
   },
   {

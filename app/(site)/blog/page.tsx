@@ -23,7 +23,7 @@ export const metadata = {
 
 export default function BlogPage() {
   return (
-    <div className="shell pb-16 pt-[5.5rem] sm:pb-20 sm:pt-28">
+    <div className="shell pb-16 pt-4 sm:pb-20 sm:pt-8">
       <JsonLd
         data={[
           breadcrumbJsonLd([

@@ -1,240 +1,96 @@
 "use client";
 
-import { Check } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
 import { LandingSection } from "@/components/site/landing-v2/components/layout/LandingSection";
-import { Badge } from "@/components/site/landing-v2/components/ui/Badge";
-import {
-  LandingFlipButton,
-  LandingFlipCta,
-} from "@/components/site/landing-v2/components/ui/LandingFlipCta";
-import {
-  LANDING_CARD_SHADOW,
-  LANDING_CARD_SHADOW_HOVER,
-  LandingSectionHeading,
-  LandingSurface,
-} from "@/components/site/landing-v2/components/ui/LandingSurface";
+import { LandingFigmaSectionHeader } from "@/components/site/landing-v2/components/ui/LandingFigmaSectionHeader";
 import { LandingStagger, LandingStaggerItem } from "@/components/site/landing-v2/lib/landing-motion";
-import { ArtisanLaunchContactForm } from "@/components/site/landing-v2/components/ArtisanLaunchContactForm";
-import {
-  LAUNCH_CONTACT_FORM_ID,
-  LAUNCH_FREE_MONTHS,
-  LAUNCH_TOTAL_PLACES,
-  PLACES_RESTANTES,
-} from "@/lib/site/launch-offer";
 import { pricingIntro } from "@/lib/site/landing-v2-content";
-import { PRICING, euroInt, type TarineoPlan } from "@/lib/site/tarineo";
+import { PRICING, type TarineoPlan } from "@/lib/site/tarineo";
 import { cn } from "@/lib/utils";
 
-type BillingPeriod = "month" | "year";
-
-function BillingToggle({
-  value,
-  onChange,
-}: {
-  value: BillingPeriod;
-  onChange: (v: BillingPeriod) => void;
-}) {
-  return (
-    <div
-      role="group"
-      aria-label="Période de facturation"
-      className="inline-flex rounded-full border border-black/[0.06] bg-paper-50 p-1 shadow-[0_1px_0_rgba(0,0,0,0.03)]"
-    >
-      {(
-        [
-          { id: "month" as const, label: "Mensuel" },
-          { id: "year" as const, label: "Annuel (−20 %)" },
-        ] as const
-      ).map((opt) => {
-        const active = value === opt.id;
-        return (
-          <LandingFlipButton
-            key={opt.id}
-            label={opt.label}
-            pressed={active}
-            onClick={() => onChange(opt.id)}
-            className={cn(
-              "rounded-full px-4",
-              active && "bg-paper-0 text-ink-900 shadow-[0_2px_8px_rgba(97,44,0,0.08)]",
-            )}
-          >
-            {opt.label}
-          </LandingFlipButton>
-        );
-      })}
-    </div>
-  );
-}
-
-function PlanPrice({ plan, period }: { plan: TarineoPlan; period: BillingPeriod }) {
-  if (period === "month") {
-    return (
-      <>
-        <span className="text-[3.75rem] leading-none font-semibold tracking-tight text-ink-900 nums">
-          {plan.month}
-        </span>
-        <span className="text-base text-ink-500">€</span>
-        <span className="ms-1 text-sm text-ink-400">/ mois HT</span>
-      </>
-    );
-  }
-  const perMonth = Math.round(plan.year / 12);
-  return (
-    <>
-      <span className="text-[3.75rem] leading-none font-semibold tracking-tight text-ink-900 nums">
-        {plan.year}
-      </span>
-      <span className="text-base text-ink-500">€</span>
-      <span className="ms-1 text-sm text-ink-400">/ an · {euroInt(perMonth)} / mois</span>
-    </>
-  );
-}
-
-function PricingCard({ plan, period }: { plan: TarineoPlan; period: BillingPeriod }) {
+function PricingCard({ plan }: { plan: TarineoPlan }) {
   const featured = plan.featured;
   const reduce = useReducedMotion();
 
   return (
     <motion.article
-      whileHover={
-        reduce
-          ? undefined
-          : { y: -5, transition: { type: "spring", stiffness: 380, damping: 28 } }
-      }
+      whileHover={reduce ? undefined : { y: -4 }}
       className={cn(
-        "relative flex h-full flex-col gap-6 overflow-hidden rounded-[24px] border border-black/[0.04] bg-paper-0 p-6 transition-[box-shadow,border-color] duration-300",
-        LANDING_CARD_SHADOW,
-        "hover:border-black/[0.06]",
-        LANDING_CARD_SHADOW_HOVER,
-        featured && "ring-1 ring-accent/25",
+        "relative flex h-full min-h-[462px] flex-col rounded-[24px] bg-white p-6",
+        "shadow-[0_4px_2px_rgba(255,107,26,0.15),inset_0_4px_4px_rgba(10,10,10,0.08)]",
+        featured && "shadow-[0_12px_16px_rgba(255,107,26,0.15),inset_0_4px_4px_rgba(2,3,28,0.12)]",
       )}
     >
       {featured ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-[radial-gradient(ellipse_at_50%_0%,color-mix(in_srgb,var(--color-accent)_14%,transparent),transparent_70%)]"
-        />
-      ) : null}
+        <p className="text-xs font-semibold uppercase tracking-[0.3px] text-[#ec5821]">Le plus choisi</p>
+      ) : (
+        <span className="h-4" aria-hidden />
+      )}
 
-      <div className="relative z-10 flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <h3 className="text-xl font-semibold tracking-tight text-ink-900">{plan.name}</h3>
-          {plan.badge ? (
-            <Badge tone="accent" size="sm">
-              {plan.badge}
-            </Badge>
-          ) : null}
-        </div>
-        <p className="text-sm font-medium leading-relaxed text-ink-500">{plan.text}</p>
-      </div>
+      <h3 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#0a0a0a]">{plan.name}</h3>
+      <p className="mt-1 text-sm leading-5 text-[#53616a]">{plan.text}</p>
 
-      <div className="relative z-10 flex flex-wrap items-baseline gap-1">
-        <PlanPrice plan={plan} period={period} />
-      </div>
+      <p className="mt-4 text-[#0a0a0a]">
+        <span className="text-[36px] font-semibold leading-10 tracking-[-0.03em]">{plan.month} €</span>
+        <span className="text-base font-medium text-[#53616a]"> / mois</span>
+      </p>
 
-      <LandingFlipCta
-        href={plan.href}
-        label={plan.cta}
-        size="md"
-        variant={featured ? "ink" : "secondary"}
-        withArrow
-        className="relative z-10 w-full min-h-11"
-      />
-
-      <div className="relative z-10 h-px w-full bg-black/[0.06]" aria-hidden />
-
-      <ul className="relative z-10 flex flex-1 flex-col gap-2.5">
+      <ul className="mt-5 flex flex-1 flex-col gap-2 text-sm leading-5 text-[#53616a]">
         {plan.features.map((feature) => (
-          <li key={feature.label} className="flex items-start gap-2 text-sm text-ink-700">
-            <Check className="mt-0.5 size-4 shrink-0 text-accent" strokeWidth={2.25} aria-hidden />
-            <span>
-              {feature.label}
-              {feature.soon ? (
-                <Badge tone="outline" size="sm" className="ml-2 align-middle">
-                  Bientôt
-                </Badge>
-              ) : null}
-            </span>
+          <li key={feature.label}>
+            {feature.label}
+            {feature.soon ? <span className="text-[#53616a]/80"> (bientôt)</span> : null}
           </li>
         ))}
       </ul>
+
+      <Link
+        href={plan.href}
+        className="mt-8 inline-flex h-11 w-fit items-center justify-center rounded-full bg-[#ff6b1a] px-5 text-sm font-semibold text-white shadow-[0_1px_1px_rgba(23,41,53,0.05)] transition-opacity hover:opacity-90"
+      >
+        {plan.cta}
+      </Link>
     </motion.article>
   );
 }
 
-/** Pricing — 3 cartes, même langage visuel que Parcours. */
-const lowestMonthlyPrice = Math.min(...PRICING.map((p) => p.month));
+type PricingProps = {
+  /** Masquer le lien « Voir la page Tarifs » (page dédiée `/prix`). */
+  showFooterLink?: boolean;
+};
 
-export function Pricing() {
-  const [period, setPeriod] = useState<BillingPeriod>("month");
-
+/** Tarifs — Figma 235:34823 */
+export function Pricing({ showFooterLink = true }: PricingProps) {
   return (
-    <LandingSection id="tarifs">
+    <LandingSection id="tarifs" className="pb-16 sm:pb-20">
       <div className="shell">
-        <LandingSurface contentClassName="mx-auto flex max-w-[1120px] flex-col items-center gap-10 sm:gap-12">
-          <LandingSectionHeading
+        <div className="mx-auto flex max-w-[1124px] flex-col items-center gap-10">
+          <LandingFigmaSectionHeader
+            align="center"
             badge={pricingIntro.title}
             title={pricingIntro.headline}
             subtitle={pricingIntro.subtitle}
           />
 
-          <div className="flex w-full max-w-3xl flex-col items-center gap-4 text-center">
-            <p
-              className="w-full rounded-2xl border border-accent/25 bg-accent-soft px-4 py-3 text-sm font-semibold leading-relaxed text-accent-800 shadow-[0_1px_0_rgba(0,0,0,0.04)] sm:px-6 sm:text-[15px]"
-              role="status"
-            >
-              Offre de lancement&nbsp;: {LAUNCH_TOTAL_PLACES} places gratuites pendant{" "}
-              {LAUNCH_FREE_MONTHS}&nbsp;mois. Remplissez le formulaire, on vous répond sous 24&nbsp;h.
-            </p>
-            <p className="text-sm font-semibold text-ink-800">
-              Il reste{" "}
-              <span className="nums text-accent">{PLACES_RESTANTES}</span> places sur{" "}
-              {LAUNCH_TOTAL_PLACES}
-            </p>
-            <BillingToggle value={period} onChange={setPeriod} />
-          </div>
-
-          <LandingStagger
-            className="grid w-full items-stretch gap-4 lg:grid-cols-3 lg:gap-5"
-            stagger={0.1}
-          >
+          <LandingStagger className="grid w-full gap-4 lg:grid-cols-3" stagger={0.08}>
             {PRICING.map((plan) => (
               <LandingStaggerItem key={plan.id} className="h-full">
-                <PricingCard plan={plan} period={period} />
+                <PricingCard plan={plan} />
               </LandingStaggerItem>
             ))}
           </LandingStagger>
 
-          <p className="max-w-xl text-center text-sm font-medium leading-relaxed text-ink-600">
-            Tarifs affichés pour après la période gratuite. Puis à partir de{" "}
-            <span className="nums font-semibold text-ink-900">{euroInt(lowestMonthlyPrice)}</span>
-            &nbsp;€ / mois HT, sans engagement.
-          </p>
-
-          <LandingFlipCta
-            href={`#${LAUNCH_CONTACT_FORM_ID}`}
-            label="Nous contacter"
-            variant="secondary"
-            size="lg"
-            className="min-h-11 w-full max-w-sm sm:w-auto"
-          />
-
-          <ArtisanLaunchContactForm />
-
-          <p className="text-center text-sm text-ink-400">
-            Besoin du détail ?{" "}
-            <Link
-              href="/prix"
-              className="font-medium text-ink-700 underline-offset-4 hover:text-accent hover:underline"
-            >
-              Voir la page Tarifs
-            </Link>
-          </p>
-        </LandingSurface>
+          {showFooterLink ? (
+            <p className="text-center text-sm text-[#53616a]">
+              Besoin du détail ?{" "}
+              <Link href="/prix" className="font-medium text-[#111827] underline-offset-4 hover:underline">
+                Voir la page Tarifs
+              </Link>
+            </p>
+          ) : null}
+        </div>
       </div>
     </LandingSection>
   );

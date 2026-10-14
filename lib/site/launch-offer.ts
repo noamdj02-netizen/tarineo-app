@@ -4,7 +4,7 @@ export const PLACES_RESTANTES = 25;
 
 export const LAUNCH_FREE_MONTHS = 1;
 
-export const LAUNCH_CONTACT_FORM_ID = "contact-lancement";
+export const LAUNCH_CONTACT_FORM_ID = "contact";
 
 export function scrollToLaunchContactForm() {
   if (typeof document === "undefined") return;

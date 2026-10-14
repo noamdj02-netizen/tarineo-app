@@ -1,13 +1,13 @@
 # Navpit — prêt pour le marketing (checklist)
 
-Dernière vérif : 24 sept. 2026
+Dernière vérif : 14 oct. 2026 — **landing v2** en production (`main`, voir `DESIGN.md` § Release production).
 
 ## Verdict rapide
 
 | | |
 |---|---|
 | **Build local** | OK (`npm run build`) |
-| **Push Git** | Beaucoup de changements **non commités** — à commit + push avant que Vercel déploie la landing à jour |
+| **Push Git** | Landing v2 commitée sur `main` (oct. 2026) — suivre `git push` + deploy Vercel pour toute évolution |
 | **Vercel** | Projet `navpit` lié, prod OK, dernier deploy ~2 h |
 | **Marketing sans vidéo motion** | OK : landing, inscription, prix, SEO, réseaux, newsletters |
 

@@ -10,7 +10,7 @@ export type MarketingNavItem = {
 export const MARKETING_NAV_LINKS: MarketingNavItem[] = [
   { label: "Accueil", href: "/#top", match: "/" },
   { label: "Fonctionnalités", href: "/#fonctionnalites" },
-  { label: "Produit", href: "/#produit" },
+  { label: "Terrain", href: "/#terrain" },
   { label: "Tarifs", href: "/#tarifs", match: "/prix" },
   { label: "Blog", href: "/blog", match: "/blog" },
 ];

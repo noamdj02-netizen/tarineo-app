@@ -1,18 +1,14 @@
 "use client";
 
-import { LandingSection } from "@/components/site/landing-v2/components/layout/LandingSection";
-import { LandingFeaturesSwitch } from "@/components/site/landing-v2/components/ui/LandingFeaturesSwitch";
-import { LandingSurface } from "@/components/site/landing-v2/components/ui/LandingSurface";
+import { FeaturesChantierFiches } from "@/components/site/landing-v2/sections/FeaturesChantierFiches";
 
-/** Figma Features Section (193:511) — panneau cohérent avec le reste de la landing. */
+/** Suivi chantier — pin scroll sans parent `transform` (sinon sticky casse). */
 export function LaunchFeaturesSwitch() {
   return (
-    <LandingSection id="fonctionnalites">
+    <section id="suivi-chantier" className="relative pt-10 sm:pt-14 lg:pt-16 pb-2 sm:pb-3 lg:pb-4">
       <div className="shell">
-        <LandingSurface contentClassName="mx-auto max-w-[1120px]">
-          <LandingFeaturesSwitch />
-        </LandingSurface>
+        <FeaturesChantierFiches />
       </div>
-    </LandingSection>
+    </section>
   );
 }

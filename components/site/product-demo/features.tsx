@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils";
 /** Ancres des sections démo sur la home. */
 const MODULE_HREF: Record<string, string> = {
   "devis-ia": "/#fonctionnalites",
-  chantiers: "/#produit",
-  achats: "/#produit",
+  chantiers: "/#fonctionnalites",
+  achats: "/#fonctionnalites",
   documents: "/#fonctionnalites",
   prix: "/#fonctionnalites",
   facturation: "/#relances",

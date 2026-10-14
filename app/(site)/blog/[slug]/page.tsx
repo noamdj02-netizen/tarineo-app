@@ -36,7 +36,7 @@ export default async function BlogArticlePage({ params }: Props) {
   if (!post) notFound();
 
   return (
-    <article className="shell pb-16 pt-[5.5rem] sm:pb-20 sm:pt-28">
+    <article className="shell pb-16 pt-4 sm:pb-20 sm:pt-8">
       <JsonLd
         data={[
           breadcrumbJsonLd([

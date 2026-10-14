@@ -7,6 +7,8 @@
 @theme {
   /* Encres */
   --color-ink-900: #0a0a0a;
+  /* Alias export Anima/Figma (`text-dark-15`) */
+  --color-dark-15: #262626;
   --color-ink-700: #2b2b2b;
   --color-ink-600: #525252;
   --color-ink-400: #6e6e6e;
@@ -79,6 +81,12 @@
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
+    /* `hidden` sur html/body (globals) casse `position: sticky` sur la landing. */
+    overflow-x: clip;
+  }
+
+  html:has(.landing-v2) body {
+    overflow-x: clip;
   }
 
   .landing-v2 {
@@ -87,7 +95,8 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+    /* `hidden` casse `position: sticky` (suivi chantier) ; `clip` évite le scroll horizontal sans ça. */
+    overflow-x: clip;
   }
 
   .landing-v2 h1,
@@ -136,6 +145,17 @@
     }
   }
 
+  /* Carrousel terrain — snap aligné au padding mobile du shell */
+  .landing-terrain-track {
+    scroll-padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 640px) {
+    .landing-terrain-track {
+      scroll-padding-inline: 0;
+    }
+  }
+
   /* Libellé technique « / SECTION /// » repris du dashboard */
   .eyebrow {
     font-family: var(--font-mono);
@@ -152,15 +172,15 @@
 
   /* Hero — même famille que les titres produit (Space Grotesk), corps en Barlow */
   .landing-v2 .hero-display {
-    font-family: var(--font-space-grotesk);
+    font-family: var(--font-inter-tight), var(--font-sans);
     font-weight: 700;
     font-style: normal;
-    font-size: clamp(2rem, 5.8vw + 0.65rem, 3.35rem);
-    line-height: 1.08;
-    letter-spacing: -0.035em;
+    font-size: clamp(2.25rem, 4.5vw + 0.5rem, 3.75rem);
+    line-height: 1.12;
+    letter-spacing: -0.03em;
     max-width: 100%;
     text-wrap: balance;
-    color: var(--color-ink-900);
+    color: #262626;
   }
 
   .landing-v2 h1 .hero-title-mark {
@@ -169,7 +189,8 @@
     font-size: inherit;
     line-height: inherit;
     letter-spacing: inherit;
-    color: var(--color-hero-orange);
+    color: #ff6b1a;
+    text-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
     background: none;
     box-shadow: none;
     transform: none;
@@ -532,6 +553,11 @@ html.js-motion [data-reveal-bar] {
   --color-accent-active: #c2410c;
   --color-accent-soft: #fff7ed;
   --color-accent-100: #ffedd5;
+
+  /* Variables brutes export Anima (`theme.extend.colors.dark-15`) */
+  --dark-15: rgba(38, 38, 38, 1);
+  --animation-delay: 0s;
+  --shimmer-width: 200px;
   --color-accent-700: #c2410c;
   --color-accent-fill: #f97316;
 
@@ -694,4 +720,91 @@ html.js-motion [data-reveal-bar] {
 
 .landing-v2 .landing-step-card:hover::before {
   opacity: 1;
+}
+
+/* ------------------------------------------------------------------ *
+ * Compat export Anima (hero Figma) — pas de reset global ni tailwind.config séparé.
+ * Le projet reste sur Tailwind v4 + preflight shadcn dans app/globals.css.
+ * ------------------------------------------------------------------ */
+@layer utilities {
+  .landing-v2 .all-unset {
+    all: unset;
+  }
+
+  .landing-v2 .animate-fade-in {
+    animation: landing-fade-in 1s var(--animation-delay, 0s) ease forwards;
+  }
+
+  .landing-v2 .animate-fade-up {
+    animation: landing-fade-up 1s var(--animation-delay, 0s) ease forwards;
+  }
+
+  .landing-v2 .animate-shimmer {
+    animation: landing-shimmer 8s infinite;
+  }
+
+  .landing-v2 .animate-image-glow {
+    animation: landing-image-glow 1s ease forwards;
+  }
+
+  .landing-v2 .animate-marquee-vertical {
+    animation: landing-marquee-vertical var(--duration, 40s) linear infinite;
+  }
+}
+
+@keyframes landing-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes landing-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes landing-shimmer {
+  0%,
+  90%,
+  to {
+    background-position: calc(-100% - var(--shimmer-width)) 0;
+  }
+  30%,
+  60% {
+    background-position: calc(100% + var(--shimmer-width)) 0;
+  }
+}
+
+@keyframes landing-image-glow {
+  0% {
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.74, 0.25, 0.76, 1);
+  }
+  10% {
+    opacity: 0.7;
+    animation-timing-function: cubic-bezier(0.12, 0.01, 0.08, 0.99);
+  }
+  to {
+    opacity: 0.4;
+  }
+}
+
+@keyframes landing-marquee-vertical {
+  0% {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-100% - var(--gap, 1rem)));
+  }
 }

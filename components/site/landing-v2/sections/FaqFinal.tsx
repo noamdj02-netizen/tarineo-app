@@ -6,11 +6,8 @@ import { ChevronDown } from "lucide-react";
 import { FinalCtaCard } from "@/components/site/landing-v2/sections/FinalCta";
 import { faqItems } from "@/lib/site/landing-v2-content";
 import { LandingSection } from "@/components/site/landing-v2/components/layout/LandingSection";
-import {
-  LANDING_CARD_SHADOW,
-  LandingSectionHeading,
-  LandingSurface,
-} from "@/components/site/landing-v2/components/ui/LandingSurface";
+import { LandingFigmaSectionHeader } from "@/components/site/landing-v2/components/ui/LandingFigmaSectionHeader";
+import { LANDING_CARD_SHADOW, LandingSurface } from "@/components/site/landing-v2/components/ui/LandingSurface";
 import { cn } from "@/lib/utils";
 import {
   Accordion,
@@ -41,7 +38,8 @@ export function FaqFinal() {
     <LandingSection id="faq" className="pb-16 sm:pb-24">
       <div className="shell flex flex-col gap-10 sm:gap-14">
         <LandingSurface contentClassName="mx-auto flex max-w-[720px] flex-col items-center gap-10 sm:gap-12">
-          <LandingSectionHeading
+          <LandingFigmaSectionHeader
+            align="center"
             badge="FAQ"
             title="Questions et réponses"
             subtitle="Ce qu’il faut savoir avant de démarrer — sans jargon."

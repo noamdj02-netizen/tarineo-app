@@ -4,7 +4,7 @@
 
 ## Mode
 
-**Persuade** — landing publique, conversion vers essai / inscription. Produit réel montré via `product-demo`, pas de dashboard inventé.
+**Persuade** — landing publique, conversion vers essai / inscription. Page d’accueil = `components/site/landing-v2/landing-v2-page.tsx` uniquement (plus de landing v1). Ancres : `#top`, `#film`, `#fonctionnalites`, `#relances`, `#terrain`, `#tarifs`, `#faq`, `#contact`. Tarifs détaillés : `/prix` (même bloc `sections/Pricing.tsx`).
 
 ## Visual world
 
@@ -16,7 +16,7 @@ Display / title pour H1–H2 (`text-display`, `text-title`), corps `text-body-lg
 
 ## Layout
 
-Conteneur `shell`, sections `LandingSection` avec ancrages (`#parcours`, `#preuve`, `#terrain`, `#produit`, `#tarifs`, `#faq`). Grilles 1 col mobile → 2 col desktop pour hero et preuves. Mesure lecture ~65ch sur paragraphes.
+Conteneur `shell`, sections `LandingSection` avec ancrages (`#top`, `#film`, `#fonctionnalites`, `#relances`, `#terrain`, `#tarifs`, `#faq`, `#contact`). Grilles 1 col mobile → 2 col desktop pour hero et preuves. Mesure lecture ~65ch sur paragraphes.
 
 ## Components
 
@@ -36,3 +36,15 @@ Toute donnée chiffrée démo = libellé **Exemple**. Section Terrain = **scéna
 - Cartes 3× identiques « feature / feature / feature » sans contenu métier.
 - Témoignages présentés comme avis vérifiés sans preuve.
 - Bordure gauche colorée comme seul callout (préférer fond `paper-50` + titre « En pratique »).
+
+## Release production (landing v2)
+
+| | |
+|---|---|
+| **Date** | 2026-10-14 |
+| **Branche** | `main` |
+| **Entrée** | `app/(site)/page.tsx` → `LandingV2Page` |
+| **Déploiement** | GitHub `tarineo-app` → Vercel projet `tarineo-app` (production) |
+| **Hors scope** | Ancienne landing v1 supprimée ; `/prix` partage `sections/Pricing.tsx` |
+
+Commit de référence : voir `git log -1 --oneline` sur `main` après merge « Landing v2 production ».

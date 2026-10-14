@@ -3,10 +3,11 @@
 import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect } from "react";
 
-import { Footer } from "@/components/site/landing-v2/components/layout/Footer";
+import { PhotoFooter } from "@/components/site/landing-v2/components/layout/PhotoFooter";
 import { enableMotion } from "@/components/site/landing-v2/lib/motion";
+import { FilmSection } from "@/components/site/landing-v2/sections/FilmSection";
 import { Hero } from "@/components/site/landing-v2/sections/Hero";
-import { LaunchLogoCloud } from "@/components/site/landing-v2/sections/LaunchLogoCloud";
+import { LandingContact } from "@/components/site/landing-v2/sections/LandingContact";
 
 const LaunchFeatureIcons = dynamic(
   () =>
@@ -26,10 +27,10 @@ const Relances = dynamic(
   () => import("@/components/site/landing-v2/sections/Relances").then((m) => m.Relances),
   { loading: () => null },
 );
-const LaunchSpotlight = dynamic(
+const LaunchTestimonials = dynamic(
   () =>
-    import("@/components/site/landing-v2/sections/LaunchSpotlight").then(
-      (m) => m.LaunchSpotlight,
+    import("@/components/site/landing-v2/sections/LaunchTestimonials").then(
+      (m) => m.LaunchTestimonials,
     ),
   { loading: () => null },
 );
@@ -42,7 +43,7 @@ const FaqFinal = dynamic(
   { loading: () => null },
 );
 
-/** Landing Launch UI (Figma) adaptée Tarineo — structure + tokens métier. */
+/** Landing marketing unique (Figma Hero Designs) — entrée `app/(site)/page.tsx`. */
 export function LandingV2Page() {
   useLayoutEffect(() => {
     enableMotion();
@@ -59,19 +60,19 @@ export function LandingV2Page() {
   }, []);
 
   return (
-    <div className="landing-v2 min-h-dvh bg-paper-100 text-ink-600">
-      {/* Nav intégrée dans Hero Designs-24 (Figma 183:3794) — pas de Header flottant */}
+    <div className="landing-v2 theme-light isolate min-h-dvh bg-[#f0f0f0] text-ink-900">
       <main id="contenu-landing">
         <Hero />
-        <LaunchLogoCloud />
+        <FilmSection />
         <LaunchFeaturesSwitch />
         <LaunchFeatureIcons />
         <Relances />
-        <LaunchSpotlight />
+        <LaunchTestimonials />
         <Pricing />
         <FaqFinal />
+        <LandingContact />
       </main>
-      <Footer />
+      <PhotoFooter />
     </div>
   );
 }

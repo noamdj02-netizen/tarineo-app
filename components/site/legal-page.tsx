@@ -9,7 +9,7 @@ export function LegalPage({
   sections: { h: string; p: string[] }[];
 }) {
   return (
-    <article className="mx-auto max-w-[720px] px-5 pb-20 pt-10 sm:px-8 sm:pt-14">
+    <article className="landing-v2 mx-auto max-w-[720px] px-5 pb-20 pt-6 sm:px-8 sm:pt-10">
       <p className="text-[12px] font-semibold uppercase tracking-[0.14em] text-tarineo-orange">
         Légal
       </p>

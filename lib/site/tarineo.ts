@@ -1,5 +1,5 @@
 /**
- * Contenu de la landing TARINEO : textes, démo, tarifs, FAQ.
+ * Contenu de la landing Tarinéo : textes, démo, tarifs, FAQ.
  * Un seul fichier à modifier — les composants de components/site/ ne contiennent pas de copy métier.
  *
  * Toutes les données chiffrées ci-dessous sont des DONNÉES DE DÉMONSTRATION,
@@ -7,8 +7,6 @@
  */
 
 import { BRAND } from "@/lib/brand";
-import { PRO_TRIAL_DAYS } from "@/lib/billing/plans";
-import { supplierDomains } from "@/lib/metier/suppliers";
 
 /* ------------------------------------------------------------------ */
 /* Hero                                                                */
@@ -22,12 +20,12 @@ export type HeroVideo = {
 };
 
 /** Offre unique, reprise telle quelle partout sur le site. */
-export const OFFER = `${PRO_TRIAL_DAYS} jours d’essai Pro, sans carte bancaire`;
+export const OFFER = "1er mois offert, sans carte bancaire";
 
 /** CTA essai : court dans la nav / le footer, long dans le hero et le bandeau final. */
 export const CTA_TRIAL = {
-  short: "Commencer",
-  long: "Essayer TARINEO gratuitement",
+  short: "Essai gratuit",
+  long: "Essayer gratuitement",
 } as const;
 
 /** Mention unique pour toute démo chiffrée. */
@@ -35,48 +33,34 @@ export const DEMO_MARK = "Exemple";
 export const DEMO_NOTE = "Données fictives.";
 
 export const HERO = {
-  badge: "Alertes prix · artisans BTP",
-  title: "Vos fournisseurs augmentent leurs prix.",
-  /** Ligne 2 du H1 — surlignée au marqueur dans le hero landing v2. */
-  titleTail: "Vous le voyez ?",
-  text:
-    "TARINEO lit vos factures et vous alerte dès qu’une référence augmente, avant que ça mange la marge de vos chantiers.",
-  primary: { label: "Essayer TARINEO gratuitement", href: "/inscription" },
-  secondary: { label: "Découvrir TARINEO", href: "/#fonctionnalites" },
+  badge: OFFER,
+  title: "Déposez vos devis.",
+  titleTail: "Tarinéo fait le reste.",
+  text: "Hausses de prix détectées, documents rangés par chantier, devis client prêt en 2 minutes.",
+  primary: { label: CTA_TRIAL.long, href: "/inscription" },
+  secondary: { label: "Voir comment ça marche", href: "/#comment" },
   founderLine: "Créé par un ancien des Travaux Publics.",
-  /** Hero sans vidéo — fichiers conservés dans /public/landing pour d’autres surfaces. */
-  video: null as HeroVideo | null,
+  /**
+   * Vidéo de fond (desktop uniquement, prioritaire sur l'image). Sur mobile, et si
+   * l'utilisateur réduit les animations, seul le poster s'affiche. `null` = image.
+   */
+  video: {
+    webm: "/landing/hero.webm",
+    mp4: "/landing/hero.mp4",
+    poster: "/landing/hero-poster.webp",
+    posterMobile: "/landing/hero-poster-mobile.webp",
+  } as HeroVideo | null,
+  /**
+   * Photo du hero, à déposer dans /public. Tant que le fichier est absent,
+   * le hero affiche la scène de chantier vectorielle (même voile, même lisibilité).
+   */
   image: "/landing/hero-chantier.webp" as string | null,
   imageAlt: "Chantier de construction",
 } as const;
 
-/** Bandeau sous le hero : 4 preuves, pas une grille de cartes. */
-export const HERO_BENEFITS = [
-  {
-    title: "Hausses visibles",
-    text: "Alerte dès qu’une référence augmente",
-    icon: "shield",
-  },
-  {
-    title: "Devis plus rapides",
-    text: "IA, voix ou manuel",
-    icon: "file",
-  },
-  {
-    title: "Chantiers centralisés",
-    text: "Tous vos documents au même endroit",
-    icon: "chart",
-  },
-  {
-    title: "Données sécurisées",
-    text: "Hébergement en France",
-    icon: "lock",
-  },
-] as const;
-
 /** Ligne d’exemple affichée sous le hero (démo). */
 export const HERO_SAMPLE = {
-  supplier: "Point.P",
+  supplier: "Cedeo",
   product: "Tube PER 16×20",
   before: 12.4,
   after: 14.2,
@@ -87,10 +71,19 @@ export const HERO_SAMPLE = {
 /* ------------------------------------------------------------------ */
 
 /**
- * Domaines logo.dev — dérivés du répertoire métier [`KNOWN_SUPPLIERS`](../metier/suppliers.ts).
+ * Domaine de chaque enseigne citée, pour afficher son logo via logo.dev.
  * Les logos restent la propriété de leurs titulaires ; aucun partenariat n'est affiché.
  */
-export const SUPPLIER_DOMAINS: Record<string, string> = supplierDomains();
+export const SUPPLIER_DOMAINS: Record<string, string> = {
+  Cedeo: "cedeo.fr",
+  "Point.P": "pointp.fr",
+  Rexel: "rexel.fr",
+  Brossette: "brossette.fr",
+  Richardson: "richardson.fr",
+  Aubade: "aubade.fr",
+  Zima: "zima.fr",
+  Marlin: "marlin.fr",
+};
 
 /** Seuil d'alerte de l'app : une hausse compte à partir de +3 % (voir CLAUDE.md de l'app). */
 export const ALERT_THRESHOLD = 3;
@@ -140,7 +133,7 @@ export const HOW_STEPS: {
   {
     id: "analyse",
     label: "Analyser",
-    title: "TARINEO extrait les lignes et les prix.",
+    title: "Tarinéo extrait les lignes et les prix.",
     text: "Références, désignations, quantités et prix unitaires sont lus automatiquement. Vous vérifiez, vous corrigez si besoin.",
   },
   {
@@ -445,14 +438,14 @@ export const CHANTIER_DEMO = {
 
 export const FOUNDER = {
   name: "Noam",
-  role: "Fondateur de TARINEO",
+  role: "Fondateur de Tarinéo",
   /** Photo à déposer dans /public. Absente : un portrait neutre s'affiche à la place. */
   photo: "/landing/fondateur.jpg",
-  text: "Bac Pro Travaux Publics, passé chez Colas, il a créé TARINEO pour les artisans qu’il a côtoyés sur les chantiers : des pros qui n’ont pas le temps de vérifier chaque ligne de facture, et qui méritent un outil simple pour protéger leur marge.",
+  text: "Bac Pro Travaux Publics, passé chez Colas, il a créé Tarinéo pour les artisans qu’il a côtoyés sur les chantiers : des pros qui n’ont pas le temps de vérifier chaque ligne de facture, et qui méritent un outil simple pour protéger leur marge.",
   facts: [
     "Bac Pro Travaux Publics",
     "Passé chez Colas",
-    "Fondateur de TARINEO",
+    "Fondateur de Tarinéo",
   ],
 } as const;
 
@@ -461,15 +454,15 @@ export const FOUNDER = {
 /* ------------------------------------------------------------------ */
 
 export const SUPPLIERS = [
-  { name: "Point.P", docs: 12, change: 6.1, share: 28, spent: 18900 },
+  { name: "Cedeo", docs: 14, change: 9.8, share: 34, spent: 23400 },
   { name: "Rexel", docs: 11, change: 8.7, share: 26, spent: 17880 },
-  { name: "Cedeo", docs: 9, change: 9.8, share: 22, spent: 15120 },
+  { name: "Point.P", docs: 9, change: 6.1, share: 22, spent: 15120 },
   { name: "Brossette", docs: 4, change: 3.2, share: 10, spent: 6880 },
   { name: "Richardson", docs: 3, change: 4.4, share: 8, spent: 5500 },
 ] as const;
 
 export const SUPPLIERS_DISCLAIMER =
-  "Noms cités à titre d’exemple de fournisseurs courants. TARINEO n’est affilié à aucun d’entre eux.";
+  "Noms cités à titre d’exemple de fournisseurs courants. Tarinéo n’est affilié à aucun d’entre eux.";
 
 /* ------------------------------------------------------------------ */
 /* Bénéfices                                                           */
@@ -479,7 +472,7 @@ export type FeatureId =
   "alertes" | "classement" | "depenses" | "comparateur" | "devis" | "export";
 
 /**
- * Fonctionnalités DISPONIBLES dans l'app TARINEO (voir tarineo-app/src/lib/features.ts).
+ * Fonctionnalités DISPONIBLES dans l'app Tarinéo (voir tarineo-app/src/lib/features.ts).
  * `soon` = annoncé mais pas encore livré : affiché avec un badge « Bientôt ».
  */
 export const FEATURES: {
@@ -511,7 +504,7 @@ export const FEATURES: {
     id: "comparateur",
     kicker: "Comparateur",
     title: "Le meilleur prix entre vos enseignes.",
-    text: "Quand un prix monte, TARINEO vérifie si vous avez payé moins cher la même référence fabricant chez un autre de vos distributeurs.",
+    text: "Quand un prix monte, Tarinéo vérifie si vous avez payé moins cher la même référence fabricant chez un autre de vos distributeurs.",
   },
   {
     id: "devis",
@@ -523,7 +516,7 @@ export const FEATURES: {
     id: "export",
     kicker: "Prix & export",
     title: "Prix de vente suggéré, export comptable.",
-    text: "TARINEO propose un prix de vente à partir de vos derniers achats et de votre marge. Export comptable de vos dépenses en un fichier.",
+    text: "Tarinéo propose un prix de vente à partir de vos derniers achats et de votre marge. Export comptable de vos dépenses en un fichier.",
   },
 ];
 
@@ -605,12 +598,13 @@ export const PRICING: TarineoPlan[] = [
     name: "Starter",
     month: 17,
     year: 163,
-    text: "Pour démarrer et tester sur vos premiers chantiers.",
+    text: "Pour débuter et tester",
     features: [
-      { label: "150 documents / mois" },
-      { label: "3 distributeurs suivis" },
-      { label: "Historique 12 mois" },
-      { label: "Alertes de hausses de prix" },
+      { label: "150 documents analysés / mois" },
+      { label: "Historique de prix sur 12 mois" },
+      { label: "3 distributeurs comparés" },
+      { label: "Alertes hausse de prix" },
+      { label: "Sans PDF devis client ni export comptable" },
     ],
     cta: "Commencer",
     href: "/inscription?plan=starter",
@@ -620,30 +614,33 @@ export const PRICING: TarineoPlan[] = [
     name: "Pro",
     month: 29,
     year: 278,
-    text: "Pour les artisans qui veulent tout suivre, sans limite.",
+    text: "Pour les artisans actifs",
     features: [
-      { label: "400 documents / mois" },
+      { label: "400 documents analysés / mois" },
+      { label: "Historique complet" },
       { label: "Tous les distributeurs" },
-      { label: "Devis client inclus" },
-      { label: "Calcul de marge automatique", soon: true },
+      { label: "Devis client PDF (logo + SIRET)" },
       { label: "Export comptable" },
+      { label: "Bibliothèque fournisseurs", soon: true },
+      { label: "Notifications push", soon: true },
     ],
     cta: "Commencer",
     href: "/inscription?plan=pro",
     featured: true,
-    badge: "Populaire",
+    badge: "Le plus choisi",
   },
   {
     id: "equipe",
     name: "Équipe",
     month: 49,
     year: 470,
-    text: "Pour les structures avec plusieurs chantiers actifs.",
+    text: "Pour les entreprises artisanales",
     features: [
-      { label: "1000 documents / mois" },
-      { label: "Tout Pro inclus" },
+      { label: "1 000 documents analysés / mois" },
+      { label: "Tout le plan Pro" },
+      { label: "Multi-utilisateurs chantier", soon: true },
+      { label: "Intégrations WhatsApp / Drive", soon: true },
       { label: "Support prioritaire" },
-      { label: "Dashboard dirigeant", soon: true },
     ],
     cta: "Commencer",
     href: "/inscription?plan=equipe",
@@ -671,11 +668,11 @@ export const FAQ_GROUPS: FaqGroup[] = [
       },
       {
         q: "Puis-je importer une photo ?",
-        a: "Oui, prise sur le chantier ou au comptoir. Si la lecture n’est pas assez sûre, TARINEO vous demande de vérifier les lignes concernées avant de les enregistrer.",
+        a: "Oui, prise sur le chantier ou au comptoir. Si la lecture n’est pas assez sûre, Tarinéo vous demande de vérifier les lignes concernées avant de les enregistrer.",
       },
       {
         q: "Quels fournisseurs sont compatibles ?",
-        a: "TARINEO lit le contenu du document, pas un format propre à une enseigne : Point.P, Rexel, Brossette, Richardson, Aubade ou votre grossiste local. Le nom du distributeur est détecté automatiquement.",
+        a: "Tarinéo lit le contenu du document, pas un format propre à une enseigne : Cedeo, Point.P, Rexel, Brossette, Richardson, Aubade ou votre grossiste local. Le nom du distributeur est détecté automatiquement.",
       },
     ],
   },
@@ -685,11 +682,11 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         q: "Je n’ai pas encore d’historique, ça marche quand même ?",
-        a: "Oui. Importez vos factures des 3 derniers mois en une fois, TARINEO construit votre historique automatiquement.",
+        a: "Oui. Importez vos factures des 3 derniers mois en une fois, Tarinéo construit votre historique automatiquement.",
       },
       {
-        q: "Comment TARINEO analyse mes prix ?",
-        a: "L’IA lit chaque ligne (référence, désignation, quantité, prix, remise). Le calcul, lui, est fait par TARINEO : chaque prix est comparé à vos propres achats précédents — dernier prix payé et moyenne 12 mois. Une alerte s’affiche au-delà de +3 %.",
+        q: "Comment Tarinéo analyse mes prix ?",
+        a: "L’IA lit chaque ligne (référence, désignation, quantité, prix, remise). Le calcul, lui, est fait par Tarinéo : chaque prix est comparé à vos propres achats précédents — dernier prix payé et moyenne 12 mois. Une alerte s’affiche au-delà de +3 %.",
       },
       {
         q: "Comparez-vous mes prix avec ceux d’autres artisans ?",
@@ -707,7 +704,7 @@ export const FAQ_GROUPS: FaqGroup[] = [
     items: [
       {
         q: "L’essai est-il vraiment sans carte ?",
-        a: `Oui : ${PRO_TRIAL_DAYS} jours d’essai Pro, sans carte bancaire. Vous ajoutez un moyen de paiement seulement si TARINEO vous est utile. Sans paiement, le compte et les données associées sont supprimés à la fin de l’essai.`,
+        a: "Oui : le 1er mois est offert, sans carte bancaire. Vous ajoutez un moyen de paiement seulement si Tarinéo vous est utile.",
       },
       {
         q: "Puis-je annuler mon abonnement ?",
@@ -725,10 +722,9 @@ export const FAQ = FAQ_GROUPS.flatMap((g) => g.items);
 
 export const FINAL_CTA = {
   label: "Commencer",
-  title: "Construisez mieux.",
-  tail: "Protégez votre marge.",
-  text: "TARINEO centralise vos documents, vos achats et vos chantiers.",
-  cta: "Commencer avec TARINEO",
+  title: "Ne découvrez pas vos hausses de prix",
+  tail: "trop tard.",
+  cta: CTA_TRIAL.long,
   href: "/inscription",
   note: `${OFFER}.`,
 } as const;
@@ -737,29 +733,26 @@ export const FINAL_CTA = {
 /* Navigation                                                          */
 /* ------------------------------------------------------------------ */
 
-/** @deprecated Préférer `MARKETING_NAV_LINKS` — gardé pour SiteNav legacy. */
 export const NAV_LINKS = [
-  { href: "/#top", label: "Accueil" },
   { href: "/#fonctionnalites", label: "Fonctionnalités" },
-  { href: "/#produit", label: "Produit" },
+  { href: "/#comment", label: "Comment ça marche" },
   { href: "/#tarifs", label: "Tarifs" },
-  { href: "/blog", label: "Blog" },
+  { href: "/#faq", label: "FAQ" },
 ] as const;
 
 export const FOOTER_COLS = [
   {
     title: "Produit",
     links: [
-      { href: "/#produit", label: "Produit" },
       { href: "/#fonctionnalites", label: "Fonctionnalités" },
-      { href: "/#film", label: "Film" },
       { href: "/#tarifs", label: "Tarifs" },
+      { href: "/#comment", label: "Comment ça marche" },
     ],
   },
   {
     title: "Entreprise",
     links: [
-      { href: "/avis", label: "À propos" },
+      { href: "/#qui", label: "À propos" },
       { href: `mailto:${BRAND.contactEmail}`, label: "Contact" },
     ],
   },
