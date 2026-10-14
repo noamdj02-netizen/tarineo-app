@@ -176,7 +176,9 @@ function AnalyseMock() {
                 <Image src={ASSETS.check} alt="" width={5} height={5} className="mt-px shrink-0" />
                 <span className="text-[6.5px] font-medium leading-[5.8px] tracking-[-0.02em] text-[#0a0a0a]">
                   {row.label}
-                  {row.hint ? <span className="font-normal text-[#6e6e6e]"> — {row.hint}</span> : null}
+                  {"hint" in row && row.hint ? (
+                    <span className="font-normal text-[#6e6e6e]"> — {row.hint}</span>
+                  ) : null}
                 </span>
               </li>
             ))}
